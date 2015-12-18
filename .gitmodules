@@ -1,0 +1,3 @@
+[submodule "lingo"]
+	path = lingo
+	url = git@github.com:asutton/lingo.git
