@@ -35,12 +35,14 @@ main(int argc, char* argv[])
 
   auto* global = new Namespace_decl(n0);
   auto* ns1 = new Namespace_decl(global, n1);
-  // auto* ns2 = new Namespace_decl(ns1, n2);
+  auto* ns2 = new Namespace_decl(ns1, n2);
 
   Name* qn1 = new Qualified_id(global, n1);
   std::cout << "Q1: " << *qn1 << '\n';
 
   Name* qn2 = new Qualified_id(ns1, n2);
   std::cout << "Q1: " << *qn2 << '\n';
+
+  std::cout << *ns2->qualified_id() << '\n';
 
 }

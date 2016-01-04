@@ -79,6 +79,8 @@ void
 Printer::qualified_id(Qualified_id const* n)
 {
   nested_name_specifier(n);
+  while (is<Qualified_id>(n->name()))
+    n = cast<Qualified_id>(n->name());
   unqualified_id(n->name());
 }
 

@@ -434,6 +434,7 @@ struct Decl : Term
 
   Decl const* context() const { return cxt; }
   Name const* name() const    { return first; }
+  Name const* qualified_id() const;
 
   Specifier spec;
   Decl*     cxt;
