@@ -50,12 +50,14 @@ init_tokens()
   symbols.put_symbol(rbrace_tok, "}");
   symbols.put_symbol(lparen_tok, "(");
   symbols.put_symbol(rparen_tok, ")");
-  symbols.put_symbol(lbracket_tok, "[]");
+  symbols.put_symbol(lbracket_tok, "[");
   symbols.put_symbol(rbracket_tok, "]");
   symbols.put_symbol(comma_tok, ",");
   symbols.put_symbol(colon_tok, ":");
   symbols.put_symbol(colon_colon_tok, "::");
   symbols.put_symbol(semicolon_tok, ";");
+  symbols.put_symbol(dot_tok, ".");
+  symbols.put_symbol(ellipsis_tok, "...");
 
   // Operators
   symbols.put_symbol(plus_tok, "+");
@@ -81,14 +83,22 @@ init_tokens()
 
   // Keywords
   symbols.put_symbol(abstract_tok, "abstract");
+  symbols.put_symbol(auto_tok, "auto");
+  symbols.put_symbol(bool_tok, "bool");
   symbols.put_symbol(char_tok, "char");
   symbols.put_symbol(char8_tok, "char8");
   symbols.put_symbol(char16_tok, "char16");
   symbols.put_symbol(char32_tok, "char32");
   symbols.put_symbol(case_tok, "case");
-  symbols.put_symbol(struct_tok, "struct");
+  symbols.put_symbol(class_tok, "class");
+  symbols.put_symbol(concept_tok, "concept");
+  symbols.put_symbol(const_tok, "const");
+  symbols.put_symbol(decltype_tok, "decltype");
+  symbols.put_symbol(def_tok, "def");
   symbols.put_symbol(do_tok, "do");
+  symbols.put_symbol(double_tok, "double");
   symbols.put_symbol(dynamic_tok, "dynamic");
+  symbols.put_symbol(enum_tok, "enum");
   symbols.put_symbol(explicit_tok, "explicit");
   symbols.put_symbol(export_tok, "export");
   symbols.put_symbol(float_tok, "float");
@@ -107,7 +117,9 @@ init_tokens()
   symbols.put_symbol(int64_tok, "int64");
   symbols.put_symbol(int128_tok, "int128");
   symbols.put_symbol(namespace_tok, "namespace");
+  symbols.put_symbol(requires_tok, "requires");
   symbols.put_symbol(static_tok, "static");
+  symbols.put_symbol(struct_tok, "struct");
   symbols.put_symbol(switch_tok, "switch");
   symbols.put_symbol(this_tok, "this");
   symbols.put_symbol(template_tok, "template");
@@ -117,8 +129,12 @@ init_tokens()
   symbols.put_symbol(uint32_tok, "uint32");
   symbols.put_symbol(uint64_tok, "uint64");
   symbols.put_symbol(int128_tok, "int128");
+  symbols.put_symbol(union_tok, "union");
   symbols.put_symbol(using_tok, "using");
   symbols.put_symbol(virtual_tok, "virtual");
+  symbols.put_symbol(var_tok, "var");
+  symbols.put_symbol(void_tok, "void");
+  symbols.put_symbol(volatile_tok, "volatile");
   symbols.put_symbol(while_tok, "while");
 }
 
@@ -154,8 +170,38 @@ Lexer::scan()
     switch (lookahead()) {
     case '\0': return eof();
 
+    case '{': get(); return symbol();
+    case '}': get(); return symbol();
     case '(': get(); return symbol();
     case ')': get(); return symbol();
+    case '[': get(); return symbol();
+    case ']': get(); return symbol();
+    case ',': get(); return symbol();
+
+    case ':':
+      get();
+      if (lookahead() == ':')
+        get();
+      return symbol();
+
+    case ';': get(); return symbol();
+
+    case '.':
+      get();
+      if (lookahead() == '.') {
+        get();
+
+        // FIXME: The diagnosis of this error is wrong.
+        // We should diagnose the occurrence of "..".
+        if (lookahead() == '.') {
+          get();
+        } else {
+          error();
+          continue;
+        }
+      }
+      return symbol();
+
     case '+': get(); return symbol();
 
     case '-':
@@ -212,12 +258,14 @@ Lexer::scan()
 
     default:
       // FIXME: Handle underscores in identifiers.
-      if (is_alpha(lookahead()))
+      if (is_alpha(lookahead())) {
         return word();
-      else if (is_decimal_digit(lookahead()))
+      } else if (is_decimal_digit(lookahead())) {
         return integer();
-      else
+      } else {
         error();
+        continue;
+      }
     }
   }
   return {};

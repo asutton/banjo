@@ -41,6 +41,8 @@ enum Token_kind
   colon_tok,
   colon_colon_tok,
   semicolon_tok,
+  dot_tok,
+  ellipsis_tok,
 
   // Operators
   plus_tok,
@@ -69,14 +71,22 @@ enum Token_kind
 
   // Keywords
   abstract_tok,
+  auto_tok,
+  bool_tok,
   char_tok,
   char8_tok,
   char16_tok,
   char32_tok,
   case_tok,
-  struct_tok,
+  class_tok,
+  concept_tok,
+  const_tok,
+  decltype_tok,
+  def_tok,
   do_tok,
+  double_tok,
   dynamic_tok,
+  enum_tok,
   explicit_tok,
   export_tok,
   float_tok,
@@ -95,7 +105,9 @@ enum Token_kind
   int64_tok,
   int128_tok,
   namespace_tok,
+  requires_tok,
   static_tok,
+  struct_tok,
   switch_tok,
   this_tok,
   template_tok,
@@ -105,8 +117,12 @@ enum Token_kind
   uint32_tok,
   uint64_tok,
   uint128_tok,
+  union_tok,
   using_tok,
+  var_tok,
   virtual_tok,
+  void_tok,
+  volatile_tok,
   while_tok,
 
   // Character classes
@@ -116,7 +132,7 @@ enum Token_kind
 
 
 char const* get_spelling(Token_kind);
-
+void init_tokens();
 
 // -------------------------------------------------------------------------- //
 // Lexing

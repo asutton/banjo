@@ -6,6 +6,8 @@
 
 #include <lingo/assert.hpp>
 #include <lingo/utility.hpp>
+#include <lingo/error.hpp>
+#include <lingo/symbol.hpp>
 
 namespace beaker
 {
