@@ -14,6 +14,8 @@ add_library(beaker
   decl.cpp
   stmt.cpp
   translation.cpp
+  hash.cpp
+  equivalence.cpp
   print.cpp
 )
 target_compile_definitions(beaker PUBLIC ${LLVM_DEFINITIONS})
@@ -36,7 +38,15 @@ add_executable(beaker-compile main.cpp)
 target_link_libraries(beaker-compile beaker)
 
 
+macro(add_run_test target)
+  add_executable(${target} ${ARGN})
+  target_link_libraries(${target} beaker)
+endmacro()
+
+
 # Unit tests
 # TODO: Move these into a different directory.
-add_executable(test_print test_print.cpp)
-target_link_libraries(test_print beaker)
+add_run_test(test_print       test_print.cpp)
+add_run_test(test_equivalence test_equivalence.cpp)
+add_run_test(test_hash        test_hash.cpp)
+add_run_test(test_variable    test_variable.cpp)

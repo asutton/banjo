@@ -83,7 +83,7 @@ struct Name::Visitor
 // A simple identifier.
 struct Simple_id : Name
 {
-  Simple_id(Symbol* sym)
+  Simple_id(Symbol const* sym)
     : first(sym)
   { }
 
@@ -91,7 +91,7 @@ struct Simple_id : Name
 
   Symbol const* symbol() const { return first; }
 
-  Symbol* first;
+  Symbol const* first;
 };
 
 
@@ -206,24 +206,106 @@ apply(Name const* n, F fn)
 
 // -------------------------------------------------------------------------- //
 // Types
+//
+// TODO: Add support for a univalent type? Unit?
+//
+// TODO: Add character types.
 
-// The base class of all type.
+struct Type;
+struct Void_type;
+struct Boolean_type;
+struct Integer_type;
+struct Float_type;
+struct Auto_type;
+struct Decltype_type;
+struct Declauto_type;
+struct Qualified_type;
+struct Pointer_type;
+struct Reference_type;
+struct Array_type;
+struct Sequence_type;
+struct Class_type;
+struct Union_type;
+struct Enum_type;
+
+
+// The base class of all types.
 struct Type : Term
 {
+  struct Visitor;
+
+  virtual void accept(Visitor&) const = 0;
+};
+
+
+struct Type::Visitor
+{
+  virtual void visit(Void_type const*) { }
+  virtual void visit(Boolean_type const*) { }
+  virtual void visit(Integer_type const*) { }
+  virtual void visit(Float_type const*) { }
+  virtual void visit(Auto_type const*) { }
+  virtual void visit(Decltype_type const*) { }
+  virtual void visit(Declauto_type const*) { }
+  virtual void visit(Qualified_type const*) { }
+  virtual void visit(Pointer_type const*) { }
+  virtual void visit(Reference_type const*) { }
+  virtual void visit(Array_type const*) { }
+  virtual void visit(Sequence_type const*) { }
+  virtual void visit(Class_type const*) { }
+  virtual void visit(Union_type const*) { }
+  virtual void visit(Enum_type const*) { }
+};
+
+
+// The void type.
+struct Void_type : Type
+{
+  void accept(Visitor& v) const { v.visit(this); }
+};
+
+
+// The boolean type.
+struct Boolean_type : Type
+{
+  void accept(Visitor& v) const { v.visit(this); }
 };
 
 
 // The integer types.
+//
+// TODO: Add a flag that distinguishes between native spellings
+// of types and their precise representation? For example, "int"
+// is lexically different than "int32", and those differences
+// might be meaningful in the output. Do the same for float.
 struct Integer_type : Type
 {
-  bool sgn;
+  Integer_type(bool s = true, int p = 32)
+    : sign(s), prec(p)
+  { }
+
+  void accept(Visitor& v) const { v.visit(this); }
+
+  bool is_signed() const   { return sign; }
+  bool is_unsigned() const { return !is_signed(); }
+  int precision() const    { return prec; }
+
+  bool sign;
   int  prec;
 };
 
 
-// The floating point types.
+// The IEEE 754 floating point types.
 struct Float_type : Type
 {
+  Float_type(int p = 64)
+    : prec(p)
+  { }
+
+  void accept(Visitor& v) const { v.visit(this); }
+
+  int precision() const { return prec; }
+
   int prec;
 };
 
@@ -231,44 +313,52 @@ struct Float_type : Type
 // The auto type.
 struct Auto_type : Type
 {
-
+  void accept(Visitor& v) const { v.visit(this); }
 };
 
 
 // The type decltype(e).
 struct Decltype_type : Type
 {
-
+  void accept(Visitor& v) const { v.visit(this); }
 };
 
 
 // The type decltype(auto).
 struct Declauto_type : Type
 {
-
+  void accept(Visitor& v) const { v.visit(this); }
 };
 
 
 struct Qualified_type : Type
 {
+  void accept(Visitor& v) const { v.visit(this); }
+
   Type* first;
 };
 
 
 struct Pointer_type : Type
 {
+  void accept(Visitor& v) const { v.visit(this); }
+
   Type* first;
 };
 
 
 struct Reference_type : Type
 {
+  void accept(Visitor& v) const { v.visit(this); }
+
   Type* first;
 };
 
 
 struct Array_type : Type
 {
+  void accept(Visitor& v) const { v.visit(this); }
+
   Type* first;
   Expr* second;
 };
@@ -278,26 +368,70 @@ struct Array_type : Type
 // of unknown bound.
 struct Sequence_type : Type
 {
+  void accept(Visitor& v) const { v.visit(this); }
+
   Type* first;
 };
 
 
 struct Class_type : Type
 {
+  void accept(Visitor& v) const { v.visit(this); }
+
   Decl* first;
 };
 
 
 struct Union_type : Type
 {
+  void accept(Visitor& v) const { v.visit(this); }
+
   Decl* first;
 };
 
 
 struct Enum_type : Type
 {
+  void accept(Visitor& v) const { v.visit(this); }
+
   Decl* first;
 };
+
+
+// A generic visitor for names.
+template<typename F, typename T>
+struct Generic_type_visitor : Type::Visitor, Generic_visitor<F, T>
+{
+  Generic_type_visitor(F f)
+    : Generic_visitor<F, T>(f)
+  { }
+
+  void visit(Void_type const* t)      { this->invoke(t); }
+  void visit(Boolean_type const* t)   { this->invoke(t); }
+  void visit(Integer_type const* t)   { this->invoke(t); }
+  void visit(Float_type const* t)     { this->invoke(t); }
+  void visit(Auto_type const* t)      { this->invoke(t); }
+  void visit(Decltype_type const* t)  { this->invoke(t); }
+  void visit(Declauto_type const* t)  { this->invoke(t); }
+  void visit(Qualified_type const* t) { this->invoke(t); }
+  void visit(Pointer_type const* t)   { this->invoke(t); }
+  void visit(Reference_type const* t) { this->invoke(t); }
+  void visit(Array_type const* t)     { this->invoke(t); }
+  void visit(Sequence_type const* t)  { this->invoke(t); }
+  void visit(Class_type const* t)     { this->invoke(t); }
+  void visit(Union_type const* t)     { this->invoke(t); }
+  void visit(Enum_type const* t)      { this->invoke(t); }
+};
+
+
+// Apply a function to the given name.
+template<typename F, typename T = typename std::result_of<F(Void_type const*)>::type>
+inline T
+apply(Type const* t, F fn)
+{
+  Generic_type_visitor<F, T> vis(fn);
+  return accept(t, vis);
+}
 
 
 // -------------------------------------------------------------------------- //
@@ -464,6 +598,10 @@ struct Object_decl : Decl
     : Decl(n), second(t), third(i)
   { }
 
+  Object_decl(Decl* cxt, Name* n, Type* t, Init* i)
+    : Decl(cxt, n), second(t), third(i)
+  { }
+
   Type const* type() const { return second; }
 
   Type* second;
@@ -490,6 +628,10 @@ struct Variable_decl : Object_decl
 {
   Variable_decl(Name* n, Type* t, Init* i)
     : Object_decl(n, t, i)
+  { }
+
+  Variable_decl(Decl* cxt, Name* n, Type* t, Init* i)
+    : Object_decl(cxt, n, t, i)
   { }
 
   void accept(Visitor& v) const { v.visit(this); }
