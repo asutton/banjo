@@ -10,7 +10,7 @@ namespace beaker
 // Returns a qualified id for the declaration.
 //
 // TODO: Use an allocator.
-Name const*
+Name const&
 Decl::qualified_id() const
 {
   Name* n = first;
@@ -19,14 +19,14 @@ Decl::qualified_id() const
     n = new Qualified_id(d, n);
     d = d->cxt;
   }
-  return n;
+  return *n;
 }
 
 
 // Returns the fully qualified id for the declaration.
 //
 // TODO: Use an allocator.
-Name const*
+Name const&
 Decl::fully_qualified_id() const
 {
   Name* n = first;
@@ -35,7 +35,7 @@ Decl::fully_qualified_id() const
     n = new Qualified_id(d, n);
     d = d->cxt;
   }
-  return n;
+  return *n;
 }
 
 

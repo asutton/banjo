@@ -16,16 +16,16 @@ namespace beaker
 struct Type;
 
 
-bool is_equivalent(Type const*, Type const*);
+bool is_equivalent(Type const&, Type const&);
 
 
-// Equality comparison function object.
+// Equality comparison for pointers.
 template<typename T>
 struct Term_eq
 {
   bool operator()(T const* a, T const* b) const
   {
-    return is_equivalent(a, b);
+    return is_equivalent(*a, *b);
   }
 };
 

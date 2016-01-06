@@ -33,24 +33,24 @@ hash_value(Type const& t)
 {
   struct fn
   {
-    std::size_t operator()(Void_type const* t)      { return hash_value(*t); }
-    std::size_t operator()(Boolean_type const* t)   { return hash_value(*t); }
-    std::size_t operator()(Integer_type const* t)   { return hash_value(*t); }
-    std::size_t operator()(Float_type const* t)     { return hash_value(*t); }
-    std::size_t operator()(Auto_type const* t)      { return hash_value(*t); }
-    std::size_t operator()(Decltype_type const* t)  { return hash_value(*t); }
-    std::size_t operator()(Declauto_type const* t)  { return hash_value(*t); }
-    std::size_t operator()(Qualified_type const* t) { lingo_unreachable(); }
-    std::size_t operator()(Pointer_type const* t)   { lingo_unreachable(); }
-    std::size_t operator()(Reference_type const* t) { lingo_unreachable(); }
-    std::size_t operator()(Array_type const* t)     { lingo_unreachable(); }
-    std::size_t operator()(Sequence_type const* t)  { lingo_unreachable(); }
-    std::size_t operator()(Class_type const* t)     { lingo_unreachable(); }
-    std::size_t operator()(Union_type const* t)     { lingo_unreachable(); }
-    std::size_t operator()(Enum_type const* t)      { lingo_unreachable(); }
+    std::size_t operator()(Void_type const& t) const      { return hash_value(t); }
+    std::size_t operator()(Boolean_type const& t) const   { return hash_value(t); }
+    std::size_t operator()(Integer_type const& t) const   { return hash_value(t); }
+    std::size_t operator()(Float_type const& t) const     { return hash_value(t); }
+    std::size_t operator()(Auto_type const& t) const      { return hash_value(t); }
+    std::size_t operator()(Decltype_type const& t) const  { return hash_value(t); }
+    std::size_t operator()(Declauto_type const& t) const  { return hash_value(t); }
+    std::size_t operator()(Qualified_type const& t) const { lingo_unreachable(); }
+    std::size_t operator()(Pointer_type const& t) const   { lingo_unreachable(); }
+    std::size_t operator()(Reference_type const& t) const { lingo_unreachable(); }
+    std::size_t operator()(Array_type const& t) const     { lingo_unreachable(); }
+    std::size_t operator()(Sequence_type const& t) const  { lingo_unreachable(); }
+    std::size_t operator()(Class_type const& t) const     { lingo_unreachable(); }
+    std::size_t operator()(Union_type const& t) const     { lingo_unreachable(); }
+    std::size_t operator()(Enum_type const& t) const      { lingo_unreachable(); }
   };
 
-  return apply(&t, fn{});
+  return apply(t, fn{});
 }
 
 

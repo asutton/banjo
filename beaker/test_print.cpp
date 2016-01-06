@@ -45,8 +45,8 @@ test_names()
   Name* qn2 = new Qualified_id(ns1, n2);
   std::cout << *qn2 << '\n'; // N1::N2
 
-  std::cout << *ns2->qualified_id() << '\n'; // N1::N2
-  std::cout << *ns2->fully_qualified_id() << '\n'; // ::N1::N2
+  std::cout << ns2->qualified_id() << '\n'; // N1::N2
+  std::cout << ns2->fully_qualified_id() << '\n'; // N1::N2
 }
 
 

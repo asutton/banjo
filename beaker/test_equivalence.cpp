@@ -20,10 +20,10 @@ Symbol_table syms;
 void
 test_types()
 {
-  Type* t1 = new Void_type();
-  Type* t2 = new Boolean_type();
-  Type* t3 = new Integer_type();
-  Type* t4 = new Float_type();
+  Type& t1 = *new Void_type();
+  Type& t2 = *new Boolean_type();
+  Type& t3 = *new Integer_type();
+  Type& t4 = *new Float_type();
 
   assert(is_equivalent(t1, t1));
   assert(is_equivalent(t2, t2));

@@ -96,15 +96,15 @@ struct Name : Term
 // Non-modifying visitor.
 struct Name::Visitor
 {
-  virtual void visit(Simple_id const* n)      { }
-  virtual void visit(Global_id const* n)      { }
-  virtual void visit(Placeholder_id const* n) { }
-  virtual void visit(Operator_id const* n)    { }
-  virtual void visit(Conversion_id const* n)  { }
-  virtual void visit(Literal_id const* n)     { }
-  virtual void visit(Destructor_id const* n)  { }
-  virtual void visit(Template_id const* n)    { }
-  virtual void visit(Qualified_id const* n)   { }
+  virtual void visit(Simple_id const& n)      { }
+  virtual void visit(Global_id const& n)      { }
+  virtual void visit(Placeholder_id const& n) { }
+  virtual void visit(Operator_id const& n)    { }
+  virtual void visit(Conversion_id const& n)  { }
+  virtual void visit(Literal_id const& n)     { }
+  virtual void visit(Destructor_id const& n)  { }
+  virtual void visit(Template_id const& n)    { }
+  virtual void visit(Qualified_id const& n)   { }
 };
 
 
@@ -115,9 +115,9 @@ struct Simple_id : Name
     : first(sym)
   { }
 
-  void accept(Visitor& v) const { v.visit(this); };
+  void accept(Visitor& v) const { v.visit(*this); };
 
-  Symbol const* symbol() const { return first; }
+  Symbol const& symbol() const { return *first; }
 
   Symbol const* first;
 };
@@ -131,42 +131,52 @@ struct Global_id : Name
   Global_id()
   { }
 
-  void accept(Visitor& v) const { v.visit(this); };
+  void accept(Visitor& v) const { v.visit(*this); };
 };
 
 
 // An placeholder for a name.
 struct Placeholder_id : Name
 {
-  void accept(Visitor& v) const { v.visit(this); };
+  void accept(Visitor& v) const { v.visit(*this); };
 };
 
 
 // An identifier of an overloaded operator.
+//
+// TODO: Implement me.
 struct Operator_id : Name
 {
-  void accept(Visitor& v) const { v.visit(this); };
+  void accept(Visitor& v) const { v.visit(*this); };
 };
 
 
 // An identifier of a connversion function.
+//
+// TODO: Implement me.
 struct Conversion_id : Name
 {
-  void accept(Visitor& v) const { v.visit(this); };
+  void accept(Visitor& v) const { v.visit(*this); };
 };
 
 
 // An identifier of a user-defined literal.
+//
+// TODO: Implement me.
 struct Literal_id : Name
 {
-  void accept(Visitor& v) const { v.visit(this); };
+  void accept(Visitor& v) const { v.visit(*this); };
 };
 
 
 // An identifier for a destructor.
+//
+// TODO: Implement me.
 struct Destructor_id : Name
 {
-  void accept(Visitor& v) const { v.visit(this); };
+  void accept(Visitor& v) const { v.visit(*this); };
+
+  Type const& type() { return *first; }
 
   Type* first;
 };
@@ -175,10 +185,10 @@ struct Destructor_id : Name
 // An identifier that refers a template specialization.
 struct Template_id : Name
 {
-  void accept(Visitor& v) const { v.visit(this); };
+  void accept(Visitor& v) const { v.visit(*this); };
 
-  Decl const*      declaration() const { return decl; }
-  Term_list const* arguments() const   { return first; }
+  Decl const&      declaration() const { return *decl; }
+  Term_list const& arguments() const   { return *first; }
 
   Decl*      decl;
   Term_list* first;
@@ -192,10 +202,10 @@ struct Qualified_id : Name
     : decl(d), first(n)
   { }
 
-  void accept(Visitor& v) const { v.visit(this); };
+  void accept(Visitor& v) const { v.visit(*this); };
 
-  Decl const* context() const { return decl; }
-  Name const* name() const    { return first; }
+  Decl const& context() const { return *decl; }
+  Name const& name() const    { return *first; }
 
   Decl* decl;
   Name* first;
@@ -210,22 +220,22 @@ struct Generic_name_visitor : Name::Visitor, Generic_visitor<F, T>
     : Generic_visitor<F, T>(f)
   { }
 
-  void visit(Simple_id const* n)      { this->invoke(n); }
-  void visit(Global_id const* n)      { this->invoke(n); }
-  void visit(Placeholder_id const* n) { this->invoke(n); }
-  void visit(Operator_id const* n)    { this->invoke(n); }
-  void visit(Conversion_id const* n)  { this->invoke(n); }
-  void visit(Literal_id const* n)     { this->invoke(n); }
-  void visit(Destructor_id const* n)  { this->invoke(n); }
-  void visit(Template_id const* n)    { this->invoke(n); }
-  void visit(Qualified_id const* n)   { this->invoke(n); }
+  void visit(Simple_id const& n)      { this->invoke(n); }
+  void visit(Global_id const& n)      { this->invoke(n); }
+  void visit(Placeholder_id const& n) { this->invoke(n); }
+  void visit(Operator_id const& n)    { this->invoke(n); }
+  void visit(Conversion_id const& n)  { this->invoke(n); }
+  void visit(Literal_id const& n)     { this->invoke(n); }
+  void visit(Destructor_id const& n)  { this->invoke(n); }
+  void visit(Template_id const& n)    { this->invoke(n); }
+  void visit(Qualified_id const& n)   { this->invoke(n); }
 };
 
 
 // Apply a function to the given name.
-template<typename F, typename T = typename std::result_of<F(Simple_id const*)>::type>
+template<typename F, typename T = typename std::result_of<F(Simple_id const&)>::type>
 inline T
-apply(Name const* n, F fn)
+apply(Name const& n, F fn)
 {
   Generic_name_visitor<F, T> vis(fn);
   return accept(n, vis);
@@ -269,36 +279,36 @@ struct Type : Term
 
 struct Type::Visitor
 {
-  virtual void visit(Void_type const*) { }
-  virtual void visit(Boolean_type const*) { }
-  virtual void visit(Integer_type const*) { }
-  virtual void visit(Float_type const*) { }
-  virtual void visit(Auto_type const*) { }
-  virtual void visit(Decltype_type const*) { }
-  virtual void visit(Declauto_type const*) { }
-  virtual void visit(Function_type const*) { }
-  virtual void visit(Qualified_type const*) { }
-  virtual void visit(Pointer_type const*) { }
-  virtual void visit(Reference_type const*) { }
-  virtual void visit(Array_type const*) { }
-  virtual void visit(Sequence_type const*) { }
-  virtual void visit(Class_type const*) { }
-  virtual void visit(Union_type const*) { }
-  virtual void visit(Enum_type const*) { }
+  virtual void visit(Void_type const&)      { }
+  virtual void visit(Boolean_type const&)   { }
+  virtual void visit(Integer_type const&)   { }
+  virtual void visit(Float_type const&)     { }
+  virtual void visit(Auto_type const&)      { }
+  virtual void visit(Decltype_type const&)  { }
+  virtual void visit(Declauto_type const&)  { }
+  virtual void visit(Function_type const&)  { }
+  virtual void visit(Qualified_type const&) { }
+  virtual void visit(Pointer_type const&)   { }
+  virtual void visit(Reference_type const&) { }
+  virtual void visit(Array_type const&)     { }
+  virtual void visit(Sequence_type const&)  { }
+  virtual void visit(Class_type const&)     { }
+  virtual void visit(Union_type const&)     { }
+  virtual void visit(Enum_type const&)      { }
 };
 
 
 // The void type.
 struct Void_type : Type
 {
-  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Visitor& v) const { v.visit(*this); }
 };
 
 
 // The boolean type.
 struct Boolean_type : Type
 {
-  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Visitor& v) const { v.visit(*this); }
 };
 
 
@@ -314,11 +324,11 @@ struct Integer_type : Type
     : sign(s), prec(p)
   { }
 
-  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Visitor& v) const { v.visit(*this); }
 
   bool is_signed() const   { return sign; }
   bool is_unsigned() const { return !is_signed(); }
-  int precision() const    { return prec; }
+  int  precision() const   { return prec; }
 
   bool sign;
   int  prec;
@@ -332,7 +342,7 @@ struct Float_type : Type
     : prec(p)
   { }
 
-  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Visitor& v) const { v.visit(*this); }
 
   int precision() const { return prec; }
 
@@ -343,21 +353,21 @@ struct Float_type : Type
 // The auto type.
 struct Auto_type : Type
 {
-  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Visitor& v) const { v.visit(*this); }
 };
 
 
 // The type decltype(e).
 struct Decltype_type : Type
 {
-  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Visitor& v) const { v.visit(*this); }
 };
 
 
 // The type decltype(auto).
 struct Declauto_type : Type
 {
-  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Visitor& v) const { v.visit(*this); }
 };
 
 
@@ -368,8 +378,8 @@ struct Function_type : Type
     : first(p), second(r)
   { }
 
-  Type_list const* parameter_types() const { return first; }
-  Type const*      return_type() const { return second; }
+  Type_list const& parameter_types() const { return *first; }
+  Type const&      return_type() const     { return *second; }
 
   Type_list* first;
   Type*      second;
@@ -378,7 +388,7 @@ struct Function_type : Type
 
 struct Qualified_type : Type
 {
-  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Visitor& v) const { v.visit(*this); }
 
   Type* first;
 };
@@ -386,7 +396,7 @@ struct Qualified_type : Type
 
 struct Pointer_type : Type
 {
-  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Visitor& v) const { v.visit(*this); }
 
   Type* first;
 };
@@ -394,7 +404,7 @@ struct Pointer_type : Type
 
 struct Reference_type : Type
 {
-  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Visitor& v) const { v.visit(*this); }
 
   Type* first;
 };
@@ -402,7 +412,7 @@ struct Reference_type : Type
 
 struct Array_type : Type
 {
-  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Visitor& v) const { v.visit(*this); }
 
   Type* first;
   Expr* second;
@@ -413,7 +423,7 @@ struct Array_type : Type
 // of unknown bound.
 struct Sequence_type : Type
 {
-  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Visitor& v) const { v.visit(*this); }
 
   Type* first;
 };
@@ -421,7 +431,7 @@ struct Sequence_type : Type
 
 struct Class_type : Type
 {
-  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Visitor& v) const { v.visit(*this); }
 
   Decl* first;
 };
@@ -429,7 +439,7 @@ struct Class_type : Type
 
 struct Union_type : Type
 {
-  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Visitor& v) const { v.visit(*this); }
 
   Decl* first;
 };
@@ -437,7 +447,7 @@ struct Union_type : Type
 
 struct Enum_type : Type
 {
-  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Visitor& v) const { v.visit(*this); }
 
   Decl* first;
 };
@@ -451,28 +461,28 @@ struct Generic_type_visitor : Type::Visitor, Generic_visitor<F, T>
     : Generic_visitor<F, T>(f)
   { }
 
-  void visit(Void_type const* t)      { this->invoke(t); }
-  void visit(Boolean_type const* t)   { this->invoke(t); }
-  void visit(Integer_type const* t)   { this->invoke(t); }
-  void visit(Float_type const* t)     { this->invoke(t); }
-  void visit(Auto_type const* t)      { this->invoke(t); }
-  void visit(Decltype_type const* t)  { this->invoke(t); }
-  void visit(Declauto_type const* t)  { this->invoke(t); }
-  void visit(Qualified_type const* t) { this->invoke(t); }
-  void visit(Pointer_type const* t)   { this->invoke(t); }
-  void visit(Reference_type const* t) { this->invoke(t); }
-  void visit(Array_type const* t)     { this->invoke(t); }
-  void visit(Sequence_type const* t)  { this->invoke(t); }
-  void visit(Class_type const* t)     { this->invoke(t); }
-  void visit(Union_type const* t)     { this->invoke(t); }
-  void visit(Enum_type const* t)      { this->invoke(t); }
+  void visit(Void_type const& t)      { this->invoke(t); }
+  void visit(Boolean_type const& t)   { this->invoke(t); }
+  void visit(Integer_type const& t)   { this->invoke(t); }
+  void visit(Float_type const& t)     { this->invoke(t); }
+  void visit(Auto_type const& t)      { this->invoke(t); }
+  void visit(Decltype_type const& t)  { this->invoke(t); }
+  void visit(Declauto_type const& t)  { this->invoke(t); }
+  void visit(Qualified_type const& t) { this->invoke(t); }
+  void visit(Pointer_type const& t)   { this->invoke(t); }
+  void visit(Reference_type const& t) { this->invoke(t); }
+  void visit(Array_type const& t)     { this->invoke(t); }
+  void visit(Sequence_type const& t)  { this->invoke(t); }
+  void visit(Class_type const& t)     { this->invoke(t); }
+  void visit(Union_type const& t)     { this->invoke(t); }
+  void visit(Enum_type const& t)      { this->invoke(t); }
 };
 
 
-// Apply a function to the given name.
-template<typename F, typename T = typename std::result_of<F(Void_type const*)>::type>
+// Apply a function to the given type.
+template<typename F, typename T = typename std::result_of<F(Void_type const&)>::type>
 inline T
-apply(Type const* t, F fn)
+apply(Type const& t, F fn)
 {
   Generic_type_visitor<F, T> vis(fn);
   return accept(t, vis);
@@ -612,9 +622,9 @@ struct Decl : Term
   virtual void accept(Visitor& v) const = 0;
 
   Decl const* context() const { return cxt; }
-  Name const* name() const    { return first; }
-  Name const* qualified_id() const;
-  Name const* fully_qualified_id() const;
+  Name const& name() const    { return *first; }
+  Name const& qualified_id() const;
+  Name const& fully_qualified_id() const;
 
   Specifier spec;
   Decl*     cxt;
@@ -625,15 +635,15 @@ struct Decl : Term
 // The declaration visitor.
 struct Decl::Visitor
 {
-  virtual void visit(Variable_decl const*) { }
-  virtual void visit(Constant_decl const*) { }
-  virtual void visit(Function_decl const*) { }
-  virtual void visit(Parameter_decl const*) { }
-  virtual void visit(Class_decl const*) { }
-  virtual void visit(Union_decl const*) { }
-  virtual void visit(Enum_decl const*) { }
-  virtual void visit(Namespace_decl const*) { }
-  virtual void visit(Template_decl const*) { }
+  virtual void visit(Variable_decl const&)  { }
+  virtual void visit(Constant_decl const&)  { }
+  virtual void visit(Function_decl const&)  { }
+  virtual void visit(Parameter_decl const&) { }
+  virtual void visit(Class_decl const&)     { }
+  virtual void visit(Union_decl const&)     { }
+  virtual void visit(Enum_decl const&)      { }
+  virtual void visit(Namespace_decl const&) { }
+  virtual void visit(Template_decl const&)  { }
 };
 
 
@@ -648,7 +658,7 @@ struct Object_decl : Decl
     : Decl(cxt, n), second(t), third(i)
   { }
 
-  Type const* type() const { return second; }
+  Type const& type() const { return *second; }
 
   Type* second;
   Init* third;
@@ -662,9 +672,8 @@ struct Type_decl : Decl
     : Decl(n), second(i)
   { }
 
-  Init const* definition() const { return second; }
+  Init const& definition() const { return *second; }
 
-  Name* first;
   Init* second;
 };
 
@@ -680,9 +689,9 @@ struct Variable_decl : Object_decl
     : Object_decl(cxt, n, t, i)
   { }
 
-  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Visitor& v) const { v.visit(*this); }
 
-  Init const* initializer() const { return third; }
+  Init const& initializer() const { return *third; }
 };
 
 
@@ -693,9 +702,9 @@ struct Constant_decl : Object_decl
     : Object_decl(n, t, i)
   { }
 
-  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Visitor& v) const { v.visit(*this); }
 
-  Init const* initializer() const { return third; }
+  Init const& initializer() const { return *third; }
 };
 
 
@@ -712,13 +721,13 @@ struct Function_decl : Decl
     : Decl(cxt, n), second(t), third(p), fourth(i)
   { }
 
-  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Visitor& v) const { v.visit(*this); }
 
-  Function_type const* type() const        { return cast<Function_type>(second); }
-  Type const*          return_type() const { return type()->return_type(); }
+  Function_type const& type() const        { return *cast<Function_type>(second); }
+  Type const&          return_type() const { return type().return_type(); }
 
-  Decl_list const* parameters() const { return third; }
-  Init const*      definition() const { return fourth; }
+  Decl_list const& parameters() const { return *third; }
+  Init const&      definition() const { return *fourth; }
 
   Type*      second;
   Decl_list* third;
@@ -733,34 +742,34 @@ struct Parameter_decl : Object_decl
     : Object_decl(n, t, i)
   { }
 
-  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Visitor& v) const { v.visit(*this); }
 
-  Init const* default_argument() const { return third; }
+  Init const& default_argument() const { return *third; }
 };
 
 
 struct Class_decl : Type_decl
 {
-  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Visitor& v) const { v.visit(*this); }
 };
 
 
 struct Union_decl : Type_decl
 {
-  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Visitor& v) const { v.visit(*this); }
 };
 
 
 struct Enum_decl : Type_decl
 {
-  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Visitor& v) const { v.visit(*this); }
 };
 
 
 // Declares a template.
 struct Template_decl : Decl
 {
-  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Visitor& v) const { v.visit(*this); }
 
   Decl_list* first;
   Decl*      second;
@@ -774,19 +783,19 @@ struct Template_decl : Decl
 struct Namespace_decl : Decl
 {
   Namespace_decl(Name* n)
-    : Decl(n), second(new List())
+    : Decl(n), second(new Decl_list())
   { }
 
   Namespace_decl(Decl* cxt, Name* n)
-    : Decl(cxt, n), second(new List())
+    : Decl(cxt, n), second(new Decl_list())
   { }
 
-  void accept(Visitor& v) const { v.visit(this); }
+  void accept(Visitor& v) const { v.visit(*this); }
 
   bool is_global() const    { return cxt == nullptr; }
   bool is_anonymous() const { return is<Placeholder_id>(first); }
 
-  List* second;
+  Decl_list* second;
 };
 
 
@@ -798,22 +807,22 @@ struct Generic_decl_visitor : Decl::Visitor, Generic_visitor<F, T>
     : Generic_visitor<F, T>(f)
   { }
 
-  void visit(Variable_decl const* d)  { this->invoke(d); }
-  void visit(Constant_decl const* d)  { this->invoke(d); }
-  void visit(Function_decl const* d)  { this->invoke(d); }
-  void visit(Parameter_decl const* d) { this->invoke(d); }
-  void visit(Class_decl const* d)     { this->invoke(d); }
-  void visit(Union_decl const* d)     { this->invoke(d); }
-  void visit(Enum_decl const* d)      { this->invoke(d); }
-  void visit(Namespace_decl const* d) { this->invoke(d); }
-  void visit(Template_decl const* d)  { this->invoke(d); }
+  void visit(Variable_decl const& d)  { this->invoke(d); }
+  void visit(Constant_decl const& d)  { this->invoke(d); }
+  void visit(Function_decl const& d)  { this->invoke(d); }
+  void visit(Parameter_decl const& d) { this->invoke(d); }
+  void visit(Class_decl const& d)     { this->invoke(d); }
+  void visit(Union_decl const& d)     { this->invoke(d); }
+  void visit(Enum_decl const& d)      { this->invoke(d); }
+  void visit(Namespace_decl const& d) { this->invoke(d); }
+  void visit(Template_decl const& d)  { this->invoke(d); }
 };
 
 
 // Apply a function to the given declaration.
-template<typename F, typename T = typename std::result_of<F(Variable_decl const*)>::type>
+template<typename F, typename T = typename std::result_of<F(Variable_decl const&)>::type>
 inline T
-apply(Decl const* d, F fn)
+apply(Decl const& d, F fn)
 {
   Generic_decl_visitor<F, T> vis(fn);
   return accept(d, vis);
