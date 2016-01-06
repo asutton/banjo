@@ -33,40 +33,59 @@ struct Term
 // -------------------------------------------------------------------------- //
 // Lists
 
-struct Term_list;
-struct Type_list;
-struct Expr_list;
-struct Stmt_list;
-struct Decl_list;
 
-
-// A general purpose list of terms.
-//
-// When all terms have the same dynamic kind (type, expr, etc), a
-// list can be explicitly cast to a more specific category.
-struct Term_list : Term, std::vector<Term*>
+// FIXME: Make this a random access iterator.
+template<typename T>
+struct List_iterator
 {
-  using std::vector<Term*>::vector;
+  using Iter              = typename std::vector<T*>::iterator;
+  using value_type        = T;
+  using reference_type    = T&;
+  using pointer_type      = T*;
+  using difference_type   = std::ptrdiff_t;
+  using iterator_cateogry = std::forward_iterator_tag;
+
+  List_iterator(Iter i)
+    : iter(i)
+  { }
+
+  reference_type operator*() const { return **iter; }
+  pointer_type  operator->() const { return *iter; }
+
+  List_iterator& operator++()    { ++iter; return *this; }
+  List_iterator& operator++(int) { List_iterator x = *this; ++iter; return x; }
+
+  bool operator==(List_iterator i) const { return iter == i.iter; }
+  bool operator!=(List_iterator i) const { return iter != i.iter; }
+
+  Iter iter;
 };
 
 
-// An short-hand alias for a list of terms.
-//
-// TODO: Make this go away.
-using List = Term_list;
-
-
-// A list of types.
-struct Type_list : Term, std::vector<Type*>
+template<typename T>
+struct List : Term, std::vector<T*>
 {
-  using std::vector<Type*>::vector;
-};
+  using iterator = List_iterator<T>;
+  using const_iterator = List_iterator<T const>;
+
+  using std::vector<T*>::vector;
+
+  std::vector<T*> const& base() const { return *this; }
+  std::vector<T*>&       base()       { return *this; }
+
+  iterator begin() { return base().begin(); }
+  iterator end()   { return base().end(); }
+
+  const_iterator begin() const { return base().begin(); }
+  const_iterator end() const   { return base().end(); }
+  };
 
 
-struct Decl_list : Term, std::vector<Decl*>
-{
-  using std::vector<Decl*>::vector;
-};
+using Term_list = List<Term>;
+using Type_list = List<Type>;
+using Expr_list = List<Expr>;
+using Stmt_list = List<Stmt>;
+using Decl_list = List<Decl>;
 
 
 // -------------------------------------------------------------------------- //
@@ -188,10 +207,10 @@ struct Template_id : Name
   void accept(Visitor& v) const { v.visit(*this); };
 
   Decl const&      declaration() const { return *decl; }
-  Term_list const& arguments() const   { return *first; }
+  Term_list const& arguments() const   { return first; }
 
   Decl*      decl;
-  Term_list* first;
+  Term_list  first;
 };
 
 
@@ -374,15 +393,17 @@ struct Declauto_type : Type
 // A function type.
 struct Function_type : Type
 {
-  Function_type(Type_list* p, Type* r)
+  Function_type(Type_list const& p, Type* r)
     : first(p), second(r)
   { }
 
-  Type_list const& parameter_types() const { return *first; }
+  void accept(Visitor& v) const { v.visit(*this); }
+
+  Type_list const& parameter_types() const { return first; }
   Type const&      return_type() const     { return *second; }
 
-  Type_list* first;
-  Type*      second;
+  Type_list first;
+  Type*     second;
 };
 
 
@@ -545,7 +566,7 @@ struct Value_init : Init
 // Direct invocation of a constructor.
 struct Direct_init : Init
 {
-  List* first;
+  // List* first;
 };
 
 
@@ -568,8 +589,8 @@ struct Function_init : Init
 // Initializer of a class type.
 struct Class_init : Init
 {
-  List* first;  // bases
-  List* second; // members
+  // List* first;  // bases
+  // List* second; // members
 };
 
 
@@ -659,6 +680,7 @@ struct Object_decl : Decl
   { }
 
   Type const& type() const { return *second; }
+  Type& type()             { return *second; }
 
   Type* second;
   Init* third;
@@ -713,11 +735,11 @@ struct Constant_decl : Object_decl
 // TODO: Write type/return type accessors.
 struct Function_decl : Decl
 {
-  Function_decl(Name* n, Type* t, Decl_list* p, Init* i)
+  Function_decl(Name* n, Type* t, Decl_list const& p, Init* i)
     : Decl(n), second(t), third(p), fourth(i)
   { }
 
-  Function_decl(Decl* cxt, Name* n, Type* t, Decl_list* p, Init* i)
+  Function_decl(Decl* cxt, Name* n, Type* t, Decl_list const& p, Init* i)
     : Decl(cxt, n), second(t), third(p), fourth(i)
   { }
 
@@ -726,12 +748,12 @@ struct Function_decl : Decl
   Function_type const& type() const        { return *cast<Function_type>(second); }
   Type const&          return_type() const { return type().return_type(); }
 
-  Decl_list const& parameters() const { return *third; }
+  Decl_list const& parameters() const { return third; }
   Init const&      definition() const { return *fourth; }
 
-  Type*      second;
-  Decl_list* third;
-  Init*      fourth;
+  Type*     second;
+  Decl_list third;
+  Init*     fourth;
 };
 
 
@@ -771,8 +793,8 @@ struct Template_decl : Decl
 {
   void accept(Visitor& v) const { v.visit(*this); }
 
-  Decl_list* first;
-  Decl*      second;
+  Decl_list first;
+  Decl*     second;
 };
 
 
@@ -783,11 +805,11 @@ struct Template_decl : Decl
 struct Namespace_decl : Decl
 {
   Namespace_decl(Name* n)
-    : Decl(n), second(new Decl_list())
+    : Decl(n), second()
   { }
 
   Namespace_decl(Decl* cxt, Name* n)
-    : Decl(cxt, n), second(new Decl_list())
+    : Decl(cxt, n), second()
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -795,7 +817,7 @@ struct Namespace_decl : Decl
   bool is_global() const    { return cxt == nullptr; }
   bool is_anonymous() const { return is<Placeholder_id>(first); }
 
-  Decl_list* second;
+  Decl_list second;
 };
 
 
@@ -835,7 +857,7 @@ apply(Decl const& d, F fn)
 
 struct Translation_unit : Term
 {
-  List* first;
+  Decl_list first;
 };
 
 } // namespace beaker

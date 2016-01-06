@@ -38,8 +38,8 @@ main(int argc, char* argv[])
     return -1;
 
   // Transform tokens into a syntax tree.
-  Term* unit = parse();
-  if (error_count())
-    return 1;
-  (void)unit;
+  // Term* unit = parse();
+  // if (error_count())
+  //   return 1;
+  // (void)unit;
 }

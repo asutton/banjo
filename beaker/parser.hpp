@@ -42,7 +42,7 @@ struct Parser
 
   // Name helpers
   Name* simple_template_id();
-  List* template_argument_list();
+  Term_list template_argument_list();
 
   // Nested name specifiers
   Name* leading_name_specifier();
@@ -69,7 +69,7 @@ struct Parser
 
   // Type helpers
   Type* return_type();
-  List* type_list();
+  Type_list type_list();
 
   // Expressions
   Expr* id_expression();
@@ -94,7 +94,7 @@ struct Parser
   Decl* class_declaration();
   Decl* enum_declaration();
   Decl* template_declaration();
-  List* declaration_seq();
+  Decl_list declaration_seq();
 
   // Initializers
   Init* initializer();
@@ -111,10 +111,10 @@ struct Parser
   Name* on_operator_id();
   Name* on_conversion_id();
   Name* on_literal_id();
-  Name* on_template_id(Token, Decl*, List*);
+  Name* on_template_id(Token, Decl*, Term_list const&);
   Name* on_qualified_id(Name*, Name*);
 
-  List* on_template_argument_list();
+  Term_list on_template_argument_list();
   Name* on_nested_name_specifier(Token);
   Name* on_nested_name_specifier(Decl*);
   Name* on_nested_name_specifier(Type*);
@@ -137,10 +137,10 @@ struct Parser
 
   Type* on_simple_type(Token);
   Type* on_decltype_type(Token, Expr*);
-  Type* on_function_type(List*, Type*);
+  Type* on_function_type(Type_list const&, Type*);
   Type* on_pointer_type(Token, Type*);
   Type* on_reference_type(Token, Type*);
-  List* on_type_list();
+  Type_list on_type_list();
 
   // Expressions
   Expr* on_id_expression(Name*);
@@ -148,16 +148,16 @@ struct Parser
 
   // Declarations
   Decl* on_variable_declaration(Token, Name*, Type*, Init*);
-  Decl* on_function_declaration(Token, Name*, List*, Type*, Init*);
+  Decl* on_function_declaration(Token, Name*, Decl_list const&, Type*, Init*);
   Decl* on_parameter_declaration(Name*, Type*, Init*);
-  Decl* on_namespace_declaration(Token, Name*, List*);
+  Decl* on_namespace_declaration(Token, Name*, Decl_list const&);
+  Decl_list on_declaration_seq();
 
   Name* on_declarator(Name*);
   Init* on_default_initializer();
   Init* on_value_initializer(Expr*);
-  Init* on_direct_initializer(List*);
-  Init* on_aggregate_initializer(List*);
-  List* on_declaration_seq();
+  Init* on_direct_initializer(Expr_list const&);
+  Init* on_aggregate_initializer(Expr_list const&);
 
   // Miscellaneous
   Term* start_translation_unit();

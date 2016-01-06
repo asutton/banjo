@@ -36,7 +36,7 @@ Parser::on_variable_declaration(Token, Name*, Type*, Init*)
 
 
 Decl*
-Parser::on_function_declaration(Token, Name*, List*, Type*, Init*)
+Parser::on_function_declaration(Token, Name*, Decl_list const&, Type*, Init*)
 {
   return nullptr;
 }
@@ -54,16 +54,16 @@ Parser::on_parameter_declaration(Name*, Type*, Init*)
 
 
 Decl*
-Parser::on_namespace_declaration(Token, Name*, List*)
+Parser::on_namespace_declaration(Token, Name*, Decl_list const&)
 {
   return nullptr;
 }
 
 
-List*
+Decl_list
 Parser::on_declaration_seq()
 {
-  return nullptr;
+  return {};
 }
 
 

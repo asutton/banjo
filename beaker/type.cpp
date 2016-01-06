@@ -24,7 +24,7 @@ Parser::on_decltype_type(Token, Expr*)
 
 
 Type*
-Parser::on_function_type(List*, Type*)
+Parser::on_function_type(Type_list const&, Type*)
 {
   return nullptr;
 }
@@ -44,10 +44,10 @@ Parser::on_reference_type(Token, Type*)
 }
 
 
-List*
+Type_list
 Parser::on_type_list()
 {
-  return nullptr;
+  return {};
 }
 
 

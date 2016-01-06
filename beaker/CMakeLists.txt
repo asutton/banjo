@@ -5,7 +5,7 @@
 add_library(beaker
   prelude.cpp
   lexer.cpp
-  parser.cpp
+  # parser.cpp
   ast.cpp
   name.cpp
   type.cpp

@@ -24,14 +24,14 @@ Parser::on_value_initializer(Expr*)
 
 
 Init*
-Parser::on_direct_initializer(List*)
+Parser::on_direct_initializer(Expr_list const&)
 {
   return nullptr;
 }
 
 
 Init*
-Parser::on_aggregate_initializer(List*)
+Parser::on_aggregate_initializer(Expr_list const&)
 {
   return nullptr;
 }

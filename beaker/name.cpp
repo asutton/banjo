@@ -48,7 +48,7 @@ Parser::on_literal_id()
 
 
 Name*
-Parser::on_template_id(Token, Decl*, List*)
+Parser::on_template_id(Token, Decl*, Term_list const&)
 {
   return nullptr;
 }
@@ -61,10 +61,10 @@ Parser::on_qualified_id(Name*, Name*)
 }
 
 
-List*
+Term_list
 Parser::on_template_argument_list()
 {
-  return nullptr;
+  return {};
 }
 
 

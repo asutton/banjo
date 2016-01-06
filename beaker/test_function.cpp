@@ -40,12 +40,14 @@ make_int_type() { return new Integer_type(); }
 
 
 Function_type*
-make_function_type(Decl_list* p, Type* r)
+make_function_type(Decl_list& ps, Type* r)
 {
-  Decl_list* ps = (Decl_list*)p;
-  for (Decl* d : *ps)
-    std::cout << *d << '\n';
-  return nullptr;
+  Type_list ts;
+  for (Decl& d : ps) {
+    Parameter_decl& p = cast<Parameter_decl>(d);
+    ts.push_back(&p.type());
+  }
+  return new Function_type(ts, r);
 }
 
 
@@ -57,11 +59,11 @@ make_parameter(char const* n, Type* t)
 
 
 Function_decl*
-make_function(Decl* cxt, char const* n, Decl_list* p, Type* r)
+make_function(Decl* cxt, char const* n, Decl_list& ps, Type* r)
 {
-  Type* t = make_function_type(p, r);
+  Type* t = make_function_type(ps, r);
   Init* i = new Incomplete_init();
-  return new Function_decl(cxt, make_id(n), t, p, i);
+  return new Function_decl(cxt, make_id(n), t, ps, i);
 }
 
 
@@ -69,7 +71,7 @@ int
 main(int argc, char* argv[])
 {
   Namespace_decl* global = make_global_ns();
-  Decl_list* ps = new Decl_list {
+  Decl_list ps = {
     make_parameter("p1", make_bool_type()),
     make_parameter("p2", make_int_type())
   };
