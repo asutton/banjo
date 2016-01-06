@@ -20,6 +20,7 @@ struct Printer
 
   void operator()(Name const* n) { id(n); }
   void operator()(Type const* t) { type(t); }
+  void operator()(Decl const* d) { declaration(d); }
 
   // Unresolved names
   void id(Name const*);
@@ -45,12 +46,23 @@ struct Printer
   void simple_type(Declauto_type const*);
 
   // Declarations
+  void declaration(Decl const*);
+  void variable_declaration(Variable_decl const*);
+  void constant_declaration(Constant_decl const*);
+  void function_declaration(Function_decl const*);
+  void parameter_declaration(Parameter_decl const*);
+  void class_declaration(Class_decl const*);
+  void union_declaration(Union_decl const*);
+  void enum_declaration(Enum_decl const*);
+  void namespace_declaration(Namespace_decl const*);
+  void template_declaration(Template_decl const*);
 
   std::ostream& os;
 };
 
 std::ostream& operator<<(std::ostream&, Name const&);
 std::ostream& operator<<(std::ostream&, Type const&);
+std::ostream& operator<<(std::ostream&, Decl const&);
 
 } // namespace beaker
 

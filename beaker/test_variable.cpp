@@ -52,5 +52,5 @@ main(int argc, char* argv[])
   Variable_decl* v1 = make_variable(global, "v1");
 
   // FIXME: What exactly are we testing here?
-  (void)v1;
+  std::cout << *v1 << '\n';
 }

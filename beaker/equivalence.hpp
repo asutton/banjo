@@ -19,6 +19,7 @@ struct Type;
 bool is_equivalent(Type const*, Type const*);
 
 
+// Equality comparison function object.
 template<typename T>
 struct Term_eq
 {
@@ -32,44 +33,17 @@ struct Term_eq
 using Type_eq = Term_eq<Type>;
 
 
-// Union-find data structure.
 
-// A node in a union-find forest.
+
+
+// -------------------------------------------------------------------------- //
+// Equivalence closure
+
 template<typename T>
-struct Disjoint_node
+struct Equivalence_closure
 {
-  Disjoint_node(T const& x)
-    : elem(x), parent(nullptr)
-  { }
 
-  T              elem;
-  Disjoint_node* parent;
 };
-
-
-// A union forest is a sequnence of disjoint nodes, used
-// to implement a union-find data structure.
-template<typename T, typename Hash = std::hash<T>, typename Eq = std::equal_to<T>>
-struct Union_forest
-{
-  using Node  = Disjoint_node<T>;
-  using Store = std::vector<Node*>;
-  using Map   = std::unordered_map<T, std::size_t, Hash, Eq>;
-
-  ~Union_forest();
-
-  Store nodes;
-  Map   map;
-};
-
-
-template<typename T, typename H, typename E>
-Union_forest<T, H, E>::~Union_forest()
-{
-  for (Node* n : nodes)
-    delete n;
-}
-
 
 } // namespace beaker
 

@@ -7,16 +7,31 @@
 namespace beaker
 {
 
-// Compute the fully qualified name for the declaration.
+// Returns a qualified id for the declaration.
 //
-// Note that the fully qualified id for the global namespace is
-// just the global namespace name.
+// TODO: Use an allocator.
 Name const*
 Decl::qualified_id() const
 {
   Name* n = first;
   Decl* d = cxt;
-  while (d) {
+  while (d->cxt) {
+    n = new Qualified_id(d, n);
+    d = d->cxt;
+  }
+  return n;
+}
+
+
+// Returns the fully qualified id for the declaration.
+//
+// TODO: Use an allocator.
+Name const*
+Decl::fully_qualified_id() const
+{
+  Name* n = first;
+  Decl* d = cxt;
+  while (d->cxt) {
     n = new Qualified_id(d, n);
     d = d->cxt;
   }

@@ -183,7 +183,102 @@ Printer::simple_type(Declauto_type const* t)
 
 
 // -------------------------------------------------------------------------- //
-// Streaming.
+// Declarations
+
+void
+Printer::declaration(Decl const* d)
+{
+  struct fn
+  {
+    Printer& p;
+    void operator()(Variable_decl const* d)  { p.variable_declaration(d); }
+    void operator()(Constant_decl const* d)  { p.constant_declaration(d); }
+    void operator()(Function_decl const* d)  { p.function_declaration(d); }
+    void operator()(Parameter_decl const* d) { p.parameter_declaration(d); }
+    void operator()(Class_decl const* d)     { p.class_declaration(d); }
+    void operator()(Union_decl const* d)     { p.union_declaration(d); }
+    void operator()(Enum_decl const* d)      { p.enum_declaration(d); }
+    void operator()(Namespace_decl const* d) { p.namespace_declaration(d); }
+    void operator()(Template_decl const* d)  { p.template_declaration(d); }
+  };
+  apply(d, fn{*this});
+}
+
+
+// FIXME: Print the initializer.
+void
+Printer::variable_declaration(Variable_decl const* d)
+{
+  os << "var " << *d->type() << ' ' << *d->name() << ';';
+}
+
+
+// FIXME: Print the initializer.
+void
+Printer::constant_declaration(Constant_decl const* d)
+{
+  os << "const " << *d->type() << ' ' << *d->name() << ';';
+}
+
+
+// FIXME: Implement me.
+void
+Printer::function_declaration(Function_decl const* d)
+{
+  os << "def " << *d->name() << ';';
+}
+
+
+// FIXME: Print the default argument.
+void
+Printer::parameter_declaration(Parameter_decl const* d)
+{
+  os << *d->type() << ' ' << *d->name() << ';';
+}
+
+
+void
+Printer::class_declaration(Class_decl const* d)
+{
+  lingo_unreachable();
+}
+
+
+void
+Printer::union_declaration(Union_decl const* d)
+{
+  lingo_unreachable();
+}
+
+
+void
+Printer::enum_declaration(Enum_decl const* d)
+{
+  lingo_unreachable();
+}
+
+
+// FIXME: Handle the global namespace and anonymous namespaces.
+//
+// FIXME: Print the list of members.
+void
+Printer::namespace_declaration(Namespace_decl const* d)
+{
+  os << "namespace " << *d->name() << " {";
+  os << "}";
+}
+
+
+void
+Printer::template_declaration(Template_decl const* d)
+{
+  lingo_unreachable();
+}
+
+
+
+// -------------------------------------------------------------------------- //
+// Streaming
 
 std::ostream&
 operator<<(std::ostream& os, Name const& n)
@@ -202,5 +297,13 @@ operator<<(std::ostream& os, Type const& t)
   return os;
 }
 
+
+std::ostream&
+operator<<(std::ostream& os, Decl const& d)
+{
+  Printer print(os);
+  print(&d);
+  return os;
+}
 
 } // namespace beaker

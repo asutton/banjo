@@ -12,7 +12,6 @@ namespace beaker
 {
 
 struct Term;
-struct List;
 struct Name;
 struct Type;
 struct Expr;
@@ -34,11 +33,40 @@ struct Term
 // -------------------------------------------------------------------------- //
 // Lists
 
+struct Term_list;
+struct Type_list;
+struct Expr_list;
+struct Stmt_list;
+struct Decl_list;
+
+
 // A general purpose list of terms.
-struct List : Term, std::vector<Term*>
+//
+// When all terms have the same dynamic kind (type, expr, etc), a
+// list can be explicitly cast to a more specific category.
+struct Term_list : Term, std::vector<Term*>
 {
+  using std::vector<Term*>::vector;
 };
 
+
+// An short-hand alias for a list of terms.
+//
+// TODO: Make this go away.
+using List = Term_list;
+
+
+// A list of types.
+struct Type_list : Term, std::vector<Type*>
+{
+  using std::vector<Type*>::vector;
+};
+
+
+struct Decl_list : Term, std::vector<Decl*>
+{
+  using std::vector<Decl*>::vector;
+};
 
 
 // -------------------------------------------------------------------------- //
@@ -149,11 +177,11 @@ struct Template_id : Name
 {
   void accept(Visitor& v) const { v.visit(this); };
 
-  Decl const* declaration() const { return decl; }
-  List const* arguments() const   { return first; }
+  Decl const*      declaration() const { return decl; }
+  Term_list const* arguments() const   { return first; }
 
-  Decl* decl;
-  List* first;
+  Decl*      decl;
+  Term_list* first;
 };
 
 
@@ -219,6 +247,7 @@ struct Float_type;
 struct Auto_type;
 struct Decltype_type;
 struct Declauto_type;
+struct Function_type;
 struct Qualified_type;
 struct Pointer_type;
 struct Reference_type;
@@ -247,6 +276,7 @@ struct Type::Visitor
   virtual void visit(Auto_type const*) { }
   virtual void visit(Decltype_type const*) { }
   virtual void visit(Declauto_type const*) { }
+  virtual void visit(Function_type const*) { }
   virtual void visit(Qualified_type const*) { }
   virtual void visit(Pointer_type const*) { }
   virtual void visit(Reference_type const*) { }
@@ -328,6 +358,21 @@ struct Decltype_type : Type
 struct Declauto_type : Type
 {
   void accept(Visitor& v) const { v.visit(this); }
+};
+
+
+// A function type.
+struct Function_type : Type
+{
+  Function_type(Type_list* p, Type* r)
+    : first(p), second(r)
+  { }
+
+  Type_list const* parameter_types() const { return first; }
+  Type const*      return_type() const { return second; }
+
+  Type_list* first;
+  Type*      second;
 };
 
 
@@ -569,6 +614,7 @@ struct Decl : Term
   Decl const* context() const { return cxt; }
   Name const* name() const    { return first; }
   Name const* qualified_id() const;
+  Name const* fully_qualified_id() const;
 
   Specifier spec;
   Decl*     cxt;
@@ -658,16 +704,25 @@ struct Constant_decl : Object_decl
 // TODO: Write type/return type accessors.
 struct Function_decl : Decl
 {
+  Function_decl(Name* n, Type* t, Decl_list* p, Init* i)
+    : Decl(n), second(t), third(p), fourth(i)
+  { }
+
+  Function_decl(Decl* cxt, Name* n, Type* t, Decl_list* p, Init* i)
+    : Decl(cxt, n), second(t), third(p), fourth(i)
+  { }
+
   void accept(Visitor& v) const { v.visit(this); }
 
-  Name const* name() const       { return first; }
-  List const* parameters() const { return third; }
-  Init const* definition() const { return fourth; }
+  Function_type const* type() const        { return cast<Function_type>(second); }
+  Type const*          return_type() const { return type()->return_type(); }
 
-  Name* first;
-  Type* second;
-  List* third;
-  Init* fourth;
+  Decl_list const* parameters() const { return third; }
+  Init const*      definition() const { return fourth; }
+
+  Type*      second;
+  Decl_list* third;
+  Init*      fourth;
 };
 
 
@@ -707,8 +762,8 @@ struct Template_decl : Decl
 {
   void accept(Visitor& v) const { v.visit(this); }
 
-  List* first;
-  Decl* second;
+  Decl_list* first;
+  Decl*      second;
 };
 
 
