@@ -44,6 +44,7 @@ struct Printer
   void simple_type(Auto_type const&);
   void simple_type(Decltype_type const&);
   void simple_type(Declauto_type const&);
+  void return_type(Type const&);
 
   // Declarations
   void declaration(Decl const&);
@@ -57,12 +58,16 @@ struct Printer
   void namespace_declaration(Namespace_decl const&);
   void template_declaration(Template_decl const&);
 
+  void parameter_list(Decl_list const&);
+
   std::ostream& os;
 };
 
 std::ostream& operator<<(std::ostream&, Name const&);
 std::ostream& operator<<(std::ostream&, Type const&);
 std::ostream& operator<<(std::ostream&, Decl const&);
+std::ostream& operator<<(std::ostream&, Init const&);
+
 
 } // namespace beaker
 

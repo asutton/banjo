@@ -40,17 +40,44 @@ struct List_iterator
 {
   using Iter              = typename std::vector<T*>::iterator;
   using value_type        = T;
-  using reference_type    = T&;
-  using pointer_type      = T*;
+  using reference         = T&;
+  using pointer           = T*;
   using difference_type   = std::ptrdiff_t;
-  using iterator_cateogry = std::forward_iterator_tag;
+  using iterator_category = std::forward_iterator_tag;
 
   List_iterator(Iter i)
     : iter(i)
   { }
 
-  reference_type operator*() const { return **iter; }
-  pointer_type  operator->() const { return *iter; }
+  reference operator*() const { return **iter; }
+  pointer  operator->() const { return *iter; }
+
+  List_iterator& operator++()    { ++iter; return *this; }
+  List_iterator& operator++(int) { List_iterator x = *this; ++iter; return x; }
+
+  bool operator==(List_iterator i) const { return iter == i.iter; }
+  bool operator!=(List_iterator i) const { return iter != i.iter; }
+
+  Iter iter;
+};
+
+
+template<typename T>
+struct List_iterator<T const>
+{
+  using Iter              = typename std::vector<T*>::const_iterator;
+  using value_type        = T;
+  using reference         = T const&;
+  using pointer           = T const*;
+  using difference_type   = std::ptrdiff_t;
+  using iterator_category = std::forward_iterator_tag;
+
+  List_iterator(Iter i)
+    : iter(i)
+  { }
+
+  reference operator*() const { return **iter; }
+  pointer  operator->() const { return *iter; }
 
   List_iterator& operator++()    { ++iter; return *this; }
   List_iterator& operator++(int) { List_iterator x = *this; ++iter; return x; }

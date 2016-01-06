@@ -3,6 +3,7 @@
 
 #include "print.hpp"
 
+#include <iterator>
 #include <iostream>
 
 
@@ -188,6 +189,13 @@ Printer::simple_type(Declauto_type const& t)
 }
 
 
+void
+Printer::return_type(Type const& t)
+{
+  os << "->" << ' ' << t;
+}
+
+
 // -------------------------------------------------------------------------- //
 // Declarations
 
@@ -215,7 +223,7 @@ Printer::declaration(Decl const& d)
 void
 Printer::variable_declaration(Variable_decl const& d)
 {
-  os << "var " << d.type() << ' ' << d.name() << ';';
+  os << "var " << d.type() << ' ' << d.name() << d.initializer() << ';';
 }
 
 
@@ -223,15 +231,32 @@ Printer::variable_declaration(Variable_decl const& d)
 void
 Printer::constant_declaration(Constant_decl const& d)
 {
-  os << "const " << d.type() << ' ' << d.name() << ';';
+  os << "const " << d.type() << ' ' << d.name() << d.initializer() << ';';
 }
 
 
-// FIXME: Implement me.
+// TODO: Rename to parameter-clause?
+void
+Printer::parameter_list(Decl_list const& d)
+{
+  for (auto iter = d.begin(); iter != d.end(); ++iter) {
+    os << *iter;
+    if (std::next(iter) != d.end())
+      os << ',';
+  }
+}
+
+
+// FIXME: Print the definition.
 void
 Printer::function_declaration(Function_decl const& d)
 {
-  os << "def " << d.name() << ';';
+  os << "def " << d.name();
+  os << '(';
+  if (!d.parameters().empty())
+    parameter_list(d.parameters());
+  os << ')' << ' ';
+  return_type(d.return_type());
 }
 
 
@@ -239,7 +264,7 @@ Printer::function_declaration(Function_decl const& d)
 void
 Printer::parameter_declaration(Parameter_decl const& d)
 {
-  os << d.type() << ' ' << d.name() << ';';
+  os << d.type() << ' ' << d.name();
 }
 
 
@@ -311,5 +336,14 @@ operator<<(std::ostream& os, Decl const& d)
   print(d);
   return os;
 }
+
+
+// TODO: Implement me.
+std::ostream&
+operator<<(std::ostream& os, Init const& i)
+{
+  return os;
+}
+
 
 } // namespace beaker

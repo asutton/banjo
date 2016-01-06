@@ -952,7 +952,7 @@ Parser::parameter_list()
 
 // Parse an optional parameter list.
 Node*
-Parser::parameter_list_opt()
+Parser::parameter_list
 {
   match(lparen_tok);
   if (match_if(rparen_tok))
