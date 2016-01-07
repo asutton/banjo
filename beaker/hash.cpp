@@ -48,6 +48,7 @@ hash_value(Type const& t)
     std::size_t operator()(Class_type const& t) const     { lingo_unreachable(); }
     std::size_t operator()(Union_type const& t) const     { lingo_unreachable(); }
     std::size_t operator()(Enum_type const& t) const      { lingo_unreachable(); }
+    std::size_t operator()(Typename_type const& t) const  { lingo_unreachable(); }
   };
 
   return apply(t, fn{});

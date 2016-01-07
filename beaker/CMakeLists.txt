@@ -45,9 +45,9 @@ endmacro()
 
 
 # Unit tests
-# TODO: Move these into a different directory.
-add_run_test(test_print       test_print.cpp)
-add_run_test(test_equivalence test_equivalence.cpp)
-add_run_test(test_hash        test_hash.cpp)
-add_run_test(test_variable    test_variable.cpp)
-add_run_test(test_function    test_function.cpp)
+add_run_test(test_print       test/test_print.cpp)
+add_run_test(test_equivalence test/test_equivalence.cpp)
+add_run_test(test_hash        test/test_hash.cpp)
+add_run_test(test_variable    test/test_variable.cpp)
+add_run_test(test_function    test/test_function.cpp)
+add_run_test(test_template    test/test_template.cpp)

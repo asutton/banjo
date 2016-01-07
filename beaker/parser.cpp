@@ -1027,6 +1027,53 @@ Parser::namespace_declaration()
 }
 
 
+// Parse a typename declaration.
+//
+//    typename-declaration:
+//      'typename' identifier ['=' type]
+Decl*
+Parser::typename_declaration()
+{
+  return nullptr;
+}
+
+
+// Parse a template parameter declaration:
+//
+//    template-parameter:
+//      typename-declaration
+//      constant-declaration
+//      template-declaration
+Decl*
+Parser::template_parameter()
+{
+  return nullptr;
+}
+
+
+// Parse a template parameter list.
+//
+//    template-parameter-list:
+//      template-parameter
+//      template-parameter-list template parameter
+Decl_seq
+Parser::template_parameter_list()
+{
+  return {};
+}
+
+
+// Parse a template declaration.
+//
+//    tempate-declaration:
+//      'template' '<' template-parameter-list '>' declaration
+Decl*
+Parser::template_declaration()
+{
+    return nullptr;
+}
+
+
 Decl*
 Parser::declaration()
 {
@@ -1057,7 +1104,7 @@ Parser::declaration()
 //      declaration
 //      declaration-seq declaration
 //
-List*
+Decl_list
 Parser::declaration_seq()
 {
   // FIXME: Catch declaration errors and continue parsing.
@@ -1065,7 +1112,7 @@ Parser::declaration_seq()
   while (starts_declaration(*this))
     declaration();
 
-  return nullptr;
+  return {};
 }
 
 

@@ -117,6 +117,8 @@ using Decl_list = List<Decl>;
 
 // -------------------------------------------------------------------------- //
 // Names
+//
+// TODO: Add support for De Bruijn names (parameter depth and offset).
 
 struct Name;
 struct Simple_id;
@@ -312,6 +314,7 @@ struct Sequence_type;
 struct Class_type;
 struct Union_type;
 struct Enum_type;
+struct Typename_type;
 
 
 // The base class of all types.
@@ -341,6 +344,7 @@ struct Type::Visitor
   virtual void visit(Class_type const&)     { }
   virtual void visit(Union_type const&)     { }
   virtual void visit(Enum_type const&)      { }
+  virtual void visit(Typename_type const&)  { }
 };
 
 
@@ -477,27 +481,62 @@ struct Sequence_type : Type
 };
 
 
-struct Class_type : Type
+// The base class of all user-defined types.
+struct User_defined_type : Type
 {
-  void accept(Visitor& v) const { v.visit(*this); }
+  User_defined_type(Decl* d)
+    : decl(d)
+  { }
 
-  Decl* first;
+  Decl const& declaration() const { return *decl; }
+
+  Decl* decl;
 };
 
 
-struct Union_type : Type
-{
-  void accept(Visitor& v) const { v.visit(*this); }
+struct Class_decl;
+struct Union_decl;
+struct Enum_decl;
+struct Type_parm;
 
-  Decl* first;
+
+// TODO: Factor a base class for all of these: user-defined type.
+struct Class_type : User_defined_type
+{
+  Class_decl const& declaration() const;
+
+  void accept(Visitor& v) const { v.visit(*this); }
 };
 
 
-struct Enum_type : Type
+struct Union_type : User_defined_type
 {
   void accept(Visitor& v) const { v.visit(*this); }
 
-  Decl* first;
+  Union_decl const& declaration() const;
+};
+
+
+struct Enum_type : User_defined_type
+{
+  void accept(Visitor& v) const { v.visit(*this); }
+
+  Enum_decl const& declaration() const;
+};
+
+
+// The type of a type parameter declaration.
+//
+// FIXME: Guarantee that d is a Type_parm.
+struct Typename_type : User_defined_type
+{
+  Typename_type(Decl* d)
+    : User_defined_type(d)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+
+  Type_parm const& declaration() const;
 };
 
 
@@ -524,6 +563,7 @@ struct Generic_type_visitor : Type::Visitor, Generic_visitor<F, T>
   void visit(Class_type const& t)     { this->invoke(t); }
   void visit(Union_type const& t)     { this->invoke(t); }
   void visit(Enum_type const& t)      { this->invoke(t); }
+  void visit(Typename_type const& t)  { this->invoke(t); }
 };
 
 
@@ -640,12 +680,16 @@ struct Decl;
 struct Variable_decl;
 struct Constant_decl;
 struct Function_decl;
-struct Parameter_decl;
 struct Class_decl;
 struct Union_decl;
 struct Enum_decl;
 struct Namespace_decl;
 struct Template_decl;
+struct Object_parm;
+struct Value_parm;
+struct Type_parm;
+struct Template_parm;
+struct Variadic_parm;
 
 
 // A specifier is a flag.
@@ -686,12 +730,16 @@ struct Decl::Visitor
   virtual void visit(Variable_decl const&)  { }
   virtual void visit(Constant_decl const&)  { }
   virtual void visit(Function_decl const&)  { }
-  virtual void visit(Parameter_decl const&) { }
   virtual void visit(Class_decl const&)     { }
   virtual void visit(Union_decl const&)     { }
   virtual void visit(Enum_decl const&)      { }
   virtual void visit(Namespace_decl const&) { }
   virtual void visit(Template_decl const&)  { }
+  virtual void visit(Object_parm const&)    { }
+  virtual void visit(Value_parm const&)     { }
+  virtual void visit(Type_parm const&)      { }
+  virtual void visit(Template_parm const&)  { }
+  virtual void visit(Variadic_parm const&)  { }
 };
 
 
@@ -720,8 +768,6 @@ struct Type_decl : Decl
   Type_decl(Name* n, Init* i)
     : Decl(n), second(i)
   { }
-
-  Init const& definition() const { return *second; }
 
   Init* second;
 };
@@ -784,44 +830,27 @@ struct Function_decl : Decl
 };
 
 
-// Declares a function paramter.
-struct Parameter_decl : Object_decl
-{
-  Parameter_decl(Name* n, Type* t, Init* i)
-    : Object_decl(n, t, i)
-  { }
-
-  void accept(Visitor& v) const { v.visit(*this); }
-
-  Init const& default_argument() const { return *third; }
-};
-
-
 struct Class_decl : Type_decl
 {
   void accept(Visitor& v) const { v.visit(*this); }
+
+  Init const& definition() const { return *second; }
 };
 
 
 struct Union_decl : Type_decl
 {
   void accept(Visitor& v) const { v.visit(*this); }
+
+  Init const& definition() const { return *second; }
 };
 
 
 struct Enum_decl : Type_decl
 {
   void accept(Visitor& v) const { v.visit(*this); }
-};
 
-
-// Declares a template.
-struct Template_decl : Decl
-{
-  void accept(Visitor& v) const { v.visit(*this); }
-
-  Decl_list first;
-  Decl*     second;
+  Init const& definition() const { return *second; }
 };
 
 
@@ -848,6 +877,102 @@ struct Namespace_decl : Decl
 };
 
 
+// Declares a template.
+struct Template_decl : Decl
+{
+  Template_decl(Decl_list const& p, Decl* d)
+    : Decl(d->first), second(p), third(d)
+  {
+    lingo_assert(!d->cxt);
+    d->cxt = this;
+  }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+
+  Decl_list const& parameters() const { return second; }
+  Decl const&      pattern() const    { return *third; }
+
+  Decl_list second;
+  Decl*     third;
+};
+
+
+// An object paramter of a function.
+struct Object_parm : Object_decl
+{
+  Object_parm(Name* n, Type* t, Init* i)
+    : Object_decl(n, t, i)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+
+  Init const& default_argument() const { return *third; }
+};
+
+
+// A constant value parameter of a template.
+struct Value_parm : Object_decl
+{
+  Value_parm(Name* n, Type* t, Init* i)
+    : Object_decl(n, t, i)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+
+  Init const& default_argument() const { return *third; }
+};
+
+
+// A type parameter of a template.
+struct Type_parm : Type_decl
+{
+  Type_parm(Name* n, Init* i)
+    : Type_decl(n, i)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+
+  Init const& default_argument() const { return *second; }
+};
+
+
+// Represents an unspecified sequence of arguments. This
+// is distinct from a parameter pack.
+//
+// Note that we allow the variadic parameter to be named although
+// the variadic parameter has a canonical name (...).
+struct Variadic_parm : Decl
+{
+  Variadic_parm(Name* n)
+    : Decl(n)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// A template parameter of a template.
+//
+// The nested effectively denotes the "kind" of the template. It
+// must be a template declaration. The name of the parameter and
+// that of the underlying declaration must be the same.
+struct Template_parm : Decl
+{
+  Template_parm(Name* n, Decl* t, Init* i)
+    : Decl(n), second(t), third(i)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+
+  Decl const& declaration() const { return *second; }
+  Init const& default_argument() const { return *third; }
+
+  Decl*     second;
+  Init*     third;
+};
+
+
+
 // A generic visitor for names.
 template<typename F, typename T>
 struct Generic_decl_visitor : Decl::Visitor, Generic_visitor<F, T>
@@ -859,12 +984,16 @@ struct Generic_decl_visitor : Decl::Visitor, Generic_visitor<F, T>
   void visit(Variable_decl const& d)  { this->invoke(d); }
   void visit(Constant_decl const& d)  { this->invoke(d); }
   void visit(Function_decl const& d)  { this->invoke(d); }
-  void visit(Parameter_decl const& d) { this->invoke(d); }
   void visit(Class_decl const& d)     { this->invoke(d); }
   void visit(Union_decl const& d)     { this->invoke(d); }
   void visit(Enum_decl const& d)      { this->invoke(d); }
   void visit(Namespace_decl const& d) { this->invoke(d); }
   void visit(Template_decl const& d)  { this->invoke(d); }
+  void visit(Object_parm const& d)    { this->invoke(d); }
+  void visit(Value_parm const& d)     { this->invoke(d); }
+  void visit(Type_parm const& d)      { this->invoke(d); }
+  void visit(Template_parm const& d)  { this->invoke(d); }
+  void visit(Variadic_parm const& d)  { this->invoke(d); }
 };
 
 
@@ -881,11 +1010,43 @@ apply(Decl const& d, F fn)
 // -------------------------------------------------------------------------- //
 // Miscellaneous
 
-
 struct Translation_unit : Term
 {
   Decl_list first;
 };
+
+
+// -------------------------------------------------------------------------- //
+// Implementation
+
+
+inline Class_decl const&
+Class_type::declaration() const
+{
+  return *cast<Class_decl>(decl);
+}
+
+
+inline Union_decl const&
+Union_type::declaration() const
+{
+  return *cast<Union_decl>(decl);
+}
+
+
+inline Enum_decl const&
+Enum_type::declaration() const
+{
+  return *cast<Enum_decl>(decl);
+}
+
+
+inline Type_parm const&
+Typename_type::declaration() const
+{
+  return *cast<Type_parm>(decl);
+}
+
 
 } // namespace beaker
 

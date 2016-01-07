@@ -19,26 +19,38 @@ namespace beaker
 Symbol_table symbols;
 
 
+
 // -------------------------------------------------------------------------- //
 // Tokens
 
-// FIXME: Implement this.  Better yet, build out a facility that
-// handles initialization and spelling simultaenously.
+
+// A map of token names to their spelling.
+//
+// TODO: Lift this into lingo.
+using Spelling_map = std::unordered_map<Token_kind, char const*>;
+Spelling_map spelling;
+
+
+// Returns te spelling of the given token kind.
 char const*
 get_spelling(Token_kind k)
 {
-  switch (k) {
-    case error_tok: return "<error>";
-    case lparen_tok: return "(";
-    case rparen_tok: return ")";
-    case plus_tok: return "+";
-    case minus_tok: return "-";
-    case star_tok: return "*";
-    case slash_tok: return "/";
-    case percent_tok: return "%";
-    case integer_tok: return "<integer>";
-    default: return "<unspecified>";
-  }
+  return spelling.find(k)->second;
+}
+
+
+void
+init_token(Token_kind k, char const* s)
+{
+  symbols.put_symbol(k, s);
+  spelling.emplace(k, s);
+}
+
+
+void
+init_token_class(Token_kind k, char const* s)
+{
+  spelling.emplace(k, s);
 }
 
 
@@ -46,96 +58,100 @@ get_spelling(Token_kind k)
 void
 init_tokens()
 {
-  symbols.put_symbol(lbrace_tok, "{");
-  symbols.put_symbol(rbrace_tok, "}");
-  symbols.put_symbol(lparen_tok, "(");
-  symbols.put_symbol(rparen_tok, ")");
-  symbols.put_symbol(lbracket_tok, "[");
-  symbols.put_symbol(rbracket_tok, "]");
-  symbols.put_symbol(comma_tok, ",");
-  symbols.put_symbol(colon_tok, ":");
-  symbols.put_symbol(colon_colon_tok, "::");
-  symbols.put_symbol(semicolon_tok, ";");
-  symbols.put_symbol(dot_tok, ".");
-  symbols.put_symbol(ellipsis_tok, "...");
+  init_token(lbrace_tok, "{");
+  init_token(rbrace_tok, "}");
+  init_token(lparen_tok, "(");
+  init_token(rparen_tok, ")");
+  init_token(lbracket_tok, "[");
+  init_token(rbracket_tok, "]");
+  init_token(comma_tok, ",");
+  init_token(colon_tok, ":");
+  init_token(colon_colon_tok, "::");
+  init_token(semicolon_tok, ";");
+  init_token(dot_tok, ".");
+  init_token(ellipsis_tok, "...");
 
   // Operators
-  symbols.put_symbol(plus_tok, "+");
-  symbols.put_symbol(minus_tok, "-");
-  symbols.put_symbol(star_tok, "*");
-  symbols.put_symbol(slash_tok, "/");
-  symbols.put_symbol(percent_tok, "%");
-  symbols.put_symbol(amp_tok, "&");
-  symbols.put_symbol(bar_tok, "|");
-  symbols.put_symbol(caret_tok, "^");
-  symbols.put_symbol(tilde_tok, "~");
-  symbols.put_symbol(eq_tok, "=");
-  symbols.put_symbol(eq_eq_tok, "==");
-  symbols.put_symbol(bang_eq_tok, "!=");
-  symbols.put_symbol(lt_tok, "<");
-  symbols.put_symbol(gt_tok, ">");
-  symbols.put_symbol(lt_eq_tok, "<=");
-  symbols.put_symbol(gt_eq_tok, ">=");
-  symbols.put_symbol(lt_lt_tok, "<<");
-  symbols.put_symbol(gt_gt_tok, ">>");
-  symbols.put_symbol(arrow_tok, "->");
-  symbols.put_symbol(question_tok, "?");
+  init_token(plus_tok, "+");
+  init_token(minus_tok, "-");
+  init_token(star_tok, "*");
+  init_token(slash_tok, "/");
+  init_token(percent_tok, "%");
+  init_token(amp_tok, "&");
+  init_token(bar_tok, "|");
+  init_token(caret_tok, "^");
+  init_token(tilde_tok, "~");
+  init_token(eq_tok, "=");
+  init_token(eq_eq_tok, "==");
+  init_token(bang_eq_tok, "!=");
+  init_token(lt_tok, "<");
+  init_token(gt_tok, ">");
+  init_token(lt_eq_tok, "<=");
+  init_token(gt_eq_tok, ">=");
+  init_token(lt_lt_tok, "<<");
+  init_token(gt_gt_tok, ">>");
+  init_token(arrow_tok, "->");
+  init_token(question_tok, "?");
 
   // Keywords
-  symbols.put_symbol(abstract_tok, "abstract");
-  symbols.put_symbol(auto_tok, "auto");
-  symbols.put_symbol(bool_tok, "bool");
-  symbols.put_symbol(char_tok, "char");
-  symbols.put_symbol(char8_tok, "char8");
-  symbols.put_symbol(char16_tok, "char16");
-  symbols.put_symbol(char32_tok, "char32");
-  symbols.put_symbol(case_tok, "case");
-  symbols.put_symbol(class_tok, "class");
-  symbols.put_symbol(concept_tok, "concept");
-  symbols.put_symbol(const_tok, "const");
-  symbols.put_symbol(decltype_tok, "decltype");
-  symbols.put_symbol(def_tok, "def");
-  symbols.put_symbol(do_tok, "do");
-  symbols.put_symbol(double_tok, "double");
-  symbols.put_symbol(dynamic_tok, "dynamic");
-  symbols.put_symbol(enum_tok, "enum");
-  symbols.put_symbol(explicit_tok, "explicit");
-  symbols.put_symbol(export_tok, "export");
-  symbols.put_symbol(float_tok, "float");
-  symbols.put_symbol(float16_tok, "float16");
-  symbols.put_symbol(float32_tok, "float32");
-  symbols.put_symbol(float64_tok, "float64");
-  symbols.put_symbol(float128_tok, "float128");
-  symbols.put_symbol(for_tok, "for");
-  symbols.put_symbol(if_tok, "if");
-  symbols.put_symbol(implicit_tok, "implicit");
-  symbols.put_symbol(import_tok, "import");
-  symbols.put_symbol(int_tok, "int");
-  symbols.put_symbol(int8_tok, "int8");
-  symbols.put_symbol(int16_tok, "int16");
-  symbols.put_symbol(int32_tok, "int32");
-  symbols.put_symbol(int64_tok, "int64");
-  symbols.put_symbol(int128_tok, "int128");
-  symbols.put_symbol(namespace_tok, "namespace");
-  symbols.put_symbol(requires_tok, "requires");
-  symbols.put_symbol(static_tok, "static");
-  symbols.put_symbol(struct_tok, "struct");
-  symbols.put_symbol(switch_tok, "switch");
-  symbols.put_symbol(this_tok, "this");
-  symbols.put_symbol(template_tok, "template");
-  symbols.put_symbol(uint_tok, "uint");
-  symbols.put_symbol(uint8_tok, "uint8");
-  symbols.put_symbol(uint16_tok, "uint16");
-  symbols.put_symbol(uint32_tok, "uint32");
-  symbols.put_symbol(uint64_tok, "uint64");
-  symbols.put_symbol(int128_tok, "int128");
-  symbols.put_symbol(union_tok, "union");
-  symbols.put_symbol(using_tok, "using");
-  symbols.put_symbol(virtual_tok, "virtual");
-  symbols.put_symbol(var_tok, "var");
-  symbols.put_symbol(void_tok, "void");
-  symbols.put_symbol(volatile_tok, "volatile");
-  symbols.put_symbol(while_tok, "while");
+  init_token(abstract_tok, "abstract");
+  init_token(auto_tok, "auto");
+  init_token(bool_tok, "bool");
+  init_token(char_tok, "char");
+  init_token(char8_tok, "char8");
+  init_token(char16_tok, "char16");
+  init_token(char32_tok, "char32");
+  init_token(case_tok, "case");
+  init_token(class_tok, "class");
+  init_token(concept_tok, "concept");
+  init_token(const_tok, "const");
+  init_token(decltype_tok, "decltype");
+  init_token(def_tok, "def");
+  init_token(do_tok, "do");
+  init_token(double_tok, "double");
+  init_token(dynamic_tok, "dynamic");
+  init_token(enum_tok, "enum");
+  init_token(explicit_tok, "explicit");
+  init_token(export_tok, "export");
+  init_token(float_tok, "float");
+  init_token(float16_tok, "float16");
+  init_token(float32_tok, "float32");
+  init_token(float64_tok, "float64");
+  init_token(float128_tok, "float128");
+  init_token(for_tok, "for");
+  init_token(if_tok, "if");
+  init_token(implicit_tok, "implicit");
+  init_token(import_tok, "import");
+  init_token(int_tok, "int");
+  init_token(int8_tok, "int8");
+  init_token(int16_tok, "int16");
+  init_token(int32_tok, "int32");
+  init_token(int64_tok, "int64");
+  init_token(int128_tok, "int128");
+  init_token(namespace_tok, "namespace");
+  init_token(requires_tok, "requires");
+  init_token(static_tok, "static");
+  init_token(struct_tok, "struct");
+  init_token(switch_tok, "switch");
+  init_token(this_tok, "this");
+  init_token(template_tok, "template");
+  init_token(typename_tok, "typename");
+  init_token(uint_tok, "uint");
+  init_token(uint8_tok, "uint8");
+  init_token(uint16_tok, "uint16");
+  init_token(uint32_tok, "uint32");
+  init_token(uint64_tok, "uint64");
+  init_token(int128_tok, "int128");
+  init_token(union_tok, "union");
+  init_token(using_tok, "using");
+  init_token(virtual_tok, "virtual");
+  init_token(var_tok, "var");
+  init_token(void_tok, "void");
+  init_token(volatile_tok, "volatile");
+  init_token(while_tok, "while");
+
+  init_token_class(identifier_tok, "<identifier>");
+  init_token_class(integer_tok, "<integer>");
 }
 
 

@@ -70,6 +70,7 @@ enum Token_kind
   question_tok,
 
   // Keywords
+  first_keyword_tok,
   abstract_tok,
   auto_tok,
   bool_tok,
@@ -111,6 +112,7 @@ enum Token_kind
   switch_tok,
   this_tok,
   template_tok,
+  typename_tok,
   uint_tok,
   uint8_tok,
   uint16_tok,
@@ -124,11 +126,20 @@ enum Token_kind
   void_tok,
   volatile_tok,
   while_tok,
+  last_keyword_tok,
 
   // Character classes
   identifier_tok,
   integer_tok,
 };
+
+
+// Returns true if k is a keyword.
+inline bool
+is_keyword(Token_kind k)
+{
+  return first_keyword_tok < k && k < last_keyword_tok;
+}
 
 
 char const* get_spelling(Token_kind);

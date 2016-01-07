@@ -90,10 +90,16 @@ struct Parser
   Decl* variable_declaration();
   Decl* function_declaration();
   Decl* parameter_declaration();
-  Decl* namespace_declaration();
   Decl* class_declaration();
   Decl* enum_declaration();
+  Decl* namespace_declaration();
   Decl* template_declaration();
+
+  Decl* type_template_parameter();
+  Decl* value_template_parameter();
+  Decl* template_template_parameter();
+  Decl* template_parameter();
+  Decl_list template_parameter_list();
   Decl_list declaration_seq();
 
   // Initializers

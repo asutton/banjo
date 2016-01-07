@@ -46,6 +46,7 @@ is_equivalent(Type const& a, Type const& b)
     bool operator()(Class_type const& a) const     { lingo_unreachable(); }
     bool operator()(Union_type const& a) const     { lingo_unreachable(); }
     bool operator()(Enum_type const& a) const      { lingo_unreachable(); }
+    bool operator()(Typename_type const& a) const  { lingo_unreachable(); }
   };
 
   // The same objects represent the same types.
