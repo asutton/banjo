@@ -144,6 +144,14 @@ is_keyword(Token_kind k)
 }
 
 
+// Returns true if k is a word (a keyword or identifier).
+inline bool
+is_word(Token_kind k)
+{
+  return k == identifier_tok || is_keyword(k);
+}
+
+
 char const* get_spelling(Token_kind);
 void init_tokens();
 

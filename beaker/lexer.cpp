@@ -90,6 +90,9 @@ init_tokens()
   init_token(gt_eq_tok, ">=");
   init_token(lt_lt_tok, "<<");
   init_token(gt_gt_tok, ">>");
+  init_token(amp_amp_tok, "&&");
+  init_token(bar_bar_tok, "||");
+  init_token(bang_tok, "!");
   init_token(arrow_tok, "->");
   init_token(question_tok, "?");
 

@@ -17,21 +17,24 @@ namespace beaker
 // Conditionally print whitespace based on this and the
 // previous token.
 void
-Printer::space(Token_kind k)
+Printer::space(Token_info info)
 {
-  if (prev != error_tok) {
+  if (prev) {
     // Always put space after a comma.
     if (prev == comma_tok)
       space();
 
-    // Identifers and keywods must be separated.
-    else if (is_keyword(prev) && k == identifier_tok)
-      space();
-    else if (is_keyword(k) && prev == identifier_tok)
+    // Insert a space between all words.
+    else if (is_word(prev) && is_word(info))
       space();
 
-    // FIXME: The rules for operators are going to be
-    // a bit tricky since they may merge.
+    // Between a word and an binary operator, we want space.
+    else if (is_word(prev) && info == binary_op_use)
+      space();
+    else if (prev == binary_op_use && is_word(info))
+      space();
+
+    // FIXME: Finish all the spacing rules.
   }
 }
 
@@ -41,9 +44,7 @@ void
 Printer::space()
 {
   os << ' ';
-
-  // Reset the previous token.
-  prev = error_tok;
+  prev.clear();
 }
 
 
@@ -52,9 +53,7 @@ void
 Printer::newline()
 {
   os << '\n';
-
-  // Reset the previous token.
-  prev = error_tok;
+  prev.clear();
 }
 
 
@@ -64,9 +63,17 @@ Printer::newline()
 void
 Printer::token(Token_kind k)
 {
-  space(k);
+  token(k, general_use);
+}
+
+
+void
+Printer::token(Token_kind k, Token_use u)
+{
+  Token_info info(k, u);
+  space(info);
   os << get_spelling(k);
-  prev = k;
+  prev = info;
 }
 
 
@@ -407,7 +414,7 @@ Printer::grouped_expression(Expr const& e, Expr const& s)
 void
 Printer::unary_expression(Unary_expr const& e, Token_kind k)
 {
-  token(k);
+  token(k, unary_op_use);
   grouped_expression(e, e.operand());
 }
 
@@ -416,7 +423,7 @@ void
 Printer::binary_expression(Binary_expr const& e, Token_kind k)
 {
   grouped_expression(e, e.left());
-  token(k);
+  token(k, binary_op_use);
   grouped_expression(e, e.right());
 }
 

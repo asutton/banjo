@@ -60,6 +60,10 @@ test_expressions()
   Expr* e2 = make_false();
   std::cout << *e1 << '\n';
   std::cout << *e2 << '\n';
+
+  Expr* e3 = new And_expr(make_bool_type(), e1, e2);
+  Expr* e4 = new Not_expr(make_bool_type(), e3);
+  std::cout << *e4 << '\n';
 }
 
 

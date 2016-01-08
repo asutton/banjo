@@ -13,6 +13,38 @@
 namespace beaker
 {
 
+// A categorization of tokens based on use.
+enum Token_use
+{
+  general_use,
+  unary_op_use,
+  binary_op_use,
+};
+
+
+// A structure that contains semantic information about the
+// use of a token in some context.
+struct Token_info
+{
+  Token_info(Token_kind k, Token_use u = general_use)
+    : kind(k), use(u)
+  { }
+
+  explicit operator bool() const { return kind != error_tok; }
+  operator Token_kind() const    { return kind; }
+  operator Token_use() const     { return use; }
+
+  void clear()
+  {
+    kind = error_tok;
+    use = general_use;
+  }
+
+  Token_kind kind;
+  Token_use  use;
+};
+
+
 struct Printer
 {
   Printer(std::ostream& os)
@@ -25,12 +57,13 @@ struct Printer
   void operator()(Decl const& d) { declaration(d); }
 
   // Lexical terms.
-  void token(Token_kind);
-  void token(Symbol const&);
-  void token(char const*);
-  void space(Token_kind);
+  void space(Token_info);
   void space();
   void newline();
+  void token(Token_kind);
+  void token(Token_kind, Token_use);
+  void token(Symbol const&);
+  void token(char const*);
 
   // Unresolved names
   void id(Name const&);
@@ -91,7 +124,7 @@ struct Printer
 
 
   std::ostream& os;
-  Token_kind    prev; // The previous token printed
+  Token_info    prev; // The previous token printed
 };
 
 std::ostream& operator<<(std::ostream&, Name const&);
