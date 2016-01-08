@@ -90,7 +90,6 @@ Printer::token(char const* str)
 }
 
 
-
 // -------------------------------------------------------------------------- //
 // Names
 
@@ -289,6 +288,135 @@ void
 Printer::return_type(Type const& t)
 {
   os << "->" << ' ' << t;
+}
+
+
+// -------------------------------------------------------------------------- //
+// Expressions
+
+
+// Returns the precedence of the operator for an expression.
+int
+precedence(Expr const& e)
+{
+  struct fn
+  {
+    int operator()(Boolean_expr const& e)   { return 0; }
+    int operator()(Integer_expr const& e)   { return 0; }
+    int operator()(Real_expr const& e)      { return 0; }
+    int operator()(Reference_expr const& e) { return 0; }
+    int operator()(Add_expr const& e)       { return 6; }
+    int operator()(Sub_expr const& e)       { return 6; }
+    int operator()(Mul_expr const& e)       { return 5; }
+    int operator()(Div_expr const& e)       { return 5; }
+    int operator()(Rem_expr const& e)       { return 5; }
+    int operator()(Neg_expr const& e)       { return 3; }
+    int operator()(Pos_expr const& e)       { return 3; }
+    int operator()(Eq_expr const& e)        { return 9; }
+    int operator()(Ne_expr const& e)        { return 9; }
+    int operator()(Lt_expr const& e)        { return 8; }
+    int operator()(Gt_expr const& e)        { return 8; }
+    int operator()(Le_expr const& e)        { return 8; }
+    int operator()(Ge_expr const& e)        { return 8; }
+    int operator()(And_expr const& e)       { return 13; }
+    int operator()(Or_expr const& e)        { return 14; }
+    int operator()(Not_expr const& e)       { return 3; }
+    int operator()(Assign_expr const& e)    { return 15; }
+  };
+  return apply(e, fn{});
+}
+
+
+void
+Printer::expression(Expr const& e)
+{
+  struct fn
+  {
+    Printer& p;
+    void operator()(Boolean_expr const& e)   { p.literal(e); }
+    void operator()(Integer_expr const& e)   { p.literal(e); }
+    void operator()(Real_expr const& e)      { p.literal(e); }
+    void operator()(Reference_expr const& e) { p.id_expression(e); }
+    void operator()(Add_expr const& e)       { p.binary_expression(e, plus_tok); }
+    void operator()(Sub_expr const& e)       { p.binary_expression(e, minus_tok); }
+    void operator()(Mul_expr const& e)       { p.binary_expression(e, star_tok); }
+    void operator()(Div_expr const& e)       { p.binary_expression(e, slash_tok); }
+    void operator()(Rem_expr const& e)       { p.binary_expression(e, percent_tok); }
+    void operator()(Neg_expr const& e)       { p.unary_expression(e, minus_tok); }
+    void operator()(Pos_expr const& e)       { p.unary_expression(e, plus_tok); }
+    void operator()(Eq_expr const& e)        { p.binary_expression(e, eq_eq_tok); }
+    void operator()(Ne_expr const& e)        { p.binary_expression(e, bang_eq_tok); }
+    void operator()(Lt_expr const& e)        { p.binary_expression(e, lt_tok); }
+    void operator()(Gt_expr const& e)        { p.binary_expression(e, gt_tok); }
+    void operator()(Le_expr const& e)        { p.binary_expression(e, lt_eq_tok); }
+    void operator()(Ge_expr const& e)        { p.binary_expression(e, gt_eq_tok); }
+    void operator()(And_expr const& e)       { p.binary_expression(e, amp_amp_tok); }
+    void operator()(Or_expr const& e)        { p.binary_expression(e, bar_bar_tok); }
+    void operator()(Not_expr const& e)       { p.unary_expression(e, bang_tok); }
+    void operator()(Assign_expr const& e)    { p.binary_expression(e, eq_tok); }
+  };
+}
+
+
+// TODO: All of the literal expressions can be unified into
+// a single function.
+void
+Printer::literal(Boolean_expr const& e)
+{
+  token(e.value());
+}
+
+
+void
+Printer::literal(Integer_expr const& e)
+{
+  token(e.value());
+}
+
+
+void
+Printer::literal(Real_expr const& e)
+{
+  token(e.value());
+}
+
+
+void
+Printer::id_expression(Reference_expr const& e)
+{
+  id(e.name());
+}
+
+
+// Possibly print a grouped expression s as a subexpression
+// of e.
+void
+Printer::grouped_expression(Expr const& e, Expr const& s)
+{
+  if (precedence(e) <= precedence(s)) {
+    token(lparen_tok);
+    expression(s);
+    token(rparen_tok);
+  } else {
+    expression(s);
+  }
+}
+
+
+void
+Printer::unary_expression(Unary_expr const& e, Token_kind k)
+{
+  token(k);
+  grouped_expression(e, e.operand());
+}
+
+
+void
+Printer::binary_expression(Binary_expr const& e, Token_kind k)
+{
+  grouped_expression(e, e.left());
+  token(k);
+  grouped_expression(e, e.right());
 }
 
 

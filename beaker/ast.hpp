@@ -400,7 +400,12 @@ struct Float_type : Type
 };
 
 
+
 // The auto type.
+//
+// TODO: Allow a deduction constraint on placeholder types.
+// This would be checked after deduction. Extend this for
+// decltype(auto) types as well.
 struct Auto_type : Type
 {
   void accept(Visitor& v) const { v.visit(*this); }
@@ -540,7 +545,7 @@ struct Typename_type : User_defined_type
 };
 
 
-// A generic visitor for names.
+// A generic visitor for types.
 template<typename F, typename T>
 struct Generic_type_visitor : Type::Visitor, Generic_visitor<F, T>
 {
@@ -579,10 +584,356 @@ apply(Type const& t, F fn)
 
 // -------------------------------------------------------------------------- //
 // Expressions
+//
+// TODO: Add bitwise operations.
 
+struct Boolean_expr;
+struct Integer_expr;
+struct Real_expr;
+struct Reference_expr;
+struct Add_expr;
+struct Sub_expr;
+struct Mul_expr;
+struct Div_expr;
+struct Rem_expr;
+struct Neg_expr;
+struct Pos_expr;
+struct Eq_expr;
+struct Ne_expr;
+struct Lt_expr;
+struct Gt_expr;
+struct Le_expr;
+struct Ge_expr;
+struct And_expr;
+struct Or_expr;
+struct Not_expr;
+struct Assign_expr;
+
+
+// The base class of all expresions.
 struct Expr : Term
 {
+  struct Visitor;
+
+  Expr(Type* t)
+    : ty(t)
+  { }
+
+  virtual void accept(Visitor&) const = 0;
+
+  Type const& type() const { return *ty; }
+
+  Type* ty;
 };
+
+
+// The visitor for expressions.
+struct Expr::Visitor
+{
+  virtual void visit(Boolean_expr const&) { }
+  virtual void visit(Integer_expr const&) { }
+  virtual void visit(Real_expr const&) { }
+  virtual void visit(Reference_expr const&) { }
+  virtual void visit(Add_expr const&) { }
+  virtual void visit(Sub_expr const&) { }
+  virtual void visit(Mul_expr const&) { }
+  virtual void visit(Div_expr const&) { }
+  virtual void visit(Rem_expr const&) { }
+  virtual void visit(Neg_expr const&) { }
+  virtual void visit(Pos_expr const&) { }
+  virtual void visit(Eq_expr const&) { }
+  virtual void visit(Ne_expr const&) { }
+  virtual void visit(Lt_expr const&) { }
+  virtual void visit(Gt_expr const&) { }
+  virtual void visit(Le_expr const&) { }
+  virtual void visit(Ge_expr const&) { }
+  virtual void visit(And_expr const&) { }
+  virtual void visit(Or_expr const&) { }
+  virtual void visit(Not_expr const&) { }
+  virtual void visit(Assign_expr const&) { }
+};
+
+
+// The base class of all literal values.
+struct Literal_expr : Expr
+{
+  Literal_expr(Type* t, Symbol const* s)
+    : Expr(t), sym(s)
+  { }
+
+  Symbol const& value() const { return *sym; }
+
+  Symbol const* sym;
+};
+
+
+// The base class of all unary expressions.
+struct Unary_expr : Expr
+{
+  Unary_expr(Type* t, Expr* e)
+    : Expr(t), first(e)
+  { }
+
+  Expr const& operand() const { return *first; }
+
+  Expr* first;
+};
+
+
+// The base class of all binary expressions.
+struct Binary_expr : Expr
+{
+  Binary_expr(Type* t, Expr* e1, Expr* e2)
+    : Expr(t), first(e1), second(e2)
+  { }
+
+  Expr const& left() const  { return *first; }
+  Expr const& right() const { return *second; }
+
+  Expr* first;
+  Expr* second;
+};
+
+
+// A boolean literal.
+struct Boolean_expr : Literal_expr
+{
+  using Literal_expr::Literal_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// An integer-valued literal.
+struct Integer_expr : Literal_expr
+{
+  using Literal_expr::Literal_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// A real-valued literal.
+struct Real_expr : Literal_expr
+{
+  using Literal_expr::Literal_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// A reference to a single declaration.
+//
+// TODO: Subclass for variables and functions? Also, add unresolved
+// identifiers and referneces to overload sets.
+struct Reference_expr : Expr
+{
+  Reference_expr(Type* t, Name* n, Decl* d)
+    : Expr(t), decl(d)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+
+  Name const& name() const        { return *id; }
+  Decl const& declaration() const { return *decl; }
+
+  Name* id;
+  Decl* decl;
+};
+
+
+// An addition express.
+struct Add_expr : Binary_expr
+{
+  using Binary_expr::Binary_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// A subtraction expression.
+struct Sub_expr : Binary_expr
+{
+  using Binary_expr::Binary_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// A multiplication expression.
+struct Mul_expr : Binary_expr
+{
+  using Binary_expr::Binary_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// A division expression.
+struct Div_expr : Binary_expr
+{
+  using Binary_expr::Binary_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// A remainder expression.
+struct Rem_expr : Binary_expr
+{
+  using Binary_expr::Binary_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// A negation expression.
+struct Neg_expr : Unary_expr
+{
+  using Unary_expr::Unary_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// A identity expression.
+struct Pos_expr : Unary_expr
+{
+  using Unary_expr::Unary_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// An equality expression.
+struct Eq_expr : Binary_expr
+{
+  using Binary_expr::Binary_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// An inequality expression.
+struct Ne_expr : Binary_expr
+{
+  using Binary_expr::Binary_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// A less-than expression.
+struct Lt_expr : Binary_expr
+{
+  using Binary_expr::Binary_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// A greater-than expression.
+struct Gt_expr : Binary_expr
+{
+  using Binary_expr::Binary_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// A less-equal expression.
+struct Le_expr : Binary_expr
+{
+  using Binary_expr::Binary_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// A greater-equal expression.
+struct Ge_expr : Binary_expr
+{
+  using Binary_expr::Binary_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// A logical and expression.
+struct And_expr : Binary_expr
+{
+  using Binary_expr::Binary_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// A logical or expression.
+struct Or_expr : Binary_expr
+{
+  using Binary_expr::Binary_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+struct Not_expr : Unary_expr
+{
+  using Unary_expr::Unary_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// An assignment expresion.
+struct Assign_expr : Binary_expr
+{
+  using Binary_expr::Binary_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// A generic visitor for expressions.
+template<typename F, typename T>
+struct Generic_expr_visitor : Expr::Visitor, Generic_visitor<F, T>
+{
+  Generic_expr_visitor(F f)
+    : Generic_visitor<F, T>(f)
+  { }
+
+  void visit(Boolean_expr const& e)   { this->invoke(e); }
+  void visit(Integer_expr const& e)   { this->invoke(e); }
+  void visit(Real_expr const& e)      { this->invoke(e); }
+  void visit(Reference_expr const& e) { this->invoke(e); }
+  void visit(Add_expr const& e)       { this->invoke(e); }
+  void visit(Sub_expr const& e)       { this->invoke(e); }
+  void visit(Mul_expr const& e)       { this->invoke(e); }
+  void visit(Div_expr const& e)       { this->invoke(e); }
+  void visit(Rem_expr const& e)       { this->invoke(e); }
+  void visit(Neg_expr const& e)       { this->invoke(e); }
+  void visit(Pos_expr const& e)       { this->invoke(e); }
+  void visit(Eq_expr const& e)        { this->invoke(e); }
+  void visit(Ne_expr const& e)        { this->invoke(e); }
+  void visit(Lt_expr const& e)        { this->invoke(e); }
+  void visit(Gt_expr const& e)        { this->invoke(e); }
+  void visit(Le_expr const& e)        { this->invoke(e); }
+  void visit(Ge_expr const& e)        { this->invoke(e); }
+  void visit(And_expr const& e)       { this->invoke(e); }
+  void visit(Or_expr const& e)        { this->invoke(e); }
+  void visit(Not_expr const& e)       { this->invoke(e); }
+  void visit(Assign_expr const& e)    { this->invoke(e); }
+};
+
+
+// Apply a function to the given type.
+template<typename F, typename T = typename std::result_of<F(Boolean_expr const&)>::type>
+inline T
+apply(Expr const& e, F fn)
+{
+  Generic_expr_visitor<F, T> vis(fn);
+  return accept(e, vis);
+}
 
 
 // -------------------------------------------------------------------------- //

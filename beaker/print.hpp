@@ -56,6 +56,16 @@ struct Printer
   void simple_type(Typename_type const&);
   void return_type(Type const&);
 
+  // Expressions
+  void expression(Expr const&);
+  void literal(Boolean_expr const&);
+  void literal(Integer_expr const&);
+  void literal(Real_expr const&);
+  void id_expression(Reference_expr const&);
+  void grouped_expression(Expr const&, Expr const&);
+  void binary_expression(Binary_expr const&, Token_kind);
+  void unary_expression(Unary_expr const&, Token_kind);
+
   // Declarations
   void declaration(Decl const&);
   void variable_declaration(Variable_decl const&);
