@@ -39,7 +39,7 @@ Printer::space(Token_info info)
 }
 
 
-// Unconditionally print whitespace.
+// Unconditionally print whitespace. Clear the previous token.
 void
 Printer::space()
 {
@@ -48,14 +48,31 @@ Printer::space()
 }
 
 
-// TODO: Indent after newline?
+// Print a new line and indent. Clear the previous token.
 void
 Printer::newline()
 {
-  os << '\n';
+  os << '\n' << std::string(2 * indent, ' ');
   prev.clear();
 }
 
+
+// Print a newline and indent one level.
+void
+Printer::newline_and_indent()
+{
+  ++indent;
+  newline();
+}
+
+
+// Print a newline and undent (back up) one level.
+void
+Printer::newline_and_undent()
+{
+  --indent;
+  newline();
+}
 
 
 // Print the token. Print an extra space after keywords
@@ -196,7 +213,7 @@ void
 Printer::nested_name_specifier(Qualified_id const& n)
 {
   unqualified_id(n.context().name());
-  os << "::";
+  token(colon_colon_tok);
   if (Qualified_id const* q = as<Qualified_id>(&n.name()))
     nested_name_specifier(*q);
 }
@@ -235,37 +252,43 @@ Printer::type(Type const& t)
 void
 Printer::simple_type(Void_type const& t)
 {
-  os << "void";
+  token(void_tok);
 }
 
 
 void
 Printer::simple_type(Boolean_type const& t)
 {
-  os << "bool";
+  token(bool_tok);
 }
 
 
+// FIXME: Map this back to a token.
 void
 Printer::simple_type(Integer_type const& t)
 {
+  std::stringstream ss;
   if (t.is_unsigned())
-    os << 'u';
-  os << "int" << t.precision();
+    ss << 'u';
+  ss << "int" << t.precision();
+  token(ss.str().c_str());
 }
 
 
+// FIXME: Map this back to a token.
 void
 Printer::simple_type(Float_type const& t)
 {
-  os << "float" << t.precision();
+  std::stringstream ss;
+  ss << "float" << t.precision();
+  token(ss.str().c_str());
 }
 
 
 void
 Printer::simple_type(Auto_type const& t)
 {
-  os << "auto";
+  token(auto_tok);
 }
 
 
@@ -273,28 +296,34 @@ Printer::simple_type(Auto_type const& t)
 void
 Printer::simple_type(Decltype_type const& t)
 {
-  os << "decltype(<|expr|>)";
+  lingo_unreachable();
 }
 
 
 void
 Printer::simple_type(Declauto_type const& t)
 {
-  os << "decltype(auto)";
+  token(decltype_tok);
+  token(lparen_tok);
+  token(auto_tok);
+  token(rparen_tok);
 }
 
 
+// FIXME: Print the qualified id? Print a qualification that
+// guarantees unique naming?
 void
 Printer::simple_type(Typename_type const& t)
 {
-  os << t.declaration().name();
+  id(t.declaration().name());
 }
 
 
 void
 Printer::return_type(Type const& t)
 {
-  os << "->" << ' ' << t;
+  token(arrow_tok);
+  type(t);
 }
 
 
@@ -462,7 +491,10 @@ Printer::declaration(Decl const& d)
 void
 Printer::variable_declaration(Variable_decl const& d)
 {
-  os << "var " << d.type() << ' ' << d.name() << d.initializer() << ';';
+  token(var_tok);
+  type(d.type());
+  id(d.name());
+  token(semicolon_tok);
 }
 
 
@@ -470,7 +502,10 @@ Printer::variable_declaration(Variable_decl const& d)
 void
 Printer::constant_declaration(Constant_decl const& d)
 {
-  os << "const " << d.type() << ' ' << d.name() << d.initializer() << ';';
+  token(const_tok);
+  type(d.type());
+  id(d.name());
+  token(semicolon_tok);
 }
 
 
@@ -526,8 +561,22 @@ Printer::template_declaration(Template_decl const& d)
   token(lt_tok);
   template_parameter_list(d.parameters());
   token(gt_tok);
-  newline();
+  if (d.is_constrained()) {
+    newline_and_indent();
+    requires_clause(d.constraint());
+    newline_and_undent();
+  } else {
+    newline();
+  }
   declaration(d.pattern());
+}
+
+
+void
+Printer::requires_clause(Expr const& e)
+{
+  token(requires_tok);
+  expression(e);
 }
 
 

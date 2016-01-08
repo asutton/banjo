@@ -1156,28 +1156,37 @@ struct Constant_decl : Object_decl
 
 // Declares a function.
 //
-// TODO: Write type/return type accessors.
+// A function has three associated exprssions:
+//    - a type constraint which governs use,
+//    - a precondition which guards entry, and
+//    - a postcondition that explicitly states effects.
 struct Function_decl : Decl
 {
   Function_decl(Name* n, Type* t, Decl_list const& p, Init* i)
-    : Decl(n), second(t), third(p), fourth(i)
+    : Decl(n), ty(t), parms(p), def(i)
   { }
 
   Function_decl(Decl* cxt, Name* n, Type* t, Decl_list const& p, Init* i)
-    : Decl(cxt, n), second(t), third(p), fourth(i)
+    : Decl(cxt, n), ty(t), parms(p), def(i)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
 
-  Function_type const& type() const        { return *cast<Function_type>(second); }
+  Function_type const& type() const        { return *cast<Function_type>(ty); }
   Type const&          return_type() const { return type().return_type(); }
 
-  Decl_list const& parameters() const { return third; }
-  Init const&      definition() const { return *fourth; }
+  Decl_list const& parameters() const    { return parms; }
+  Expr const&      constraint() const    { return *constr; }
+  Expr const&      precondition() const  { return *constr; }
+  Expr const&      postcondition() const { return *constr; }
+  Init const&      definition() const    { return *def; }
 
-  Type*     second;
-  Decl_list third;
-  Init*     fourth;
+  Type*     ty;
+  Decl_list parms;
+  Expr*     constr;
+  Expr*     pre;
+  Expr*     post;
+  Init*     def;
 };
 
 
@@ -1229,10 +1238,15 @@ struct Namespace_decl : Decl
 
 
 // Declares a template.
+//
+// A template has a single constraint expression corresponding
+// to a requires clause. Note that this is transformed into
+// a logical proposition for the purpose of constraint checking
+// and comparison.
 struct Template_decl : Decl
 {
   Template_decl(Decl_list const& p, Decl* d)
-    : Decl(d->first), second(p), third(d)
+    : Decl(d->first), parms(p), decl(d)
   {
     lingo_assert(!d->cxt);
     d->cxt = this;
@@ -1240,11 +1254,15 @@ struct Template_decl : Decl
 
   void accept(Visitor& v) const { v.visit(*this); }
 
-  Decl_list const& parameters() const { return second; }
-  Decl const&      pattern() const    { return *third; }
+  Decl_list const& parameters() const { return parms; }
+  Expr const&      constraint() const { return *constr; }
+  Decl const&      pattern() const    { return *decl; }
 
-  Decl_list second;
-  Decl*     third;
+  bool is_constrained() const { return constr; }
+
+  Decl_list parms;
+  Expr*     constr;
+  Decl*     decl;
 };
 
 

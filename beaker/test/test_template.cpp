@@ -38,12 +38,26 @@ main(int argc, char* argv[])
 
   Namespace_decl* global = make_global_ns();
 
-  // FIXME: Assign the context to the template.
-  Type_parm* p1 = make_type_parameter("T");
-  Type_parm* p2 = make_type_parameter("U");
-  Value_parm* p3 = make_value_parameter("N", make_int_type());
+  {
+    Type_parm* p1 = make_type_parameter("T");
+    Type_parm* p2 = make_type_parameter("U");
+    Value_parm* p3 = make_value_parameter("N", make_int_type());
 
-  Decl* var = make_variable(nullptr, "v", new Typename_type(p1));
-  Decl* tmp = make_template(global, {p1, p2, p3}, var);
-  std::cout << *tmp << '\n';
+    Decl* var = make_variable(nullptr, "v", new Typename_type(p1));
+    Decl* tmp = make_template(global, {p1, p2, p3}, var);
+    std::cout << *tmp << '\n';
+  }
+
+  {
+    Type_parm* p1 = make_type_parameter("T");
+    Type_parm* p2 = make_type_parameter("U");
+    Value_parm* p3 = make_value_parameter("N", make_int_type());
+    Expr* req = make_true();
+
+    Decl* var = make_variable(nullptr, "v", new Typename_type(p1));
+    auto* tmp = make_template(global, {p1, p2, p3}, var);
+    tmp->constr = req;
+    std::cout << *tmp << '\n';
+  }
+
 }

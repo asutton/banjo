@@ -48,7 +48,7 @@ struct Token_info
 struct Printer
 {
   Printer(std::ostream& os)
-    : os(os), prev(error_tok)
+    : os(os), indent(0), prev(error_tok)
   { }
 
   void operator()(Name const& n) { id(n); }
@@ -60,6 +60,8 @@ struct Printer
   void space(Token_info);
   void space();
   void newline();
+  void newline_and_indent();
+  void newline_and_undent();
   void token(Token_kind);
   void token(Token_kind, Token_use);
   void token(Symbol const&);
@@ -122,10 +124,14 @@ struct Printer
   void template_parameter(Decl const&);
   void template_parameter_list(Decl_list const&);
 
+  void requires_clause(Expr const&);
 
   std::ostream& os;
-  Token_info    prev; // The previous token printed
+  int           indent; // The current indentation
+  Token_info    prev;   // The previous token printed
+
 };
+
 
 std::ostream& operator<<(std::ostream&, Name const&);
 std::ostream& operator<<(std::ostream&, Type const&);
