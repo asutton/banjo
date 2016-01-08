@@ -45,10 +45,25 @@ test_types()
   std::cout << *t2 << '\n'; // bool
 
   Type* t3 = new Integer_type();
-  std::cout << *t3 << '\n'; // bool
+  std::cout << *t3 << '\n'; // int
 
   Type* t4 = new Float_type();
-  std::cout << *t4 << '\n'; // bool
+  std::cout << *t4 << '\n'; // double
+
+  Type* t5 = new Function_type({t2, t3}, t2);
+  std::cout << *t5 << '\n'; // (bool, int32) -> bool
+
+  Type* t6 = new Pointer_type(t2);
+  std::cout << *t6 << '\n'; // bool*;
+
+  Type* t7 = new Reference_type(t5);
+  std::cout << *t7 << '\n'; // ((bool, int32) -> bool)&;
+
+  Type* t8 = new Function_type({}, t1);
+  std::cout << *t8 << '\n'; // () -> void
+
+  Type* t9 = new Sequence_type(new Pointer_type(t8));
+  std::cout << *t9 << '\n'; // (() -> void)*[]
 }
 
 

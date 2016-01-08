@@ -31,16 +31,55 @@ Parser::on_function_type(Type_list const&, Type*)
 
 
 Type*
-Parser::on_pointer_type(Token, Type*)
+Parser::on_pointer_type(Token, Type* t)
 {
-  return nullptr;
+  return new Pointer_type(t);
+}
+
+
+// Returns a qualified type. If the type is already qualified,
+// then add the new qualifier to the set.
+//
+// TODO: Verify that we can actually const-qualify this type.
+Type*
+Parser::on_const_type(Token, Type* t)
+{
+  if (Qualified_type* q = as<Qualified_type>(t)) {
+    q->qual |= const_qual;
+    return q;
+  } else {
+    return new Qualified_type(t, const_qual);
+  }
+}
+
+
+// Returns a qualified type. If the type is already qualified,
+// then add the new qualifier to the set.
+//
+// TODO: Verify that we can actually volatile-qualify this type.
+Type*
+Parser::on_volatile_type(Token, Type* t)
+{
+  if (Qualified_type* q = as<Qualified_type>(t)) {
+    q->qual |= volatile_qual;
+    return q;
+  } else {
+    return new Qualified_type(t, volatile_qual);
+  }
 }
 
 
 Type*
-Parser::on_reference_type(Token, Type*)
+Parser::on_sequence_type(Type* t)
 {
-  return nullptr;
+  return new Sequence_type(t);
+}
+
+
+Type*
+Parser::on_reference_type(Token, Type* t)
+{
+  return new Reference_type(t);
 }
 
 

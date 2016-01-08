@@ -16,6 +16,7 @@ std::size_t hash_value(Float_type const&);
 std::size_t hash_value(Auto_type const&);
 std::size_t hash_value(Decltype_type const&);
 std::size_t hash_value(Declauto_type const&);
+std::size_t hash_value(Function_type const&);
 
 
 // Default hash values for empty types.
@@ -40,15 +41,16 @@ hash_value(Type const& t)
     std::size_t operator()(Auto_type const& t) const      { return hash_value(t); }
     std::size_t operator()(Decltype_type const& t) const  { return hash_value(t); }
     std::size_t operator()(Declauto_type const& t) const  { return hash_value(t); }
-    std::size_t operator()(Qualified_type const& t) const { lingo_unreachable(); }
-    std::size_t operator()(Pointer_type const& t) const   { lingo_unreachable(); }
-    std::size_t operator()(Reference_type const& t) const { lingo_unreachable(); }
-    std::size_t operator()(Array_type const& t) const     { lingo_unreachable(); }
-    std::size_t operator()(Sequence_type const& t) const  { lingo_unreachable(); }
-    std::size_t operator()(Class_type const& t) const     { lingo_unreachable(); }
-    std::size_t operator()(Union_type const& t) const     { lingo_unreachable(); }
-    std::size_t operator()(Enum_type const& t) const      { lingo_unreachable(); }
-    std::size_t operator()(Typename_type const& t) const  { lingo_unreachable(); }
+    std::size_t operator()(Function_type const& t) const  { return hash_value(t); }
+    std::size_t operator()(Qualified_type const& t) const { lingo_unimplemented(); }
+    std::size_t operator()(Pointer_type const& t) const   { lingo_unimplemented(); }
+    std::size_t operator()(Reference_type const& t) const { lingo_unimplemented(); }
+    std::size_t operator()(Array_type const& t) const     { lingo_unimplemented(); }
+    std::size_t operator()(Sequence_type const& t) const  { lingo_unimplemented(); }
+    std::size_t operator()(Class_type const& t) const     { lingo_unimplemented(); }
+    std::size_t operator()(Union_type const& t) const     { lingo_unimplemented(); }
+    std::size_t operator()(Enum_type const& t) const      { lingo_unimplemented(); }
+    std::size_t operator()(Typename_type const& t) const  { lingo_unimplemented(); }
   };
 
   return apply(t, fn{});
@@ -101,6 +103,16 @@ std::size_t
 hash_value(Declauto_type const&)
 {
   return declauto_type_hash;
+}
+
+
+std::size_t
+hash_value(Function_type const& t)
+{
+  std::size_t seed = 0;
+  boost::hash_combine(seed, t.parameter_types());
+  boost::hash_combine(seed, t.return_type());
+  return seed;
 }
 
 

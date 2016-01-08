@@ -65,7 +65,9 @@ struct Parser
   Type* decltype_type();
   Type* function_type();
   Type* grouped_type();
-  Type* qualified_type();
+  Type* postfix_type();
+  Type* sequence_type();
+  Type* reference_type();
 
   // Type helpers
   Type* return_type();
@@ -145,6 +147,9 @@ struct Parser
   Type* on_decltype_type(Token, Expr*);
   Type* on_function_type(Type_list const&, Type*);
   Type* on_pointer_type(Token, Type*);
+  Type* on_const_type(Token, Type*);
+  Type* on_volatile_type(Token, Type*);
+  Type* on_sequence_type(Type*);
   Type* on_reference_type(Token, Type*);
   Type_list on_type_list();
 

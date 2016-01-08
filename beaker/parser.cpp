@@ -598,50 +598,80 @@ Parser::simple_type()
 }
 
 
-// Parser a qualified-type.
+// Parse a postfix-type.
 //
-//
-//    qualified-type:
+//    postfix-type:
 //      simple-type
-//      qualified-type 'const'
-//      qualified-type 'volatile'
+//      postfix-type 'const'
+//      postfix-type 'volatile'
+//      postfix-type '*'
+//      postfix-type '[' expression ']'
 //
-// FIXME: Implement me.
+// TODO: Implement array types.
 Type*
-Parser::qualified_type()
-{
-  return simple_type();
-}
-
-
-// Parse a type.
-//
-//    type:
-//      simple-type
-//      qualified-type
-//      type '*'
-//      type '&'
-//      type '[]'
-//      type '[' expression ']'
-//      type 'const'
-//
-// TODO: Implement qualified types and array notation.
-//
-// FIXME Lift references so they group with the least
-// precedence.
-Type*
-Parser::type()
+Parser::postfix_type()
 {
   Type* t = simple_type();
   while (true) {
     if (Token tok = match_if(star_tok))
       t = on_pointer_type(tok, t);
+    else if (Token tok = match_if(const_tok))
+      t = on_const_type(tok, t);
+    else if (Token tok = match_if(volatile_tok))
+      t = on_volatile_type(tok, t);
     else if (Token tok = match_if(amp_tok))
       t = on_reference_type(tok, t);
     else
       break;
   }
   return t;
+}
+
+
+// Parse a sequence type. This is a type type followed
+// by empty brackets.
+//
+//    sequence-type:
+//      postfix-type ['[' ']']
+Type*
+Parser::sequence_type()
+{
+  Type* t = postfix_type();
+  if (match_if(lbracket_tok)) {
+    match(rbracket_tok());
+    return on_sequence_type(t);
+  }
+}
+
+
+// Parse a reference type.
+//
+//    reference-type:
+//      sequence-type ['&']
+//      sequence-type ['&&']
+//
+// FIXME: Implement rvalue and forwarding references.
+Type*
+Parser::reference_type()
+{
+  Type* t = sequence_type();
+  if (match_if(amp_tok))
+    return on_reference_type(t);
+  return t;
+}
+
+
+// Parse a type.
+//
+//    type:
+//      reference-type
+//
+// TODO: Add general support for packed types (e.g.: int...). This
+// has lower precedence than reference types.
+Type*
+Parser::type()
+{
+  return reference_type;
 }
 
 

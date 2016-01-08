@@ -443,27 +443,56 @@ struct Function_type : Type
 };
 
 
+// Type qualifier flags.
+//
+// TODO: Make this a legitimate type.
+constexpr int const_qual    = 0x01;
+constexpr int volatile_qual = 0x02;
+
+
 struct Qualified_type : Type
 {
+  Qualified_type(Type* t, int q)
+    : ty(t), qual(q)
+  { }
+
   void accept(Visitor& v) const { v.visit(*this); }
 
-  Type* first;
+  Type const& type() const { return *ty; }
+  int qualifier() const    { return qual; }
+  bool is_const() const    { return qual & const_qual; }
+  bool is_volatile() const { return qual & volatile_qual; }
+
+  Type* ty;
+  int   qual;
 };
 
 
 struct Pointer_type : Type
 {
+  Pointer_type(Type* t)
+    : ty(t)
+  { }
+
   void accept(Visitor& v) const { v.visit(*this); }
 
-  Type* first;
+  Type const& type() const { return *ty; }
+
+  Type* ty;
 };
 
 
 struct Reference_type : Type
 {
+  Reference_type(Type* t)
+    : ty(t)
+  { }
+
   void accept(Visitor& v) const { v.visit(*this); }
 
-  Type* first;
+  Type const& type() const { return *ty; }
+
+  Type* ty;
 };
 
 
@@ -480,9 +509,15 @@ struct Array_type : Type
 // of unknown bound.
 struct Sequence_type : Type
 {
+  Sequence_type(Type* t)
+    : ty(t)
+  { }
+
   void accept(Visitor& v) const { v.visit(*this); }
 
-  Type* first;
+  Type const& type() const { return *ty; }
+
+  Type* ty;
 };
 
 
@@ -560,6 +595,7 @@ struct Generic_type_visitor : Type::Visitor, Generic_visitor<F, T>
   void visit(Auto_type const& t)      { this->invoke(t); }
   void visit(Decltype_type const& t)  { this->invoke(t); }
   void visit(Declauto_type const& t)  { this->invoke(t); }
+  void visit(Function_type const& t)  { this->invoke(t); }
   void visit(Qualified_type const& t) { this->invoke(t); }
   void visit(Pointer_type const& t)   { this->invoke(t); }
   void visit(Reference_type const& t) { this->invoke(t); }

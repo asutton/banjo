@@ -28,10 +28,8 @@ Printer::space(Token_info info)
     else if (is_word(prev) && is_word(info))
       space();
 
-    // Between a word and an binary operator, we want space.
-    else if (is_word(prev) && info == binary_op_use)
-      space();
-    else if (prev == binary_op_use && is_word(info))
+    // Guarantee spaces around binary operators.
+    else if (prev == binary_op_use || info == binary_op_use)
       space();
 
     // FIXME: Finish all the spacing rules.
@@ -222,6 +220,39 @@ Printer::nested_name_specifier(Qualified_id const& n)
 // -------------------------------------------------------------------------- //
 // Printing of types
 
+// Returns the precedence of a type. Note that the precedence of
+// function types is poisoned so that it always requires parens
+// when writing it out.
+//
+// Maybe this indicates that function types should be the lowest
+// precedence parse. Err... function types are annoying.
+int
+precedence(Type const& t)
+{
+  struct fn
+  {
+    int operator()(Void_type const& t)      { return 0; }
+    int operator()(Boolean_type const& t)   { return 0; }
+    int operator()(Integer_type const& t)   { return 0; }
+    int operator()(Float_type const& t)     { return 0; }
+    int operator()(Auto_type const& t)      { return 0; }
+    int operator()(Decltype_type const& t)  { return 0; }
+    int operator()(Declauto_type const& t)  { return 0; }
+    int operator()(Function_type const& t)  { return 99; }
+    int operator()(Qualified_type const& t) { return 1; }
+    int operator()(Pointer_type const& t)   { return 1; }
+    int operator()(Reference_type const& t) { return 3; }
+    int operator()(Array_type const& t)     { return 1; }
+    int operator()(Sequence_type const& t)  { return 2; }
+    int operator()(Class_type const& t)     { return 0; }
+    int operator()(Union_type const& t)     { return 0; }
+    int operator()(Enum_type const& t)      { return 0; }
+    int operator()(Typename_type const& t)  { return 0; }
+  };
+  return apply(t, fn{});
+}
+
+
 void
 Printer::type(Type const& t)
 {
@@ -235,14 +266,15 @@ Printer::type(Type const& t)
     void operator()(Auto_type const& t)      { p.simple_type(t); }
     void operator()(Decltype_type const& t)  { p.simple_type(t); }
     void operator()(Declauto_type const& t)  { p.simple_type(t); }
-    void operator()(Qualified_type const& t) { lingo_unreachable(); }
-    void operator()(Pointer_type const& t)   { lingo_unreachable(); }
-    void operator()(Reference_type const& t) { lingo_unreachable(); }
-    void operator()(Array_type const& t)     { lingo_unreachable(); }
-    void operator()(Sequence_type const& t)  { lingo_unreachable(); }
-    void operator()(Class_type const& t)     { lingo_unreachable(); }
-    void operator()(Union_type const& t)     { lingo_unreachable(); }
-    void operator()(Enum_type const& t)      { lingo_unreachable(); }
+    void operator()(Function_type const& t)  { p.simple_type(t); }
+    void operator()(Qualified_type const& t) { p.postfix_type(t); }
+    void operator()(Pointer_type const& t)   { p.postfix_type(t); }
+    void operator()(Reference_type const& t) { p.reference_type(t); }
+    void operator()(Array_type const& t)     { p.postfix_type(t); }
+    void operator()(Sequence_type const& t)  { p.sequence_type(t); }
+    void operator()(Class_type const& t)     { lingo_unimplemented(); }
+    void operator()(Union_type const& t)     { lingo_unimplemented(); }
+    void operator()(Enum_type const& t)      { lingo_unimplemented(); }
     void operator()(Typename_type const& t)  { p.simple_type(t); }
   };
   apply(t, fn{*this});
@@ -310,6 +342,21 @@ Printer::simple_type(Declauto_type const& t)
 }
 
 
+void
+Printer::simple_type(Function_type const& t)
+{
+  token(lparen_tok);
+  Type_list const& p = t.parameter_types();
+  for (auto iter = p.begin(); iter != p.end(); ++iter) {
+    type(*iter);
+    if (std::next(iter) != p.end())
+      token(comma_tok);
+  }
+  token(rparen_tok);
+  return_type(t.return_type());
+}
+
+
 // FIXME: Print the qualified id? Print a qualification that
 // guarantees unique naming?
 void
@@ -320,9 +367,65 @@ Printer::simple_type(Typename_type const& t)
 
 
 void
+Printer::grouped_type(Type const& t, Type const& s)
+{
+  if (precedence(t) < precedence(s)) {
+    token(lparen_tok);
+    type(s);
+    token(rparen_tok);
+  } else {
+    type(s);
+  }
+}
+
+
+void
+Printer::postfix_type(Pointer_type const& t)
+{
+  grouped_type(t, t.type());
+  token(star_tok);
+}
+
+
+void
+Printer::postfix_type(Qualified_type const& t)
+{
+  grouped_type(t, t.type());
+  if (t.is_const())
+    token(const_tok);
+  if (t.is_volatile())
+    token(volatile_tok);
+}
+
+
+void
+Printer::postfix_type(Array_type const& t)
+{
+  lingo_unimplemented();
+}
+
+
+void
+Printer::sequence_type(Sequence_type const& t)
+{
+  grouped_type(t, t.type());
+  token(lbracket_tok);
+  token(rbracket_tok);
+}
+
+
+void
+Printer::reference_type(Reference_type const& t)
+{
+  grouped_type(t, t.type());
+  token(amp_tok);
+}
+
+
+void
 Printer::return_type(Type const& t)
 {
-  token(arrow_tok);
+  token(arrow_tok, binary_op_use);
   type(t);
 }
 
