@@ -1,11 +1,7 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#include <beaker/ast.hpp>
-#include <beaker/lexer.hpp>
-#include <beaker/print.hpp>
-
-#include <lingo/symbol.hpp>
+#include "test.hpp"
 
 #include <iostream>
 
@@ -14,27 +10,15 @@ using namespace lingo;
 using namespace beaker;
 
 
-// A symbol table.
-Symbol_table syms;
-
-
-// Create an identifier and return its symbol.
-Name*
-make_id(char const* n)
-{
-  Symbol const* sym = syms.put_identifier(identifier_tok, n);
-  return new Simple_id(sym);
-}
-
+Namespace_decl* global;
 
 void
 test_names()
 {
-  Name* n0 = new Global_id();
+  std::cout << "--- names ---\n";
   Name* n1 = make_id("N1");
   Name* n2 = make_id("N2");
 
-  auto* global = new Namespace_decl(n0);
   auto* ns1 = new Namespace_decl(global, n1);
   auto* ns2 = new Namespace_decl(ns1, n2);
 
@@ -53,6 +37,7 @@ test_names()
 void
 test_types()
 {
+  std::cout << "--- types ---\n";
   Type* t1 = new Void_type();
   std::cout << *t1 << '\n'; // void
 
@@ -67,9 +52,25 @@ test_types()
 }
 
 
+void
+test_expressions()
+{
+  std::cout << "--- expressions ---\n";
+  Expr* e1 = make_true();
+  Expr* e2 = make_false();
+  std::cout << *e1 << '\n';
+  std::cout << *e2 << '\n';
+}
+
+
 int
 main(int argc, char* argv[])
 {
+  init_tokens();
+
+  global = make_global_ns();
+
   test_names();
   test_types();
+  test_expressions();
 }

@@ -113,6 +113,7 @@ init_tokens()
   init_token(enum_tok, "enum");
   init_token(explicit_tok, "explicit");
   init_token(export_tok, "export");
+  init_token(false_tok, "false");
   init_token(float_tok, "float");
   init_token(float16_tok, "float16");
   init_token(float32_tok, "float32");
@@ -135,6 +136,7 @@ init_tokens()
   init_token(switch_tok, "switch");
   init_token(this_tok, "this");
   init_token(template_tok, "template");
+  init_token(true_tok, "true");
   init_token(typename_tok, "typename");
   init_token(uint_tok, "uint");
   init_token(uint8_tok, "uint8");

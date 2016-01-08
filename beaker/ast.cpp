@@ -31,7 +31,7 @@ Decl::fully_qualified_id() const
 {
   Name* n = first;
   Decl* d = cxt;
-  while (d->cxt) {
+  while (d) {
     n = new Qualified_id(d, n);
     d = d->cxt;
   }

@@ -6,21 +6,18 @@
 #include <beaker/lexer.hpp>
 #include <beaker/print.hpp>
 
+#include <iostream>
+
 
 using namespace lingo;
 using namespace beaker;
-
-
-// A symbol table. This must be defined in each unit test (until
-// we have a library that exports it).
-extern Symbol_table syms;
 
 
 // Create an identifier and return its symbol.
 inline Name*
 make_id(char const* n)
 {
-  Symbol* sym = syms.put_identifier(identifier_tok, n);
+  Symbol const* sym = symbols.put_identifier(identifier_tok, n);
   return new Simple_id(sym);
 }
 
@@ -30,11 +27,45 @@ make_global_ns() { return new Namespace_decl(new Global_id()); }
 
 
 inline Boolean_type*
-make_bool_type() { return new Boolean_type(); }
+make_bool_type()
+{
+  static Boolean_type t;
+  return &t;
+}
 
 
 inline Integer_type*
-make_int_type() { return new Integer_type(); }
+make_int_type()
+{
+  static Integer_type t;
+  return &t;
+}
+
+
+inline Boolean_expr*
+make_bool(bool b)
+{
+  Symbol const* sym = symbols.get(b ? "true" : "false");
+  return new Boolean_expr(make_bool_type(), sym);
+}
+
+
+inline Boolean_expr*
+make_true() { return make_bool(true); }
+
+
+inline Boolean_expr*
+make_false() { return make_bool(false); }
+
+
+inline Integer_expr*
+make_integer(int n, Type*)
+{
+  std::stringstream ss;
+  ss << n;
+  Symbol const* sym = symbols.put_integer(integer_tok, ss.str(), n);
+  return new Integer_expr(make_int_type(), sym);
+}
 
 
 inline Variable_decl*

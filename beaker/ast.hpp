@@ -661,7 +661,7 @@ struct Literal_expr : Expr
     : Expr(t), sym(s)
   { }
 
-  Symbol const& value() const { return *sym; }
+  Symbol const& symbol() const { return *sym; }
 
   Symbol const* sym;
 };

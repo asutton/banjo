@@ -21,6 +21,7 @@ struct Printer
 
   void operator()(Name const& n) { id(n); }
   void operator()(Type const& t) { type(t); }
+  void operator()(Expr const& e) { expression(e); }
   void operator()(Decl const& d) { declaration(d); }
 
   // Lexical terms.
@@ -95,6 +96,7 @@ struct Printer
 
 std::ostream& operator<<(std::ostream&, Name const&);
 std::ostream& operator<<(std::ostream&, Type const&);
+std::ostream& operator<<(std::ostream&, Expr const&);
 std::ostream& operator<<(std::ostream&, Decl const&);
 std::ostream& operator<<(std::ostream&, Init const&);
 

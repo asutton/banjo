@@ -355,6 +355,7 @@ Printer::expression(Expr const& e)
     void operator()(Not_expr const& e)       { p.unary_expression(e, bang_tok); }
     void operator()(Assign_expr const& e)    { p.binary_expression(e, eq_tok); }
   };
+  apply(e, fn{*this});
 }
 
 
@@ -363,21 +364,21 @@ Printer::expression(Expr const& e)
 void
 Printer::literal(Boolean_expr const& e)
 {
-  token(e.value());
+  token(e.symbol());
 }
 
 
 void
 Printer::literal(Integer_expr const& e)
 {
-  token(e.value());
+  token(e.symbol());
 }
 
 
 void
 Printer::literal(Real_expr const& e)
 {
-  token(e.value());
+  token(e.symbol());
 }
 
 
@@ -639,6 +640,15 @@ operator<<(std::ostream& os, Type const& t)
 {
   Printer print(os);
   print(t);
+  return os;
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Expr const& e)
+{
+  Printer print(os);
+  print(e);
   return os;
 }
 
