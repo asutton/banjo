@@ -98,6 +98,5 @@ inline Function_decl*
 make_function(Decl* cxt, char const* n, Decl_list& ps, Type* r)
 {
   Type* t = make_function_type(ps, r);
-  Init* i = new Incomplete_init();
-  return new Function_decl(cxt, make_id(n), t, ps, i);
+  return new Function_decl(cxt, make_id(n), t, ps, nullptr);
 }

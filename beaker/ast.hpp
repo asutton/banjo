@@ -975,89 +975,282 @@ apply(Expr const& e, F fn)
 // -------------------------------------------------------------------------- //
 // Statements
 
+struct Stmt;
+struct Return_stmt;
+
+
 struct Stmt : Term
 {
+  struct Visitor;
+
+  virtual void accept(Visitor& v) const = 0;
 };
+
+
+struct Stmt::Visitor
+{
+  virtual void visit(Return_stmt const& s) { }
+};
+
+
+struct Return_stmt : Stmt
+{
+  Return_stmt(Expr* e)
+    : expr(e)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+
+  Expr const& expression() const { return *expr; }
+
+  Expr* expr;
+};
+
+
+// A generic visitor for statement.
+template<typename F, typename T>
+struct Generic_stmt_visitor : Stmt::Visitor, Generic_visitor<F, T>
+{
+  Generic_stmt_visitor(F f)
+    : Generic_visitor<F, T>(f)
+  { }
+
+  void visit(Return_stmt const& s) { this->invoke(s); }
+};
+
+
+// Apply a function to the given type.
+template<typename F, typename T = typename std::result_of<F(Return_stmt const&)>::type>
+inline T
+apply(Stmt const& s, F fn)
+{
+  Generic_stmt_visitor<F, T> vis(fn);
+  return accept(s, vis);
+}
 
 
 // -------------------------------------------------------------------------- //
-// Variable initializers
+// Object initializers
+//
+// TODO: Consider adding deleted initializers.
+//
+// TODO: Provide explicit support for trivial initialization?
 
-// An initializers is any term that follows a declaration.
-// Each kind of iniitializer corresponds to a particular
-// syntax.
+struct Init;
+struct Default_init;
+struct Value_init;
+struct Direct_init;
+struct Aggregate_init;
+struct Type_init;
+struct Template_init;
+
+
+// An object initializer provides a value for a constant,
+// variable, or parameter (of various kind).
 struct Init : Term
 {
+  struct Visitor;
 };
 
 
-// Default initialization by a constructor or internal
-// mechanism.
+// The visitor for initializers.
+struct Init::Visitor
+{
+  virtual void visit(Default_init const&)   { }
+  virtual void visit(Value_init const&)     { }
+  virtual void visit(Direct_init const&)    { }
+  virtual void visit(Aggregate_init const&) { }
+  virtual void visit(Type_init const&)      { }
+  virtual void visit(Template_init const&)  { }
+};
+
+
+// A declaration can be defined to have a default value,
+// or in the case of functions, a default behavior.
 struct Default_init : Init
 {
 };
 
 
-// Deletion.
-struct Delete_init : Init
-{
-};
-
-
-// Declared but not defined.
-struct Incomplete_init : Init
-{
-};
-
-
-// Initialization by an expression.
+// A declaration can be defined to have a given value,
+// or in the case of functions, an expression.
 struct Value_init : Init
 {
   Expr* first;
 };
 
 
-// Direct invocation of a constructor.
+// A variable declaration can be directly initialized by a
+// constructor corresponding to the given arguments.
 struct Direct_init : Init
 {
-  // List* first;
+  Expr_list args;
 };
 
 
-// Initialization by an aggregate.
-//
-// TODO: This is a list of expression-like things that
-// could include designated initializers.
+// A variable declaration can be initialized by specifying all
+// of its fields as an aggregate.
 struct Aggregate_init : Init
+{
+  Expr_list inits;
+};
+
+
+// Represents the initialization of a type parameter by a type.
+struct Type_init : Init
+{
+  Type* ty;
+};
+
+
+// Represents the initialization of a template parameter by
+// a template declaration.
+struct Template_init : Init
+{
+  Decl* decl;
+};
+
+
+// A generic visitor for initializers.
+template<typename F, typename T>
+struct Generic_init_visitor : Init::Visitor, Generic_visitor<F, T>
+{
+  Generic_init_visitor(F f)
+    : Generic_visitor<F, T>(f)
+  { }
+
+  void visit(Default_init const& i)   { this->invoke(i); }
+  void visit(Value_init const& i)     { this->invoke(i); }
+  void visit(Direct_init const& i)    { this->invoke(i); }
+  void visit(Aggregate_init const& i) { this->invoke(i); }
+  void visit(Type_init const& i)      { this->invoke(i); }
+  void visit(Template_init const& i)  { this->invoke(i); }
+};
+
+
+// Apply a function to the given type.
+template<typename F, typename T = typename std::result_of<F(Default_init const&)>::type>
+inline T
+apply(Init const& i, F fn)
+{
+  Generic_init_visitor<F, T> vis(fn);
+  return accept(i, vis);
+}
+
+
+// -------------------------------------------------------------------------- //
+// Function and type definitions
+
+struct Def;
+struct Defaulted_def;
+struct Deleted_def;
+struct Function_def;
+struct Class_def;
+struct Union_def;
+struct Enum_def;
+
+
+// Denotes the set of definitions for functions and types.
+//
+// Note that the inclusion of definitions for both functions
+// and types is largely one of syntactic convenience. Care
+// must be taken to ensure that a class declaration does not
+// have e.g., a function definition (that doesn't make sense).
+struct Def
+{
+  struct Visitor;
+
+  virtual void accept(Visitor&) = 0;
+};
+
+
+// Visitor for definitions.
+struct Def::Visitor
+{
+  virtual void visit(Defaulted_def const&) { }
+  virtual void visit(Deleted_def const&)   { }
+  virtual void visit(Function_def const&)  { }
+  virtual void visit(Class_def const&)     { }
+  virtual void visit(Union_def const&)     { }
+  virtual void visit(Enum_def const&)      { }
+};
+
+
+// A defaulted definition has a specification determined by
+// the compiler.
+//
+// C++ allows only defaulted special functions, but this can
+// be made far more general.
+struct Defaulted_def : Def
 {
 };
 
 
-// Initialization of a function by a body.
-struct Function_init : Init
+// A deleted definition is specified to be invalid.
+//
+// C++ allows deleted functions, but deleted classes (and also
+// variables) make sense for partial specializations.
+struct Deleted_def : Def
+{
+};
+
+
+// A function declaration can be initialized by a compound
+// statement.
+//
+// TODO: Provide extended support for member initialization
+// lists of member functions.
+struct Function_def : Def
 {
   Stmt* first;
 };
 
 
-// Initializer of a class type.
-struct Class_init : Init
+// A definition of a class.
+struct Class_def : Def
 {
   // List* first;  // bases
   // List* second; // members
 };
 
 
-// Initializer of a union type.
-struct Union_init : Init
+// A definition of a union.
+struct Union_def : Def
 {
 };
 
 
-// Initializer of an enumeration type.
-struct Enum_init : Init
+// A definition of an enumeration.
+struct Enum_def : Def
 {
 };
+
+
+// A generic visitor for definitions.
+template<typename F, typename T>
+struct Generic_def_visitor : Def::Visitor, Generic_visitor<F, T>
+{
+  Generic_def_visitor(F f)
+    : Generic_visitor<F, T>(f)
+  { }
+
+  void visit(Defaulted_def const& d)  { this->invoke(d); }
+  void visit(Deleted_def const& d)    { this->invoke(d); }
+  void visit(Function_def const& d)   { this->invoke(d); }
+  void visit(Class_def const& d)      { this->invoke(d); }
+  void visit(Union_def const& d)      { this->invoke(d); }
+  void visit(Enum_def const& d)       { this->invoke(d); }
+};
+
+
+// Apply a function to the given type.
+template<typename F, typename T = typename std::result_of<F(Default_init const&)>::type>
+inline T
+apply(Def const& d, F fn)
+{
+  Generic_def_visitor<F, T> vis(fn);
+  return accept(d, vis);
+}
 
 
 // -------------------------------------------------------------------------- //
@@ -1152,11 +1345,11 @@ struct Object_decl : Decl
 // Declares a class, union, enum, or generic type.
 struct Type_decl : Decl
 {
-  Type_decl(Name* n, Init* i)
-    : Decl(n), second(i)
+  Type_decl(Name* n, Def* i)
+    : Decl(n), def(i)
   { }
 
-  Init* second;
+  Def* def;
 };
 
 
@@ -1198,11 +1391,11 @@ struct Constant_decl : Object_decl
 //    - a postcondition that explicitly states effects.
 struct Function_decl : Decl
 {
-  Function_decl(Name* n, Type* t, Decl_list const& p, Init* i)
+  Function_decl(Name* n, Type* t, Decl_list const& p, Def* i)
     : Decl(n), ty(t), parms(p), def(i)
   { }
 
-  Function_decl(Decl* cxt, Name* n, Type* t, Decl_list const& p, Init* i)
+  Function_decl(Decl* cxt, Name* n, Type* t, Decl_list const& p, Def* i)
     : Decl(cxt, n), ty(t), parms(p), def(i)
   { }
 
@@ -1215,14 +1408,16 @@ struct Function_decl : Decl
   Expr const&      constraint() const    { return *constr; }
   Expr const&      precondition() const  { return *constr; }
   Expr const&      postcondition() const { return *constr; }
-  Init const&      definition() const    { return *def; }
+  Def const&       definition() const    { return *def; }
+
+  bool is_defined() const  { return def; }
 
   Type*     ty;
   Decl_list parms;
   Expr*     constr;
   Expr*     pre;
   Expr*     post;
-  Init*     def;
+  Def*     def;
 };
 
 
@@ -1230,7 +1425,9 @@ struct Class_decl : Type_decl
 {
   void accept(Visitor& v) const { v.visit(*this); }
 
-  Init const& definition() const { return *second; }
+  Def const& definition() const { return *def; }
+
+  bool is_defined() const { return def; }
 };
 
 
@@ -1238,7 +1435,9 @@ struct Union_decl : Type_decl
 {
   void accept(Visitor& v) const { v.visit(*this); }
 
-  Init const& definition() const { return *second; }
+  Def const& definition() const { return *def; }
+
+  bool is_defined() const { return def; }
 };
 
 
@@ -1246,14 +1445,13 @@ struct Enum_decl : Type_decl
 {
   void accept(Visitor& v) const { v.visit(*this); }
 
-  Init const& definition() const { return *second; }
+  Def const& definition() const { return *def; }
+
+  bool is_defined() const { return def; }
 };
 
 
 // Defines a namespace.
-//
-// TODO: How should I model re-opened namespaces? Probably
-// just do the lookup and re-establish the context.
 struct Namespace_decl : Decl
 {
   Namespace_decl(Name* n)
@@ -1305,7 +1503,7 @@ struct Template_decl : Decl
 // An object paramter of a function.
 struct Object_parm : Object_decl
 {
-  Object_parm(Name* n, Type* t, Init* i)
+  Object_parm(Name* n, Type* t, Init* i = nullptr)
     : Object_decl(n, t, i)
   { }
 
@@ -1318,26 +1516,15 @@ struct Object_parm : Object_decl
 // A constant value parameter of a template.
 struct Value_parm : Object_decl
 {
-  Value_parm(Name* n, Type* t, Init* i)
+  Value_parm(Name* n, Type* t, Init* i = nullptr)
     : Object_decl(n, t, i)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
 
   Init const& default_argument() const { return *third; }
-};
 
-
-// A type parameter of a template.
-struct Type_parm : Type_decl
-{
-  Type_parm(Name* n, Init* i)
-    : Type_decl(n, i)
-  { }
-
-  void accept(Visitor& v) const { v.visit(*this); }
-
-  Init const& default_argument() const { return *second; }
+  bool has_default_arguement() const { return third; }
 };
 
 
@@ -1356,6 +1543,23 @@ struct Variadic_parm : Decl
 };
 
 
+// A type parameter of a template.
+struct Type_parm : Decl
+{
+  Type_parm(Name* n, Init* d = nullptr)
+    : Decl(n), def(d)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+
+  Init const& default_argument() const { return *def; }
+
+  bool has_default_arguement() const { return def; }
+
+  Init* def;
+};
+
+
 // A template parameter of a template.
 //
 // The nested effectively denotes the "kind" of the template. It
@@ -1363,19 +1567,20 @@ struct Variadic_parm : Decl
 // that of the underlying declaration must be the same.
 struct Template_parm : Decl
 {
-  Template_parm(Name* n, Decl* t, Init* i)
-    : Decl(n), second(t), third(i)
+  Template_parm(Name* n, Decl* t, Init* d)
+    : Decl(n), temp(t), def(d)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
 
-  Decl const& declaration() const { return *second; }
-  Init const& default_argument() const { return *third; }
+  Decl const& declaration() const      { return *temp; }
+  Init const& default_argument() const { return *def; }
 
-  Decl*     second;
-  Init*     third;
+  bool has_default_arguement() const { return def; }
+
+  Decl*     temp;
+  Init*     def;
 };
-
 
 
 // A generic visitor for names.

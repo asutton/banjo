@@ -10,13 +10,11 @@ using namespace lingo;
 using namespace beaker;
 
 
-// A symbol table.
-Symbol_table syms;
-
-
 int
 main(int argc, char* argv[])
 {
+  init_tokens();
+
   Namespace_decl* global = make_global_ns();
   Variable_decl* v1 = make_variable(global, "v1", make_bool_type());
 

@@ -13,14 +13,14 @@ Symbol_table syms;
 inline Type_parm*
 make_type_parameter(char const* n)
 {
-  return new Type_parm(make_id(n), new Incomplete_init());
+  return new Type_parm(make_id(n));
 }
 
 
 inline Value_parm*
 make_value_parameter(char const* n, Type* t)
 {
-  return new Value_parm(make_id(n), t, new Default_init());
+  return new Value_parm(make_id(n), t);
 }
 
 

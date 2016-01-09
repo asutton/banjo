@@ -41,6 +41,7 @@ target_link_libraries(beaker-compile beaker)
 macro(add_run_test target)
   add_executable(${target} ${ARGN})
   target_link_libraries(${target} beaker)
+  add_test(${target} ${target})
 endmacro()
 
 
