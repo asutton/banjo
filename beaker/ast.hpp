@@ -643,6 +643,7 @@ struct Ge_expr;
 struct And_expr;
 struct Or_expr;
 struct Not_expr;
+struct Call_expr;
 struct Assign_expr;
 
 
@@ -686,6 +687,7 @@ struct Expr::Visitor
   virtual void visit(And_expr const&) { }
   virtual void visit(Or_expr const&) { }
   virtual void visit(Not_expr const&) { }
+  virtual void visit(Call_expr const&) { }
   virtual void visit(Assign_expr const&) { }
 };
 
@@ -913,11 +915,38 @@ struct Or_expr : Binary_expr
 };
 
 
+// Logical negation.
 struct Not_expr : Unary_expr
 {
   using Unary_expr::Unary_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// Represents a function call expression of the form `f(args...)`.
+//
+// If the `f` and `args` are non-dependent, then `f` must refer
+// to a function declaration, `args...` must be the converted
+// and instantiated default arguments, and the type is the return
+// type of the function.
+//
+// If the operands are dependent, then the retun type is a fresh
+// placeholder type.
+//
+// TODO: Consider subtyping for [virtual|open| method calls and
+// unresolved calls. It would simplify code generation.
+struct Call_expr : Expr
+{
+  Call_expr(Type* t, Expr* e, Expr_list const& a)
+    : Expr(t), fn(e), args(a)
+  { }
+
+  Expr const&      function() const  { return *fn; }
+  Expr_list const& arguments() const { return args; }
+
+  Expr*     fn;
+  Expr_list args;
 };
 
 
@@ -958,6 +987,7 @@ struct Generic_expr_visitor : Expr::Visitor, Generic_visitor<F, T>
   void visit(And_expr const& e)       { this->invoke(e); }
   void visit(Or_expr const& e)        { this->invoke(e); }
   void visit(Not_expr const& e)       { this->invoke(e); }
+  void visit(Call_expr const& e)       { this->invoke(e); }
   void visit(Assign_expr const& e)    { this->invoke(e); }
 };
 
@@ -1078,6 +1108,7 @@ apply(Stmt const& s, F fn)
 struct Init;
 struct Default_init;
 struct Value_init;
+struct Reference_init;
 struct Direct_init;
 struct Aggregate_init;
 struct Type_init;
@@ -1097,6 +1128,7 @@ struct Init::Visitor
 {
   virtual void visit(Default_init const&)   { }
   virtual void visit(Value_init const&)     { }
+  virtual void visit(Reference_init const&) { }
   virtual void visit(Direct_init const&)    { }
   virtual void visit(Aggregate_init const&) { }
   virtual void visit(Type_init const&)      { }
@@ -1115,7 +1147,13 @@ struct Default_init : Init
 // or in the case of functions, an expression.
 struct Value_init : Init
 {
-  Expr* first;
+  Expr* expr;
+};
+
+
+struct Reference_init : Init
+{
+  Expr* expr;
 };
 
 
@@ -1160,6 +1198,7 @@ struct Generic_init_visitor : Init::Visitor, Generic_visitor<F, T>
 
   void visit(Default_init const& i)   { this->invoke(i); }
   void visit(Value_init const& i)     { this->invoke(i); }
+  void visit(Reference_init const& i) { this->invoke(i); }
   void visit(Direct_init const& i)    { this->invoke(i); }
   void visit(Aggregate_init const& i) { this->invoke(i); }
   void visit(Type_init const& i)      { this->invoke(i); }

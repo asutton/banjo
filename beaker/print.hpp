@@ -106,8 +106,9 @@ struct Printer
   void literal(Real_expr const&);
   void id_expression(Reference_expr const&);
   void grouped_expression(Expr const&, Expr const&);
-  void binary_expression(Binary_expr const&, Token_kind);
+  void postfix_expression(Call_expr const&);
   void unary_expression(Unary_expr const&, Token_kind);
+  void binary_expression(Binary_expr const&, Token_kind);
 
   // Declarations
   void declaration(Decl const&);

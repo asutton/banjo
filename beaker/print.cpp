@@ -460,6 +460,7 @@ precedence(Expr const& e)
     int operator()(And_expr const& e)       { return 13; }
     int operator()(Or_expr const& e)        { return 14; }
     int operator()(Not_expr const& e)       { return 3; }
+    int operator()(Call_expr const& e)      { return 2; }
     int operator()(Assign_expr const& e)    { return 15; }
   };
   return apply(e, fn{});
@@ -492,6 +493,7 @@ Printer::expression(Expr const& e)
     void operator()(And_expr const& e)       { p.binary_expression(e, amp_amp_tok); }
     void operator()(Or_expr const& e)        { p.binary_expression(e, bar_bar_tok); }
     void operator()(Not_expr const& e)       { p.unary_expression(e, bang_tok); }
+    void operator()(Call_expr const& e)      { p.postfix_expression(e); }
     void operator()(Assign_expr const& e)    { p.binary_expression(e, eq_tok); }
   };
   apply(e, fn{*this});
@@ -540,6 +542,21 @@ Printer::grouped_expression(Expr const& e, Expr const& s)
   } else {
     expression(s);
   }
+}
+
+
+void
+Printer::postfix_expression(Call_expr const& e)
+{
+  grouped_expression(e, e.function());
+  token(lparen_tok);
+  Expr_list const& p = e.arguments();
+  for (auto iter = p.begin(); iter != p.end(); ++iter) {
+    expression(*iter);
+    if (std::next(iter) != p.end())
+      token(comma_tok);
+  }
+  token(rparen_tok);
 }
 
 
