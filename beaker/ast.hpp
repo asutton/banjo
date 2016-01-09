@@ -976,9 +976,13 @@ apply(Expr const& e, F fn)
 // Statements
 
 struct Stmt;
+struct Compound_stmt;
+struct Expression_stmt;
+struct Declaration_stmt;
 struct Return_stmt;
 
 
+// Represents the set of all statemnts in the language.
 struct Stmt : Term
 {
   struct Visitor;
@@ -989,10 +993,42 @@ struct Stmt : Term
 
 struct Stmt::Visitor
 {
-  virtual void visit(Return_stmt const& s) { }
+  virtual void visit(Compound_stmt const&) { }
+  virtual void visit(Expression_stmt const&) { }
+  virtual void visit(Declaration_stmt const&) { }
+  virtual void visit(Return_stmt const&) { }
 };
 
 
+// A blocked sequence of statements.
+struct Compound_stmt : Stmt
+{
+  void accept(Visitor& v) const { v.visit(*this); }
+
+  Stmt_list stms;
+};
+
+
+// A statement that evaluates an expression and discards
+// the result.
+struct Expression_stmt : Stmt
+{
+  void accept(Visitor& v) const { v.visit(*this); }
+
+  Expr* expr;
+};
+
+
+// A statemnt that declares a variable.
+struct Declaration_stmt : Stmt
+{
+  void accept(Visitor& v) const { v.visit(*this); }
+
+  Decl* decl;
+};
+
+
+// A return statement.
 struct Return_stmt : Stmt
 {
   Return_stmt(Expr* e)
@@ -1015,7 +1051,10 @@ struct Generic_stmt_visitor : Stmt::Visitor, Generic_visitor<F, T>
     : Generic_visitor<F, T>(f)
   { }
 
-  void visit(Return_stmt const& s) { this->invoke(s); }
+  void visit(Compound_stmt const& s)    { this->invoke(s); }
+  void visit(Expression_stmt const& s)  { this->invoke(s); }
+  void visit(Declaration_stmt const& s) { this->invoke(s); }
+  void visit(Return_stmt const& s)      { this->invoke(s); }
 };
 
 
