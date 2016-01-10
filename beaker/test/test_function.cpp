@@ -13,12 +13,16 @@ using namespace beaker;
 int
 main(int argc, char* argv[])
 {
-  init_tokens();
+  Context cxt;
+  Builder build(cxt);
+
+  Type& b = build.get_bool_type();
+  Type& z = build.get_int_type();
 
   Decl_list ps = {
-    &make_parameter("p1", make_bool_type()),
-    &make_parameter("p2", make_int_type())
+    &build.make_object_parm("p1", b),
+    &build.make_object_parm("p2", z)
   };
-  auto& f = make_function("f1", ps, make_int_type());
+  auto& f = build.make_function("f1", ps, z);
   std::cout << f << '\n';
 }

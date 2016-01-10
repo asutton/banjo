@@ -326,6 +326,9 @@ struct Typename_type;
 bool is_object_type(Type const&);
 bool is_reference_type(Type const&);
 
+bool is_more_qualified_type(Type const&, Type const&);
+
+
 // The base class of all types.
 struct Type : Term
 {
@@ -335,6 +338,19 @@ struct Type : Term
 
   bool is_object_type() const    { return beaker::is_object_type(*this); }
   bool is_reference_type() const { return beaker::is_reference_type(*this); }
+
+  // Returns the qualifier for this type.
+  //
+  // FIXME: Make the qualifier a legitmate type.
+  //
+  // TODO: Merge the qualifier into the base type?
+  virtual int qualifier() const    { return 0; }
+  virtual bool is_const() const    { return false; }
+  virtual bool is_volatile() const { return false; }
+
+  // Returns the unqualified version of this type.
+  virtual Type const& unqualified_type() const { return *this; }
+  virtual Type&       unqualified_type()       { return *this; }
 };
 
 
@@ -463,18 +479,44 @@ constexpr int const_qual    = 0x01;
 constexpr int volatile_qual = 0x02;
 
 
+// Returns true if a is strictly more qualified than b.
+inline bool
+is_more_qualified(int a, int b)
+{
+  // case: any cv > 0
+  if (a && !b)
+    return true;
+
+  // case: cv > c
+  // case: cv > v
+  if (a == 0x03 && b < 0x03)
+    return true;
+  return false;
+}
+
+
 struct Qualified_type : Type
 {
   Qualified_type(Type& t, int q)
     : ty(&t), qual(q)
-  { }
+  {
+    lingo_assert(!is<Qualified_type>(ty));
+  }
 
   void accept(Visitor& v) const { v.visit(*this); }
 
   Type const& type() const { return *ty; }
-  int qualifier() const    { return qual; }
+  Type&       type()       { return *ty; }
+
+  // Returns the qualifier for this type. Note that these
+  // override functions in type.
+  int  qualifier() const   { return qual; }
   bool is_const() const    { return qual & const_qual; }
   bool is_volatile() const { return qual & volatile_qual; }
+
+  // Returns the unqualfiied version of this type.
+  Type const& unqualified_type() const { return type(); }
+  Type&       unqualified_type()       { return type(); }
 
   Type* ty;
   int   qual;
@@ -664,6 +706,7 @@ struct Assign_expr;
 // Conversions
 struct Value_conv;
 struct Qualification_conv;
+struct Boolean_conv;
 struct Integer_conv;
 struct Float_conv;
 struct Numeric_conv;
@@ -714,6 +757,7 @@ struct Expr::Visitor
   virtual void visit(Assign_expr const&) { }
   virtual void visit(Value_conv const&) { }
   virtual void visit(Qualification_conv const&) { }
+  virtual void visit(Boolean_conv const&) { }
   virtual void visit(Integer_conv const&) { }
   virtual void visit(Float_conv const&) { }
   virtual void visit(Numeric_conv const&) { }
@@ -793,25 +837,22 @@ struct Real_expr : Literal_expr
 
 // A reference to a single declaration.
 //
-// TODO: Subclass for variables and functions? Also, add unresolved
-// identifiers and referneces to overload sets.
+// TODO: Subclass for variables, constants, and functions.
+// Unresolved identifiers are also interesting. These should be
+// called Variable_expr, Constant_expr, and Function_expr,
+// respectively.
 struct Reference_expr : Expr
 {
-  Reference_expr(Type& t, Name& n, Decl& d)
-    : Expr(t), id(&n), decl(&d)
+  Reference_expr(Type& t,Decl& d)
+    : Expr(t), decl(&d)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
-
-  // Returns the id of the expression.
-  Name const& name() const { return *id; }
-  Name&       name()       { return *id; }
 
   // Returns the referenced declaration.
   Decl const& declaration() const { return *decl; }
   Decl&       declaration()       { return *decl; }
 
-  Name* id;
   Decl* decl;
 };
 
@@ -1044,6 +1085,15 @@ struct Qualification_conv : Conv
 
 
 // A conversion from one integer type to another.
+struct Boolean_conv : Conv
+{
+  using Conv::Conv;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// A conversion from one integer type to another.
 struct Integer_conv : Conv
 {
   using Conv::Conv;
@@ -1104,6 +1154,7 @@ struct Generic_expr_visitor : Expr::Visitor, Generic_visitor<F, T>
   void visit(Assign_expr const& e)        { this->invoke(e); }
   void visit(Value_conv const& e)         { this->invoke(e); }
   void visit(Qualification_conv const& e) { this->invoke(e); }
+  void visit(Boolean_conv const& e)       { this->invoke(e); }
   void visit(Integer_conv const& e)       { this->invoke(e); }
   void visit(Float_conv const& e)         { this->invoke(e); }
   void visit(Numeric_conv const& e)       { this->invoke(e); }
@@ -1731,6 +1782,9 @@ struct Template_decl : Decl
 
 
 // An object paramter of a function.
+//
+// TODO: Name this variable_parm to be consistent with variable
+// declarations?
 struct Object_parm : Object_decl
 {
   Object_parm(Name& n, Type& t)
@@ -1753,6 +1807,9 @@ struct Object_parm : Object_decl
 
 
 // A constant value parameter of a template.
+//
+// TODO: Name this Constant_parm to be consistent with
+// constant declarations?
 struct Value_parm : Object_decl
 {
   Value_parm(Name& n, Type& t)

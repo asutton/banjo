@@ -13,7 +13,8 @@ namespace beaker
 struct Type;
 struct Expr;
 
-Expr* convert(Expr const&, Type const&);
+
+Expr& convert(Expr const&, Type const&);
 
 
 } // namespace beaker

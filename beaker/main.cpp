@@ -1,6 +1,7 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
+#include "context.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
 
@@ -18,8 +19,7 @@ using namespace beaker;
 int
 main(int argc, char* argv[])
 {
-  init_colors();
-  init_tokens();
+  Context cxt;
 
   if (argc != 2) {
     std::cerr << "usage: beaker-compile <input-file>\n";
@@ -29,8 +29,8 @@ main(int argc, char* argv[])
   File input(argv[1]);
   Character_stream cs(input);
   Token_stream ts(input);
-  Lexer lex(cs, ts);
-  Parser parse(ts);
+  Lexer lex(cxt, cs, ts);
+  Parser parse(cxt, ts);
 
   // Transform characters into tokens.
   lex();

@@ -4,9 +4,12 @@
 # Add the core Beaker library.
 add_library(beaker
   prelude.cpp
+  token.cpp
   lexer.cpp
   # parser.cpp
   ast.cpp
+  context.cpp
+  builder.cpp
   name.cpp
   type.cpp
   expr.cpp
@@ -53,3 +56,4 @@ add_run_test(test_hash        test/test_hash.cpp)
 add_run_test(test_variable    test/test_variable.cpp)
 add_run_test(test_function    test/test_function.cpp)
 add_run_test(test_template    test/test_template.cpp)
+add_run_test(test_convert     test/test_convert.cpp)

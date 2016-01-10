@@ -6,29 +6,27 @@
 #include <iostream>
 
 
-using namespace lingo;
-using namespace beaker;
-
-
-Namespace_decl& global = make_global_ns();
+Context* cxt;
 
 void
 test_names()
 {
-  std::cout << "--- names ---\n";
-  Name& n1 = make_id("N1");
-  Name& n2 = make_id("N2");
+  Builder build(*cxt);
 
-  Namespace_decl ns1(n1);
-  Namespace_decl ns2(n2);
+  std::cout << "--- names ---\n";
+  Name& n1 = build.get_id("N1");
+  Name& n2 = build.get_id("N2");
+  Namespace_decl& global = build.get_global_namespace();
+  Namespace_decl& ns1 = build.make_namespace(n1);
+  Namespace_decl& ns2 = build.make_namespace(n2);
   ns1.context(global);
   ns2.context(ns1);
 
   // TODO: How do I automate these tests?
-  Qualified_id qn1(global, n1);
+  Name& qn1 = build.get_id(global, n1);
   std::cout << qn1 << '\n'; // ::N1
 
-  Qualified_id qn2(ns1, n2);
+  Name& qn2 = build.get_id(ns1, n2);
   std::cout << qn2 << '\n'; // N1::N2
 
   std::cout << ns2.qualified_id() << '\n'; // N1::N2
@@ -72,14 +70,18 @@ test_types()
 void
 test_expressions()
 {
+  Builder build(*cxt);
+
+  Type& b = build.get_bool_type();
+
   std::cout << "--- expressions ---\n";
-  Expr& e1 = make_true();
-  Expr& e2 = make_false();
+  Expr& e1 = build.get_true();
+  Expr& e2 = build.get_false();
   std::cout << e1 << '\n';
   std::cout << e2 << '\n';
 
-  Expr& e3 = *new And_expr(make_bool_type(), e1, e2);
-  Expr& e4 = *new Not_expr(make_bool_type(), e3);
+  Expr& e3 = build.make_and(b, e1, e2);
+  Expr& e4 = build.make_not(b, e3);
   std::cout << e4 << '\n';
 }
 
@@ -87,7 +89,8 @@ test_expressions()
 int
 main(int argc, char* argv[])
 {
-  init_tokens();
+  Context c;
+  cxt = &c;
 
   test_names();
   test_types();

@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "ast.hpp"
+#include "equivalence.hpp"
 
 
 namespace beaker
@@ -59,6 +60,19 @@ bool
 is_reference_type(Type const& t)
 {
   return is<Reference_type>(&t);
+}
+
+
+
+// Returns true if a is a more qualified type than b. The
+// unqualified versions of a and b shall be equivalent.
+//
+// TODO: Handle aggregate chains.
+bool
+is_more_qualified_type(Type const& a, Type const& b)
+{
+  lingo_assert(is_equivalent(a.unqualified_type(), b.unqualified_type()));
+  return is_more_qualified(a.qualifier(), b.qualifier());
 }
 
 

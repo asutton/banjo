@@ -4,8 +4,8 @@
 #ifndef BEAKER_PRINT_HPP
 #define BEAKER_PRINT_HPP
 
+#include "token.hpp"
 #include "ast.hpp"
-#include "lexer.hpp"
 
 #include <iosfwd>
 
@@ -107,6 +107,12 @@ struct Printer
   void id_expression(Reference_expr const&);
   void grouped_expression(Expr const&, Expr const&);
   void postfix_expression(Call_expr const&);
+  void postfix_expression(Value_conv const&);
+  void postfix_expression(Qualification_conv const&);
+  void postfix_expression(Boolean_conv const&);
+  void postfix_expression(Integer_conv const&);
+  void postfix_expression(Float_conv const&);
+  void postfix_expression(Numeric_conv const&);
   void unary_expression(Unary_expr const&, Token_kind);
   void binary_expression(Binary_expr const&, Token_kind);
 

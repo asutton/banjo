@@ -462,7 +462,7 @@ precedence(Expr const& e)
     int operator()(Not_expr const& e)       { return 3; }
     int operator()(Call_expr const& e)      { return 2; }
     int operator()(Assign_expr const& e)    { return 15; }
-    int operator()(Conv const& e)           { return 0; }
+    int operator()(Conv const& e)           { return 3; }
   };
   return apply(e, fn{});
 }
@@ -474,30 +474,35 @@ Printer::expression(Expr const& e)
   struct fn
   {
     Printer& p;
-    void operator()(Boolean_expr const& e)   { p.literal(e); }
-    void operator()(Integer_expr const& e)   { p.literal(e); }
-    void operator()(Real_expr const& e)      { p.literal(e); }
-    void operator()(Reference_expr const& e) { p.id_expression(e); }
-    void operator()(Add_expr const& e)       { p.binary_expression(e, plus_tok); }
-    void operator()(Sub_expr const& e)       { p.binary_expression(e, minus_tok); }
-    void operator()(Mul_expr const& e)       { p.binary_expression(e, star_tok); }
-    void operator()(Div_expr const& e)       { p.binary_expression(e, slash_tok); }
-    void operator()(Rem_expr const& e)       { p.binary_expression(e, percent_tok); }
-    void operator()(Neg_expr const& e)       { p.unary_expression(e, minus_tok); }
-    void operator()(Pos_expr const& e)       { p.unary_expression(e, plus_tok); }
-    void operator()(Eq_expr const& e)        { p.binary_expression(e, eq_eq_tok); }
-    void operator()(Ne_expr const& e)        { p.binary_expression(e, bang_eq_tok); }
-    void operator()(Lt_expr const& e)        { p.binary_expression(e, lt_tok); }
-    void operator()(Gt_expr const& e)        { p.binary_expression(e, gt_tok); }
-    void operator()(Le_expr const& e)        { p.binary_expression(e, lt_eq_tok); }
-    void operator()(Ge_expr const& e)        { p.binary_expression(e, gt_eq_tok); }
-    void operator()(And_expr const& e)       { p.binary_expression(e, amp_amp_tok); }
-    void operator()(Or_expr const& e)        { p.binary_expression(e, bar_bar_tok); }
-    void operator()(Not_expr const& e)       { p.unary_expression(e, bang_tok); }
-    void operator()(Call_expr const& e)      { p.postfix_expression(e); }
-    void operator()(Assign_expr const& e)    { p.binary_expression(e, eq_tok); }
-    void operator()(Conv const& e)           { p.expression(e.source()); }
-  };
+    void operator()(Boolean_expr const& e)       { p.literal(e); }
+    void operator()(Integer_expr const& e)       { p.literal(e); }
+    void operator()(Real_expr const& e)          { p.literal(e); }
+    void operator()(Reference_expr const& e)     { p.id_expression(e); }
+    void operator()(Add_expr const& e)           { p.binary_expression(e, plus_tok); }
+    void operator()(Sub_expr const& e)           { p.binary_expression(e, minus_tok); }
+    void operator()(Mul_expr const& e)           { p.binary_expression(e, star_tok); }
+    void operator()(Div_expr const& e)           { p.binary_expression(e, slash_tok); }
+    void operator()(Rem_expr const& e)           { p.binary_expression(e, percent_tok); }
+    void operator()(Neg_expr const& e)           { p.unary_expression(e, minus_tok); }
+    void operator()(Pos_expr const& e)           { p.unary_expression(e, plus_tok); }
+    void operator()(Eq_expr const& e)            { p.binary_expression(e, eq_eq_tok); }
+    void operator()(Ne_expr const& e)            { p.binary_expression(e, bang_eq_tok); }
+    void operator()(Lt_expr const& e)            { p.binary_expression(e, lt_tok); }
+    void operator()(Gt_expr const& e)            { p.binary_expression(e, gt_tok); }
+    void operator()(Le_expr const& e)            { p.binary_expression(e, lt_eq_tok); }
+    void operator()(Ge_expr const& e)            { p.binary_expression(e, gt_eq_tok); }
+    void operator()(And_expr const& e)           { p.binary_expression(e, amp_amp_tok); }
+    void operator()(Or_expr const& e)            { p.binary_expression(e, bar_bar_tok); }
+    void operator()(Not_expr const& e)           { p.unary_expression(e, bang_tok); }
+    void operator()(Call_expr const& e)          { p.postfix_expression(e); }
+    void operator()(Assign_expr const& e)        { p.binary_expression(e, eq_tok); }
+    void operator()(Value_conv const& e)         { p.postfix_expression(e); }
+    void operator()(Qualification_conv const& e) { p.postfix_expression(e); }
+    void operator()(Integer_conv const& e)       { p.postfix_expression(e); }
+    void operator()(Boolean_conv const& e)       { p.postfix_expression(e); }
+    void operator()(Float_conv const& e)         { p.postfix_expression(e); }
+    void operator()(Numeric_conv const& e)       { p.postfix_expression(e); }
+};
   apply(e, fn{*this});
 }
 
@@ -528,7 +533,7 @@ Printer::literal(Real_expr const& e)
 void
 Printer::id_expression(Reference_expr const& e)
 {
-  id(e.name());
+  id(e.declaration().name());
 }
 
 
@@ -558,6 +563,67 @@ Printer::postfix_expression(Call_expr const& e)
     if (std::next(iter) != p.end())
       token(comma_tok);
   }
+  token(rparen_tok);
+}
+
+
+void
+Printer::postfix_expression(Value_conv const& e)
+{
+  token("__dereference");
+  token(lparen_tok);
+  expression(e.source());
+  token(rparen_tok);
+}
+
+
+void
+Printer::postfix_expression(Qualification_conv const& e)
+{
+  // TODO: Be more specific about the qualification added.
+  token("__add_qualifier");
+  token(lparen_tok);
+  expression(e.source());
+  token(rparen_tok);
+}
+
+
+void
+Printer::postfix_expression(Boolean_conv const& e)
+{
+  token("__convert_to_bool");
+  token(lparen_tok);
+  expression(e.source());
+  token(rparen_tok);
+}
+
+
+void
+Printer::postfix_expression(Integer_conv const& e)
+{
+  token("__widen_integer");
+  token(lparen_tok);
+  expression(e.source());
+  token(rparen_tok);
+}
+
+
+void
+Printer::postfix_expression(Float_conv const& e)
+{
+  token("__widen_float");
+  token(lparen_tok);
+  expression(e.source());
+  token(rparen_tok);
+}
+
+
+void
+Printer::postfix_expression(Numeric_conv const& e)
+{
+  token("__convert_to_float");
+  token(lparen_tok);
+  expression(e.source());
   token(rparen_tok);
 }
 

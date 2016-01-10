@@ -5,6 +5,7 @@
 #define BEAKER_PARSER_HPP
 
 #include "lexer.hpp"
+#include "token.hpp"
 #include "ast.hpp"
 
 
@@ -23,8 +24,8 @@ struct Syntax_error : std::runtime_error
 // tokens. This supports the resolution of source code locations.
 struct Parser
 {
-  Parser(Token_stream& ts)
-    : tokens(ts), state()
+  Parser(Context& cxt, Token_stream& ts)
+    : cxt(cxt), tokens(ts), state()
   { }
 
   Term* operator()();
@@ -201,6 +202,7 @@ struct Parser
 
   struct Assume_template;
 
+  Context&      cxt;
   Token_stream& tokens;
   State         state;
 };

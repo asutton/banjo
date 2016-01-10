@@ -13,10 +13,10 @@ using namespace beaker;
 int
 main(int argc, char* argv[])
 {
-  init_tokens();
+  Context cxt;
+  Builder build(cxt);
 
-  Default_init def;
-  Variable_decl v1(make_id("v1"), make_bool_type(), def);
+  Variable_decl& v1 = build.make_variable("v1", build.get_int_type());
 
   // FIXME: What exactly are we testing here?
   std::cout << v1 << '\n';
