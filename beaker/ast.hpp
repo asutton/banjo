@@ -100,17 +100,21 @@ struct List : Term, std::vector<T*>
   std::vector<T*> const& base() const { return *this; }
   std::vector<T*>&       base()       { return *this; }
 
+  void push_back(T& x) { base().push_back(&x); }
+  void push_back(T* x) { base().push_back(x); }
+
   iterator begin() { return base().begin(); }
   iterator end()   { return base().end(); }
 
   const_iterator begin() const { return base().begin(); }
   const_iterator end() const   { return base().end(); }
-  };
+};
 
 
 using Term_list = List<Term>;
 using Type_list = List<Type>;
 using Expr_list = List<Expr>;
+using Init_list = List<Expr>;
 using Stmt_list = List<Stmt>;
 using Decl_list = List<Decl>;
 
@@ -159,8 +163,8 @@ struct Name::Visitor
 // A simple identifier.
 struct Simple_id : Name
 {
-  Simple_id(Symbol const* sym)
-    : first(sym)
+  Simple_id(Symbol const& sym)
+    : first(&sym)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); };
@@ -184,6 +188,8 @@ struct Global_id : Name
 
 
 // An placeholder for a name.
+//
+// FIXME: Call this something else?
 struct Placeholder_id : Name
 {
   void accept(Visitor& v) const { v.visit(*this); };
@@ -246,8 +252,8 @@ struct Template_id : Name
 // An explicitly scoped identifier.
 struct Qualified_id : Name
 {
-  Qualified_id(Decl* d, Name* n)
-    : decl(d), first(n)
+  Qualified_id(Decl& d, Name& n)
+    : decl(&d), first(&n)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); };
@@ -317,12 +323,18 @@ struct Enum_type;
 struct Typename_type;
 
 
+bool is_object_type(Type const&);
+bool is_reference_type(Type const&);
+
 // The base class of all types.
 struct Type : Term
 {
   struct Visitor;
 
   virtual void accept(Visitor&) const = 0;
+
+  bool is_object_type() const    { return beaker::is_object_type(*this); }
+  bool is_reference_type() const { return beaker::is_reference_type(*this); }
 };
 
 
@@ -429,17 +441,18 @@ struct Declauto_type : Type
 // A function type.
 struct Function_type : Type
 {
-  Function_type(Type_list const& p, Type* r)
-    : first(p), second(r)
+  Function_type(Type_list const& p, Type& r)
+    : parms(p), ret(&r)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
 
-  Type_list const& parameter_types() const { return first; }
-  Type const&      return_type() const     { return *second; }
+  Type_list const& parameter_types() const { return parms; }
+  Type const&      return_type() const     { return *ret; }
+  Type&            return_type()           { return *ret; }
 
-  Type_list first;
-  Type*     second;
+  Type_list parms;
+  Type*     ret;
 };
 
 
@@ -452,8 +465,8 @@ constexpr int volatile_qual = 0x02;
 
 struct Qualified_type : Type
 {
-  Qualified_type(Type* t, int q)
-    : ty(t), qual(q)
+  Qualified_type(Type& t, int q)
+    : ty(&t), qual(q)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -470,13 +483,14 @@ struct Qualified_type : Type
 
 struct Pointer_type : Type
 {
-  Pointer_type(Type* t)
-    : ty(t)
+  Pointer_type(Type& t)
+    : ty(&t)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
 
   Type const& type() const { return *ty; }
+  Type&       type()       { return *ty; }
 
   Type* ty;
 };
@@ -484,13 +498,14 @@ struct Pointer_type : Type
 
 struct Reference_type : Type
 {
-  Reference_type(Type* t)
-    : ty(t)
+  Reference_type(Type& t)
+    : ty(&t)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
 
   Type const& type() const { return *ty; }
+  Type&       type()       { return *ty; }
 
   Type* ty;
 };
@@ -509,13 +524,14 @@ struct Array_type : Type
 // of unknown bound.
 struct Sequence_type : Type
 {
-  Sequence_type(Type* t)
-    : ty(t)
+  Sequence_type(Type& t)
+    : ty(&t)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
 
   Type const& type() const { return *ty; }
+  Type&       type()       { return *ty; }
 
   Type* ty;
 };
@@ -524,8 +540,8 @@ struct Sequence_type : Type
 // The base class of all user-defined types.
 struct User_defined_type : Type
 {
-  User_defined_type(Decl* d)
-    : decl(d)
+  User_defined_type(Decl& d)
+    : decl(&d)
   { }
 
   Decl const& declaration() const { return *decl; }
@@ -570,9 +586,7 @@ struct Enum_type : User_defined_type
 // FIXME: Guarantee that d is a Type_parm.
 struct Typename_type : User_defined_type
 {
-  Typename_type(Decl* d)
-    : User_defined_type(d)
-  { }
+  using User_defined_type::User_defined_type;
 
   void accept(Visitor& v) const { v.visit(*this); }
 
@@ -623,9 +637,11 @@ apply(Type const& t, F fn)
 //
 // TODO: Add bitwise operations.
 
+// Literals
 struct Boolean_expr;
 struct Integer_expr;
 struct Real_expr;
+// Expressions
 struct Reference_expr;
 struct Add_expr;
 struct Sub_expr;
@@ -645,6 +661,12 @@ struct Or_expr;
 struct Not_expr;
 struct Call_expr;
 struct Assign_expr;
+// Conversions
+struct Value_conv;
+struct Qualification_conv;
+struct Integer_conv;
+struct Float_conv;
+struct Numeric_conv;
 
 
 // The base class of all expresions.
@@ -652,13 +674,14 @@ struct Expr : Term
 {
   struct Visitor;
 
-  Expr(Type* t)
-    : ty(t)
+  Expr(Type& t)
+    : ty(&t)
   { }
 
   virtual void accept(Visitor&) const = 0;
 
   Type const& type() const { return *ty; }
+  Type&       type()       { return *ty; }
 
   Type* ty;
 };
@@ -689,14 +712,19 @@ struct Expr::Visitor
   virtual void visit(Not_expr const&) { }
   virtual void visit(Call_expr const&) { }
   virtual void visit(Assign_expr const&) { }
+  virtual void visit(Value_conv const&) { }
+  virtual void visit(Qualification_conv const&) { }
+  virtual void visit(Integer_conv const&) { }
+  virtual void visit(Float_conv const&) { }
+  virtual void visit(Numeric_conv const&) { }
 };
 
 
 // The base class of all literal values.
 struct Literal_expr : Expr
 {
-  Literal_expr(Type* t, Symbol const* s)
-    : Expr(t), sym(s)
+  Literal_expr(Type& t, Symbol const& s)
+    : Expr(t), sym(&s)
   { }
 
   Symbol const& symbol() const { return *sym; }
@@ -708,8 +736,8 @@ struct Literal_expr : Expr
 // The base class of all unary expressions.
 struct Unary_expr : Expr
 {
-  Unary_expr(Type* t, Expr* e)
-    : Expr(t), first(e)
+  Unary_expr(Type& t, Expr& e)
+    : Expr(t), first(&e)
   { }
 
   Expr const& operand() const { return *first; }
@@ -721,12 +749,15 @@ struct Unary_expr : Expr
 // The base class of all binary expressions.
 struct Binary_expr : Expr
 {
-  Binary_expr(Type* t, Expr* e1, Expr* e2)
-    : Expr(t), first(e1), second(e2)
+  Binary_expr(Type& t, Expr& e1, Expr& e2)
+    : Expr(t), first(&e1), second(&e2)
   { }
 
-  Expr const& left() const  { return *first; }
+  Expr const& left() const { return *first; }
+  Expr&       left()       { return *first; }
+
   Expr const& right() const { return *second; }
+  Expr&       right()       { return *second; }
 
   Expr* first;
   Expr* second;
@@ -766,14 +797,19 @@ struct Real_expr : Literal_expr
 // identifiers and referneces to overload sets.
 struct Reference_expr : Expr
 {
-  Reference_expr(Type* t, Name* n, Decl* d)
-    : Expr(t), decl(d)
+  Reference_expr(Type& t, Name& n, Decl& d)
+    : Expr(t), id(&n), decl(&d)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
 
-  Name const& name() const        { return *id; }
+  // Returns the id of the expression.
+  Name const& name() const { return *id; }
+  Name&       name()       { return *id; }
+
+  // Returns the referenced declaration.
   Decl const& declaration() const { return *decl; }
+  Decl&       declaration()       { return *decl; }
 
   Name* id;
   Decl* decl;
@@ -925,6 +961,7 @@ struct Not_expr : Unary_expr
 
 
 // Represents a function call expression of the form `f(args...)`.
+// The function arguments are initializers for the declared parameters.
 //
 // If the `f` and `args` are non-dependent, then `f` must refer
 // to a function declaration, `args...` must be the converted
@@ -938,15 +975,18 @@ struct Not_expr : Unary_expr
 // unresolved calls. It would simplify code generation.
 struct Call_expr : Expr
 {
-  Call_expr(Type* t, Expr* e, Expr_list const& a)
-    : Expr(t), fn(e), args(a)
+  Call_expr(Type& t, Expr& e, Init_list const& a)
+    : Expr(t), fn(&e), args(a)
   { }
 
-  Expr const&      function() const  { return *fn; }
-  Expr_list const& arguments() const { return args; }
+  Expr const& function() const { return *fn; }
+  Expr&       function()       { return *fn; }
+
+  Init_list const& arguments() const { return args; }
+  Init_list&       arguments()       { return args; }
 
   Expr*     fn;
-  Expr_list args;
+  Init_list args;
 };
 
 
@@ -954,6 +994,79 @@ struct Call_expr : Expr
 struct Assign_expr : Binary_expr
 {
   using Binary_expr::Binary_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// Represents the set of standard conversions. A conversion
+// has a source expression and target type. Each derived
+// conversion contains the logic needed to transform the
+// value computed by the source expression into the target
+// type. Note that the target type is also the type of the
+// expression.
+struct Conv : Expr
+{
+  Conv(Type& t, Expr& e)
+    : Expr(t), expr(&e)
+  { }
+
+  // Returns the target type of the conversion. This is the
+  // same as the expression's type.
+  Type const& target() const { return type(); }
+  Type&       target()       { return type(); }
+
+  // Returns the converted expression (the operand).
+  Expr const& source() const { return *expr; }
+  Expr&       source()       { return *expr; }
+
+  Expr* expr;
+};
+
+
+// A conversion from an object to a value.
+struct Value_conv : Conv
+{
+  using Conv::Conv;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// A conversion from a less cv-qualified type to a more
+// cv-qualified type.
+struct Qualification_conv : Conv
+{
+  using Conv::Conv;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// A conversion from one integer type to another.
+struct Integer_conv : Conv
+{
+  using Conv::Conv;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// A conversion from one floating point type to another.
+struct Float_conv : Conv
+{
+  using Conv::Conv;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// A conversion from integer to floating point type.
+//
+// TODO: Integrate this with the float conversion?
+struct Numeric_conv : Conv
+{
+  using Conv::Conv;
 
   void accept(Visitor& v) const { v.visit(*this); }
 };
@@ -967,28 +1080,33 @@ struct Generic_expr_visitor : Expr::Visitor, Generic_visitor<F, T>
     : Generic_visitor<F, T>(f)
   { }
 
-  void visit(Boolean_expr const& e)   { this->invoke(e); }
-  void visit(Integer_expr const& e)   { this->invoke(e); }
-  void visit(Real_expr const& e)      { this->invoke(e); }
-  void visit(Reference_expr const& e) { this->invoke(e); }
-  void visit(Add_expr const& e)       { this->invoke(e); }
-  void visit(Sub_expr const& e)       { this->invoke(e); }
-  void visit(Mul_expr const& e)       { this->invoke(e); }
-  void visit(Div_expr const& e)       { this->invoke(e); }
-  void visit(Rem_expr const& e)       { this->invoke(e); }
-  void visit(Neg_expr const& e)       { this->invoke(e); }
-  void visit(Pos_expr const& e)       { this->invoke(e); }
-  void visit(Eq_expr const& e)        { this->invoke(e); }
-  void visit(Ne_expr const& e)        { this->invoke(e); }
-  void visit(Lt_expr const& e)        { this->invoke(e); }
-  void visit(Gt_expr const& e)        { this->invoke(e); }
-  void visit(Le_expr const& e)        { this->invoke(e); }
-  void visit(Ge_expr const& e)        { this->invoke(e); }
-  void visit(And_expr const& e)       { this->invoke(e); }
-  void visit(Or_expr const& e)        { this->invoke(e); }
-  void visit(Not_expr const& e)       { this->invoke(e); }
-  void visit(Call_expr const& e)       { this->invoke(e); }
-  void visit(Assign_expr const& e)    { this->invoke(e); }
+  void visit(Boolean_expr const& e)       { this->invoke(e); }
+  void visit(Integer_expr const& e)       { this->invoke(e); }
+  void visit(Real_expr const& e)          { this->invoke(e); }
+  void visit(Reference_expr const& e)     { this->invoke(e); }
+  void visit(Add_expr const& e)           { this->invoke(e); }
+  void visit(Sub_expr const& e)           { this->invoke(e); }
+  void visit(Mul_expr const& e)           { this->invoke(e); }
+  void visit(Div_expr const& e)           { this->invoke(e); }
+  void visit(Rem_expr const& e)           { this->invoke(e); }
+  void visit(Neg_expr const& e)           { this->invoke(e); }
+  void visit(Pos_expr const& e)           { this->invoke(e); }
+  void visit(Eq_expr const& e)            { this->invoke(e); }
+  void visit(Ne_expr const& e)            { this->invoke(e); }
+  void visit(Lt_expr const& e)            { this->invoke(e); }
+  void visit(Gt_expr const& e)            { this->invoke(e); }
+  void visit(Le_expr const& e)            { this->invoke(e); }
+  void visit(Ge_expr const& e)            { this->invoke(e); }
+  void visit(And_expr const& e)           { this->invoke(e); }
+  void visit(Or_expr const& e)            { this->invoke(e); }
+  void visit(Not_expr const& e)           { this->invoke(e); }
+  void visit(Call_expr const& e)          { this->invoke(e); }
+  void visit(Assign_expr const& e)        { this->invoke(e); }
+  void visit(Value_conv const& e)         { this->invoke(e); }
+  void visit(Qualification_conv const& e) { this->invoke(e); }
+  void visit(Integer_conv const& e)       { this->invoke(e); }
+  void visit(Float_conv const& e)         { this->invoke(e); }
+  void visit(Numeric_conv const& e)       { this->invoke(e); }
 };
 
 
@@ -1061,8 +1179,8 @@ struct Declaration_stmt : Stmt
 // A return statement.
 struct Return_stmt : Stmt
 {
-  Return_stmt(Expr* e)
-    : expr(e)
+  Return_stmt(Expr& e)
+    : expr(&e)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -1361,18 +1479,22 @@ struct Decl : Term
 {
   struct Visitor;
 
-  Decl(Name* n)
-    : spec(0), cxt(nullptr), first(n)
-  { }
-
-  Decl(Decl* c, Name* n)
-    : spec(0), cxt(c), first(n)
+  Decl(Name& n)
+    : spec(0), cxt(nullptr), first(&n)
   { }
 
   virtual void accept(Visitor& v) const = 0;
 
-  Decl const* context() const { return cxt; }
-  Name const& name() const    { return *first; }
+  // Returns a pointer to the context to which this
+  // declaration belongs. This is only null for the
+  // global namespace.
+  Decl const* context() const  { return cxt; }
+  Decl*       context()        { return cxt; }
+  void        context(Decl& d) { cxt = &d; }
+
+  Name const& name() const { return *first; }
+  Name&       name()       { return *first; }
+
   Name const& qualified_id() const;
   Name const& fully_qualified_id() const;
 
@@ -1404,28 +1526,37 @@ struct Decl::Visitor
 // Declares a variable, constant, or function parameter.
 struct Object_decl : Decl
 {
-  Object_decl(Name* n, Type* t, Init* i)
-    : Decl(n), second(t), third(i)
+  Object_decl(Name& n, Type& t)
+    : Decl(n), ty(&t), init()
   { }
 
-  Object_decl(Decl* cxt, Name* n, Type* t, Init* i)
-    : Decl(cxt, n), second(t), third(i)
+  Object_decl(Name& n, Type& t, Init& i)
+    : Decl(n), ty(&t), init(&i)
   { }
 
-  Type const& type() const { return *second; }
-  Type& type()             { return *second; }
+  Type const& type() const { return *ty; }
+  Type&       type()       { return *ty; }
 
-  Type* second;
-  Init* third;
+  Type* ty;
+  Init* init;
 };
 
 
-// Declares a class, union, enum, or generic type.
+// Declares a class, union, enum.
 struct Type_decl : Decl
 {
-  Type_decl(Name* n, Def* i)
-    : Decl(n), def(i)
+  Type_decl(Name& n)
+    : Decl(n), def()
   { }
+
+  Type_decl(Name& n, Def& i)
+    : Decl(n), def(&i)
+  { }
+
+  Def const& definition() const { return *def; }
+  Def&       definition()       { return *def; }
+
+  bool is_defined() const { return def; }
 
   Def* def;
 };
@@ -1434,30 +1565,28 @@ struct Type_decl : Decl
 // Declares a variable.
 struct Variable_decl : Object_decl
 {
-  Variable_decl(Name* n, Type* t, Init* i)
+  Variable_decl(Name& n, Type& t, Init& i)
     : Object_decl(n, t, i)
-  { }
-
-  Variable_decl(Decl* cxt, Name* n, Type* t, Init* i)
-    : Object_decl(cxt, n, t, i)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
 
-  Init const& initializer() const { return *third; }
+  Init const& initializer() const { return *init; }
+  Init&       initializer()       { return *init; }
 };
 
 
 // Declares a symbolic constant.
 struct Constant_decl : Object_decl
 {
-  Constant_decl(Name* n, Type* t, Init* i)
+  Constant_decl(Name& n, Type& t, Init& i)
     : Object_decl(n, t, i)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
 
-  Init const& initializer() const { return *third; }
+  Init const& initializer() const { return *init; }
+  Init&       initializer()       { return *init; }
 };
 
 
@@ -1469,75 +1598,91 @@ struct Constant_decl : Object_decl
 //    - a postcondition that explicitly states effects.
 struct Function_decl : Decl
 {
-  Function_decl(Name* n, Type* t, Decl_list const& p, Def* i)
-    : Decl(n), ty(t), parms(p), def(i)
+  Function_decl(Name& n, Type& t, Decl_list const& p)
+    : Decl(n), ty(&t), parms(p), def()
   { }
 
-  Function_decl(Decl* cxt, Name* n, Type* t, Decl_list const& p, Def* i)
-    : Decl(cxt, n), ty(t), parms(p), def(i)
+  Function_decl(Name& n, Type& t, Decl_list const& p, Def& d)
+    : Decl(n), ty(&t), parms(p), def(&d)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
 
-  Function_type const& type() const        { return *cast<Function_type>(ty); }
-  Type const&          return_type() const { return type().return_type(); }
+  // Returns the type of this declaration.
+  Function_type const& type() const { return *cast<Function_type>(ty); }
+  Function_type&       type()       { return *cast<Function_type>(ty); }
 
-  Decl_list const& parameters() const    { return parms; }
-  Expr const&      constraint() const    { return *constr; }
-  Expr const&      precondition() const  { return *constr; }
-  Expr const&      postcondition() const { return *constr; }
-  Def const&       definition() const    { return *def; }
+  // Returns the return type of the function.
+  Type const& return_type() const { return type().return_type(); }
+  Type&       return_type()       { return type().return_type(); }
 
-  bool is_defined() const  { return def; }
+  // Returns the list of parameter declarations for the function.
+  Decl_list const& parameters() const { return parms; }
+  Decl_list&       parameters()       { return parms; }
+
+  // Returns the function constraints. This is valid iff
+  // is_constrained() is true.
+  Expr const& constraint() const { return *constr; }
+  Expr&       constraint()       { return *constr; }
+
+  bool is_constrained() const { return constr; }
+
+  // TODO: Implelemnt pre- and post-conditions.
+  // Expr const& precondition() const  { return *constr; }
+  // Expr const& postcondition() const { return *constr; }
+
+  Def const& definition() const { return *def; }
+  Def&       definition()       { return *def; }
+
+  bool is_defined() const     { return def; }
 
   Type*     ty;
   Decl_list parms;
   Expr*     constr;
   Expr*     pre;
   Expr*     post;
-  Def*     def;
+  Def*      def;
 };
 
 
 struct Class_decl : Type_decl
 {
+  using Type_decl::Type_decl;
+
   void accept(Visitor& v) const { v.visit(*this); }
 
-  Def const& definition() const { return *def; }
-
-  bool is_defined() const { return def; }
+  Class_def const& definition() const { return *cast<Class_def>(def); }
+  Class_def&       definition()       { return *cast<Class_def>(def); }
 };
 
 
 struct Union_decl : Type_decl
 {
+  using Type_decl::Type_decl;
+
   void accept(Visitor& v) const { v.visit(*this); }
 
-  Def const& definition() const { return *def; }
-
-  bool is_defined() const { return def; }
+  Union_def const& definition() const { return *cast<Union_def>(def); }
+  Union_def&       definition()       { return *cast<Union_def>(def); }
 };
 
 
 struct Enum_decl : Type_decl
 {
+  using Type_decl::Type_decl;
+
   void accept(Visitor& v) const { v.visit(*this); }
 
-  Def const& definition() const { return *def; }
-
-  bool is_defined() const { return def; }
+  Enum_def const& definition() const { return *cast<Enum_def>(def); }
+  Enum_def&       definition()       { return *cast<Enum_def>(def); }
 };
 
 
 // Defines a namespace.
 struct Namespace_decl : Decl
 {
-  Namespace_decl(Name* n)
+  Namespace_decl(Name& n)
     : Decl(n), second()
-  { }
-
-  Namespace_decl(Decl* cxt, Name* n)
-    : Decl(cxt, n), second()
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -1557,20 +1702,27 @@ struct Namespace_decl : Decl
 // and comparison.
 struct Template_decl : Decl
 {
-  Template_decl(Decl_list const& p, Decl* d)
-    : Decl(d->first), parms(p), decl(d)
+  Template_decl(Decl_list const& p, Decl& d)
+    : Decl(d.name()), parms(p), decl(&d)
   {
-    lingo_assert(!d->cxt);
-    d->cxt = this;
+    lingo_assert(!d.context());
+    d.context(*this);
   }
 
   void accept(Visitor& v) const { v.visit(*this); }
 
   Decl_list const& parameters() const { return parms; }
-  Expr const&      constraint() const { return *constr; }
-  Decl const&      pattern() const    { return *decl; }
+
+  // Returns the constraint associated with the template.
+  // This is valid iff is_constrained() is true.
+  Expr const& constraint() const  { return *constr; }
+  Expr&       constraint()        { return *constr; }
+  void        constraint(Expr& e) { constr = &e; }
 
   bool is_constrained() const { return constr; }
+
+  Decl const&      pattern() const    { return *decl; }
+
 
   Decl_list parms;
   Expr*     constr;
@@ -1581,39 +1733,57 @@ struct Template_decl : Decl
 // An object paramter of a function.
 struct Object_parm : Object_decl
 {
-  Object_parm(Name* n, Type* t, Init* i = nullptr)
+  Object_parm(Name& n, Type& t)
+    : Object_decl(n, t)
+  { }
+
+  Object_parm(Name& n, Type& t, Init& i)
     : Object_decl(n, t, i)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
 
-  Init const& default_argument() const { return *third; }
+  // Returns the default argument for the parameter.
+  // This is valid iff has_default_arguement() is true.
+  Init const& default_argument() const { return *init; }
+  Init&       default_argument()       { return *init; }
+
+  bool has_default_arguement() const { return init; }
 };
 
 
 // A constant value parameter of a template.
 struct Value_parm : Object_decl
 {
-  Value_parm(Name* n, Type* t, Init* i = nullptr)
+  Value_parm(Name& n, Type& t)
+    : Object_decl(n, t)
+  { }
+
+  Value_parm(Name& n, Type& t, Init& i)
     : Object_decl(n, t, i)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
 
-  Init const& default_argument() const { return *third; }
+  // Returns the default argument for the parameter.
+  // This is valid iff has_default_arguement() is true.
+  Init const& default_argument() const { return *init; }
+  Init&       default_argument()       { return *init; }
 
-  bool has_default_arguement() const { return third; }
+  bool has_default_arguement() const { return init; }
 };
 
 
 // Represents an unspecified sequence of arguments. This
 // is distinct from a parameter pack.
 //
-// Note that we allow the variadic parameter to be named although
-// the variadic parameter has a canonical name (...).
+// Note that we allow the variadic parameter to be named
+// although the variadic parameter has a canonical name (...).
+//
+// TODO: Make this the type of an annamed parameter?
 struct Variadic_parm : Decl
 {
-  Variadic_parm(Name* n)
+  Variadic_parm(Name& n)
     : Decl(n)
   { }
 
@@ -1624,17 +1794,24 @@ struct Variadic_parm : Decl
 // A type parameter of a template.
 struct Type_parm : Decl
 {
-  Type_parm(Name* n, Init* d = nullptr)
-    : Decl(n), def(d)
+  Type_parm(Name& n)
+    : Decl(n), init()
+  { }
+
+  Type_parm(Name& n, Init& d)
+    : Decl(n), init(&d)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
 
-  Init const& default_argument() const { return *def; }
+  // Returns the default argument for the parameter.
+  // This is valid iff has_default_arguement() is true.
+  Init const& default_argument() const { return *init; }
+  Init&       default_argument()       { return *init; }
 
-  bool has_default_arguement() const { return def; }
+  bool has_default_arguement() const { return init; }
 
-  Init* def;
+  Init* init;
 };
 
 
@@ -1645,14 +1822,25 @@ struct Type_parm : Decl
 // that of the underlying declaration must be the same.
 struct Template_parm : Decl
 {
-  Template_parm(Name* n, Decl* t, Init* d)
-    : Decl(n), temp(t), def(d)
+  Template_parm(Name& n, Decl& t)
+    : Decl(n), temp(&t), def()
+  { }
+
+  Template_parm(Name& n, Decl& t, Init& i)
+    : Decl(n), temp(&t), def(&i)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
 
-  Decl const& declaration() const      { return *temp; }
+  // Returns the tempalte declaration that defines the
+  // signature of accepted arguments.
+  Template_decl const& declaration() const { return *cast<Template_decl>(temp); }
+  Template_decl&       declaration()       { return *cast<Template_decl>(temp); }
+
+  // Returns the default argument for the parameter.
+  // This is valid iff has_default_arguement() is true.
   Init const& default_argument() const { return *def; }
+  Init&       default_argument()       { return *def; }
 
   bool has_default_arguement() const { return def; }
 
@@ -1706,7 +1894,6 @@ struct Translation_unit : Term
 
 // -------------------------------------------------------------------------- //
 // Implementation
-
 
 inline Class_decl const&
 Class_type::declaration() const

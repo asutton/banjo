@@ -462,6 +462,7 @@ precedence(Expr const& e)
     int operator()(Not_expr const& e)       { return 3; }
     int operator()(Call_expr const& e)      { return 2; }
     int operator()(Assign_expr const& e)    { return 15; }
+    int operator()(Conv const& e)           { return 0; }
   };
   return apply(e, fn{});
 }
@@ -495,6 +496,7 @@ Printer::expression(Expr const& e)
     void operator()(Not_expr const& e)       { p.unary_expression(e, bang_tok); }
     void operator()(Call_expr const& e)      { p.postfix_expression(e); }
     void operator()(Assign_expr const& e)    { p.binary_expression(e, eq_tok); }
+    void operator()(Conv const& e)           { p.expression(e.source()); }
   };
   apply(e, fn{*this});
 }

@@ -16,6 +16,7 @@ add_library(beaker
   translation.cpp
   hash.cpp
   equivalence.cpp
+  convert.cpp
   print.cpp
 )
 target_compile_definitions(beaker PUBLIC ${LLVM_DEFINITIONS})

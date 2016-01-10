@@ -33,7 +33,7 @@ Parser::on_function_type(Type_list const&, Type*)
 Type*
 Parser::on_pointer_type(Token, Type* t)
 {
-  return new Pointer_type(t);
+  return new Pointer_type(*t);
 }
 
 
@@ -48,7 +48,7 @@ Parser::on_const_type(Token, Type* t)
     q->qual |= const_qual;
     return q;
   } else {
-    return new Qualified_type(t, const_qual);
+    return new Qualified_type(*t, const_qual);
   }
 }
 
@@ -64,7 +64,7 @@ Parser::on_volatile_type(Token, Type* t)
     q->qual |= volatile_qual;
     return q;
   } else {
-    return new Qualified_type(t, volatile_qual);
+    return new Qualified_type(*t, volatile_qual);
   }
 }
 
@@ -72,14 +72,14 @@ Parser::on_volatile_type(Token, Type* t)
 Type*
 Parser::on_sequence_type(Type* t)
 {
-  return new Sequence_type(t);
+  return new Sequence_type(*t);
 }
 
 
 Type*
 Parser::on_reference_type(Token, Type* t)
 {
-  return new Reference_type(t);
+  return new Reference_type(*t);
 }
 
 

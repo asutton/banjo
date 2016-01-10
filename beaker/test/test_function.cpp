@@ -15,11 +15,10 @@ main(int argc, char* argv[])
 {
   init_tokens();
 
-  Namespace_decl* global = make_global_ns();
   Decl_list ps = {
-    make_parameter("p1", make_bool_type()),
-    make_parameter("p2", make_int_type())
+    &make_parameter("p1", make_bool_type()),
+    &make_parameter("p2", make_int_type())
   };
-  Decl* f = make_function(global, "f1", ps, make_int_type());
-  std::cout << *f << '\n';
+  auto& f = make_function("f1", ps, make_int_type());
+  std::cout << f << '\n';
 }

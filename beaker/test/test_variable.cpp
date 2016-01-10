@@ -15,9 +15,9 @@ main(int argc, char* argv[])
 {
   init_tokens();
 
-  Namespace_decl* global = make_global_ns();
-  Variable_decl* v1 = make_variable(global, "v1", make_bool_type());
+  Default_init def;
+  Variable_decl v1(make_id("v1"), make_bool_type(), def);
 
   // FIXME: What exactly are we testing here?
-  std::cout << *v1 << '\n';
+  std::cout << v1 << '\n';
 }

@@ -10,27 +10,29 @@ using namespace lingo;
 using namespace beaker;
 
 
-Namespace_decl* global;
+Namespace_decl& global = make_global_ns();
 
 void
 test_names()
 {
   std::cout << "--- names ---\n";
-  Name* n1 = make_id("N1");
-  Name* n2 = make_id("N2");
+  Name& n1 = make_id("N1");
+  Name& n2 = make_id("N2");
 
-  auto* ns1 = new Namespace_decl(global, n1);
-  auto* ns2 = new Namespace_decl(ns1, n2);
+  Namespace_decl ns1(n1);
+  Namespace_decl ns2(n2);
+  ns1.context(global);
+  ns2.context(ns1);
 
   // TODO: How do I automate these tests?
-  Name* qn1 = new Qualified_id(global, n1);
-  std::cout << *qn1 << '\n'; // ::N1
+  Qualified_id qn1(global, n1);
+  std::cout << qn1 << '\n'; // ::N1
 
-  Name* qn2 = new Qualified_id(ns1, n2);
-  std::cout << *qn2 << '\n'; // N1::N2
+  Qualified_id qn2(ns1, n2);
+  std::cout << qn2 << '\n'; // N1::N2
 
-  std::cout << ns2->qualified_id() << '\n'; // N1::N2
-  std::cout << ns2->fully_qualified_id() << '\n'; // N1::N2
+  std::cout << ns2.qualified_id() << '\n'; // N1::N2
+  std::cout << ns2.fully_qualified_id() << '\n'; // N1::N2
 }
 
 
@@ -38,32 +40,32 @@ void
 test_types()
 {
   std::cout << "--- types ---\n";
-  Type* t1 = new Void_type();
-  std::cout << *t1 << '\n'; // void
+  Void_type t1;
+  std::cout << t1 << '\n'; // void
 
-  Type* t2 = new Boolean_type();
-  std::cout << *t2 << '\n'; // bool
+  Boolean_type t2;
+  std::cout << t2 << '\n'; // bool
 
-  Type* t3 = new Integer_type();
-  std::cout << *t3 << '\n'; // int
+  Integer_type t3;
+  std::cout << t3 << '\n'; // int
 
-  Type* t4 = new Float_type();
-  std::cout << *t4 << '\n'; // double
+  Float_type t4;
+  std::cout << t4 << '\n'; // double
 
-  Type* t5 = new Function_type({t2, t3}, t2);
-  std::cout << *t5 << '\n'; // (bool, int32) -> bool
+  Function_type t5({&t2, &t3}, t2);
+  std::cout << t5 << '\n'; // (bool, int32) -> bool
 
-  Type* t6 = new Pointer_type(t2);
-  std::cout << *t6 << '\n'; // bool*;
+  Pointer_type t6(t2);
+  std::cout << t6 << '\n'; // bool*;
 
-  Type* t7 = new Reference_type(t5);
-  std::cout << *t7 << '\n'; // ((bool, int32) -> bool)&;
+  Reference_type t7(t5);
+  std::cout << t7 << '\n'; // ((bool, int32) -> bool)&;
 
-  Type* t8 = new Function_type({}, t1);
-  std::cout << *t8 << '\n'; // () -> void
+  Function_type t8({}, t1);
+  std::cout << t8 << '\n'; // () -> void
 
-  Type* t9 = new Sequence_type(new Pointer_type(t8));
-  std::cout << *t9 << '\n'; // (() -> void)*[]
+  Sequence_type t9(*new Pointer_type(t8));
+  std::cout << t9 << '\n'; // (() -> void)*[]
 }
 
 
@@ -71,14 +73,14 @@ void
 test_expressions()
 {
   std::cout << "--- expressions ---\n";
-  Expr* e1 = make_true();
-  Expr* e2 = make_false();
-  std::cout << *e1 << '\n';
-  std::cout << *e2 << '\n';
+  Expr& e1 = make_true();
+  Expr& e2 = make_false();
+  std::cout << e1 << '\n';
+  std::cout << e2 << '\n';
 
-  Expr* e3 = new And_expr(make_bool_type(), e1, e2);
-  Expr* e4 = new Not_expr(make_bool_type(), e3);
-  std::cout << *e4 << '\n';
+  Expr& e3 = *new And_expr(make_bool_type(), e1, e2);
+  Expr& e4 = *new Not_expr(make_bool_type(), e3);
+  std::cout << e4 << '\n';
 }
 
 
@@ -86,8 +88,6 @@ int
 main(int argc, char* argv[])
 {
   init_tokens();
-
-  global = make_global_ns();
 
   test_names();
   test_types();
