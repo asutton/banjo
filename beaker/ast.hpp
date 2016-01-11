@@ -7,6 +7,7 @@
 #include "prelude.hpp"
 
 #include <vector>
+#include <utility>
 
 namespace beaker
 {
@@ -117,6 +118,10 @@ using Expr_list = List<Expr>;
 using Init_list = List<Expr>;
 using Stmt_list = List<Stmt>;
 using Decl_list = List<Decl>;
+
+
+// Pairs and tuples
+using Expr_pair = std::pair<Expr&, Expr&>;
 
 
 // -------------------------------------------------------------------------- //
@@ -399,16 +404,17 @@ struct Boolean_type : Type
 struct Integer_type : Type
 {
   Integer_type(bool s = true, int p = 32)
-    : sign(s), prec(p)
+    : sgn(s), prec(p)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
 
-  bool is_signed() const   { return sign; }
-  bool is_unsigned() const { return !is_signed(); }
+  bool sign() const        { return sgn; }
+  bool is_signed() const   { return sgn; }
+  bool is_unsigned() const { return !sgn; }
   int  precision() const   { return prec; }
 
-  bool sign;
+  bool sgn;
   int  prec;
 };
 
@@ -1046,6 +1052,11 @@ struct Assign_expr : Binary_expr
 // value computed by the source expression into the target
 // type. Note that the target type is also the type of the
 // expression.
+//
+// FIXME: Embed as much information in type conversions as possible.
+// Essentially we want to duplicate the set of conversions that
+// would be applied in the IR. That frees us from dealing with
+// complex code generation implementations.
 struct Conv : Expr
 {
   Conv(Type& t, Expr& e)
@@ -1978,6 +1989,43 @@ Typename_type::declaration() const
 {
   return *cast<Type_parm>(decl);
 }
+
+
+// -------------------------------------------------------------------------- //
+// Queries
+
+
+// Returns true if t is an integer type.
+inline bool
+is_integer_type(Type const& t)
+{
+  return is<Integer_type>(&t);
+}
+
+
+// Retruns true if the expression `e` has integer type.
+inline bool
+has_integer_type(Expr const& e)
+{
+  return is_integer_type(e.type());
+}
+
+
+// Returns true if `t` is a floating point type.
+inline bool
+is_floating_point_type(Type const& t)
+{
+  return is<Float_type>(&t);
+}
+
+
+// Returns true if the expression `e` has floating point type.
+inline bool
+has_floating_point_type(Expr const& e)
+{
+  return is_floating_point_type(e.type());
+}
+
 
 
 } // namespace beaker

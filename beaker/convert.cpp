@@ -68,7 +68,7 @@ convert_to_bool(Expr& e, Boolean_type& t)
 // false is 0 and true is 1.
 //
 // FIXME: An int-to-int conversion requires some form of sign
-// extension. That depends on the target type. Perhaps use
+// extension. That depends on the destination type. Perhaps use
 // different conversions for these values?
 //
 // Also use a different conversion for bool-to-int?
@@ -369,15 +369,15 @@ convert_qualifier(Expr& e, Type& t)
 
 
 // -------------------------------------------------------------------------- //
-// Implicit conversion
+// Standard conversions
 
 // Try to find a conversion from a source expression `e` and
-// a target type `t`.
+// a destination type `t`.
 //
 // FIXME: Should `t` be an object type? That is we should perform
 // conversions iff we can declare an object of type T?
 Expr&
-convert(Expr& e, Type& t)
+convert_to_type(Expr& e, Type& t)
 {
   Expr& c1 = convert_category(e, t);
   if (is_equivalent(c1.type(), t))
@@ -397,15 +397,121 @@ convert(Expr& e, Type& t)
 
 
 // Try to find a conversion from a source expression `e` and
-// a target type `t`.
+// a destination type `t`.
 Expr&
-convert(Expr const& e, Type const& t)
+convert_to_type(Expr const& e, Type const& t)
 {
   // Just forward to the non-const version of this function.
   // We strip the const qualifier because we're going to be
   // building new terms.
-  return convert(*modify(&e), *modify(&t));
+  return convert_to_type(*modify(&e), *modify(&t));
 }
 
+
+// -------------------------------------------------------------------------- //
+// Arithmetic conversions
+
+
+// Assuming the type of e1 is untested and e2 has floating point
+// type, convert to the most precise floating point type.
+Expr_pair
+convert_to_common_float(Expr& e1, Expr& e2)
+{
+  Float_type& f2 = cast<Float_type>(e2.type());
+
+  // If e1 has float type, convert to the most precise.
+  if (has_floating_point_type(e1)) {
+    Float_type& f1 = cast<Float_type>(e1.type());
+    if (f1.precision() < f2.precision())
+      return {convert_to_wider_float(e1, f2), e2};
+    if (f2.precision() < f1.precision())
+      return {e1, convert_to_wider_float(e2, f1)};
+  }
+
+  // If e1 has integer type, convert to e2.
+  if (has_integer_type(e1)) {
+    return {convert_integer_to_float(e1, f2), e2};
+  }
+
+  throw std::runtime_error("incompatible types");
+}
+
+Expr_pair
+convert_to_common_int(Expr& e1, Expr& e2)
+{
+  Integer_type& t1 = cast<Integer_type>(e1.type());
+  Integer_type& t2 = cast<Integer_type>(e2.type());
+
+  // If both types have the same sign, convert to the one with
+  // the most precision.
+  if (t1.sign() == t2.sign()) {
+    if (t1.precision() < t2.precision())
+      return {convert_to_wider_integer(e1, t2), e2};
+    if (t2.precision() < t1.precision())
+      return {e1, convert_to_wider_integer(e2, t1)};
+  }
+
+  // If the unsigned operand has greater rank than the signed
+  // operand, convert to the type of the unsigned operand.
+  if (t1.is_unsigned() && t2.precision() < t1.precision())
+    return {e1, convert_to_wider_integer(e2, t1)};
+  if (t2.is_unsigned() && t1.precision() < t2.precision())
+    return {convert_to_wider_integer(e1, t2), e2};
+
+  // Otherwise, both operands are converted to the corresponding
+  // unsigned type of the signed operand.
+  //
+  // FIXME: Use a Builder (hence context) for this conversion.
+  int p = t1.is_signed() ? t1.precision() : t2.precision();
+  Integer_type& c = *new Integer_type(false, p);
+  return {convert_to_wider_integer(e1, c), convert_to_wider_integer(e2, c)};
+}
+
+
+// Find a common type for `e1` and `e2` and convert both expressions
+// to that type.
+//
+// NOTE: In C++ reference-to-value conversions are required on a
+// per-expression basis, independently of converting to a common
+// type. Also, non-user-defined types are unqualified prior to
+// analysis. It would be easier if we found an absolute common
+// type and then instantiated a declaration suitable for overload
+// resolution. Maybe.
+//
+// TODO: Handle conversions for character types.
+//
+// TODO: How does bool work with this set of conversions?
+//
+// TODO: Can we unify this with the common type required by the
+// conditional expression? Note that the arithmetic version converts
+// to values, and the conditional expression can retain references.
+Expr_pair
+convert_to_common(Expr& e1, Expr& e2)
+{
+  // If the types are the same, no conversions are applied.
+  if (is_equivalent(e1.type(), e2.type()))
+    return {e1, e2};
+
+  // If either operand has floating point type, convert to the type
+  // with the greatest precision.
+  if (has_floating_point_type(e1))
+    return convert_to_common_float(e2, e1);
+  if (has_floating_point_type(e2))
+    return convert_to_common_float(e1, e2);
+
+  // If both oerands have integer type, the following rules apply.
+  if (has_integer_type(e1) && has_integer_type(e2))
+    return convert_to_common_int(e1, e2);
+
+  // TODO: No conversion from e1 to e2.
+  throw std::runtime_error("incompatible types");
+}
+
+
+Expr_pair
+convert_to_common(Expr const& e1, Expr const& e2)
+{
+  return convert_to_common(*modify(&e1), *modify(&e2));
+}
 
 } // namespace beaker

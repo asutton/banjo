@@ -85,38 +85,38 @@ test_convert()
 
   // object-to-value
   Reference_expr e1 = build.make_reference(v1);
-  Expr& c1 = convert(e1, b);
+  Expr& c1 = convert_to_type(e1, b);
   std::cout << c1 << '\n';
 
   // no conversion
   Boolean_expr e2 = build.get_true();
-  Expr& c2 = convert(e2, b);
+  Expr& c2 = convert_to_type(e2, b);
   std::cout << c2 << '\n';
 
   // bool-to-int
-  Expr& c3 = convert(e2, z);
+  Expr& c3 = convert_to_type(e2, z);
   std::cout << c3 << '\n';
 
   // int-to-bool
   Integer_expr e3 = build.get_int(0);
-  Expr& c4 = convert(e3, b);
+  Expr& c4 = convert_to_type(e3, b);
   std::cout << c4 << '\n';
 
   // bool& ~> int
-  Expr& c5 = convert(e1, z);
+  Expr& c5 = convert_to_type(e1, z);
   std::cout << c5 << '\n';
 
   // int ~> int const
-  Expr& c6 = convert(e3, cz);
+  Expr& c6 = convert_to_type(e3, cz);
   std::cout << c6 << '\n';
 
   // bool& ~> int const
-  Expr& c7 = convert(e1, cz);
+  Expr& c7 = convert_to_type(e1, cz);
   std::cout << c7 << '\n';
 
   // int const -> int
   Expr& e4 = build.get_integer(cz, 1);
-  Expr& c8 = convert(e4, z);
+  Expr& c8 = convert_to_type(e4, z);
   std::cout << c8 << '\n';
 }
 
