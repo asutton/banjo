@@ -570,7 +570,7 @@ Printer::postfix_expression(Call_expr const& e)
 void
 Printer::postfix_expression(Value_conv const& e)
 {
-  token("__dereference");
+  token("__convert_to_value");
   token(lparen_tok);
   expression(e.source());
   token(rparen_tok);
@@ -581,7 +581,7 @@ void
 Printer::postfix_expression(Qualification_conv const& e)
 {
   // TODO: Be more specific about the qualification added.
-  token("__add_qualifier");
+  token("__convert_qualification");
   token(lparen_tok);
   expression(e.source());
   token(rparen_tok);

@@ -16,6 +16,13 @@ struct Expr;
 
 Expr& convert(Expr const&, Type const&);
 
+bool is_similar(Type const&, Type const&);
+
+
+using Qualifier_list = std::vector<int>;
+
+Qualifier_list get_qualification_signature(Type const&);
+
 
 } // namespace beaker
 
