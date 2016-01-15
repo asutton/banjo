@@ -375,6 +375,7 @@ struct Type : Term
   virtual Qualifier_set qualifier() const   { return empty_qual; }
   virtual bool          is_const() const    { return false; }
   virtual bool          is_volatile() const { return false; }
+  bool                  is_qualified() { return qualifier() != empty_qual; }
 
   // Returns the unqualified version of this type.
   virtual Type const& unqualified_type() const { return *this; }

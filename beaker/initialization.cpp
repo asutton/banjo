@@ -123,7 +123,7 @@ check_paren_initialization(Init& i)
   if (is_paren_initialization(i)) {
     Paren_init& p = cast<Paren_init>(i);
     if (p.arguments().size() > 1)
-      throw std::runtime_error("scalar initialize from multiple arguments");
+      throw std::runtime_error("scalar initialized from multiple arguments");
   }
 }
 
@@ -145,7 +145,7 @@ initialize(Context& cxt, Type& t, Init& i)
   // If the destination type is a T&, then perform reference
   // initialization.
   if (is_reference_type(t))
-    return initialize_reference(t, i);
+    return initialize_reference(cast<Reference_type>(t), i);
 
   // If the destination type is T[N] or T[] and the initializer
   // is `= s` where `s` is a string literal, perform string
@@ -244,14 +244,49 @@ is_reference_compatible(Type const& t1, Type const& t2)
 }
 
 
-
 // Construct a reference initializer. This will produce temporary
 // bindings as needed.
+//
+// TODO: Without rvaule references, every reference is an lvalue
+// reference.
+//
+// TODO: A reference binding may invoke a conversion in order
+// to bind to a sub-objet or a user-defined conversion. However,
+// these aren't conversions in the standard sense.
 Init&
-initialize_reference(Context& cxt, Type& t, Init& i)
+initialize_reference(Context& cxt, Reference_type& t1, Init& i)
 {
-  lingo_unimplemented();
-  // Type& ut = t.unqualified_type();
+  Builder build(cxt);
+
+  // Reference initializaiton must have a source object.
+  Expr* s = i.source();
+  if (!s)
+    throw std::runtime_error("reference initialized from multiple objects");
+  Type& t2 = s->type();
+
+  // The initializer has reference type.
+  if (is_reference_type(t2)) {
+    // If t1 is reference-compatible with t2, then bind directly.
+    if (is_reference_compatible(t1, t2))
+      return build.make_reference_init(*s);
+
+    // t2 has class type and has a user-defined conversion that is
+    // reference compatible with t1, then bind the the to the
+    // result of that conversion.
+    if (is_class_type(t2))
+      ; // Fall through for now...
+  }
+
+  // The reference must be a const reference.
+  //
+  // TODO: Handle const reference bindings to compound objects.
+  if (t1.type().qualifier() == const_qual) {
+
+  }
+
+  // TODO: Handle bindings to temporaries.
+
+  throw std::runtime_error("cannot bind reference");
 }
 
 
