@@ -502,6 +502,7 @@ Printer::expression(Expr const& e)
     void operator()(Boolean_conv const& e)       { p.postfix_expression(e); }
     void operator()(Float_conv const& e)         { p.postfix_expression(e); }
     void operator()(Numeric_conv const& e)       { p.postfix_expression(e); }
+    void operator()(Ellipsis_conv const& e)      { p.postfix_expression(e); }
 };
   apply(e, fn{*this});
 }
@@ -557,12 +558,14 @@ Printer::postfix_expression(Call_expr const& e)
 {
   grouped_expression(e, e.function());
   token(lparen_tok);
-  Expr_list const& p = e.arguments();
-  for (auto iter = p.begin(); iter != p.end(); ++iter) {
-    expression(*iter);
-    if (std::next(iter) != p.end())
-      token(comma_tok);
-  }
+
+  // Expr_list const& p = e.arguments();
+  // for (auto iter = p.begin(); iter != p.end(); ++iter) {
+  //   expression(*iter);
+  //   if (std::next(iter) != p.end())
+  //     token(comma_tok);
+  // }
+
   token(rparen_tok);
 }
 
@@ -622,6 +625,16 @@ void
 Printer::postfix_expression(Numeric_conv const& e)
 {
   token("__convert_to_float");
+  token(lparen_tok);
+  expression(e.source());
+  token(rparen_tok);
+}
+
+
+void
+Printer::postfix_expression(Ellipsis_conv const& e)
+{
+  token("__convert_to_ellipsis");
   token(lparen_tok);
   expression(e.source());
   token(rparen_tok);

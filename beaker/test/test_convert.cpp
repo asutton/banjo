@@ -3,7 +3,7 @@
 
 #include "test.hpp"
 
-#include <beaker/convert.hpp>
+#include <beaker/conversion.hpp>
 
 #include <iostream>
 #include <iomanip>
@@ -50,6 +50,8 @@ test_similar()
 {
   Builder build(*cxt);
 
+  std::cout << "--- qualifier similarity --" << '\n';
+
   Type& b = build.get_bool_type();
   Type& cb = build.get_const_type(b);
   Type& p_b = build.get_pointer_type(b); // bool*
@@ -73,9 +75,11 @@ test_similar()
 
 
 void
-test_convert()
+test_standard_conversions()
 {
   Builder build(*cxt);
+
+  std::cout << "--- standard conversions --" << '\n';
 
   Type& b = build.get_bool_type();
   Type& z = build.get_int_type();
@@ -83,41 +87,72 @@ test_convert()
 
   Variable_decl& v1 = build.make_variable("v1", b);
 
-  // object-to-value
+  // FIXME: How should we go about testing conversion sequences?
+
+  // bool& ~> bool
   Reference_expr e1 = build.make_reference(v1);
-  Expr& c1 = convert_to_type(e1, b);
+  Expr& c1 = standard_conversion(e1, b);
   std::cout << c1 << '\n';
+  Conversion_seq s1 = get_conversion_sequence(c1);
+  assert(s1.kind() == std_conv_seq);
 
   // no conversion
   Boolean_expr e2 = build.get_true();
-  Expr& c2 = convert_to_type(e2, b);
+  Expr& c2 = standard_conversion(e2, b);
   std::cout << c2 << '\n';
+  Conversion_seq s2 = get_conversion_sequence(c1);
+  assert(s2.kind() == std_conv_seq);
 
   // bool-to-int
-  Expr& c3 = convert_to_type(e2, z);
+  Expr& c3 = standard_conversion(e2, z);
   std::cout << c3 << '\n';
 
   // int-to-bool
   Integer_expr e3 = build.get_int(0);
-  Expr& c4 = convert_to_type(e3, b);
+  Expr& c4 = standard_conversion(e3, b);
   std::cout << c4 << '\n';
 
   // bool& ~> int
-  Expr& c5 = convert_to_type(e1, z);
+  Expr& c5 = standard_conversion(e1, z);
   std::cout << c5 << '\n';
 
   // int ~> int const
-  Expr& c6 = convert_to_type(e3, cz);
+  Expr& c6 = standard_conversion(e3, cz);
   std::cout << c6 << '\n';
 
   // bool& ~> int const
-  Expr& c7 = convert_to_type(e1, cz);
+  Expr& c7 = standard_conversion(e1, cz);
   std::cout << c7 << '\n';
 
   // int const -> int
   Expr& e4 = build.get_integer(cz, 1);
-  Expr& c8 = convert_to_type(e4, z);
+  Expr& c8 = standard_conversion(e4, z);
   std::cout << c8 << '\n';
+}
+
+
+void
+test_arithmetic_conversions()
+{
+  Builder build(*cxt);
+
+  std::cout << "--- arithmetic conversions --" << '\n';
+
+  Type& i16 = build.get_integer_type(true, 16);
+  Type& i32 = build.get_integer_type(true, 32);
+  Type& u32 = build.get_integer_type(false, 32);
+
+  Expr& z16 = build.get_integer(i16, 0);
+  Expr& z32 = build.get_integer(i32, 1);
+  Expr& n32 = build.get_integer(u32, 1);
+
+  Expr_pair p1 = arithmetic_conversion(z16, z32);
+  std::cout << p1.first << " ## " << p1.second << '\n';
+
+  Expr_pair p2 = arithmetic_conversion(n32, z32);
+  std::cout << p2.first << " ## " << p2.second << '\n';
+
+  // TODO: Fully exhaust all of the different testing rules.
 }
 
 
@@ -128,5 +163,6 @@ main(int argc, char* argv[])
   cxt = &c;
 
   test_similar();
-  test_convert();
+  test_standard_conversions();
+  test_arithmetic_conversions();
 }

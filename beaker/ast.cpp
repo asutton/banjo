@@ -52,30 +52,6 @@ is_value_type(Type const& t)
 }
 
 
-// Returns true if this is a reference type.
-//
-// FIXME: Make this undefined for placeholder and dependent types.
-// See the comments above.
-bool
-is_reference_type(Type const& t)
-{
-  return is<Reference_type>(&t);
-}
-
-
-
-// Returns true if a is a more qualified type than b. The
-// unqualified versions of a and b shall be equivalent.
-//
-// TODO: Handle aggregate chains.
-bool
-is_more_qualified_type(Type const& a, Type const& b)
-{
-  lingo_assert(is_equivalent(a.unqualified_type(), b.unqualified_type()));
-  return is_more_qualified(a.qualifier(), b.qualifier());
-}
-
-
 // Returns a qualified id for the declaration.
 //
 // TODO: Use an allocator.

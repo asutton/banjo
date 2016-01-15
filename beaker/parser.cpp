@@ -677,6 +677,8 @@ Parser::type()
 
 // -------------------------------------------------------------------------- //
 // Expressions
+//
+// TODO: Be sure that function arguments produce initializers.
 
 // Parse an id-expression.
 //
@@ -852,27 +854,27 @@ Parser::declarator()
 }
 
 
-// Variables
+// Initializers
 
 // Parse a value initializer.
 //
-//    value-initializer:
+//    equal-initializer:
 //      '=' expression
 Init*
-Parser::value_initializer()
+Parser::equal_initializer()
 {
   require(eq_tok);
   Expr* expr = expression();
-  return on_value_initializer(expr);
+  return on_equal_initializer(expr);
 }
 
 
 // Parse a direct initializer.
 //
-//    direct-initializer:
+//    paren-initializer:
 //      '(' expression-list ')'
 Init*
-Parser::direct_initializer()
+Parser::paren_initializer()
 {
   throw std::runtime_error("not implemented");
 }
@@ -883,7 +885,7 @@ Parser::direct_initializer()
 //    brace-initializer:
 //      '{' expression-list '}'
 Init*
-Parser::aggregate_initializer()
+Parser::brace_initializer()
 {
   throw std::runtime_error("not implemented");
 }
@@ -892,18 +894,28 @@ Parser::aggregate_initializer()
 // Parse a variable initializer.
 //
 //    initializer:
-//      value-initializer
+//      equal-initializer
+//      paren-initializer
 //      brace-initializer
-//      direct-initializer
+//
+// Note that C++ refers to the equal-initializer form of initialization
+// as copy-initialization. This term also applies to object initialization
+// that occurs in argument passing, initialiation of condition variables,
+// exception construction and catching and aggregate member initialization.
+// Copy initialization may invoke a move.
+//
+// The paren- and brace-initializer foms are called direct initialization.
+// This term also applies to object initialization in new expressions,
+// static casts, functional conversion, and member initializers. 
 Init*
 Parser::initializer()
 {
   if (lookahead() == eq_tok)
     return value_initializer();
   else if (lookahead() == lparen_tok)
-    return direct_initializer();
+    return paren_initializer();
   else if (lookahead() == lbrace_tok)
-    return aggregate_initializer();
+    return brace_initializer();
   throw Syntax_error("expected initializer");
 }
 

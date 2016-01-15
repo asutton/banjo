@@ -1,7 +1,7 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#include "convert.hpp"
+#include "conversion.hpp"
 #include "ast.hpp"
 #include "equivalence.hpp"
 #include "print.hpp"
@@ -76,8 +76,14 @@ Expr&
 convert_to_wider_integer(Expr& e, Integer_type& t)
 {
   // A value of integer type can be converted...
-  if (Integer_type* et = as<Integer_type>(&e.type())) {
-    if (et->precision() < t.precision())
+  if (has_integer_type(e)) {
+    Integer_type& et = cast<Integer_type>(e.type());
+    // TODO: Be more precise about the conversion that's
+    // actually going to happen. Especially, if we convert
+    // sign and widen simultaneously.
+    if (et.precision() < t.precision())
+      return *new Integer_conv(t, e);
+    else if (et.sign() != t.sign())
       return *new Integer_conv(t, e);
     else
       return e;
@@ -371,13 +377,13 @@ convert_qualifier(Expr& e, Type& t)
 // -------------------------------------------------------------------------- //
 // Standard conversions
 
-// Try to find a conversion from a source expression `e` and
-// a destination type `t`.
+// Try to find a standard conversion sequence from a source
+// expression `e` and a destination type `t`.
 //
 // FIXME: Should `t` be an object type? That is we should perform
 // conversions iff we can declare an object of type T?
 Expr&
-convert_to_type(Expr& e, Type& t)
+standard_conversion(Expr& e, Type& t)
 {
   Expr& c1 = convert_category(e, t);
   if (is_equivalent(c1.type(), t))
@@ -399,18 +405,17 @@ convert_to_type(Expr& e, Type& t)
 // Try to find a conversion from a source expression `e` and
 // a destination type `t`.
 Expr&
-convert_to_type(Expr const& e, Type const& t)
+standard_conversion(Expr const& e, Type const& t)
 {
   // Just forward to the non-const version of this function.
   // We strip the const qualifier because we're going to be
   // building new terms.
-  return convert_to_type(*modify(&e), *modify(&t));
+  return standard_conversion(modify(e), modify(t));
 }
 
 
 // -------------------------------------------------------------------------- //
 // Arithmetic conversions
-
 
 // Assuming the type of e1 is untested and e2 has floating point
 // type, convert to the most precise floating point type.
@@ -468,25 +473,28 @@ convert_to_common_int(Expr& e1, Expr& e2)
 }
 
 
-// Find a common type for `e1` and `e2` and convert both expressions
-// to that type.
+// Perform the usual arithmetic conversions on `e1` and `e2`. This
+// tries to find a common type for `e1` and `e2` and convert both
+// expressions to that type.
 //
-// NOTE: In C++ reference-to-value conversions are required on a
+// NOTE: In C++ lvalue-to-rvalue conversions are required on a
 // per-expression basis, independently of converting to a common
 // type. Also, non-user-defined types are unqualified prior to
 // analysis. It would be easier if we found an absolute common
 // type and then instantiated a declaration suitable for overload
 // resolution. Maybe.
 //
-// TODO: Handle conversions for character types.
+// TODO: Handle conversions for character types (or promote to a
+// corresponding integer type?).
 //
-// TODO: How does bool work with this set of conversions?
+// TODO: How does bool work with this set of conversions? Promote
+// bool to int?
 //
 // TODO: Can we unify this with the common type required by the
 // conditional expression? Note that the arithmetic version converts
 // to values, and the conditional expression can retain references.
 Expr_pair
-convert_to_common(Expr& e1, Expr& e2)
+arithmetic_conversion(Expr& e1, Expr& e2)
 {
   // If the types are the same, no conversions are applied.
   if (is_equivalent(e1.type(), e2.type()))
@@ -509,9 +517,115 @@ convert_to_common(Expr& e1, Expr& e2)
 
 
 Expr_pair
-convert_to_common(Expr const& e1, Expr const& e2)
+arithmetic_conversion(Expr const& e1, Expr const& e2)
 {
-  return convert_to_common(*modify(&e1), *modify(&e2));
+  return arithmetic_conversion(modify(e1), modify(e2));
 }
+
+
+// -------------------------------------------------------------------------- //
+// Conversion sequences
+
+// Return the conversion sequence for the given expression.
+//
+// Because conversions are unary operators, we can simply walk
+// the list and accumulate information as we go.
+//
+// TODO: Add support for detecting ellipsis conversions
+// and also user-defined conversions.
+Conversion_seq
+get_conversion_sequence(Expr& e)
+{
+  struct fn
+  {
+    Standard_conversion_seq& seq;
+
+    // Do nothing for non-conversion expressions.
+    Expr* operator()(Expr&)                { return nullptr; }
+
+    // Set the corresponding conversion level.
+    Expr* operator()(Value_conv& e)         { seq.transformation(e); return &e.source(); }
+    Expr* operator()(Qualification_conv& e) { seq.adjustment(e); return &e.source(); }
+    Expr* operator()(Boolean_conv& e)       { seq.conversion(e); return &e.source(); }
+    Expr* operator()(Integer_conv& e)       { seq.conversion(e); return &e.source(); }
+    Expr* operator()(Float_conv& e)         { seq.conversion(e); return &e.source(); }
+    Expr* operator()(Numeric_conv& e)       { seq.conversion(e); return &e.source(); }
+
+    // This is handled elsewhere.
+    Expr* operator()(Ellipsis_conv& e)      { lingo_unreachable(); }
+  };
+
+  // Handle the trivial case first.
+  //
+  // TODO: Set type information?
+  if (is_ellipsis_conversion(e))
+    return Conversion_seq(Ellipsis_conversion_seq{});
+
+  // Unwind standard conversion from the expression.
+  Expr* p = &e;
+  Standard_conversion_seq seq;
+  while (is_standard_conversion(*p))
+    p = apply(*p, fn{seq});
+
+  // TODO: If p is a user-defined conversion, build a user-defined
+  // conversion sequence with seq as the "after" component,
+  // and then unwind the standard conversions for the "before"
+  // part.
+
+  return Conversion_seq(seq);
+}
+
+
+Conversion_seq
+get_conversion_sequence(Expr const& e)
+{
+  return get_conversion_sequence(modify(e));
+}
+
+
+// -------------------------------------------------------------------------- //
+// Ordering of conversion sequences
+
+
+// FIXME: Finish implementing this.
+Conversion_comp
+compare(Standard_conversion_seq const& s1, Standard_conversion_seq const& s2)
+{
+  // If s1 is a proper subsequence of s2.
+  // TODO: How is a subsequence defined?
+
+  // or s1 is better than s2 according to some rules...
+
+  // ... some stuff about refernce bindings
+  return indistinct_conv;
+}
+
+
+
+Conversion_comp
+compare(Conversion_seq const& a, Conversion_seq const& b)
+{
+  // A standad conversion sequence is better then a user-define
+  // conversion sequence and an ellipsis conversion sequence.
+  if (a.kind() == std_conv_seq && b.kind() != std_conv_seq)
+    return better_conv;
+  if (b.kind() == std_conv_seq && a.kind() != std_conv_seq)
+    return worse_conv;
+
+  // A user-defined conversion sequence is better than an ellipsis
+  // conversion sequence.
+  if (a.kind() == user_conv_seq && b.kind() == ellipsis_conv_seq)
+    return better_conv;
+  if (b.kind() == user_conv_seq && a.kind() == ellipsis_conv_seq)
+    return worse_conv;
+
+  // Distinguish between converison sequences of the same kind.
+  if (a.kind() == std_conv_seq && b.kind() == std_conv_seq)
+    return compare(a.standard_conversions(), b.standard_conversions());
+
+  // We cannot distinguis the conversion sequences.
+  return indistinct_conv;
+}
+
 
 } // namespace beaker

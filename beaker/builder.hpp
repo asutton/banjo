@@ -52,7 +52,7 @@ struct Builder
   Declauto_type&  get_declauto_type();
   Function_type&  get_function_type(Decl_list const&, Type&);
   Function_type&  get_function_type(Type_list const&, Type&);
-  Qualified_type& get_qualified_type(Type&, int);
+  Qualified_type& get_qualified_type(Type&, Qualifier_set);
   Qualified_type& get_const_type(Type&);
   Qualified_type& get_volatile_type(Type&);
   Pointer_type&   get_pointer_type(Type&);
@@ -68,6 +68,7 @@ struct Builder
   Boolean_expr&   get_true();
   Boolean_expr&   get_false();
   Integer_expr&   get_integer(Type&, int);
+  Integer_expr&   get_zero(Type&);
   Integer_expr&   get_int(int);
   Integer_expr&   get_uint(unsigned);
   Reference_expr& make_reference(Variable_decl& d);
@@ -77,7 +78,19 @@ struct Builder
   And_expr&       make_and(Type&, Expr&, Expr&);
   Not_expr&       make_not(Type&, Expr&);
 
-  Default_init&  get_default_init();
+  Absent_init&       make_absent_init();
+  Equal_init&        make_equal_init(Expr&);
+  Paren_init&        make_paren_init(Expr_list const&);
+  Brace_init&        make_brace_init(Expr_list const&);
+  Structural_init&   make_structural_init(Init_list const&);
+  Trivial_init&      make_trivial_init();
+  Zero_init&         make_zero_init(Expr&);
+  Constructor_init&  make_constructor_init(Decl&, Expr_list const&);
+  Object_init&       make_object_init(Expr&);
+  Reference_init&    make_reference_init(Expr&);
+  Aggregate_init&    make_aggregate_init();
+  Type_init&         make_type_init();
+  Template_init&     make_template_init();
 
   Namespace_decl& make_namespace(Name&);
   Namespace_decl& make_namespace(char const*);
@@ -264,7 +277,7 @@ Builder::get_function_type(Type_list const& ts, Type& r)
 // Is that a hard error, or do we simply fold the const into
 // the return type and/or element type?
 inline Qualified_type&
-Builder::get_qualified_type(Type& t, int qual)
+Builder::get_qualified_type(Type& t, Qualifier_set qual)
 {
   if (Qualified_type* q = as<Qualified_type>(&t)) {
     q->qual |= qual;
@@ -369,12 +382,25 @@ Builder::get_false()
 }
 
 
+// TODO: Verify that T can have an integer value?
+// I think that all scalars can have integer values.
 inline Integer_expr&
 Builder::get_integer(Type& t, int n)
 {
   Symbol const* sym = symbols().put_integer(integer_tok, std::to_string(n), n);
   return make<Integer_expr>(t, *sym);
 }
+
+
+// Returns the 0 constant, with scalar type `t`.
+//
+// TODO: Verify that t is scalar.
+inline Integer_expr&
+Builder::get_zero(Type& t)
+{
+  return get_integer(t, 0);
+}
+
 
 
 inline Integer_expr&
@@ -419,11 +445,95 @@ Builder::make_not(Type& t, Expr& e)
 
 
 // TODO: Really global?
-inline Default_init&
-Builder::get_default_init()
+inline Absent_init&
+Builder::make_absent_init()
 {
-  static Default_init i;
+  static Absent_init i;
   return i;
+}
+
+
+inline Equal_init&
+Builder::make_equal_init(Expr& e)
+{
+  return make<Equal_init>(e);
+}
+
+
+inline Paren_init&
+Builder::make_paren_init(Expr_list const& es)
+{
+  return make<Paren_init>(es);
+}
+
+
+inline Brace_init&
+Builder::make_brace_init(Expr_list const& es)
+{
+  return make<Brace_init>(es);
+}
+
+
+inline Structural_init&
+Builder::make_structural_init(Init_list const& is)
+{
+  return make<Structural_init>(is);
+}
+
+
+inline Trivial_init&
+Builder::make_trivial_init()
+{
+  return make<Trivial_init>();
+}
+
+
+inline Zero_init&
+Builder::make_zero_init(Expr& e)
+{
+  return make<Zero_init>(e);
+}
+
+
+inline Constructor_init&
+Builder::make_constructor_init(Decl& d, Expr_list const& es)
+{
+  return make<Constructor_init>(d, es);
+}
+
+
+inline Object_init&
+Builder::make_object_init(Expr& e)
+{
+  return make<Object_init>(e);
+}
+
+
+inline Reference_init&
+Builder::make_reference_init(Expr& e)
+{
+  return make<Reference_init>(e);
+}
+
+
+inline Aggregate_init&
+Builder::make_aggregate_init()
+{
+  lingo_unimplemented();
+}
+
+
+inline Type_init&
+Builder::make_type_init()
+{
+  lingo_unimplemented();
+}
+
+
+inline Template_init&
+Builder::make_template_init()
+{
+  lingo_unimplemented();
 }
 
 
@@ -437,14 +547,14 @@ Builder::get_default_init()
 inline Variable_decl&
 Builder::make_variable(Name& n, Type& t)
 {
-  return make_variable(n, t, get_default_init());
+  return make_variable(n, t, make_absent_init());
 }
 
 
 inline Variable_decl&
 Builder::make_variable(char const* s, Type& t)
 {
-  return make_variable(get_id(s), t, get_default_init());
+  return make_variable(get_id(s), t, make_absent_init());
 }
 
 

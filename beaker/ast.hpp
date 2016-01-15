@@ -115,7 +115,7 @@ struct List : Term, std::vector<T*>
 using Term_list = List<Term>;
 using Type_list = List<Type>;
 using Expr_list = List<Expr>;
-using Init_list = List<Expr>;
+using Init_list = List<Init>;
 using Stmt_list = List<Stmt>;
 using Decl_list = List<Decl>;
 
@@ -329,9 +329,39 @@ struct Typename_type;
 
 
 bool is_object_type(Type const&);
-bool is_reference_type(Type const&);
 
-bool is_more_qualified_type(Type const&, Type const&);
+
+// Represents a set of type qualifiers.
+enum Qualifier_set
+{
+  empty_qual    = 0x00,
+  const_qual    = 0x01,
+  volatile_qual = 0x02,
+  total_qual    = const_qual | volatile_qual
+};
+
+
+inline Qualifier_set&
+operator|=(Qualifier_set& a, Qualifier_set b)
+{
+  return a = Qualifier_set(a | b);
+}
+
+
+// Returns true if a is a superset of b.
+inline bool
+is_superset(Qualifier_set a, Qualifier_set b)
+{
+  return (a & b) == b;
+}
+
+
+// Returns true if a is strictly more qualified than b.
+inline bool
+is_more_qualified(Qualifier_set a, Qualifier_set b)
+{
+  return is_superset(a, b) && a != b;
+}
 
 
 // The base class of all types.
@@ -341,17 +371,10 @@ struct Type : Term
 
   virtual void accept(Visitor&) const = 0;
 
-  bool is_object_type() const    { return beaker::is_object_type(*this); }
-  bool is_reference_type() const { return beaker::is_reference_type(*this); }
-
   // Returns the qualifier for this type.
-  //
-  // FIXME: Make the qualifier a legitmate type.
-  //
-  // TODO: Merge the qualifier into the base type?
-  virtual int qualifier() const    { return 0; }
-  virtual bool is_const() const    { return false; }
-  virtual bool is_volatile() const { return false; }
+  virtual Qualifier_set qualifier() const   { return empty_qual; }
+  virtual bool          is_const() const    { return false; }
+  virtual bool          is_volatile() const { return false; }
 
   // Returns the unqualified version of this type.
   virtual Type const& unqualified_type() const { return *this; }
@@ -478,34 +501,12 @@ struct Function_type : Type
 };
 
 
-// Type qualifier flags.
-//
-// TODO: Make this a legitimate type.
-constexpr int const_qual    = 0x01;
-constexpr int volatile_qual = 0x02;
-
-
-// Returns true if a is strictly more qualified than b.
-inline bool
-is_more_qualified(int a, int b)
-{
-  // case: any cv > 0
-  if (a && !b)
-    return true;
-
-  // case: cv > c
-  // case: cv > v
-  if (a == 0x03 && b < 0x03)
-    return true;
-  return false;
-}
-
-
 struct Qualified_type : Type
 {
-  Qualified_type(Type& t, int q)
+  Qualified_type(Type& t, Qualifier_set q)
     : ty(&t), qual(q)
   {
+    lingo_assert(q != empty_qual);
     lingo_assert(!is<Qualified_type>(ty));
   }
 
@@ -516,16 +517,16 @@ struct Qualified_type : Type
 
   // Returns the qualifier for this type. Note that these
   // override functions in type.
-  int  qualifier() const   { return qual; }
-  bool is_const() const    { return qual & const_qual; }
-  bool is_volatile() const { return qual & volatile_qual; }
+  Qualifier_set qualifier() const   { return qual; }
+  bool          is_const() const    { return qual & const_qual; }
+  bool          is_volatile() const { return qual & volatile_qual; }
 
   // Returns the unqualfiied version of this type.
   Type const& unqualified_type() const { return type(); }
   Type&       unqualified_type()       { return type(); }
 
-  Type* ty;
-  int   qual;
+  Type*         ty;
+  Qualifier_set qual;
 };
 
 
@@ -716,18 +717,21 @@ struct Boolean_conv;
 struct Integer_conv;
 struct Float_conv;
 struct Numeric_conv;
+struct Ellipsis_conv;
 
 
 // The base class of all expresions.
 struct Expr : Term
 {
   struct Visitor;
+  struct Mutator;
 
   Expr(Type& t)
     : ty(&t)
   { }
 
   virtual void accept(Visitor&) const = 0;
+  virtual void accept(Mutator&) = 0;
 
   Type const& type() const { return *ty; }
   Type&       type()       { return *ty; }
@@ -767,6 +771,40 @@ struct Expr::Visitor
   virtual void visit(Integer_conv const&) { }
   virtual void visit(Float_conv const&) { }
   virtual void visit(Numeric_conv const&) { }
+  virtual void visit(Ellipsis_conv const&) { }
+};
+
+struct Expr::Mutator
+{
+  virtual void visit(Boolean_expr&) { }
+  virtual void visit(Integer_expr&) { }
+  virtual void visit(Real_expr&) { }
+  virtual void visit(Reference_expr&) { }
+  virtual void visit(Add_expr&) { }
+  virtual void visit(Sub_expr&) { }
+  virtual void visit(Mul_expr&) { }
+  virtual void visit(Div_expr&) { }
+  virtual void visit(Rem_expr&) { }
+  virtual void visit(Neg_expr&) { }
+  virtual void visit(Pos_expr&) { }
+  virtual void visit(Eq_expr&) { }
+  virtual void visit(Ne_expr&) { }
+  virtual void visit(Lt_expr&) { }
+  virtual void visit(Gt_expr&) { }
+  virtual void visit(Le_expr&) { }
+  virtual void visit(Ge_expr&) { }
+  virtual void visit(And_expr&) { }
+  virtual void visit(Or_expr&) { }
+  virtual void visit(Not_expr&) { }
+  virtual void visit(Call_expr&) { }
+  virtual void visit(Assign_expr&) { }
+  virtual void visit(Value_conv&) { }
+  virtual void visit(Qualification_conv&) { }
+  virtual void visit(Boolean_conv&) { }
+  virtual void visit(Integer_conv&) { }
+  virtual void visit(Float_conv&) { }
+  virtual void visit(Numeric_conv&) { }
+  virtual void visit(Ellipsis_conv&) { }
 };
 
 
@@ -820,6 +858,7 @@ struct Boolean_expr : Literal_expr
   using Literal_expr::Literal_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -829,6 +868,7 @@ struct Integer_expr : Literal_expr
   using Literal_expr::Literal_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -838,6 +878,7 @@ struct Real_expr : Literal_expr
   using Literal_expr::Literal_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -854,6 +895,7 @@ struct Reference_expr : Expr
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the referenced declaration.
   Decl const& declaration() const { return *decl; }
@@ -869,6 +911,7 @@ struct Add_expr : Binary_expr
   using Binary_expr::Binary_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -878,6 +921,7 @@ struct Sub_expr : Binary_expr
   using Binary_expr::Binary_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -887,6 +931,7 @@ struct Mul_expr : Binary_expr
   using Binary_expr::Binary_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -896,6 +941,7 @@ struct Div_expr : Binary_expr
   using Binary_expr::Binary_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -905,6 +951,7 @@ struct Rem_expr : Binary_expr
   using Binary_expr::Binary_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -914,6 +961,7 @@ struct Neg_expr : Unary_expr
   using Unary_expr::Unary_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -923,6 +971,7 @@ struct Pos_expr : Unary_expr
   using Unary_expr::Unary_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -932,6 +981,7 @@ struct Eq_expr : Binary_expr
   using Binary_expr::Binary_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -941,6 +991,7 @@ struct Ne_expr : Binary_expr
   using Binary_expr::Binary_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -950,6 +1001,7 @@ struct Lt_expr : Binary_expr
   using Binary_expr::Binary_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -959,6 +1011,7 @@ struct Gt_expr : Binary_expr
   using Binary_expr::Binary_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -968,6 +1021,7 @@ struct Le_expr : Binary_expr
   using Binary_expr::Binary_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -977,6 +1031,7 @@ struct Ge_expr : Binary_expr
   using Binary_expr::Binary_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -986,6 +1041,7 @@ struct And_expr : Binary_expr
   using Binary_expr::Binary_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -995,6 +1051,7 @@ struct Or_expr : Binary_expr
   using Binary_expr::Binary_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -1004,6 +1061,7 @@ struct Not_expr : Unary_expr
   using Unary_expr::Unary_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -1026,6 +1084,9 @@ struct Call_expr : Expr
     : Expr(t), fn(&e), args(a)
   { }
 
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
   Expr const& function() const { return *fn; }
   Expr&       function()       { return *fn; }
 
@@ -1043,6 +1104,7 @@ struct Assign_expr : Binary_expr
   using Binary_expr::Binary_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -1063,10 +1125,10 @@ struct Conv : Expr
     : Expr(t), expr(&e)
   { }
 
-  // Returns the target type of the conversion. This is the
+  // Returns the destination type of the conversion. This is the
   // same as the expression's type.
-  Type const& target() const { return type(); }
-  Type&       target()       { return type(); }
+  Type const& destination() const { return type(); }
+  Type&       destination()       { return type(); }
 
   // Returns the converted expression (the operand).
   Expr const& source() const { return *expr; }
@@ -1076,60 +1138,85 @@ struct Conv : Expr
 };
 
 
-// A conversion from an object to a value.
-struct Value_conv : Conv
+// A grouping class. All standard conversions derive frrom
+// this type.
+struct Standard_conv : Conv
 {
   using Conv::Conv;
+};
+
+
+// A conversion from an object to a value.
+struct Value_conv : Standard_conv
+{
+  using Standard_conv::Standard_conv;
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
 // A conversion from a less cv-qualified type to a more
 // cv-qualified type.
-struct Qualification_conv : Conv
+struct Qualification_conv : Standard_conv
 {
-  using Conv::Conv;
+  using Standard_conv::Standard_conv;
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
 // A conversion from one integer type to another.
-struct Boolean_conv : Conv
+struct Boolean_conv : Standard_conv
 {
-  using Conv::Conv;
+  using Standard_conv::Standard_conv;
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
 // A conversion from one integer type to another.
-struct Integer_conv : Conv
+struct Integer_conv : Standard_conv
 {
-  using Conv::Conv;
+  using Standard_conv::Standard_conv;
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
 // A conversion from one floating point type to another.
-struct Float_conv : Conv
+struct Float_conv : Standard_conv
 {
-  using Conv::Conv;
+  using Standard_conv::Standard_conv;
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
 // A conversion from integer to floating point type.
 //
 // TODO: Integrate this with the float conversion?
-struct Numeric_conv : Conv
+struct Numeric_conv : Standard_conv
+{
+  using Standard_conv::Standard_conv;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// Represents the conversion of an argument type the ellipsis
+// parameter.
+struct Ellipsis_conv : Conv
 {
   using Conv::Conv;
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -1169,6 +1256,7 @@ struct Generic_expr_visitor : Expr::Visitor, Generic_visitor<F, T>
   void visit(Integer_conv const& e)       { this->invoke(e); }
   void visit(Float_conv const& e)         { this->invoke(e); }
   void visit(Numeric_conv const& e)       { this->invoke(e); }
+  void visit(Ellipsis_conv const& e)      { this->invoke(e); }
 };
 
 
@@ -1178,6 +1266,56 @@ inline T
 apply(Expr const& e, F fn)
 {
   Generic_expr_visitor<F, T> vis(fn);
+  return accept(e, vis);
+}
+
+
+// A generic mutator for expressions.
+template<typename F, typename T>
+struct Generic_expr_mutator : Expr::Mutator, Generic_mutator<F, T>
+{
+  Generic_expr_mutator(F f)
+    : Generic_mutator<F, T>(f)
+  { }
+
+  void visit(Boolean_expr& e)       { this->invoke(e); }
+  void visit(Integer_expr& e)       { this->invoke(e); }
+  void visit(Real_expr& e)          { this->invoke(e); }
+  void visit(Reference_expr& e)     { this->invoke(e); }
+  void visit(Add_expr& e)           { this->invoke(e); }
+  void visit(Sub_expr& e)           { this->invoke(e); }
+  void visit(Mul_expr& e)           { this->invoke(e); }
+  void visit(Div_expr& e)           { this->invoke(e); }
+  void visit(Rem_expr& e)           { this->invoke(e); }
+  void visit(Neg_expr& e)           { this->invoke(e); }
+  void visit(Pos_expr& e)           { this->invoke(e); }
+  void visit(Eq_expr& e)            { this->invoke(e); }
+  void visit(Ne_expr& e)            { this->invoke(e); }
+  void visit(Lt_expr& e)            { this->invoke(e); }
+  void visit(Gt_expr& e)            { this->invoke(e); }
+  void visit(Le_expr& e)            { this->invoke(e); }
+  void visit(Ge_expr& e)            { this->invoke(e); }
+  void visit(And_expr& e)           { this->invoke(e); }
+  void visit(Or_expr& e)            { this->invoke(e); }
+  void visit(Not_expr& e)           { this->invoke(e); }
+  void visit(Call_expr& e)          { this->invoke(e); }
+  void visit(Assign_expr& e)        { this->invoke(e); }
+  void visit(Value_conv& e)         { this->invoke(e); }
+  void visit(Qualification_conv& e) { this->invoke(e); }
+  void visit(Boolean_conv& e)       { this->invoke(e); }
+  void visit(Integer_conv& e)       { this->invoke(e); }
+  void visit(Float_conv& e)         { this->invoke(e); }
+  void visit(Numeric_conv& e)       { this->invoke(e); }
+  void visit(Ellipsis_conv& e)      { this->invoke(e); }
+};
+
+
+// Apply a function to the given type.
+template<typename F, typename T = typename std::result_of<F(Boolean_expr&)>::type>
+inline T
+apply(Expr& e, F fn)
+{
+  Generic_expr_mutator<F, T> vis(fn);
   return accept(e, vis);
 }
 
@@ -1281,16 +1419,36 @@ apply(Stmt const& s, F fn)
 // -------------------------------------------------------------------------- //
 // Object initializers
 //
-// TODO: Consider adding deleted initializers.
+// Initializers fall into two categories
 //
-// TODO: Provide explicit support for trivial initialization?
+//  - syntactic initializers reflect initial parse, and
+//  - elaborated initialziers reflect the initialization procedure.
+//
+// Elaborated initializers are produced by analysis of the target
+// type (the type of the initialized object) and information provided
+// in the syntactic initializer.
+//
+// We also include initialiers for type and template template parameters
+// so that copy initialization is a fully generalized concept.
+//
+// TODO: Factor the syntctic initializers into a different set of
+// terms?
 
 struct Init;
-struct Default_init;
-struct Value_init;
+// Synactic initialziers
+struct Absent_init;
+struct Equal_init;
+struct Paren_init;
+struct Brace_init;
+// Elaborated initializers
+struct Structural_init;
+struct Trivial_init;
+struct Zero_init;
+struct Constructor_init;
+struct Object_init;
 struct Reference_init;
-struct Direct_init;
 struct Aggregate_init;
+// Template initializers
 struct Type_init;
 struct Template_init;
 
@@ -1300,62 +1458,253 @@ struct Template_init;
 struct Init : Term
 {
   struct Visitor;
+
+  virtual void accept(Visitor&) const = 0;
+
+  // Returns the source expression for initialization. This
+  // is defined only when there is a single expression for
+  // initialization.
+  virtual Expr const* source() const { return nullptr; }
+  virtual Expr*       source()       { return nullptr; }
+
+  // Returns the type of the source expresssion.
+  virtual Type const* source_type() const { return nullptr; }
+  virtual Type*       source_type()       { return nullptr; }
 };
 
 
 // The visitor for initializers.
 struct Init::Visitor
 {
-  virtual void visit(Default_init const&)   { }
-  virtual void visit(Value_init const&)     { }
-  virtual void visit(Reference_init const&) { }
-  virtual void visit(Direct_init const&)    { }
-  virtual void visit(Aggregate_init const&) { }
-  virtual void visit(Type_init const&)      { }
-  virtual void visit(Template_init const&)  { }
+  virtual void visit(Absent_init const&)      { }
+  virtual void visit(Equal_init const&)       { }
+  virtual void visit(Paren_init const&)       { }
+  virtual void visit(Brace_init const&)       { }
+  virtual void visit(Structural_init const&)  { }
+  virtual void visit(Trivial_init const&)     { }
+  virtual void visit(Zero_init const&)        { }
+  virtual void visit(Constructor_init const&) { }
+  virtual void visit(Object_init const&)      { }
+  virtual void visit(Reference_init const&)   { }
+  virtual void visit(Aggregate_init const&)   { }
+  virtual void visit(Type_init const&)        { }
+  virtual void visit(Template_init const&)    { }
 };
 
 
-// A declaration can be defined to have a default value,
-// or in the case of functions, a default behavior.
-struct Default_init : Init
+// Represents the absence of an initializer.
+struct Absent_init : Init
 {
+  void accept(Visitor& v) const { v.visit(*this); }
 };
 
 
-// A declaration can be defined to have a given value,
-// or in the case of functions, an expression.
-struct Value_init : Init
+// Copy initialization represents the initialization of an object
+// or reference by an expression. This is the base class of
+// equal initializers and argument initializers.
+struct Copy_init : Init
 {
-  Expr* expr;
-};
+  Copy_init(Expr& e)
+    : expr(&e)
+  { }
 
+  // Returns the source expression for initialization.
+  Expr const* source() const { return &expression(); }
+  Expr*       source()       { return &expression(); }
 
-struct Reference_init : Init
-{
+  // Returns the type of the source expresssion.
+  Type const* source_type() const { return &type(); }
+  Type*       source_type()       { return &type(); }
+
+  // Returns the source expressions.
+  Expr const& expression() const { return *expr; }
+  Expr&       expression()       { return *expr; }
+
+  // Returns the type of the source expresssion.
+  Type const& type() const { return expr->type(); }
+  Type&       type()       { return expr->type(); }
+
   Expr* expr;
 };
 
 
 // A variable declaration can be directly initialized by a
-// constructor corresponding to the given arguments.
+// constructor corresponding to the given arguments. This
+// the base cass of the syntactic paren- and brace-initializers.
 struct Direct_init : Init
 {
+  Direct_init(Expr_list const& a)
+    : args(a)
+  { }
+
+  // Returns the source expression for initialization.
+  // This is defined only when there is a single operand
+  // in the initializer list.
+  Expr const* source() const { return args.size() == 1 ? args.front() : nullptr; }
+  Expr*       source()       { return args.size() == 1 ? args.front() : nullptr; }
+
+  // Returns the type of the source expresssion.
+  // This is defined only when there is a single operand
+  // in the initializer list.
+  Type const* source_type() const { return source() ? &source()->type() : nullptr; }
+  Type*       source_type()       { return source() ? &source()->type() : nullptr; }
+
+  // Returns the argumetns supplied for direct initialization.
+  Expr_list const& arguments() const { return args; }
+  Expr_list&       arguments()       { return args; }
+
   Expr_list args;
 };
 
 
-// A variable declaration can be initialized by specifying all
-// of its fields as an aggregate.
-struct Aggregate_init : Init
+// Represents copy initialization by an '='.
+struct Equal_init : Copy_init
 {
-  Expr_list inits;
+  using Copy_init::Copy_init;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// Direct initialization by a paren-enclosed list of expressions.
+struct Paren_init : Direct_init
+{
+  using Direct_init::Direct_init;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// Direct initialization by a brace-enclosed list of expressions.
+struct Brace_init : Direct_init
+{
+  using Direct_init::Direct_init;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// Elaborated initialzers
+
+// Represents the recursive initialziation of a compound object.
+struct Structural_init : Init
+{
+  Structural_init(Init_list const& i)
+    : inits(i)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+
+  // Returns a sequence of selected initializers for
+  // a compound target type.
+  Init_list const& initializers() const { return inits; }
+  Init_list&       initializers()       { return inits; }
+
+  Init_list inits;
+};
+
+
+// Represents the absence of initialization for an object. This
+// is selected by zero initialization of references and by the
+// default constrution of trivially constructible class and union
+// types.
+struct Trivial_init : Init
+{
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// Represents the implicit initialization of an object with the zero
+// value of the target type.
+//
+// TODO: Can we define trivial zero initialization for trivially
+// default constructible class types (i.e., memset_init)?
+struct Zero_init : Init
+{
+  Zero_init(Expr& e)
+    : expr(&e)
+  { }
+
+  // Returns the zero initializer for the target type.
+  Expr const& zero() const { return *expr; }
+  Expr&       zero()       { return *expr; }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+
+  Expr* expr;
+};
+
+
+// Represents the initialization of a class-type object by a
+// user-defined constructor.
+//
+// Note that we can't form a complete call expression since we don't
+// have an object at the point of construction (e.g., new expressions).
+// We'll have to build the call during evaluation and/or code gen.
+//
+// TODO: Make this return a Constructor_decl.
+struct Constructor_init : Init
+{
+  Constructor_init(Decl& d, Expr_list const& e)
+    : ctor(&d), args(e)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+
+  // Returns the constructor that initializes the target.
+  Decl const& constructor() const { return *ctor; }
+  Decl&       constructor()       { return *ctor; }
+
+  // Returns the arguments to the constructor.
+  Expr_list const& arguments() const { return args; }
+  Expr_list&       arguments()       { return args; }
+
+  Decl*     ctor;
+  Expr_list args;
+};
+
+
+// Represents the initialization of an object by an expression.
+// Object initialization is always a form of copy initialization.
+//
+// TODO: Is the object always non-class type? That would seem
+// likely since copy initialization of a POD-type would actually
+// select a generated constructor, possibly a trivial copy
+// constructor (i.e., memcpy_init)?
+struct Object_init : Copy_init
+{
+  using Copy_init::Copy_init;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// Represents the initialization of a reference by an expression.
+// Reference binding is generally a form of copy initialization.
+struct Reference_init : Copy_init
+{
+  using Copy_init::Copy_init;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+};
+
+
+// A variable declaration can be initialized by specifying all
+// of its fields as an aggregate. Aggregate iniitializaiton is
+// a special kind of structural initialization.
+struct Aggregate_init : Structural_init
+{
+  using Structural_init::Structural_init;
+
+  void accept(Visitor& v) const { v.visit(*this); }
 };
 
 
 // Represents the initialization of a type parameter by a type.
 struct Type_init : Init
 {
+  void accept(Visitor& v) const { v.visit(*this); }
+
   Type* ty;
 };
 
@@ -1364,6 +1713,8 @@ struct Type_init : Init
 // a template declaration.
 struct Template_init : Init
 {
+  void accept(Visitor& v) const { v.visit(*this); }
+
   Decl* decl;
 };
 
@@ -1376,18 +1727,24 @@ struct Generic_init_visitor : Init::Visitor, Generic_visitor<F, T>
     : Generic_visitor<F, T>(f)
   { }
 
-  void visit(Default_init const& i)   { this->invoke(i); }
-  void visit(Value_init const& i)     { this->invoke(i); }
-  void visit(Reference_init const& i) { this->invoke(i); }
-  void visit(Direct_init const& i)    { this->invoke(i); }
-  void visit(Aggregate_init const& i) { this->invoke(i); }
-  void visit(Type_init const& i)      { this->invoke(i); }
-  void visit(Template_init const& i)  { this->invoke(i); }
+  void visit(Absent_init const& i)      { this->invoke(i); }
+  void visit(Equal_init const& i)       { this->invoke(i); }
+  void visit(Direct_init const& i)      { this->invoke(i); }
+  void visit(Brace_init const& i)       { this->invoke(i); }
+  void visit(Structural_init const& i)  { this->invoke(i); }
+  void visit(Trivial_init const& i)     { this->invoke(i); }
+  void visit(Zero_init const& i)        { this->invoke(i); }
+  void visit(Constructor_init const& i) { this->invoke(i); }
+  void visit(Object_init const& i)      { this->invoke(i); }
+  void visit(Reference_init const& i)   { this->invoke(i); }
+  void visit(Aggregate_init const& i)   { this->invoke(i); }
+  void visit(Type_init const& i)        { this->invoke(i); }
+  void visit(Template_init const& i)    { this->invoke(i); }
 };
 
 
 // Apply a function to the given type.
-template<typename F, typename T = typename std::result_of<F(Default_init const&)>::type>
+template<typename F, typename T = typename std::result_of<F(Absent_init const&)>::type>
 inline T
 apply(Init const& i, F fn)
 {
@@ -1502,7 +1859,7 @@ struct Generic_def_visitor : Def::Visitor, Generic_visitor<F, T>
 
 
 // Apply a function to the given type.
-template<typename F, typename T = typename std::result_of<F(Default_init const&)>::type>
+template<typename F, typename T = typename std::result_of<F(Defaulted_def const&)>::type>
 inline T
 apply(Def const& d, F fn)
 {
@@ -1992,22 +2349,26 @@ Typename_type::declaration() const
 
 
 // -------------------------------------------------------------------------- //
-// Queries
+// Queries on types
+//
+// TODO: For the is_*_type() predicates, should we account
+// for qualified types? For example, most rules asking for
+// a class type also cover qualified class types also.
 
 
-// Returns true if t is an integer type.
+// Returns true if `t` is the boolean type.
+inline bool
+is_boolean_type(Type const& t)
+{
+  return is<Boolean_type>(&t);
+}
+
+
+// Returns true if `t` is an integer type.
 inline bool
 is_integer_type(Type const& t)
 {
   return is<Integer_type>(&t);
-}
-
-
-// Retruns true if the expression `e` has integer type.
-inline bool
-has_integer_type(Expr const& e)
-{
-  return is_integer_type(e.type());
 }
 
 
@@ -2019,6 +2380,86 @@ is_floating_point_type(Type const& t)
 }
 
 
+// Returns true if `t` is a function type.
+inline bool
+is_function_type(Type const& t)
+{
+  return is<Function_type>(&t);
+}
+
+
+// Returns true if `t` is a reference type.
+inline bool
+is_reference_type(Type const& t)
+{
+  return is<Reference_type>(&t);
+}
+
+
+// Returns true if `t` is a pointer type.
+inline bool
+is_pointer_type(Type const& t)
+{
+  return is<Pointer_type>(&t);
+}
+
+
+// Returns true if `t` is an array type.
+inline bool
+is_array_type(Type const& t)
+{
+  return is<Array_type>(&t);
+}
+
+
+// Returns true if `t` is a sequence type.
+inline bool
+is_sequence_type(Type const& t)
+{
+  return is<Sequence_type>(&t);
+}
+
+
+// Returns true if `t` is a class type.
+inline bool
+is_class_type(Type const& t)
+{
+  return is<Class_type>(&t);
+}
+
+
+// Returns true if `t` is a union type.
+inline bool
+is_union_type(Type const& t)
+{
+  return is<Union_type>(&t);
+}
+
+
+// Returns true if `t` is a scalar type.
+inline bool
+is_scalar_type(Type const& t)
+{
+  return is_boolean_type(t)
+      || is_integer_type(t)
+      || is_floating_point_type(t)
+      || is_pointer_type(t)
+      || is_sequence_type(t);
+}
+
+
+// -------------------------------------------------------------------------- //
+// Queries on expressions
+
+
+// Returns true if the expression `e` has integer type.
+inline bool
+has_integer_type(Expr const& e)
+{
+  return is_integer_type(e.type());
+}
+
+
 // Returns true if the expression `e` has floating point type.
 inline bool
 has_floating_point_type(Expr const& e)
@@ -2026,6 +2467,79 @@ has_floating_point_type(Expr const& e)
   return is_floating_point_type(e.type());
 }
 
+
+// Returns true if `e` has reference type.
+inline bool
+has_reference_type(Expr const& e)
+{
+  return is_reference_type(e.type());
+}
+
+
+// Returns trhe if `e` has array type.
+inline bool
+has_array_type(Expr const& e)
+{
+  return is_array_type(e.type());
+}
+
+
+// Returns true if `e` has class type.
+inline bool
+has_class_type(Expr const& e)
+{
+  return is_class_type(e.type());
+}
+
+
+
+// Returns true if `e` has union type.
+inline bool
+has_union_type(Expr const& e)
+{
+  return is_union_type(e.type());
+}
+
+
+// -------------------------------------------------------------------------- //
+// Queries on conversions
+
+// Returns true if the expression is a standard conversion.
+inline bool
+is_standard_conversion(Expr const& e)
+{
+  return is<Standard_conv>(&e);
+}
+
+
+// Returns true if the expression is an ellipsis conversion.
+inline bool
+is_ellipsis_conversion(Expr const& e)
+{
+  return is<Ellipsis_conv>(&e);
+}
+
+
+// -------------------------------------------------------------------------- //
+// Queries on initialization
+
+
+// Returns true if `i` is direct initialization from a
+// paren-enclosed sequence of expressions.
+inline bool
+is_paren_initialization(Init const& i)
+{
+  return is<Paren_init>(&i);
+}
+
+
+// Returns true if `i` is direct initialization from a
+// brace-enclosed sequence of expressions.
+inline bool
+is_brace_initialization(Init const& i)
+{
+  return is<Brace_init>(&i);
+}
 
 
 } // namespace beaker
