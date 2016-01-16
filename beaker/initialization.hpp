@@ -7,22 +7,25 @@
 #include "prelude.hpp"
 #include "context.hpp"
 
-
 namespace beaker
 {
 
 struct Type;
+struct Reference_type;
 struct Expr;
 struct Init;
+struct Brace_init;
 
 
-Init& zero_initialize(Type&);
-Init& default_initialize(Type&);
-Init& value_initialize(Type&);
+Init& zero_initialize(Context&, Type&);
+Init& default_initialize(Context&, Type&);
+Init& value_initialize(Context&, Type&);
+Init& reference_initialize(Context&, Reference_type&, Init&);
+Init& aggregate_initialize(Context&, Type&, Brace_init&);
 
-Init& initialize(Type&, Init&);
-Init& initialize_reference(Type&, Init&);
-Init& initialize_aggregate(Type&, Init&);
+Init& initialize(Context&, Type&, Init&);
+Init& copy_initialize(Context&, Type&, Init&);
+Init& direct_initialize(Context&, Type&, Init&);
 
 
 } // namespace beaker

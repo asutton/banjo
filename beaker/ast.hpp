@@ -1730,8 +1730,8 @@ struct Generic_init_visitor : Init::Visitor, Generic_visitor<F, T>
 
   void visit(Absent_init const& i)      { this->invoke(i); }
   void visit(Equal_init const& i)       { this->invoke(i); }
-  void visit(Direct_init const& i)      { this->invoke(i); }
   void visit(Brace_init const& i)       { this->invoke(i); }
+  void visit(Paren_init const& i)       { this->invoke(i); }
   void visit(Structural_init const& i)  { this->invoke(i); }
   void visit(Trivial_init const& i)     { this->invoke(i); }
   void visit(Zero_init const& i)        { this->invoke(i); }

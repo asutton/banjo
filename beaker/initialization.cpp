@@ -140,12 +140,12 @@ initialize(Context& cxt, Type& t, Init& i)
 
   // If the initializer is {...}, then perform aggregate initalization.
   if (is_brace_initialization(i))
-    return initialize_aggregate(t, cast<Brace_init>(i));
+    return aggregate_initialize(cxt, t, cast<Brace_init>(i));
 
   // If the destination type is a T&, then perform reference
   // initialization.
   if (is_reference_type(t))
-    return initialize_reference(cast<Reference_type>(t), i);
+    return reference_initialize(cxt, cast<Reference_type>(t), i);
 
   // If the destination type is T[N] or T[] and the initializer
   // is `= s` where `s` is a string literal, perform string
@@ -157,7 +157,7 @@ initialize(Context& cxt, Type& t, Init& i)
   if (is_paren_initialization(i)) {
     Paren_init& p = cast<Paren_init>(i);
     if (p.arguments().empty())
-      return value_initialize(t);
+      return value_initialize(cxt, t);
   }
 
   Type& u = t.unqualified_type();
@@ -254,7 +254,7 @@ is_reference_compatible(Type const& t1, Type const& t2)
 // to bind to a sub-objet or a user-defined conversion. However,
 // these aren't conversions in the standard sense.
 Init&
-initialize_reference(Context& cxt, Reference_type& t1, Init& i)
+reference_initialize(Context& cxt, Reference_type& t1, Init& i)
 {
   Builder build(cxt);
 
@@ -294,7 +294,7 @@ initialize_reference(Context& cxt, Reference_type& t1, Init& i)
 // Aggregate initialization
 
 Init&
-initialize_aggregate(Context& cxt, Type& t, Brace_init& i)
+aggregate_initialize(Context& cxt, Type& t, Brace_init& i)
 {
   lingo_unimplemented();
 }

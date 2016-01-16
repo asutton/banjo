@@ -55,6 +55,7 @@ struct Printer
   void operator()(Type const& t) { type(t); }
   void operator()(Expr const& e) { expression(e); }
   void operator()(Decl const& d) { declaration(d); }
+  void operator()(Init const& i) { initializer(i); }
 
   // Lexical terms.
   void space(Token_info);
@@ -116,6 +117,16 @@ struct Printer
   void postfix_expression(Ellipsis_conv const&);
   void unary_expression(Unary_expr const&, Token_kind);
   void binary_expression(Binary_expr const&, Token_kind);
+
+  // Initializers
+  void initializer(Init const&);
+  void equal_initializer(Trivial_init const&);
+  void equal_initializer(Zero_init const&);
+  void equal_initializer(Object_init const&);
+  void equal_initializer(Reference_init const&);
+  void paren_initializer(Constructor_init const&);
+  void brace_initializer(Structural_init const&);
+  void brace_initializer(Aggregate_init const&);
 
   // Declarations
   void declaration(Decl const&);

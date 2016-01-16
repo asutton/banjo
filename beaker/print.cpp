@@ -584,7 +584,7 @@ void
 Printer::postfix_expression(Qualification_conv const& e)
 {
   // TODO: Be more specific about the qualification added.
-  token("__convert_qualification");
+  token("__adjust_qualification");
   token(lparen_tok);
   expression(e.source());
   token(rparen_tok);
@@ -659,8 +659,89 @@ Printer::binary_expression(Binary_expr const& e, Token_kind k)
 
 
 // -------------------------------------------------------------------------- //
-// Declarations
+// Initializers
 
+// TODO: Figure out how to print initializers.
+void
+Printer::initializer(Init const& i)
+{
+  struct fn
+  {
+    Printer& p;
+    void operator()(Init const&)               { lingo_unreachable(); }
+    void operator()(Trivial_init const& i)     { p.equal_initializer(i); }
+    void operator()(Zero_init const& i)        { p.equal_initializer(i); }
+    void operator()(Object_init const& i)      { p.equal_initializer(i); }
+    void operator()(Reference_init const& i)   { p.equal_initializer(i); }
+    void operator()(Constructor_init const& i) { p.paren_initializer(i); }
+    void operator()(Structural_init const& i)  { p.brace_initializer(i); }
+    void operator()(Aggregate_init const& i)   { p.brace_initializer(i); }
+  };
+  apply(i, fn{*this});
+}
+
+
+void
+Printer::equal_initializer(Trivial_init const& i)
+{
+  token(eq_tok);
+  token("<trivial>");
+}
+
+
+// TODO: Can all scalar types be initialized by 0?
+void
+Printer::equal_initializer(Zero_init const& i)
+{
+  token(eq_tok);
+  token("0");
+}
+
+
+void
+Printer::equal_initializer(Object_init const& i)
+{
+  token(eq_tok);
+  space();
+  expression(i.expression());
+}
+
+
+void
+Printer::equal_initializer(Reference_init const& i)
+{
+  token(eq_tok);
+  space();
+  expression(i.expression());
+}
+
+
+// TODO: Implement me.
+void
+Printer::paren_initializer(Constructor_init const& i)
+{
+  token("(...)");
+}
+
+
+// TODO: Implement me.
+void
+Printer::brace_initializer(Structural_init const&)
+{
+  token("{...}");
+}
+
+
+// TODO: Implement me.
+void
+Printer::brace_initializer(Aggregate_init const&)
+{
+  token("{...}");
+}
+
+
+// -------------------------------------------------------------------------- //
+// Declarations
 
 // Dispatch for declarations (as in declaration statements).
 struct declaration_fn
@@ -923,6 +1004,8 @@ operator<<(std::ostream& os, Decl const& d)
 std::ostream&
 operator<<(std::ostream& os, Init const& i)
 {
+  Printer print(os);
+  print(i);
   return os;
 }
 
