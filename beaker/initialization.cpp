@@ -192,6 +192,34 @@ initialize(Context& cxt, Type& t, Init& i)
 }
 
 
+// Perform copy initialization. Find an initialization procedure
+// for an object of type `t` by the given expression. This performs
+// initializations as for a variable of type T as if we had
+// written:
+//
+//    T x = e;
+//
+// The full range of initializations and conversions apply.
+Init&
+copy_initialize(Context& cxt, Type& t, Expr& e)
+{
+  Builder build(cxt);
+  return initialize(cxt, t, build.make_equal_init(e));
+}
+
+
+// Perform direct initialization.
+//
+// TODO: This isn't just direct initialization. We need to account
+// for whether braces or parens are used. Maybe we should have two
+// function: brace_initialize() and paren_initialize().
+Init&
+direct_initialize(Context&, Type&, Expr_list const&)
+{
+  lingo_unimplemented();
+}
+
+
 // -------------------------------------------------------------------------- //
 // Reference initialization
 

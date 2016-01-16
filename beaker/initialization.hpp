@@ -24,7 +24,7 @@ Init& reference_initialize(Context&, Reference_type&, Init&);
 Init& aggregate_initialize(Context&, Type&, Brace_init&);
 
 Init& initialize(Context&, Type&, Init&);
-Init& copy_initialize(Context&, Type&, Init&);
+Init& copy_initialize(Context&, Type&, Expr&);
 Init& direct_initialize(Context&, Type&, Init&);
 
 
