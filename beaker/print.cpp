@@ -462,7 +462,8 @@ precedence(Expr const& e)
     int operator()(Not_expr const& e)       { return 3; }
     int operator()(Call_expr const& e)      { return 2; }
     int operator()(Assign_expr const& e)    { return 15; }
-    int operator()(Conv const& e)           { return 3; }
+    int operator()(Conv const& e)           { return precedence(e.source()); }
+    int operator()(Init const& e)           { lingo_unreachable(); }
   };
   return apply(e, fn{});
 }
@@ -503,6 +504,7 @@ Printer::expression(Expr const& e)
     void operator()(Float_conv const& e)         { p.postfix_expression(e); }
     void operator()(Numeric_conv const& e)       { p.postfix_expression(e); }
     void operator()(Ellipsis_conv const& e)      { p.postfix_expression(e); }
+    void operator()(Init const& e)               { lingo_unreachable(); }
 };
   apply(e, fn{*this});
 }
@@ -668,7 +670,7 @@ Printer::initializer(Init const& i)
   struct fn
   {
     Printer& p;
-    void operator()(Init const&)               { lingo_unreachable(); }
+    void operator()(Expr const&)               { lingo_unreachable(); }
     void operator()(Trivial_init const& i)     { p.equal_initializer(i); }
     void operator()(Zero_init const& i)        { p.equal_initializer(i); }
     void operator()(Object_init const& i)      { p.equal_initializer(i); }

@@ -21,6 +21,7 @@ add_library(beaker
   equivalence.cpp
   conversion.cpp
   initialization.cpp
+  call.cpp
   inheritance.cpp
   print.cpp
 )

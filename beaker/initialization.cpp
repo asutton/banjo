@@ -31,7 +31,7 @@ zero_initialize(Context& cxt, Type& t)
 
   // No initialization is performed for reference types.
   if (is_reference_type(t))
-    return build.make_trivial_init();
+    return build.make_trivial_init(t);
 
   // Zero initialize each sub-object in turn.
   if (is_array_type(t))
@@ -48,7 +48,7 @@ zero_initialize(Context& cxt, Type& t)
     lingo_unimplemented();
 
   if (is_scalar_type(u))
-    return build.make_zero_init(build.get_zero(t));
+    return build.make_zero_init(t, build.get_zero(t));
 
   // FIXME: I'm not sure that we should have an error here.
   throw std::runtime_error("cannot zero initialize type");
@@ -75,18 +75,16 @@ default_initialize(Context& cxt, Type& t)
   if (is_array_type(t))
     lingo_unimplemented();
 
-  Type& u = t.unqualified_type();
-
   // Select a (possibly synthesized) default constructor for u.
-  if (is_class_type(u))
+  if (is_maybe_qualified_class_type(t))
     lingo_unimplemented();
 
   // Select a (possibly synthesized) default constructor for u.
-  if (is_union_type(u))
+  if (is_maybe_qualified_union_type(t))
     lingo_unimplemented();
 
   // Otherwise, no initialization is performed.
-  return build.make_trivial_init();
+  return build.make_trivial_init(t);
 }
 
 
@@ -103,11 +101,9 @@ value_initialize(Context& cxt, Type& t)
   if (is_array_type(t))
     lingo_unimplemented();
 
-  Type& u = t.unqualified_type();
-
   // Either zero-initialize or default-initialize based on
   // the presence of user-defined constructors.
-  if (is_class_type(u) || is_union_type(u))
+  if (is_maybe_qualified_class_type(t) || is_maybe_qualified_union_type(t))
     lingo_unimplemented();
 
   // Are we sure that there are no other categories of types?
@@ -160,12 +156,10 @@ initialize(Context& cxt, Type& t, Init& i)
       return value_initialize(cxt, t);
   }
 
-  Type& u = t.unqualified_type();
-
   // Find an initialization procedure for user-defined compound
   // types, given the initializer i. Note that this can find
   // user-defined conversions for `t` from the initializer.
-  if (is_class_type(u) || is_union_type(u))
+  if (is_maybe_qualified_class_type(t) || is_maybe_qualified_union_type(t))
     lingo_unimplemented();
   else
     check_paren_initialization(i);
@@ -188,7 +182,7 @@ initialize(Context& cxt, Type& t, Init& i)
   // TODO: Catch exceptions and restructure the error with
   // the conversion error as an explanation.
   Expr& c = standard_conversion(*i.source(), t);
-  return build.make_object_init(c);
+  return build.make_object_init(t, c);
 }
 
 
@@ -295,8 +289,12 @@ reference_initialize(Context& cxt, Reference_type& t1, Init& i)
   // The initializer has reference type.
   if (is_reference_type(t2)) {
     // If t1 is reference-compatible with t2, then bind directly.
+    //
+    // TODO: If we bind to a base class, we might need to apply a
+    // base class conversion in order to explicitly adjust pointer
+    // offsets.
     if (is_reference_compatible(t1, t2))
-      return build.make_reference_init(*s);
+      return build.make_reference_init(t1, *s);
 
     // t2 has class type and has a user-defined conversion that is
     // reference compatible with t1, then bind the the to the

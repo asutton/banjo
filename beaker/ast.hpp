@@ -18,7 +18,6 @@ struct Type;
 struct Expr;
 struct Stmt;
 struct Decl;
-struct Init;
 
 
 // -------------------------------------------------------------------------- //
@@ -115,7 +114,6 @@ struct List : Term, std::vector<T*>
 using Term_list = List<Term>;
 using Type_list = List<Type>;
 using Expr_list = List<Expr>;
-using Init_list = List<Init>;
 using Stmt_list = List<Stmt>;
 using Decl_list = List<Decl>;
 
@@ -494,6 +492,8 @@ struct Function_type : Type
   void accept(Visitor& v) const { v.visit(*this); }
 
   Type_list const& parameter_types() const { return parms; }
+  Type_list&       parameter_types()       { return parms; }
+
   Type const&      return_type() const     { return *ret; }
   Type&            return_type()           { return *ret; }
 
@@ -719,6 +719,17 @@ struct Integer_conv;
 struct Float_conv;
 struct Numeric_conv;
 struct Ellipsis_conv;
+// Initialization
+struct Equal_init;
+struct Paren_init;
+struct Brace_init;
+struct Structural_init;
+struct Trivial_init;
+struct Zero_init;
+struct Constructor_init;
+struct Object_init;
+struct Reference_init;
+struct Aggregate_init;
 
 
 // The base class of all expresions.
@@ -726,6 +737,10 @@ struct Expr : Term
 {
   struct Visitor;
   struct Mutator;
+
+  Expr()
+    : ty(nullptr)
+  { }
 
   Expr(Type& t)
     : ty(&t)
@@ -773,6 +788,16 @@ struct Expr::Visitor
   virtual void visit(Float_conv const&) { }
   virtual void visit(Numeric_conv const&) { }
   virtual void visit(Ellipsis_conv const&) { }
+  virtual void visit(Equal_init const&) { }
+  virtual void visit(Paren_init const&) { }
+  virtual void visit(Brace_init const&) { }
+  virtual void visit(Structural_init const&) { }
+  virtual void visit(Trivial_init const&) { }
+  virtual void visit(Zero_init const&) { }
+  virtual void visit(Constructor_init const&) { }
+  virtual void visit(Object_init const&) { }
+  virtual void visit(Reference_init const&) { }
+  virtual void visit(Aggregate_init const&) { }
 };
 
 struct Expr::Mutator
@@ -806,6 +831,16 @@ struct Expr::Mutator
   virtual void visit(Float_conv&) { }
   virtual void visit(Numeric_conv&) { }
   virtual void visit(Ellipsis_conv&) { }
+  virtual void visit(Equal_init&) { }
+  virtual void visit(Paren_init&) { }
+  virtual void visit(Brace_init&) { }
+  virtual void visit(Structural_init&) { }
+  virtual void visit(Trivial_init&) { }
+  virtual void visit(Zero_init&) { }
+  virtual void visit(Constructor_init&) { }
+  virtual void visit(Object_init&) { }
+  virtual void visit(Reference_init&) { }
+  virtual void visit(Aggregate_init&) { }
 };
 
 
@@ -1081,7 +1116,7 @@ struct Not_expr : Unary_expr
 // unresolved calls. It would simplify code generation.
 struct Call_expr : Expr
 {
-  Call_expr(Type& t, Expr& e, Init_list const& a)
+  Call_expr(Type& t, Expr& e, Expr_list const& a)
     : Expr(t), fn(&e), args(a)
   { }
 
@@ -1091,11 +1126,11 @@ struct Call_expr : Expr
   Expr const& function() const { return *fn; }
   Expr&       function()       { return *fn; }
 
-  Init_list const& arguments() const { return args; }
-  Init_list&       arguments()       { return args; }
+  Expr_list const& arguments() const { return args; }
+  Expr_list&       arguments()       { return args; }
 
   Expr*     fn;
-  Init_list args;
+  Expr_list args;
 };
 
 
@@ -1221,6 +1256,261 @@ struct Ellipsis_conv : Conv
 };
 
 
+// An initializer is an expressio that provides a value for an
+// object or reference.
+//
+// There are two kinds of initializers: syntactic and elaborated.
+// A syntactic initializer represents how an initializer is
+// initially written. Note that these may be untyped at the point
+// of elaboration. An elaborated initalizers determines how
+// initialization is actually done.
+//
+// TODO: Give all initializers a type. For untyped initializers,
+// just make that type void, or <init>. Maybe?
+struct Init : Expr
+{
+  Init()
+    : Expr()
+  { }
+
+  Init(Type& t)
+    : Expr(t)
+  { }
+
+  // Returns the source expression for initialization. This
+  // is defined only when there is a single expression for
+  // initialization.
+  virtual Expr const* source() const { return nullptr; }
+  virtual Expr*       source()       { return nullptr; }
+
+  // Returns the type of the source expression.
+  virtual Type const* source_type() const { return nullptr; }
+  virtual Type*       source_type()       { return nullptr; }
+};
+
+
+// Copy initialization represents the initialization of an object
+// or reference by an expression. This is the base class of
+// equal initializers and argument initializers.
+struct Copy_init : Init
+{
+  Copy_init(Expr& e)
+    : Init(), expr(&e)
+  { }
+
+  Copy_init(Type& t, Expr& e)
+    : Init(t), expr(&e)
+  { }
+
+  // Returns the source expression for initialization.
+  Expr const* source() const { return &expression(); }
+  Expr*       source()       { return &expression(); }
+
+  // Returns the type of the source expresssion.
+  Type const* source_type() const { return &type(); }
+  Type*       source_type()       { return &type(); }
+
+  // Returns the source expressions.
+  Expr const& expression() const { return *expr; }
+  Expr&       expression()       { return *expr; }
+
+  // Returns the type of the source expresssion.
+  Type const& type() const { return expr->type(); }
+  Type&       type()       { return expr->type(); }
+
+  Expr* expr;
+};
+
+
+// A variable declaration can be directly initialized by a
+// constructor corresponding to the given arguments. This
+// the base cass of the syntactic paren- and brace-initializers.
+struct Direct_init : Init
+{
+  Direct_init(Expr_list const& a)
+    : Init(), args(a)
+  { }
+
+  Direct_init(Type& t, Expr_list const& a)
+    : Init(t), args(a)
+  { }
+
+  // Returns the source expression for initialization.
+  // This is defined only when there is a single operand
+  // in the initializer list.
+  Expr const* source() const { return args.size() == 1 ? args.front() : nullptr; }
+  Expr*       source()       { return args.size() == 1 ? args.front() : nullptr; }
+
+  // Returns the type of the source expresssion.
+  // This is defined only when there is a single operand
+  // in the initializer list.
+  Type const* source_type() const { return source() ? &source()->type() : nullptr; }
+  Type*       source_type()       { return source() ? &source()->type() : nullptr; }
+
+  // Returns the argumetns supplied for direct initialization.
+  Expr_list const& arguments() const { return args; }
+  Expr_list&       arguments()       { return args; }
+
+  Expr_list args;
+};
+
+// Syntactic initializers
+
+// Represents copy initialization by an '='.
+struct Equal_init : Copy_init
+{
+  using Copy_init::Copy_init;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// Direct initialization by a paren-enclosed list of expressions.
+struct Paren_init : Direct_init
+{
+  using Direct_init::Direct_init;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// Direct initialization by a brace-enclosed list of expressions.
+struct Brace_init : Direct_init
+{
+  using Direct_init::Direct_init;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// Elaborated initialzers
+
+// Represents the recursive initialziation of a compound object.
+struct Structural_init : Init
+{
+  Structural_init(Type& t, Expr_list const& i)
+    : Init(t), inits(i)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns a sequence of selected initializers for
+  // a compound target type.
+  Expr_list const& initializers() const { return inits; }
+  Expr_list&       initializers()       { return inits; }
+
+  Expr_list inits;
+};
+
+
+// Represents the absence of initialization for an object. This
+// is selected by zero initialization of references and by the
+// default constrution of trivially constructible class and union
+// types.
+struct Trivial_init : Init
+{
+  using Init::Init;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// Represents the implicit initialization of an object with the zero
+// value of the target type.
+//
+// TODO: Can we define trivial zero initialization for trivially
+// default constructible class types (i.e., memset_init)?
+struct Zero_init : Init
+{
+  Zero_init(Type& t, Expr& e)
+    : Init(t), expr(&e)
+  { }
+
+  // Returns the zero initializer for the target type.
+  Expr const& zero() const { return *expr; }
+  Expr&       zero()       { return *expr; }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  Expr* expr;
+};
+
+
+// Represents the initialization of a class-type object by a
+// user-defined constructor.
+//
+// Note that we can't form a complete call expression since we don't
+// have an object at the point of construction (e.g., new expressions).
+// We'll have to build the call during evaluation and/or code gen.
+//
+// TODO: Make this return a Constructor_decl.
+struct Constructor_init : Init
+{
+  Constructor_init(Type& t, Decl& d, Expr_list const& e)
+    : Init(t), ctor(&d), args(e)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the constructor that initializes the target.
+  Decl const& constructor() const { return *ctor; }
+  Decl&       constructor()       { return *ctor; }
+
+  // Returns the arguments to the constructor.
+  Expr_list const& arguments() const { return args; }
+  Expr_list&       arguments()       { return args; }
+
+  Decl*     ctor;
+  Expr_list args;
+};
+
+
+// Represents the initialization of an object by an expression.
+//
+// TODO: Is the object always non-class type? That would seem
+// likely since copy initialization of a POD-type would actually
+// select a generated constructor, possibly a trivial copy
+// constructor (i.e., memcpy_init)?
+struct Object_init : Copy_init
+{
+  using Copy_init::Copy_init;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// Represents the initialization of a reference by an expression.
+struct Reference_init : Copy_init
+{
+  using Copy_init::Copy_init;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// A variable declaration can be initialized by specifying all
+// of its fields as an aggregate. Aggregate iniitializaiton is
+// a special kind of structural initialization.
+//
+// TODO: Derive from direct init?
+struct Aggregate_init : Structural_init
+{
+  using Structural_init::Structural_init;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
 // A generic visitor for expressions.
 template<typename F, typename T>
 struct Generic_expr_visitor : Expr::Visitor, Generic_visitor<F, T>
@@ -1258,6 +1548,16 @@ struct Generic_expr_visitor : Expr::Visitor, Generic_visitor<F, T>
   void visit(Float_conv const& e)         { this->invoke(e); }
   void visit(Numeric_conv const& e)       { this->invoke(e); }
   void visit(Ellipsis_conv const& e)      { this->invoke(e); }
+  void visit(Equal_init const& e)         { this->invoke(e); }
+  void visit(Paren_init const& e)         { this->invoke(e); }
+  void visit(Brace_init const& e)         { this->invoke(e); }
+  void visit(Structural_init const& e)    { this->invoke(e); }
+  void visit(Trivial_init const& e)       { this->invoke(e); }
+  void visit(Zero_init const& e)          { this->invoke(e); }
+  void visit(Constructor_init const& e)   { this->invoke(e); }
+  void visit(Object_init const& e)        { this->invoke(e); }
+  void visit(Reference_init const& e)     { this->invoke(e); }
+  void visit(Aggregate_init const& e)     { this->invoke(e); }
 };
 
 
@@ -1308,6 +1608,16 @@ struct Generic_expr_mutator : Expr::Mutator, Generic_mutator<F, T>
   void visit(Float_conv& e)         { this->invoke(e); }
   void visit(Numeric_conv& e)       { this->invoke(e); }
   void visit(Ellipsis_conv& e)      { this->invoke(e); }
+  void visit(Equal_init& e)         { this->invoke(e); }
+  void visit(Paren_init& e)         { this->invoke(e); }
+  void visit(Brace_init& e)         { this->invoke(e); }
+  void visit(Structural_init& e)    { this->invoke(e); }
+  void visit(Trivial_init& e)       { this->invoke(e); }
+  void visit(Zero_init& e)          { this->invoke(e); }
+  void visit(Constructor_init& e)   { this->invoke(e); }
+  void visit(Object_init& e)        { this->invoke(e); }
+  void visit(Reference_init& e)     { this->invoke(e); }
+  void visit(Aggregate_init& e)     { this->invoke(e); }
 };
 
 
@@ -1414,343 +1724,6 @@ apply(Stmt const& s, F fn)
 {
   Generic_stmt_visitor<F, T> vis(fn);
   return accept(s, vis);
-}
-
-
-// -------------------------------------------------------------------------- //
-// Object initializers
-//
-// Initializers fall into two categories
-//
-//  - syntactic initializers reflect initial parse, and
-//  - elaborated initialziers reflect the initialization procedure.
-//
-// Elaborated initializers are produced by analysis of the target
-// type (the type of the initialized object) and information provided
-// in the syntactic initializer.
-//
-// We also include initialiers for type and template template parameters
-// so that copy initialization is a fully generalized concept.
-//
-// TODO: Factor the syntctic initializers into a different set of
-// terms?
-
-struct Init;
-// Synactic initialziers
-struct Absent_init;
-struct Equal_init;
-struct Paren_init;
-struct Brace_init;
-// Elaborated initializers
-struct Structural_init;
-struct Trivial_init;
-struct Zero_init;
-struct Constructor_init;
-struct Object_init;
-struct Reference_init;
-struct Aggregate_init;
-// Template initializers
-struct Type_init;
-struct Template_init;
-
-
-// An object initializer provides a value for a constant,
-// variable, or parameter (of various kind).
-struct Init : Term
-{
-  struct Visitor;
-
-  virtual void accept(Visitor&) const = 0;
-
-  // Returns the source expression for initialization. This
-  // is defined only when there is a single expression for
-  // initialization.
-  virtual Expr const* source() const { return nullptr; }
-  virtual Expr*       source()       { return nullptr; }
-
-  // Returns the type of the source expresssion.
-  virtual Type const* source_type() const { return nullptr; }
-  virtual Type*       source_type()       { return nullptr; }
-};
-
-
-// The visitor for initializers.
-struct Init::Visitor
-{
-  virtual void visit(Absent_init const&)      { }
-  virtual void visit(Equal_init const&)       { }
-  virtual void visit(Paren_init const&)       { }
-  virtual void visit(Brace_init const&)       { }
-  virtual void visit(Structural_init const&)  { }
-  virtual void visit(Trivial_init const&)     { }
-  virtual void visit(Zero_init const&)        { }
-  virtual void visit(Constructor_init const&) { }
-  virtual void visit(Object_init const&)      { }
-  virtual void visit(Reference_init const&)   { }
-  virtual void visit(Aggregate_init const&)   { }
-  virtual void visit(Type_init const&)        { }
-  virtual void visit(Template_init const&)    { }
-};
-
-
-// Represents the absence of an initializer.
-struct Absent_init : Init
-{
-  void accept(Visitor& v) const { v.visit(*this); }
-};
-
-
-// Copy initialization represents the initialization of an object
-// or reference by an expression. This is the base class of
-// equal initializers and argument initializers.
-struct Copy_init : Init
-{
-  Copy_init(Expr& e)
-    : expr(&e)
-  { }
-
-  // Returns the source expression for initialization.
-  Expr const* source() const { return &expression(); }
-  Expr*       source()       { return &expression(); }
-
-  // Returns the type of the source expresssion.
-  Type const* source_type() const { return &type(); }
-  Type*       source_type()       { return &type(); }
-
-  // Returns the source expressions.
-  Expr const& expression() const { return *expr; }
-  Expr&       expression()       { return *expr; }
-
-  // Returns the type of the source expresssion.
-  Type const& type() const { return expr->type(); }
-  Type&       type()       { return expr->type(); }
-
-  Expr* expr;
-};
-
-
-// A variable declaration can be directly initialized by a
-// constructor corresponding to the given arguments. This
-// the base cass of the syntactic paren- and brace-initializers.
-struct Direct_init : Init
-{
-  Direct_init(Expr_list const& a)
-    : args(a)
-  { }
-
-  // Returns the source expression for initialization.
-  // This is defined only when there is a single operand
-  // in the initializer list.
-  Expr const* source() const { return args.size() == 1 ? args.front() : nullptr; }
-  Expr*       source()       { return args.size() == 1 ? args.front() : nullptr; }
-
-  // Returns the type of the source expresssion.
-  // This is defined only when there is a single operand
-  // in the initializer list.
-  Type const* source_type() const { return source() ? &source()->type() : nullptr; }
-  Type*       source_type()       { return source() ? &source()->type() : nullptr; }
-
-  // Returns the argumetns supplied for direct initialization.
-  Expr_list const& arguments() const { return args; }
-  Expr_list&       arguments()       { return args; }
-
-  Expr_list args;
-};
-
-
-// Represents copy initialization by an '='.
-struct Equal_init : Copy_init
-{
-  using Copy_init::Copy_init;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-};
-
-
-// Direct initialization by a paren-enclosed list of expressions.
-struct Paren_init : Direct_init
-{
-  using Direct_init::Direct_init;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-};
-
-
-// Direct initialization by a brace-enclosed list of expressions.
-struct Brace_init : Direct_init
-{
-  using Direct_init::Direct_init;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-};
-
-
-// Elaborated initialzers
-
-// Represents the recursive initialziation of a compound object.
-struct Structural_init : Init
-{
-  Structural_init(Init_list const& i)
-    : inits(i)
-  { }
-
-  void accept(Visitor& v) const { v.visit(*this); }
-
-  // Returns a sequence of selected initializers for
-  // a compound target type.
-  Init_list const& initializers() const { return inits; }
-  Init_list&       initializers()       { return inits; }
-
-  Init_list inits;
-};
-
-
-// Represents the absence of initialization for an object. This
-// is selected by zero initialization of references and by the
-// default constrution of trivially constructible class and union
-// types.
-struct Trivial_init : Init
-{
-  void accept(Visitor& v) const { v.visit(*this); }
-};
-
-
-// Represents the implicit initialization of an object with the zero
-// value of the target type.
-//
-// TODO: Can we define trivial zero initialization for trivially
-// default constructible class types (i.e., memset_init)?
-struct Zero_init : Init
-{
-  Zero_init(Expr& e)
-    : expr(&e)
-  { }
-
-  // Returns the zero initializer for the target type.
-  Expr const& zero() const { return *expr; }
-  Expr&       zero()       { return *expr; }
-
-  void accept(Visitor& v) const { v.visit(*this); }
-
-  Expr* expr;
-};
-
-
-// Represents the initialization of a class-type object by a
-// user-defined constructor.
-//
-// Note that we can't form a complete call expression since we don't
-// have an object at the point of construction (e.g., new expressions).
-// We'll have to build the call during evaluation and/or code gen.
-//
-// TODO: Make this return a Constructor_decl.
-struct Constructor_init : Init
-{
-  Constructor_init(Decl& d, Expr_list const& e)
-    : ctor(&d), args(e)
-  { }
-
-  void accept(Visitor& v) const { v.visit(*this); }
-
-  // Returns the constructor that initializes the target.
-  Decl const& constructor() const { return *ctor; }
-  Decl&       constructor()       { return *ctor; }
-
-  // Returns the arguments to the constructor.
-  Expr_list const& arguments() const { return args; }
-  Expr_list&       arguments()       { return args; }
-
-  Decl*     ctor;
-  Expr_list args;
-};
-
-
-// Represents the initialization of an object by an expression.
-// Object initialization is always a form of copy initialization.
-//
-// TODO: Is the object always non-class type? That would seem
-// likely since copy initialization of a POD-type would actually
-// select a generated constructor, possibly a trivial copy
-// constructor (i.e., memcpy_init)?
-struct Object_init : Copy_init
-{
-  using Copy_init::Copy_init;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-};
-
-
-// Represents the initialization of a reference by an expression.
-// Reference binding is generally a form of copy initialization.
-struct Reference_init : Copy_init
-{
-  using Copy_init::Copy_init;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-};
-
-
-// A variable declaration can be initialized by specifying all
-// of its fields as an aggregate. Aggregate iniitializaiton is
-// a special kind of structural initialization.
-struct Aggregate_init : Structural_init
-{
-  using Structural_init::Structural_init;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-};
-
-
-// Represents the initialization of a type parameter by a type.
-struct Type_init : Init
-{
-  void accept(Visitor& v) const { v.visit(*this); }
-
-  Type* ty;
-};
-
-
-// Represents the initialization of a template parameter by
-// a template declaration.
-struct Template_init : Init
-{
-  void accept(Visitor& v) const { v.visit(*this); }
-
-  Decl* decl;
-};
-
-
-// A generic visitor for initializers.
-template<typename F, typename T>
-struct Generic_init_visitor : Init::Visitor, Generic_visitor<F, T>
-{
-  Generic_init_visitor(F f)
-    : Generic_visitor<F, T>(f)
-  { }
-
-  void visit(Absent_init const& i)      { this->invoke(i); }
-  void visit(Equal_init const& i)       { this->invoke(i); }
-  void visit(Brace_init const& i)       { this->invoke(i); }
-  void visit(Paren_init const& i)       { this->invoke(i); }
-  void visit(Structural_init const& i)  { this->invoke(i); }
-  void visit(Trivial_init const& i)     { this->invoke(i); }
-  void visit(Zero_init const& i)        { this->invoke(i); }
-  void visit(Constructor_init const& i) { this->invoke(i); }
-  void visit(Object_init const& i)      { this->invoke(i); }
-  void visit(Reference_init const& i)   { this->invoke(i); }
-  void visit(Aggregate_init const& i)   { this->invoke(i); }
-  void visit(Type_init const& i)        { this->invoke(i); }
-  void visit(Template_init const& i)    { this->invoke(i); }
-};
-
-
-// Apply a function to the given type.
-template<typename F, typename T = typename std::result_of<F(Absent_init const&)>::type>
-inline T
-apply(Init const& i, F fn)
-{
-  Generic_init_visitor<F, T> vis(fn);
-  return accept(i, vis);
 }
 
 
@@ -1985,28 +1958,42 @@ struct Type_decl : Decl
 // Declares a variable.
 struct Variable_decl : Object_decl
 {
+  Variable_decl(Name& n, Type& t)
+    : Object_decl(n, t)
+  { }
+
   Variable_decl(Name& n, Type& t, Init& i)
     : Object_decl(n, t, i)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
 
-  Init const& initializer() const { return *init; }
-  Init&       initializer()       { return *init; }
+  // Returns the initializer for the variable. This is
+  // defined iff has_initializer() is true.
+  Init const& initializer() const     { return *init; }
+  Init&       initializer()           { return *init; }
+  bool        has_initializer() const { return init; }
 };
 
 
 // Declares a symbolic constant.
 struct Constant_decl : Object_decl
 {
+  Constant_decl(Name& n, Type& t)
+    : Object_decl(n, t)
+  { }
+
   Constant_decl(Name& n, Type& t, Init& i)
     : Object_decl(n, t, i)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
 
-  Init const& initializer() const { return *init; }
-  Init&       initializer()       { return *init; }
+  // Returns the initializer for the variable. This is
+  // defined iff has_initializer() is true.
+  Init const& initializer() const     { return *init; }
+  Init&       initializer()           { return *init; }
+  bool        has_initializer() const { return init; }
 };
 
 
@@ -2429,11 +2416,27 @@ is_class_type(Type const& t)
 }
 
 
+// Returns true if `t` is a (possibly qualified) class type.
+inline bool
+is_maybe_qualified_class_type(Type const& t)
+{
+  return is_class_type(t.unqualified_type());
+}
+
+
 // Returns true if `t` is a union type.
 inline bool
 is_union_type(Type const& t)
 {
   return is<Union_type>(&t);
+}
+
+
+// Returns true if `t` is a (possibly qualified) union type.
+inline bool
+is_maybe_qualified_union_type(Type const& t)
+{
+  return is_union_type(t.unqualified_type());
 }
 
 

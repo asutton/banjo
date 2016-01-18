@@ -77,20 +77,18 @@ struct Builder
 
   And_expr&       make_and(Type&, Expr&, Expr&);
   Not_expr&       make_not(Type&, Expr&);
+  Call_expr&      make_call(Type&, Function_decl&, Expr_list const&);
 
-  Absent_init&       make_absent_init();
   Equal_init&        make_equal_init(Expr&);
   Paren_init&        make_paren_init(Expr_list const&);
   Brace_init&        make_brace_init(Expr_list const&);
-  Structural_init&   make_structural_init(Init_list const&);
-  Trivial_init&      make_trivial_init();
-  Zero_init&         make_zero_init(Expr&);
-  Constructor_init&  make_constructor_init(Decl&, Expr_list const&);
-  Object_init&       make_object_init(Expr&);
-  Reference_init&    make_reference_init(Expr&);
-  Aggregate_init&    make_aggregate_init();
-  Type_init&         make_type_init();
-  Template_init&     make_template_init();
+  Structural_init&   make_structural_init(Type&, Expr_list const&);
+  Trivial_init&      make_trivial_init(Type&);
+  Zero_init&         make_zero_init(Type&, Expr&);
+  Constructor_init&  make_constructor_init(Type&, Decl&, Expr_list const&);
+  Object_init&       make_object_init(Type&, Expr&);
+  Reference_init&    make_reference_init(Type&, Expr&);
+  Aggregate_init&    make_aggregate_init(Type&);
 
   Namespace_decl& make_namespace(Name&);
   Namespace_decl& make_namespace(char const*);
@@ -440,17 +438,15 @@ Builder::make_not(Type& t, Expr& e)
 }
 
 
+inline Call_expr&
+Builder::make_call(Type& t, Function_decl& f, Expr_list const& a)
+{
+  return make<Call_expr>(t, make_reference(f), a);
+}
+
+
 // -------------------------------------------------------------------------- //
 // Initializers
-
-
-// TODO: Really global?
-inline Absent_init&
-Builder::make_absent_init()
-{
-  static Absent_init i;
-  return i;
-}
 
 
 inline Equal_init&
@@ -475,63 +471,49 @@ Builder::make_brace_init(Expr_list const& es)
 
 
 inline Structural_init&
-Builder::make_structural_init(Init_list const& is)
+Builder::make_structural_init(Type& t, Expr_list const& es)
 {
-  return make<Structural_init>(is);
+  return make<Structural_init>(t, es);
 }
 
 
 inline Trivial_init&
-Builder::make_trivial_init()
+Builder::make_trivial_init(Type& t)
 {
-  return make<Trivial_init>();
+  return make<Trivial_init>(t);
 }
 
 
 inline Zero_init&
-Builder::make_zero_init(Expr& e)
+Builder::make_zero_init(Type& t, Expr& e)
 {
-  return make<Zero_init>(e);
+  return make<Zero_init>(t, e);
 }
 
 
 inline Constructor_init&
-Builder::make_constructor_init(Decl& d, Expr_list const& es)
+Builder::make_constructor_init(Type& t, Decl& d, Expr_list const& es)
 {
-  return make<Constructor_init>(d, es);
+  return make<Constructor_init>(t, d, es);
 }
 
 
 inline Object_init&
-Builder::make_object_init(Expr& e)
+Builder::make_object_init(Type& t, Expr& e)
 {
-  return make<Object_init>(e);
+  return make<Object_init>(t, e);
 }
 
 
 inline Reference_init&
-Builder::make_reference_init(Expr& e)
+Builder::make_reference_init(Type& t, Expr& e)
 {
-  return make<Reference_init>(e);
+  return make<Reference_init>(t, e);
 }
 
 
 inline Aggregate_init&
-Builder::make_aggregate_init()
-{
-  lingo_unimplemented();
-}
-
-
-inline Type_init&
-Builder::make_type_init()
-{
-  lingo_unimplemented();
-}
-
-
-inline Template_init&
-Builder::make_template_init()
+Builder::make_aggregate_init(Type&)
 {
   lingo_unimplemented();
 }
@@ -547,14 +529,14 @@ Builder::make_template_init()
 inline Variable_decl&
 Builder::make_variable(Name& n, Type& t)
 {
-  return make_variable(n, t, make_absent_init());
+  return make_variable(n, t);
 }
 
 
 inline Variable_decl&
 Builder::make_variable(char const* s, Type& t)
 {
-  return make_variable(get_id(s), t, make_absent_init());
+  return make_variable(get_id(s), t);
 }
 
 
