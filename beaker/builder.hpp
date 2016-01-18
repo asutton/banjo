@@ -529,7 +529,7 @@ Builder::make_aggregate_init(Type&)
 inline Variable_decl&
 Builder::make_variable(Name& n, Type& t)
 {
-  return make_variable(n, t);
+  return make<Variable_decl>(n, t);
 }
 
 

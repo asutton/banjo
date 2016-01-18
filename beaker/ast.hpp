@@ -1985,12 +1985,14 @@ using Specifier = std::int32_t;
 struct Decl : Term
 {
   struct Visitor;
+  struct Mutator;
 
   Decl(Name& n)
     : spec(0), cxt(nullptr), first(&n)
   { }
 
   virtual void accept(Visitor& v) const = 0;
+  virtual void accept(Mutator& v) = 0;
 
   // Returns a pointer to the context to which this
   // declaration belongs. This is only null for the
@@ -2011,7 +2013,6 @@ struct Decl : Term
 };
 
 
-// The declaration visitor.
 struct Decl::Visitor
 {
   virtual void visit(Variable_decl const&)  { }
@@ -2027,6 +2028,24 @@ struct Decl::Visitor
   virtual void visit(Type_parm const&)      { }
   virtual void visit(Template_parm const&)  { }
   virtual void visit(Variadic_parm const&)  { }
+};
+
+
+struct Decl::Mutator
+{
+  virtual void visit(Variable_decl&)  { }
+  virtual void visit(Constant_decl&)  { }
+  virtual void visit(Function_decl&)  { }
+  virtual void visit(Class_decl&)     { }
+  virtual void visit(Union_decl&)     { }
+  virtual void visit(Enum_decl&)      { }
+  virtual void visit(Namespace_decl&) { }
+  virtual void visit(Template_decl&)  { }
+  virtual void visit(Object_parm&)    { }
+  virtual void visit(Value_parm&)     { }
+  virtual void visit(Type_parm&)      { }
+  virtual void visit(Template_parm&)  { }
+  virtual void visit(Variadic_parm&)  { }
 };
 
 
@@ -2081,6 +2100,7 @@ struct Variable_decl : Object_decl
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the initializer for the variable. This is
   // defined iff has_initializer() is true.
@@ -2102,6 +2122,7 @@ struct Constant_decl : Object_decl
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the initializer for the variable. This is
   // defined iff has_initializer() is true.
@@ -2128,6 +2149,7 @@ struct Function_decl : Decl
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the type of this declaration.
   Function_type const& type() const { return *cast<Function_type>(ty); }
@@ -2171,6 +2193,7 @@ struct Class_decl : Type_decl
   using Type_decl::Type_decl;
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
   Class_def const& definition() const { return *cast<Class_def>(def); }
   Class_def&       definition()       { return *cast<Class_def>(def); }
@@ -2182,6 +2205,7 @@ struct Union_decl : Type_decl
   using Type_decl::Type_decl;
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
   Union_def const& definition() const { return *cast<Union_def>(def); }
   Union_def&       definition()       { return *cast<Union_def>(def); }
@@ -2193,6 +2217,7 @@ struct Enum_decl : Type_decl
   using Type_decl::Type_decl;
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
   Enum_def const& definition() const { return *cast<Enum_def>(def); }
   Enum_def&       definition()       { return *cast<Enum_def>(def); }
@@ -2207,6 +2232,7 @@ struct Namespace_decl : Decl
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
   bool is_global() const    { return cxt == nullptr; }
   bool is_anonymous() const { return is<Placeholder_id>(first); }
@@ -2231,6 +2257,7 @@ struct Template_decl : Decl
   }
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
   Decl_list const& parameters() const { return parms; }
 
@@ -2266,6 +2293,7 @@ struct Object_parm : Object_decl
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the default argument for the parameter.
   // This is valid iff has_default_arguement() is true.
@@ -2291,6 +2319,7 @@ struct Value_parm : Object_decl
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the default argument for the parameter.
   // This is valid iff has_default_arguement() is true.
@@ -2315,6 +2344,7 @@ struct Variadic_parm : Decl
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -2330,6 +2360,7 @@ struct Type_parm : Decl
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the default argument for the parameter.
   // This is valid iff has_default_arguement() is true.
@@ -2358,6 +2389,7 @@ struct Template_parm : Decl
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the tempalte declaration that defines the
   // signature of accepted arguments.
@@ -2376,7 +2408,7 @@ struct Template_parm : Decl
 };
 
 
-// A generic visitor for names.
+// A generic visitor for declarations.
 template<typename F, typename T>
 struct Generic_decl_visitor : Decl::Visitor, Generic_visitor<F, T>
 {
@@ -2402,10 +2434,44 @@ struct Generic_decl_visitor : Decl::Visitor, Generic_visitor<F, T>
 
 // Apply a function to the given declaration.
 template<typename F, typename T = typename std::result_of<F(Variable_decl const&)>::type>
-inline T
+inline decltype(auto)
 apply(Decl const& d, F fn)
 {
   Generic_decl_visitor<F, T> vis(fn);
+  return accept(d, vis);
+}
+
+
+// A generic visitor for names.
+template<typename F, typename T>
+struct Generic_decl_mutator : Decl::Mutator, Generic_mutator<F, T>
+{
+  Generic_decl_mutator(F f)
+    : Generic_mutator<F, T>(f)
+  { }
+
+  void visit(Variable_decl& d)  { this->invoke(d); }
+  void visit(Constant_decl& d)  { this->invoke(d); }
+  void visit(Function_decl& d)  { this->invoke(d); }
+  void visit(Class_decl& d)     { this->invoke(d); }
+  void visit(Union_decl& d)     { this->invoke(d); }
+  void visit(Enum_decl& d)      { this->invoke(d); }
+  void visit(Namespace_decl& d) { this->invoke(d); }
+  void visit(Template_decl& d)  { this->invoke(d); }
+  void visit(Object_parm& d)    { this->invoke(d); }
+  void visit(Value_parm& d)     { this->invoke(d); }
+  void visit(Type_parm& d)      { this->invoke(d); }
+  void visit(Template_parm& d)  { this->invoke(d); }
+  void visit(Variadic_parm& d)  { this->invoke(d); }
+};
+
+
+// Apply a function to the given declaration.
+template<typename F, typename T = typename std::result_of<F(Variable_decl&)>::type>
+inline decltype(auto)
+apply(Decl& d, F fn)
+{
+  Generic_decl_mutator<F, T> vis(fn);
   return accept(d, vis);
 }
 

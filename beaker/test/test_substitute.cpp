@@ -43,10 +43,36 @@ test_subst_type(Context& cxt)
 }
 
 
+void
+test_subst_decl(Context& cxt)
+{
+  Builder build(cxt);
+
+  // Substitutable type and an argument.
+  Decl& parm = build.make_type_parameter("T");
+  Type& arg = build.get_int_type();
+  Substitution sub;
+  sub.put(parm, arg);
+
+  // Substitution patterns
+  Type& t = build.get_typename_type(parm);
+  Type& p_t = build.get_pointer_type(t);
+
+  Decl& v1 = build.make_variable("v1", t);
+  test_subst(cxt, v1, sub);
+
+  Decl& v2 = build.make_variable("v2", p_t);
+  test_subst(cxt, v2, sub);
+
+  // TODO: Exercise this a little bit more.
+}
+
+
 
 int
 main(int argc, char* argv[])
 {
   Context cxt;
   test_subst_type(cxt);
+  test_subst_decl(cxt);
 }

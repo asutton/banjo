@@ -141,11 +141,41 @@ substitute(Context& cxt, Expr& e, Substitution& sub)
 
 // -------------------------------------------------------------------------- //
 // Substitution into declarations
+//
+// Note that substitution into a declaration does not change
+// the name of the declaration. Specialization, however, is a
+// special form of substitution where we generate a newly named
+// declaration.
+
+Decl& substitute_decl(Context&, Variable_decl&, Substitution&);
+
 
 Decl&
 substitute(Context& cxt, Decl& d, Substitution& sub)
 {
-  lingo_unimplemented();
+  struct fn
+  {
+    Context&      cxt;
+    Substitution& sub;
+    Decl& operator()(Decl& d)           { lingo_unimplemented(); }
+    Decl& operator()(Variable_decl& d)  { return substitute_decl(cxt, d, sub); }
+  };
+  return apply(d, fn{cxt, sub});
+}
+
+
+// TODO: Substitute into the initializer.
+//
+// TODO: Should we declare the variable? In general, how should we
+// handle elaboration?
+Decl&
+substitute_decl(Context& cxt, Variable_decl& d, Substitution& sub)
+{
+  Name& n = d.name();
+  Type& t = substitute(cxt, d.type(), sub);
+
+  Builder build(cxt);
+  return build.make_variable(n, t);
 }
 
 
