@@ -21,6 +21,7 @@ add_library(beaker
   equivalence.cpp
   conversion.cpp
   initialization.cpp
+  substitution.cpp
   call.cpp
   inheritance.cpp
   print.cpp
@@ -61,3 +62,4 @@ add_run_test(test_function    test/test_function.cpp)
 add_run_test(test_template    test/test_template.cpp)
 add_run_test(test_convert     test/test_convert.cpp)
 add_run_test(test_initialize  test/test_initialize.cpp)
+add_run_test(test_substitute  test/test_substitute.cpp)

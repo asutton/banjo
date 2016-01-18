@@ -107,8 +107,8 @@ struct Builder
   Object_parm& make_object_parm(char const*, Type&);
   Value_parm&  make_value_parm(Name&, Type&);
   Value_parm&  make_value_parm(char const*, Type&);
-  Type_parm&   make_type_parm(Name&);
-  Type_parm&   make_type_parm(char const*);
+  Type_parm&   make_type_parameter(Name&);
+  Type_parm&   make_type_parameter(char const*);
 
   // Resources
   Symbol_table& symbols() { return cxt.symbols(); }
@@ -611,16 +611,16 @@ Builder::make_object_parm(char const* s, Type& t)
 
 
 inline Type_parm&
-Builder::make_type_parm(Name& n)
+Builder::make_type_parameter(Name& n)
 {
   return make<Type_parm>(n);
 }
 
 
 inline Type_parm&
-Builder::make_type_parm(char const* n)
+Builder::make_type_parameter(char const* n)
 {
-  return make_type_parm(get_id(n));
+  return make_type_parameter(get_id(n));
 }
 
 

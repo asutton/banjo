@@ -10,10 +10,6 @@
 namespace beaker
 {
 
-using Type_iter = Type_list::iterator;
-using Expr_iter = Expr_list::iterator;
-
-
 // Initialize one parameter.
 //
 // The parameter initial parameter and argument are provided
@@ -54,6 +50,7 @@ initialize_parameters(Context& cxt, Type_list& parms, Expr_list& args)
     Expr& e = initialize_parameter(cxt, p0, pi, a0, ai);
     ret.push_back(e);
   }
+
   return ret;
 }
 

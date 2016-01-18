@@ -111,11 +111,18 @@ struct List : Term, std::vector<T*>
 };
 
 
+// Lists
 using Term_list = List<Term>;
 using Type_list = List<Type>;
 using Expr_list = List<Expr>;
 using Stmt_list = List<Stmt>;
 using Decl_list = List<Decl>;
+
+
+// Iterators
+using Type_iter = Type_list::iterator;
+using Expr_iter = Expr_list::iterator;
+using Decl_iter = Decl_list::iterator;
 
 
 // Pairs and tuples
@@ -366,8 +373,10 @@ is_more_qualified(Qualifier_set a, Qualifier_set b)
 struct Type : Term
 {
   struct Visitor;
+  struct Mutator;
 
   virtual void accept(Visitor&) const = 0;
+  virtual void accept(Mutator&)       = 0;
 
   // Returns the qualifier for this type.
   virtual Qualifier_set qualifier() const   { return empty_qual; }
@@ -403,10 +412,33 @@ struct Type::Visitor
 };
 
 
+struct Type::Mutator
+{
+  virtual void visit(Void_type&)      { }
+  virtual void visit(Boolean_type&)   { }
+  virtual void visit(Integer_type&)   { }
+  virtual void visit(Float_type&)     { }
+  virtual void visit(Auto_type&)      { }
+  virtual void visit(Decltype_type&)  { }
+  virtual void visit(Declauto_type&)  { }
+  virtual void visit(Function_type&)  { }
+  virtual void visit(Qualified_type&) { }
+  virtual void visit(Pointer_type&)   { }
+  virtual void visit(Reference_type&) { }
+  virtual void visit(Array_type&)     { }
+  virtual void visit(Sequence_type&)  { }
+  virtual void visit(Class_type&)     { }
+  virtual void visit(Union_type&)     { }
+  virtual void visit(Enum_type&)      { }
+  virtual void visit(Typename_type&)  { }
+};
+
+
 // The void type.
 struct Void_type : Type
 {
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -414,6 +446,7 @@ struct Void_type : Type
 struct Boolean_type : Type
 {
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -430,6 +463,7 @@ struct Integer_type : Type
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
   bool sign() const        { return sgn; }
   bool is_signed() const   { return sgn; }
@@ -449,6 +483,7 @@ struct Float_type : Type
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
   int precision() const { return prec; }
 
@@ -456,15 +491,36 @@ struct Float_type : Type
 };
 
 
-
 // The auto type.
 //
 // TODO: Allow a deduction constraint on placeholder types.
 // This would be checked after deduction. Extend this for
 // decltype(auto) types as well.
+//
+// FIXME: The model for auto types works like this:
+//
+//    auto x = e;
+//
+// Is essentially shorthand for writing:
+//
+//    typename T;
+//    T x = e;
+//
+// So x would have typename-type and not auto-type. If we
+// add constraints, we might represent that internally as
+// this.
+//
+//    typename T;
+//    T|C x = e;  // |C means give C.
+//
+// We could eliminate this node entirely, and the declauto
+// node, except that we would to encode the deduction mechanism
+// into the tree somehow. Maybe make deduction a property of
+// of the typename declaration (i.e., a decltype decl).
 struct Auto_type : Type
 {
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -472,6 +528,7 @@ struct Auto_type : Type
 struct Decltype_type : Type
 {
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -479,6 +536,7 @@ struct Decltype_type : Type
 struct Declauto_type : Type
 {
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -490,6 +548,7 @@ struct Function_type : Type
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
   Type_list const& parameter_types() const { return parms; }
   Type_list&       parameter_types()       { return parms; }
@@ -512,6 +571,7 @@ struct Qualified_type : Type
   }
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
   Type const& type() const { return *ty; }
   Type&       type()       { return *ty; }
@@ -538,6 +598,7 @@ struct Pointer_type : Type
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
   Type const& type() const { return *ty; }
   Type&       type()       { return *ty; }
@@ -553,6 +614,7 @@ struct Reference_type : Type
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
   Type const& type() const { return *ty; }
   Type&       type()       { return *ty; }
@@ -564,6 +626,7 @@ struct Reference_type : Type
 struct Array_type : Type
 {
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
   Type* first;
   Expr* second;
@@ -579,6 +642,7 @@ struct Sequence_type : Type
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
   Type const& type() const { return *ty; }
   Type&       type()       { return *ty; }
@@ -595,6 +659,7 @@ struct User_defined_type : Type
   { }
 
   Decl const& declaration() const { return *decl; }
+  Decl&       declaration()       { return *decl; }
 
   Decl* decl;
 };
@@ -609,25 +674,34 @@ struct Type_parm;
 // TODO: Factor a base class for all of these: user-defined type.
 struct Class_type : User_defined_type
 {
-  Class_decl const& declaration() const;
-
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the declaration of the class type.
+  Class_decl const& declaration() const;
+  Class_decl&       declaration();
 };
 
 
 struct Union_type : User_defined_type
 {
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
+  // Returns the declaration of the union type.
   Union_decl const& declaration() const;
+  Union_decl&       declaration();
 };
 
 
 struct Enum_type : User_defined_type
 {
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
+  // Returns the declaration of the enum type.
   Enum_decl const& declaration() const;
+  Enum_decl&       declaration();
 };
 
 
@@ -639,8 +713,11 @@ struct Typename_type : User_defined_type
   using User_defined_type::User_defined_type;
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
+  // Returns the declaration of the typename type.
   Type_parm const& declaration() const;
+  Type_parm&       declaration();
 };
 
 
@@ -674,13 +751,50 @@ struct Generic_type_visitor : Type::Visitor, Generic_visitor<F, T>
 
 // Apply a function to the given type.
 template<typename F, typename T = typename std::result_of<F(Void_type const&)>::type>
-inline T
+inline decltype(auto)
 apply(Type const& t, F fn)
 {
   Generic_type_visitor<F, T> vis(fn);
   return accept(t, vis);
 }
 
+
+// A generic mutator for types.
+template<typename F, typename T>
+struct Generic_type_mutator : Type::Mutator, Generic_mutator<F, T>
+{
+  Generic_type_mutator(F f)
+    : Generic_mutator<F, T>(f)
+  { }
+
+  void visit(Void_type& t)      { this->invoke(t); }
+  void visit(Boolean_type& t)   { this->invoke(t); }
+  void visit(Integer_type& t)   { this->invoke(t); }
+  void visit(Float_type& t)     { this->invoke(t); }
+  void visit(Auto_type& t)      { this->invoke(t); }
+  void visit(Decltype_type& t)  { this->invoke(t); }
+  void visit(Declauto_type& t)  { this->invoke(t); }
+  void visit(Function_type& t)  { this->invoke(t); }
+  void visit(Qualified_type& t) { this->invoke(t); }
+  void visit(Pointer_type& t)   { this->invoke(t); }
+  void visit(Reference_type& t) { this->invoke(t); }
+  void visit(Array_type& t)     { this->invoke(t); }
+  void visit(Sequence_type& t)  { this->invoke(t); }
+  void visit(Class_type& t)     { this->invoke(t); }
+  void visit(Union_type& t)     { this->invoke(t); }
+  void visit(Enum_type& t)      { this->invoke(t); }
+  void visit(Typename_type& t)  { this->invoke(t); }
+};
+
+
+// Apply a function to the given type.
+template<typename F, typename T = typename std::result_of<F(Void_type&)>::type>
+inline decltype(auto)
+apply(Type& t, F fn)
+{
+  Generic_type_mutator<F, T> vis(fn);
+  return accept(t, vis);
+}
 
 // -------------------------------------------------------------------------- //
 // Expressions
@@ -2308,12 +2422,22 @@ struct Translation_unit : Term
 // -------------------------------------------------------------------------- //
 // Implementation
 
+// Class type
+
 inline Class_decl const&
 Class_type::declaration() const
 {
   return *cast<Class_decl>(decl);
 }
 
+
+inline Class_decl&
+Class_type::declaration()
+{
+  return *cast<Class_decl>(decl);
+}
+
+// Union type
 
 inline Union_decl const&
 Union_type::declaration() const
@@ -2322,6 +2446,14 @@ Union_type::declaration() const
 }
 
 
+inline Union_decl&
+Union_type::declaration()
+{
+  return *cast<Union_decl>(decl);
+}
+
+// Enum type
+
 inline Enum_decl const&
 Enum_type::declaration() const
 {
@@ -2329,8 +2461,23 @@ Enum_type::declaration() const
 }
 
 
+inline Enum_decl&
+Enum_type::declaration()
+{
+  return *cast<Enum_decl>(decl);
+}
+
+// Typename type
+
 inline Type_parm const&
 Typename_type::declaration() const
+{
+  return *cast<Type_parm>(decl);
+}
+
+
+inline Type_parm&
+Typename_type::declaration()
 {
   return *cast<Type_parm>(decl);
 }
