@@ -12,7 +12,8 @@ namespace beaker
 {
 
 
-Decl& build_specialization(Context&, Template_decl&, Term_list&);
+Decl& specialize_template(Context&, Template_decl&, Term_list&);
+
 
 } // namespace beaker
 

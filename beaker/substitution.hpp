@@ -25,22 +25,40 @@ namespace beaker
 // hash on identity rather than syntax.
 struct Substitution : std::unordered_map<Decl*, Term*>
 {
-  using std::unordered_map<Decl*, Term*>::unordered_map;
+  Substitution() = default;
+  Substitution(Decl_list&, Term_list&);
 
-  void put(Decl& d, Term& t);
+  void send(Decl& d, Term& t);
 
   Term const* get(Decl& d) const;
   Term*       get(Decl& d);
 };
 
 
-// Create a substitution for the parameter d with t.
+// Initialize the substitution with a mapping from each
+// `pi` in `p` to its corresponding `ai` in `a`.
+inline
+Substitution::Substitution(Decl_list& p, Term_list& a)
+{
+  auto pi = p.begin();
+  auto ai = a.begin();
+  while (pi != p.end()) {
+    send(*pi, *ai);
+    ++pi;
+    ++ai;
+  }
+}
+
+
+// Create a substitution that sends each occurrence of `d` to
+// its a corresponding `t`. Note that the kind and type of `t`
+// must agree with that of `d`.
 //
 // FIXME: If we use this during template argument deduction, do we
 // need this to act as a unifier (i.e. reject re-mappings of
 // previously deduced terms?). Probably.
 inline void
-Substitution::put(Decl& d, Term& t)
+Substitution::send(Decl& d, Term& t)
 {
   emplace(&d, &t);
 }

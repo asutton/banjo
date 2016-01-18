@@ -120,6 +120,7 @@ using Decl_list = List<Decl>;
 
 
 // Iterators
+using Term_iter = Term_list::iterator;
 using Type_iter = Type_list::iterator;
 using Expr_iter = Expr_list::iterator;
 using Decl_iter = Decl_list::iterator;
@@ -247,15 +248,24 @@ struct Destructor_id : Name
 
 
 // An identifier that refers a template specialization.
+//
+// FIXME: Make the declaration a template declaration.
 struct Template_id : Name
 {
+  Template_id(Decl& d, Term_list const& a)
+    : decl(&d), args(a)
+  { }
+
   void accept(Visitor& v) const { v.visit(*this); };
 
-  Decl const&      declaration() const { return *decl; }
-  Term_list const& arguments() const   { return first; }
+  Decl const& declaration() const { return *decl; }
+  Decl&       declaration()       { return *decl; }
+
+  Term_list const& arguments() const { return args; }
+  Term_list&       arguments()       { return args; }
 
   Decl*      decl;
-  Term_list  first;
+  Term_list  args;
 };
 
 
@@ -2259,7 +2269,9 @@ struct Template_decl : Decl
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
+  // Returns the template parameters of the declaration.
   Decl_list const& parameters() const { return parms; }
+  Decl_list&       parameters()       { return parms; }
 
   // Returns the constraint associated with the template.
   // This is valid iff is_constrained() is true.
@@ -2269,8 +2281,8 @@ struct Template_decl : Decl
 
   bool is_constrained() const { return constr; }
 
-  Decl const&      pattern() const    { return *decl; }
-
+  Decl const& pattern() const { return *decl; }
+  Decl&       pattern()       { return *decl; }
 
   Decl_list parms;
   Expr*     constr;

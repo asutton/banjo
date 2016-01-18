@@ -149,6 +149,7 @@ struct Printer
   void template_template_parameter(Template_parm const&);
   void template_parameter(Decl const&);
   void template_parameter_list(Decl_list const&);
+  void template_argument(Term const&);
 
   void requires_clause(Expr const&);
 

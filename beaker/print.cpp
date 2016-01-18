@@ -184,11 +184,21 @@ Printer::literal_id(Literal_id const&)
 }
 
 
-// TODO: Implement me.
 void
 Printer::template_id(Template_id const& n)
 {
-  os << "<|template-decl|>" << '<' << '>';
+  // FIXME: Use a template-name production?
+  id(n.declaration().name());
+
+  // FIXME: Don't insert spaces after the template name.
+  token("<");
+  Term_list const& args = n.arguments();
+  for (auto iter = args.begin(); iter != args.end(); ++iter) {
+    template_argument(*iter);
+    if (std::next(iter) != args.end())
+      token(comma_tok);
+  }
+  token(">");
 }
 
 
@@ -777,6 +787,7 @@ Printer::variable_declaration(Variable_decl const& d)
 {
   token(var_tok);
   type(d.type());
+  space();
   id(d.name());
   token(semicolon_tok);
 }
@@ -961,6 +972,20 @@ Printer::template_parameter_list(Decl_list const& ps)
   }
 }
 
+
+// FIXME: Print the qualified name for template arguments?
+void
+Printer::template_argument(Term const& a)
+{
+  if (Type const* t = as<Type>(&a))
+    type(*t);
+  else if (Expr const* e = as<Expr>(&a))
+    expression(*e);
+  else if (Decl const* d = as<Decl>(&a))
+    id(d->name());
+  else
+    lingo_unreachable();
+}
 
 
 // -------------------------------------------------------------------------- //

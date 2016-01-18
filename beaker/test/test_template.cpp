@@ -3,7 +3,33 @@
 
 #include "test.hpp"
 
+#include <beaker/template.hpp>
+#include <beaker/substitution.hpp>
+
 #include <iostream>
+
+
+void
+test_specialize(Context& cxt)
+{
+  std::cout << "--- specialization ---\n";
+  Builder build(cxt);
+
+  // Substitutable type and an argument.
+  Decl& parm = build.make_type_parameter("T");
+  Type& arg = build.get_int_type();
+  Term_list args {&arg};
+
+  // Substitution patterns
+  Type& t = build.get_typename_type(parm);
+  Type& p_t = build.get_pointer_type(t);
+
+  Decl& v1 = build.make_variable("v1", p_t);
+  Template_decl& tv1 = build.make_template({&parm}, v1);
+  std::cout << tv1 << "\n   vvvv\n";
+  Decl& ts1 = specialize_template(cxt, tv1, args);
+  std::cout << ts1 << '\n';
+}
 
 
 int
@@ -29,4 +55,6 @@ main(int argc, char* argv[])
     tmp.constraint(build.get_true());
     std::cout << tmp << '\n';
   }
+
+  test_specialize(cxt);
 }

@@ -26,7 +26,7 @@ test_subst_type(Context& cxt)
   Decl& parm = build.make_type_parameter("T");
   Type& arg = build.get_int_type();
   Substitution sub;
-  sub.put(parm, arg);
+  sub.send(parm, arg);
 
   // Substitution patterns
   Type& t0 = build.get_typename_type(parm);
@@ -52,7 +52,7 @@ test_subst_decl(Context& cxt)
   Decl& parm = build.make_type_parameter("T");
   Type& arg = build.get_int_type();
   Substitution sub;
-  sub.put(parm, arg);
+  sub.send(parm, arg);
 
   // Substitution patterns
   Type& t = build.get_typename_type(parm);

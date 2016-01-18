@@ -4,6 +4,7 @@
 #ifndef BEAKER_BUILDER_HPP
 #define BEAKER_BUILDER_HPP
 
+#include "prelude.hpp"
 #include "context.hpp"
 #include "token.hpp"
 #include "ast.hpp"
@@ -36,7 +37,7 @@ struct Builder
   // Conversion_id&  get_id();
   // Literal_id&     get_id();
   Destructor_id&  get_id(Type const&);
-  // Template_id&    get_id(Decl& d);
+  Template_id&    get_id(Template_decl&, Term_list const&);
   Qualified_id&   get_id(Decl&, Name&);
   Global_id&      get_global_id();
 
@@ -163,6 +164,13 @@ inline Destructor_id&
 Builder::get_id(Type const& t)
 {
   lingo_unimplemented();
+}
+
+
+inline Template_id&
+Builder::get_id(Template_decl& d, Term_list const& t)
+{
+  return make<Template_id>(d, t);
 }
 
 

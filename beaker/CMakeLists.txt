@@ -21,9 +21,10 @@ add_library(beaker
   equivalence.cpp
   conversion.cpp
   initialization.cpp
-  substitution.cpp
   call.cpp
   inheritance.cpp
+  substitution.cpp
+  template.cpp
   print.cpp
 )
 target_compile_definitions(beaker PUBLIC ${LLVM_DEFINITIONS})
