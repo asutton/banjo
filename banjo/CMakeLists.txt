@@ -19,6 +19,8 @@ add_library(banjo
   translation.cpp
   hash.cpp
   equivalence.cpp
+  lookup.cpp
+  overload.cpp
   conversion.cpp
   initialization.cpp
   call.cpp
