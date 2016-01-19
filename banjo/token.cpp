@@ -6,11 +6,25 @@
 namespace banjo
 {
 
+
+// NOTE: Apparently GCC-4.9 does not provide a default hash 
+// function  for scalar types.
+struct Token_kind_hash
+{
+  std::size_t operator()(Token_kind k) const
+  {
+    using Int = std::underlying_type<Token_kind>::type;
+    std::hash<Int> h;
+    return h(k);
+  }
+};
+
+
 // A map of token names to their spelling.
 //
 // TODO: Lift this into lingo. Maybe make it part of the
 // symbol table.
-using Spelling_map = std::unordered_map<Token_kind, char const*>;
+using Spelling_map = std::unordered_map<Token_kind, char const*, Token_kind_hash>;
 Spelling_map spelling;
 
 

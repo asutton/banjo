@@ -38,7 +38,8 @@ test_subst_type(Context& cxt)
   Type& t2 = build.get_pointer_type(build.get_pointer_type(t0));
   test_subst(cxt, t2, sub);
 
-  Type& t3 = build.get_function_type({&t1, &t2}, arg);
+  Type_list p3 {&t1, &t2};
+  Type& t3 = build.get_function_type(p3, arg);
   test_subst(cxt, t3, sub);
 }
 
