@@ -6,7 +6,7 @@
 #include <iostream>
 
 
-namespace beaker
+namespace banjo
 {
 
 // TODO: Factor each kind of declaration into its own file.
@@ -67,4 +67,4 @@ Parser::on_declaration_seq()
 }
 
 
-} // namespace beaker
+} // namespace banjo

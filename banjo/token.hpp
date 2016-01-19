@@ -1,13 +1,13 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BEAKER_TOKEN_HPP
-#define BEAKER_TOKEN_HPP
+#ifndef BANJO_TOKEN_HPP
+#define BANJO_TOKEN_HPP
 
 #include "prelude.hpp"
 
 
-namespace beaker
+namespace banjo
 {
 
 enum Token_kind
@@ -139,7 +139,7 @@ char const* get_spelling(Token_kind);
 void init_tokens(Symbol_table&);
 
 
-} // namespace beaker
+} // namespace banjo
 
 
 #endif

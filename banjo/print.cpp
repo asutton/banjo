@@ -7,7 +7,7 @@
 #include <iostream>
 
 
-namespace beaker
+namespace banjo
 {
 
 // -------------------------------------------------------------------------- //
@@ -1055,4 +1055,4 @@ operator<<(std::ostream& os, Init const& i)
 }
 
 
-} // namespace beaker
+} // namespace banjo

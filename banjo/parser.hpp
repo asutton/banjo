@@ -1,15 +1,15 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BEAKER_PARSER_HPP
-#define BEAKER_PARSER_HPP
+#ifndef BANJO_PARSER_HPP
+#define BANJO_PARSER_HPP
 
 #include "lexer.hpp"
 #include "token.hpp"
 #include "ast.hpp"
 
 
-namespace beaker
+namespace banjo
 {
 
 // Denotes a syntactic error.
@@ -281,7 +281,7 @@ Parser::match_if(R* (Parser::* f)())
 }
 
 
-} // nammespace beaker
+} // nammespace banjo
 
 
 #endif

@@ -1,14 +1,14 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BEAKER_CONVERSION_HPP
-#define BEAKER_CONVERSION_HPP
+#ifndef BANJO_CONVERSION_HPP
+#define BANJO_CONVERSION_HPP
 
 #include "prelude.hpp"
 #include "ast.hpp"
 
 
-namespace beaker
+namespace banjo
 {
 
 struct Type;
@@ -198,7 +198,7 @@ bool is_similar(Type const&, Type const&);
 Qualifier_list get_qualification_signature(Type const&);
 
 
-} // namespace beaker
+} // namespace banjo
 
 
 #endif

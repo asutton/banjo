@@ -12,7 +12,7 @@
 #include <string>
 #include <iostream>
 
-namespace beaker
+namespace banjo
 {
 
 Symbol_table&
@@ -261,4 +261,4 @@ Lexer::operator()()
 }
 
 
-} // namespace beaker
+} // namespace banjo

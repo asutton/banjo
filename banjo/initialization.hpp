@@ -1,13 +1,13 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BEAKER_INITIALIZATION_HPP
-#define BEAKER_INITIALIZATION_HPP
+#ifndef BANJO_INITIALIZATION_HPP
+#define BANJO_INITIALIZATION_HPP
 
 #include "prelude.hpp"
 #include "context.hpp"
 
-namespace beaker
+namespace banjo
 {
 
 struct Type;
@@ -28,7 +28,7 @@ Init& copy_initialize(Context&, Type&, Expr&);
 Init& direct_initialize(Context&, Type&, Init&);
 
 
-} // namespace beaker
+} // namespace banjo
 
 
 #endif

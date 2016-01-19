@@ -1,8 +1,8 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BEAKER_LEXER_HPP
-#define BEAKER_LEXER_HPP
+#ifndef BANJO_LEXER_HPP
+#define BANJO_LEXER_HPP
 
 #include "prelude.hpp"
 
@@ -11,7 +11,7 @@
 #include <lingo/character.hpp>
 
 
-namespace beaker
+namespace banjo
 {
 
 struct Context;
@@ -63,7 +63,7 @@ struct Lexer
 };
 
 
-} // namespace beaker
+} // namespace banjo
 
 
 #endif

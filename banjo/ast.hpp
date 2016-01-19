@@ -1,15 +1,15 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BEAKER_AST_HPP
-#define BEAKER_AST_HPP
+#ifndef BANJO_AST_HPP
+#define BANJO_AST_HPP
 
 #include "prelude.hpp"
 
 #include <vector>
 #include <utility>
 
-namespace beaker
+namespace banjo
 {
 
 struct Term;
@@ -2771,7 +2771,7 @@ is_brace_initialization(Init const& i)
 }
 
 
-} // namespace beaker
+} // namespace banjo
 
 
 #endif

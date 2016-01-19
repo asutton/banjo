@@ -1,8 +1,8 @@
 # Copyright (c) 2015-2016 Andrew Sutton
 # All rights reserved
 
-# Add the core Beaker library.
-add_library(beaker
+# Add the core Banjo library.
+add_library(banjo
   prelude.cpp
   token.cpp
   lexer.cpp
@@ -28,15 +28,15 @@ add_library(beaker
   template.cpp
   print.cpp
 )
-target_compile_definitions(beaker PUBLIC ${LLVM_DEFINITIONS})
-target_include_directories(beaker
+target_compile_definitions(banjo PUBLIC ${LLVM_DEFINITIONS})
+target_include_directories(banjo
   PUBLIC
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR};${PROJECT_BINARY_DIR}>"
     ${lingo_SOURCE_DIR}
     ${Boost_INCLUDE_DIRS}
     ${LLVM_INCLUDE_DIRS}
 )
-target_link_libraries(beaker
+target_link_libraries(banjo
 PUBLIC
   lingo
   ${Boost_LIBRARIES}
@@ -44,13 +44,13 @@ PUBLIC
 )
 
 # The compiler is the main driver for compilation.
-add_executable(beaker-compile main.cpp)
-target_link_libraries(beaker-compile beaker)
+add_executable(banjo-compile main.cpp)
+target_link_libraries(banjo-compile banjo)
 
 
 macro(add_run_test target)
   add_executable(${target} ${ARGN})
-  target_link_libraries(${target} beaker)
+  target_link_libraries(${target} banjo)
   add_test(${target} ${target})
 endmacro()
 

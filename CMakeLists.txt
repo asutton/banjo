@@ -46,15 +46,15 @@ find_program(LLVM_IR_COMPILER llc HINTS ${LLVM_TOOLS_BINARY_DIR} NO_DEFAULT_PATH
 
 
 # Use the discovered or configured build tools
-# within Beaker. Note that the native compiler is
+# within Banjo. Note that the native compiler is
 # also used as the frontend to the native linker
 # since that will guarantee that we get the C
 # runtime in the output.
 #
 # TODO: Actually use the low-level tools and link
-# only against the minimal Beaker runtime.
-set(BEAKER_NATIVE_COMPILER ${CMAKE_C_COMPILER})
-set(BEAKER_NATIVE_ARCHIVER ${CMAKE_AR})
+# only against the minimal Banjo runtime.
+set(BANJO_NATIVE_COMPILER ${CMAKE_C_COMPILER})
+set(BANJO_NATIVE_ARCHIVER ${CMAKE_AR})
 
 
 # Compiler configuration
@@ -70,4 +70,4 @@ endif()
 
 
 add_subdirectory(lingo)
-add_subdirectory(beaker)
+add_subdirectory(banjo)

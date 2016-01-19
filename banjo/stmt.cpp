@@ -2,12 +2,3 @@
 // All rights reserved
 
 #include "parser.hpp"
-
-#include <iostream>
-
-
-namespace beaker
-{
-
-
-} // namespace beaker

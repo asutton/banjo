@@ -6,7 +6,7 @@
 #include <iostream>
 
 
-namespace beaker
+namespace banjo
 {
 
 Type*
@@ -90,4 +90,4 @@ Parser::on_type_list()
 }
 
 
-} // namespace beaker
+} // namespace banjo

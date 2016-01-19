@@ -7,7 +7,7 @@
 #include "builder.hpp"
 
 
-namespace beaker
+namespace banjo
 {
 
 // Initialize one parameter.
@@ -77,4 +77,4 @@ build_function_call(Context& cxt, Function_decl& f, Expr_list& args)
 }
 
 
-} // namespace beaker
+} // namespace banjo

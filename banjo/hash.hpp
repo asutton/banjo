@@ -7,7 +7,7 @@
 #include <boost/functional/hash.hpp>
 
 
-namespace beaker
+namespace banjo
 {
 
 struct Type;
@@ -29,4 +29,4 @@ struct Term_hash
 using Type_hash = Term_hash<Type>;
 
 
-} // namespace beaker
+} // namespace banjo

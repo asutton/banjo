@@ -3,7 +3,7 @@
 
 #include "token.hpp"
 
-namespace beaker
+namespace banjo
 {
 
 // A map of token names to their spelling.
@@ -143,4 +143,4 @@ init_tokens(Symbol_table& syms)
 }
 
 
-} // namespace beaker
+} // namespace banjo

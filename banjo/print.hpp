@@ -1,8 +1,8 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BEAKER_PRINT_HPP
-#define BEAKER_PRINT_HPP
+#ifndef BANJO_PRINT_HPP
+#define BANJO_PRINT_HPP
 
 #include "token.hpp"
 #include "ast.hpp"
@@ -10,7 +10,7 @@
 #include <iosfwd>
 
 
-namespace beaker
+namespace banjo
 {
 
 // A categorization of tokens based on use.
@@ -168,6 +168,6 @@ std::ostream& operator<<(std::ostream&, Decl const&);
 std::ostream& operator<<(std::ostream&, Init const&);
 
 
-} // namespace beaker
+} // namespace banjo
 
 #endif

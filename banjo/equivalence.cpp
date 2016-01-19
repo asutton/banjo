@@ -7,7 +7,7 @@
 #include <typeindex>
 
 
-namespace beaker
+namespace banjo
 {
 
 bool is_equivalent(Type const&, Type const&);
@@ -182,4 +182,4 @@ is_equivalent(User_defined_type const& t1, User_defined_type const& t2)
 }
 
 
-} // namespace beaker
+} // namespace banjo

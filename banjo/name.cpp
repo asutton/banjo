@@ -6,7 +6,7 @@
 #include <iostream>
 
 
-namespace beaker
+namespace banjo
 {
 
 // -------------------------------------------------------------------------- //
@@ -200,4 +200,4 @@ Parser::on_template_name(Token)
 }
 
 
-} // namespace beaker
+} // namespace banjo

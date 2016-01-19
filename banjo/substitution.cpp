@@ -7,7 +7,7 @@
 #include <iostream>
 
 
-namespace beaker
+namespace banjo
 {
 
 template<typename T>
@@ -179,4 +179,4 @@ substitute_decl(Context& cxt, Variable_decl& d, Substitution& sub)
 }
 
 
-} // namespace beaker
+} // namespace banjo

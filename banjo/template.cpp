@@ -7,7 +7,7 @@
 #include "builder.hpp"
 
 
-namespace beaker
+namespace banjo
 {
 
 // -------------------------------------------------------------------------- //
@@ -167,4 +167,4 @@ specialize_template(Context& cxt, Template_decl& tmp, Term_list& args)
 }
 
 
-} // namespace beaker
+} // namespace banjo

@@ -5,9 +5,8 @@
 #include "equivalence.hpp"
 
 
-namespace beaker
+namespace banjo
 {
-
 
 // Returns true if `t` is an object type. That is, any type
 // except function types and reference types.
@@ -84,4 +83,4 @@ Decl::fully_qualified_id() const
 }
 
 
-} // namespace beaker
+} // namespace banjo

@@ -7,7 +7,7 @@
 #include <iostream>
 
 
-namespace beaker
+namespace banjo
 {
 
 void deduce_type(Reference_type&, Type&, Substitution&);
@@ -109,4 +109,4 @@ deduce_type(Typename_type& p, Type& a, Substitution& sub)
 }
 
 
-} // namespace beaker
+} // namespace banjo

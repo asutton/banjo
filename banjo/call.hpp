@@ -1,14 +1,14 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BEAKER_CALL_HPP
-#define BEAKER_CALL_HPP
+#ifndef BANJO_CALL_HPP
+#define BANJO_CALL_HPP
 
 #include "prelude.hpp"
 #include "context.hpp"
 #include "ast.hpp"
 
-namespace beaker
+namespace banjo
 {
 
 // Represeents a candidate for overload resolution.
@@ -38,7 +38,7 @@ struct Function_candidate
 Expr& build_function_call(Context&, Function_decl&, Expr_list&);
 
 
-} // namespace beaker
+} // namespace banjo
 
 
 #endif

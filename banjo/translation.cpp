@@ -6,7 +6,7 @@
 #include <iostream>
 
 
-namespace beaker
+namespace banjo
 {
 
 Term*
@@ -23,4 +23,4 @@ Parser::finish_translation_unit()
 }
 
 
-} // namespace beaker
+} // namespace banjo

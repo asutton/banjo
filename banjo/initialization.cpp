@@ -9,7 +9,7 @@
 #include "builder.hpp"
 
 
-namespace beaker
+namespace banjo
 {
 
 // Select a zero-initialization procedure for an object or
@@ -326,4 +326,4 @@ aggregate_initialize(Context& cxt, Type& t, Brace_init& i)
 }
 
 
-} // namespace beaker
+} // namespace banjo

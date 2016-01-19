@@ -1,8 +1,8 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BEAKER_BUILDER_HPP
-#define BEAKER_BUILDER_HPP
+#ifndef BANJO_BUILDER_HPP
+#define BANJO_BUILDER_HPP
 
 #include "prelude.hpp"
 #include "context.hpp"
@@ -10,7 +10,7 @@
 #include "ast.hpp"
 
 
-namespace beaker
+namespace banjo
 {
 
 // An interface to an AST builder.
@@ -646,7 +646,7 @@ Builder::make_value_parm(char const* s, Type& t)
 }
 
 
-} // namespace beaker
+} // namespace banjo
 
 
 #endif

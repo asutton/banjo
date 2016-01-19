@@ -6,7 +6,7 @@
 #include <iostream>
 
 
-namespace beaker
+namespace banjo
 {
 
 Init*
@@ -37,4 +37,4 @@ Parser::on_aggregate_initializer(Expr_list const&)
 }
 
 
-} // namespace beaker
+} // namespace banjo

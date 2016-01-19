@@ -1,15 +1,15 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BEAKER_SUBSTITUTION_HPP
-#define BEAKER_SUBSTITUTION_HPP
+#ifndef BANJO_SUBSTITUTION_HPP
+#define BANJO_SUBSTITUTION_HPP
 
 #include "prelude.hpp"
 #include "context.hpp"
 #include "ast.hpp"
 
 
-namespace beaker
+namespace banjo
 {
 
 // -------------------------------------------------------------------------- //
@@ -96,7 +96,7 @@ Expr& substitute(Context&, Expr&, Substitution&);
 Decl& substitute(Context&, Decl&, Substitution&);
 
 
-} // namespace beaker
+} // namespace banjo
 
 
 #endif

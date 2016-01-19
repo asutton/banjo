@@ -6,7 +6,7 @@
 #include <iostream>
 
 
-namespace beaker
+namespace banjo
 {
 
 Expr*
@@ -23,4 +23,4 @@ Parser::on_integer_literal(Token)
 }
 
 
-} // namespace beaker
+} // namespace banjo

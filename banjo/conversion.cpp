@@ -10,7 +10,7 @@
 #include <iostream>
 
 
-namespace beaker
+namespace banjo
 {
 
 // -------------------------------------------------------------------------- //
@@ -628,4 +628,4 @@ compare(Conversion_seq const& a, Conversion_seq const& b)
 }
 
 
-} // namespace beaker
+} // namespace banjo

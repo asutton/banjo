@@ -5,7 +5,7 @@
 #include "ast.hpp"
 
 
-namespace beaker
+namespace banjo
 {
 
 std::size_t hash_value(Type const&);
@@ -117,4 +117,4 @@ hash_value(Function_type const& t)
 
 
 
-} // namespace beaker
+} // namespace banjo

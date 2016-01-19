@@ -6,7 +6,7 @@
 #include <iostream>
 
 
-namespace beaker
+namespace banjo
 {
 
 namespace
@@ -906,7 +906,7 @@ Parser::brace_initializer()
 //
 // The paren- and brace-initializer foms are called direct initialization.
 // This term also applies to object initialization in new expressions,
-// static casts, functional conversion, and member initializers. 
+// static casts, functional conversion, and member initializers.
 Init*
 Parser::initializer()
 {
@@ -1179,4 +1179,4 @@ Parser::operator()()
 }
 
 
-} // namespace beaker
+} // namespace banjo

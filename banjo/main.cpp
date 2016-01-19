@@ -13,7 +13,7 @@
 
 
 using namespace lingo;
-using namespace beaker;
+using namespace banjo;
 
 
 int
@@ -22,7 +22,7 @@ main(int argc, char* argv[])
   Context cxt;
 
   if (argc != 2) {
-    std::cerr << "usage: beaker-compile <input-file>\n";
+    std::cerr << "usage: banjo-compile <input-file>\n";
     return -1;
   }
 

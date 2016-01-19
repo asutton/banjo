@@ -1,8 +1,8 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BEAKER_EQUIVALENCE_HPP
-#define BEAKER_EQUIVALENCE_HPP
+#ifndef BANJO_EQUIVALENCE_HPP
+#define BANJO_EQUIVALENCE_HPP
 
 #include "prelude.hpp"
 
@@ -10,7 +10,7 @@
 #include <unordered_map>
 
 
-namespace beaker
+namespace banjo
 {
 
 struct Type;
@@ -45,6 +45,6 @@ struct Equivalence_closure
 
 };
 
-} // namespace beaker
+} // namespace banjo
 
 #endif

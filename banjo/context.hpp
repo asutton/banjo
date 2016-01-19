@@ -1,13 +1,13 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BEAKER_CONTEXT_HPP
-#define BEAKER_CONTEXT_HPP
+#ifndef BANJO_CONTEXT_HPP
+#define BANJO_CONTEXT_HPP
 
 #include "prelude.hpp"
 
 
-namespace beaker
+namespace banjo
 {
 
 // A repository of information to support translation.
@@ -27,7 +27,7 @@ struct Context
 };
 
 
-} // namespace beaker
+} // namespace banjo
 
 
 #endif

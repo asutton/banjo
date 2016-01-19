@@ -7,7 +7,7 @@
 #include <lingo/io.hpp>
 
 
-namespace beaker
+namespace banjo
 {
 
 Context::Context()
@@ -24,4 +24,4 @@ Context::Context()
 }
 
 
-} // namespace beaker
+} // namespace banjo

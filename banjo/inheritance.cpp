@@ -4,7 +4,7 @@
 #include "inheritance.hpp"
 
 
-namespace beaker
+namespace banjo
 {
 
 // Returns true if t1 is a base class of t2.
@@ -17,4 +17,4 @@ is_base_class(Type const& t1, Type const& t2)
 }
 
 
-} // namespace beaker
+} // namespace banjo
