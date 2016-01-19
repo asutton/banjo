@@ -2260,7 +2260,7 @@ struct Namespace_decl : Decl
 struct Template_decl : Decl
 {
   Template_decl(Decl_list const& p, Decl& d)
-    : Decl(d.name()), parms(p), decl(&d)
+    : Decl(d.name()), parms(p), constr(nullptr), decl(&d)
   {
     lingo_assert(!d.context());
     d.context(*this);
