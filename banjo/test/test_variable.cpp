@@ -6,10 +6,6 @@
 #include <iostream>
 
 
-using namespace lingo;
-using namespace beaker;
-
-
 int
 main(int argc, char* argv[])
 {

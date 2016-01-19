@@ -3,7 +3,7 @@
 
 #include "test.hpp"
 
-#include <beaker/deduction.hpp>
+#include <banjo/deduction.hpp>
 
 #include <iostream>
 

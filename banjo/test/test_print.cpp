@@ -6,12 +6,10 @@
 #include <iostream>
 
 
-Context* cxt;
-
 void
-test_names()
+test_names(Context& cxt)
 {
-  Builder build(*cxt);
+  Builder build(cxt);
 
   std::cout << "--- names ---\n";
   Name& n1 = build.get_id("N1");
@@ -68,9 +66,9 @@ test_types()
 
 
 void
-test_expressions()
+test_expressions(Context& cxt)
 {
-  Builder build(*cxt);
+  Builder build(cxt);
 
   Type& b = build.get_bool_type();
 
@@ -89,10 +87,9 @@ test_expressions()
 int
 main(int argc, char* argv[])
 {
-  Context c;
-  cxt = &c;
+  Context cxt;
 
-  test_names();
+  test_names(cxt);
   test_types();
-  test_expressions();
+  test_expressions(cxt);
 }

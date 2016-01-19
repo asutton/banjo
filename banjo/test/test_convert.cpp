@@ -3,17 +3,10 @@
 
 #include "test.hpp"
 
-#include <beaker/conversion.hpp>
+#include <banjo/conversion.hpp>
 
 #include <iostream>
 #include <iomanip>
-
-
-using namespace lingo;
-using namespace beaker;
-
-
-Context* cxt;
 
 
 bool
@@ -46,9 +39,9 @@ test_signature(Type const& t)
 
 
 void
-test_similar()
+test_similar(Context& cxt)
 {
-  Builder build(*cxt);
+  Builder build(cxt);
 
   std::cout << "--- qualifier similarity --" << '\n';
 
@@ -75,9 +68,9 @@ test_similar()
 
 
 void
-test_standard_conversions()
+test_standard_conversions(Context& cxt)
 {
-  Builder build(*cxt);
+  Builder build(cxt);
 
   std::cout << "--- standard conversions --" << '\n';
 
@@ -132,9 +125,9 @@ test_standard_conversions()
 
 
 void
-test_arithmetic_conversions()
+test_arithmetic_conversions(Context& cxt)
 {
-  Builder build(*cxt);
+  Builder build(cxt);
 
   std::cout << "--- arithmetic conversions --" << '\n';
 
@@ -159,10 +152,9 @@ test_arithmetic_conversions()
 int
 main(int argc, char* argv[])
 {
-  Context c;
-  cxt = &c;
+  Context cxt;
 
-  test_similar();
-  test_standard_conversions();
-  test_arithmetic_conversions();
+  test_similar(cxt);
+  test_standard_conversions(cxt);
+  test_arithmetic_conversions(cxt);
 }

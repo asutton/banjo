@@ -1,17 +1,12 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#include <beaker/ast.hpp>
-#include <beaker/hash.hpp>
+#include "test.hpp"
 
-#include <lingo/symbol.hpp>
+#include <banjo/hash.hpp>
 
 #include <iostream>
 #include <unordered_set>
-
-
-using namespace lingo;
-using namespace beaker;
 
 
 void

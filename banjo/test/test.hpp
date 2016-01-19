@@ -1,13 +1,18 @@
-
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#include <beaker/context.hpp>
-#include <beaker/builder.hpp>
-#include <beaker/print.hpp>
+#ifndef TEST_HPP
+#define TEST_HPP
+
+#include <banjo/context.hpp>
+#include <banjo/builder.hpp>
+#include <banjo/print.hpp>
 
 #include <iostream>
 
 
 using namespace lingo;
-using namespace beaker;
+using namespace banjo;
+
+
+#endif

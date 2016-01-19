@@ -3,7 +3,7 @@
 
 #include "test.hpp"
 
-#include <beaker/substitution.hpp>
+#include <banjo/substitution.hpp>
 
 #include <iostream>
 

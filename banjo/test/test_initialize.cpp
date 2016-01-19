@@ -3,14 +3,10 @@
 
 #include "test.hpp"
 
-#include <beaker/initialization.hpp>
+#include <banjo/initialization.hpp>
 
 #include <iostream>
 #include <iomanip>
-
-
-using namespace lingo;
-using namespace beaker;
 
 
 void

@@ -3,8 +3,8 @@
 
 #include "test.hpp"
 
-#include <beaker/template.hpp>
-#include <beaker/substitution.hpp>
+#include <banjo/template.hpp>
+#include <banjo/substitution.hpp>
 
 #include <iostream>
 

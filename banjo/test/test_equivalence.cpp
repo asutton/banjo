@@ -1,26 +1,17 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#include <beaker/ast.hpp>
-#include <beaker/equivalence.hpp>
+#include "test.hpp"
 
-#include <lingo/symbol.hpp>
+#include <banjo/equivalence.hpp>
 
 #include <iostream>
-
-
-using namespace lingo;
-using namespace beaker;
-
-
-// A symbol table.
-Symbol_table syms;
 
 
 void
 test_types()
 {
-  
+
   Type& t1 = *new Void_type();
   Type& t2 = *new Boolean_type();
   Type& t3 = *new Integer_type();
