@@ -24,6 +24,7 @@ add_library(beaker
   call.cpp
   inheritance.cpp
   substitution.cpp
+  deduction.cpp
   template.cpp
   print.cpp
 )
@@ -64,3 +65,4 @@ add_run_test(test_template    test/test_template.cpp)
 add_run_test(test_convert     test/test_convert.cpp)
 add_run_test(test_initialize  test/test_initialize.cpp)
 add_run_test(test_substitute  test/test_substitute.cpp)
+add_run_test(test_deduce      test/test_deduce.cpp)

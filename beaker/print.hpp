@@ -160,6 +160,7 @@ struct Printer
 };
 
 
+std::ostream& operator<<(std::ostream&, Term const&);
 std::ostream& operator<<(std::ostream&, Name const&);
 std::ostream& operator<<(std::ostream&, Type const&);
 std::ostream& operator<<(std::ostream&, Expr const&);

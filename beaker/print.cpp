@@ -755,29 +755,31 @@ Printer::brace_initializer(Aggregate_init const&)
 // -------------------------------------------------------------------------- //
 // Declarations
 
-// Dispatch for declarations (as in declaration statements).
-struct declaration_fn
-{
-  Printer& p;
-
-  template<typename T>
-  void operator()(T const&) { lingo_unreachable(); }
-
-  void operator()(Variable_decl const& d)  { p.variable_declaration(d); }
-  void operator()(Constant_decl const& d)  { p.constant_declaration(d); }
-  void operator()(Function_decl const& d)  { p.function_declaration(d); }
-  void operator()(Class_decl const& d)     { p.class_declaration(d); }
-  void operator()(Union_decl const& d)     { p.union_declaration(d); }
-  void operator()(Enum_decl const& d)      { p.enum_declaration(d); }
-  void operator()(Namespace_decl const& d) { p.namespace_declaration(d); }
-  void operator()(Template_decl const& d)  { p.template_declaration(d); }
-};
-
-
 void
 Printer::declaration(Decl const& d)
 {
-  apply(d, declaration_fn{*this});
+  struct fn
+  {
+    Printer& p;
+
+    void operator()(Decl const&) { lingo_unreachable(); }
+    void operator()(Variable_decl const& d)  { p.variable_declaration(d); }
+    void operator()(Constant_decl const& d)  { p.constant_declaration(d); }
+    void operator()(Function_decl const& d)  { p.function_declaration(d); }
+    void operator()(Class_decl const& d)     { p.class_declaration(d); }
+    void operator()(Union_decl const& d)     { p.union_declaration(d); }
+    void operator()(Enum_decl const& d)      { p.enum_declaration(d); }
+    void operator()(Namespace_decl const& d) { p.namespace_declaration(d); }
+    void operator()(Template_decl const& d)  { p.template_declaration(d); }
+
+    // Support emitting these here so we can print parameters
+    // without an appropriate context.
+    void operator()(Object_parm const& d)    { p.parameter(d); }
+    void operator()(Value_parm const& d)     { p.value_template_parameter(d); }
+    void operator()(Type_parm const& d)      { p.type_template_parameter(d); }
+    void operator()(Template_parm const& d)  { p.template_template_parameter(d); }
+  };
+  apply(d, fn{*this});
 }
 
 
@@ -990,6 +992,22 @@ Printer::template_argument(Term const& a)
 
 // -------------------------------------------------------------------------- //
 // Streaming
+
+
+std::ostream&
+operator<<(std::ostream& os, Term const& x)
+{
+  if (Name const* n = as<Name>(&x))
+    return os << *n;
+  if (Type const* t = as<Type>(&x))
+    return os << *t;
+  if (Expr const* e = as<Expr>(&x))
+    return os << *e;
+  if (Decl const* d = as<Decl>(&x))
+    return os << *d;
+  lingo_unreachable();
+}
+
 
 std::ostream&
 operator<<(std::ostream& os, Name const& n)
