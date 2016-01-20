@@ -7,13 +7,19 @@
 #include "prelude.hpp"
 #include "overload.hpp"
 #include "context.hpp"
-#include "ast.hpp"
 
 #include <lingo/environment.hpp>
 
 
 namespace banjo
 {
+
+
+struct Decl;
+struct Namespace_decl;
+struct Function_decl;
+struct Class_decl;
+struct Object_decl;
 
 
 // -------------------------------------------------------------------------- //
@@ -111,64 +117,7 @@ struct Block_scope : Scope
 };
 
 
-
 // TODO: Define other kinds of scope.
-
-
-inline Namespace_decl const& 
-Namespace_scope::declaration() const 
-{ 
-  return *cast<Namespace_decl>(context()); 
-}
-
-Namespace_decl&
-Namespace_scope::declaration()
-{ 
-  return *cast<Namespace_decl>(context()); 
-}
-
-
-inline Function_decl const&
-Function_scope::declaration() const
-{ 
-  return *cast<Function_decl>(context());
-}
-
-
-inline Function_decl&      
-Function_scope::declaration()      
-{ 
-  return *cast<Function_decl>(context());
-}
-
-
-inline Class_decl const&
-Class_scope::declaration() const
-{ 
-  return *cast<Class_decl>(context());
-}
-
-
-inline Class_decl&      
-Class_scope::declaration()      
-{ 
-  return *cast<Class_decl>(context());
-}
-
-
-inline Object_decl const&
-Initializer_scope::declaration() const
-{ 
-  return *cast<Object_decl>(context());
-}
-
-
-inline Object_decl&      
-Initializer_scope::declaration()      
-{ 
-  return *cast<Object_decl>(context());
-}
-
 
 
 // Returns true if s is a scope for a namespace.

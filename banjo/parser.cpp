@@ -99,6 +99,20 @@ Parser::accept()
 }
 
 
+// -------------------------------------------------------------------------- //
+// Scopes
+
+
+// Enter the given scope. Unless `s` is the scope of the global
+// namespace, `s` must be linked through its enclosing scopes
+// to the global namespace.
+//
+// Use Parser::Scope_sentinel to enter a new scope.
+void
+Parser::enter_scope(Scope& s)
+{
+  state.scope = &s;
+}
 
 
 // -------------------------------------------------------------------------- //
@@ -795,17 +809,16 @@ Parser::declaration_seq()
 //
 //    translation-unit:
 //      [declaration-seq]
-Term*
+Term&
 Parser::translation_unit()
 {
-  start_translation_unit();
+  Scope_sentinel scope(cxt.global_namespace());
   if (peek())
     declaration_seq();
-  return finish_translation_unit();
 }
 
 
-Term*
+Term&
 Parser::operator()()
 {
   return translation_unit();

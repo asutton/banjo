@@ -19,7 +19,6 @@ add_library(banjo
   sema_init.cpp
   sema_decl.cpp
   sema_stmt.cpp
-  sema_unit.cpp
   # Utilities
   hash.cpp
   equivalence.cpp

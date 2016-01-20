@@ -34,6 +34,7 @@ struct Context
 
   Symbol_table    syms;
   Namespace_decl* top;  // The global namespace
+
 };
 
 

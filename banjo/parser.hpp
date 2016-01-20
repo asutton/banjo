@@ -13,6 +13,9 @@
 namespace banjo
 {
 
+struct Scope;
+
+
 // Denotes a syntactic error.
 struct Syntax_error : std::runtime_error
 {
@@ -176,10 +179,6 @@ struct Parser
   Expr& on_direct_initializer(Expr_list const&);
   Expr& on_aggregate_initializer(Expr_list const&);
 
-  // Miscellaneous
-  Term* start_translation_unit();
-  Term* finish_translation_unit();
-
   // Token matching.
   Token      peek() const;
   Token_kind lookahead() const;
@@ -192,6 +191,9 @@ struct Parser
   // Tree matching.
   template<typename T> T* match_if(T& (Parser::* p)());
 
+  // Scope management
+  void enter_scope(Scope&);
+
   // Maintains the current parse state.
   struct State
   {
@@ -203,14 +205,38 @@ struct Parser
 
     // True if the next identifier is a template.
     bool assume_template = false;
+
+    // The current scope.
+    Scope* scope;
   };
 
+  struct Scope_sentinel;
   struct Assume_template;
 
   Context&      cxt;
   Builder       build;
   Token_stream& tokens;
   State         state;
+};
+
+
+// An RAII helper that manages the entry and exit of
+// scopes.
+struct Parser::Scope_sentinel
+{
+  Scope_sentinel(Parser& p, Namespace_decl& ns)
+    : parser(p), prev(p.state.scope)
+  {
+    parser.enter_scope(ns.scope());
+  }
+
+  ~Scope_sentinel()
+  {
+    parser.enter_scope(*prev);
+  }
+
+  Parser& parser;
+  Scope* prev;
 };
 
 

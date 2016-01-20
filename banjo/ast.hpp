@@ -18,6 +18,7 @@ struct Type;
 struct Expr;
 struct Stmt;
 struct Decl;
+struct Scope;
 
 
 // -------------------------------------------------------------------------- //
@@ -2272,6 +2273,10 @@ struct Namespace_decl : Decl
 
   bool is_global() const    { return cxt == nullptr; }
   bool is_anonymous() const { return is<Placeholder_id>(id); }
+
+  // FIXME: This is totally broken.
+  Scope const& scope() const { return *(Scope*)nullptr; }
+  Scope&       scope()       { return *(Scope*)nullptr;; }
 
   Decl_list second;
 };
