@@ -14,20 +14,20 @@ namespace banjo
 // -------------------------------------------------------------------------- //
 // Declarators
 
-Name*
-Parser::on_declarator(Name*)
+Name&
+Parser::on_declarator(Name&)
 {
-  return nullptr;
+  lingo_unimplemented();
 }
 
 
 // -------------------------------------------------------------------------- //
 // Variable declarations
 
-Decl*
-Parser::on_variable_declaration(Token, Name*, Type*, Init*)
+Decl&
+Parser::on_variable_declaration(Token, Name&, Type&, Expr&)
 {
-  return nullptr;
+  lingo_unimplemented();
 }
 
 
@@ -35,17 +35,17 @@ Parser::on_variable_declaration(Token, Name*, Type*, Init*)
 // Function declarations
 
 
-Decl*
-Parser::on_function_declaration(Token, Name*, Decl_list const&, Type*, Init*)
+Decl&
+Parser::on_function_declaration(Token, Name&, Decl_list const&, Type&, Expr&)
 {
-  return nullptr;
+  lingo_unimplemented();
 }
 
 
-Decl*
-Parser::on_parameter_declaration(Name*, Type*, Init*)
+Decl&
+Parser::on_parameter_declaration(Name&, Type&, Expr&)
 {
-  return nullptr;
+  lingo_unimplemented();
 }
 
 
@@ -53,10 +53,10 @@ Parser::on_parameter_declaration(Name*, Type*, Init*)
 // Namespace declarations
 
 
-Decl*
-Parser::on_namespace_declaration(Token, Name*, Decl_list const&)
+Decl&
+Parser::on_namespace_declaration(Token, Name&, Decl_list const&)
 {
-  return nullptr;
+  lingo_unimplemented();
 }
 
 

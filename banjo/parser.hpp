@@ -7,6 +7,7 @@
 #include "lexer.hpp"
 #include "token.hpp"
 #include "ast.hpp"
+#include "builder.hpp"
 
 
 namespace banjo
@@ -25,53 +26,53 @@ struct Syntax_error : std::runtime_error
 struct Parser
 {
   Parser(Context& cxt, Token_stream& ts)
-    : cxt(cxt), tokens(ts), state()
+    : cxt(cxt), build(cxt), tokens(ts), state()
   { }
 
   Term* operator()();
 
   // Syntax
   // Unresolved names
-  Name* id();
-  Name* unqualified_id();
-  Name* destructor_id();
-  Name* operator_id();
-  Name* conversion_id();
-  Name* literal_id();
-  Name* template_id();
-  Name* qualified_id();
+  Name& id();
+  Name& unqualified_id();
+  Name& destructor_id();
+  Name& operator_id();
+  Name& conversion_id();
+  Name& literal_id();
+  Name& template_id();
+  Name& qualified_id();
 
   // Name helpers
-  Name* simple_template_id();
+  Name& simple_template_id();
   Term_list template_argument_list();
 
   // Nested name specifiers
-  Name* leading_name_specifier();
-  Name* nested_name_specifier();
-  Name* nested_name_specifier_opt();
+  Decl& leading_name_specifier();
+  Decl& nested_name_specifier();
+  Decl* nested_name_specifier_opt();
 
   // Resolved names
-  Type* class_name();
-  Type* union_name();
-  Type* enum_name();
-  Type* type_name();
-  Type* type_alias();
-  Decl* namespace_name();
-  Decl* namespace_alias();
-  Decl* template_name();
+  Type& class_name();
+  Type& union_name();
+  Type& enum_name();
+  Type& type_name();
+  Type& type_alias();
+  Decl& namespace_name();
+  Decl& namespace_alias();
+  Decl& template_name();
 
   // Types
-  Type* type();
-  Type* simple_type();
-  Type* decltype_type();
-  Type* function_type();
-  Type* grouped_type();
-  Type* postfix_type();
-  Type* sequence_type();
-  Type* reference_type();
+  Type& type();
+  Type& simple_type();
+  Type& decltype_type();
+  Type& function_type();
+  Type& grouped_type();
+  Type& postfix_type();
+  Type& sequence_type();
+  Type& reference_type();
 
   // Type helpers
-  Type* return_type();
+  Type& return_type();
   Type_list type_list();
 
   // Expressions
@@ -87,89 +88,93 @@ struct Parser
   Expr* expression();
 
   // Declarations
-  Name* declarator();
-  Decl* declaration();
-  Decl* empty_declaration();
-  Decl* variable_declaration();
-  Decl* function_declaration();
-  Decl* parameter_declaration();
-  Decl* class_declaration();
-  Decl* enum_declaration();
-  Decl* namespace_declaration();
-  Decl* template_declaration();
+  Name& declarator();
+  Decl& declaration();
+  Decl& empty_declaration();
+  Decl& variable_declaration();
+  Decl& function_declaration();
+  Decl& parameter_declaration();
+  Decl& class_declaration();
+  Decl& enum_declaration();
+  Decl& namespace_declaration();
+  Decl& template_declaration();
 
-  Decl* type_template_parameter();
-  Decl* value_template_parameter();
-  Decl* template_template_parameter();
-  Decl* template_parameter();
+  Decl& type_template_parameter();
+  Decl& value_template_parameter();
+  Decl& template_template_parameter();
+  Decl& template_parameter();
   Decl_list template_parameter_list();
   Decl_list declaration_seq();
 
   // Initializers
-  Init* initializer();
-  Init* value_initializer();
-  Init* direct_initializer();
-  Init* aggregate_initializer();
+  Expr& initializer();
+  Expr& value_initializer();
+  Expr& direct_initializer();
+  Expr& aggregate_initializer();
 
   Term* translation_unit();
 
   // Semantics
+
+  // Identifiers
+  Name& on_simple_id(Token);
+  Name& on_destructor_id(Token, Type&);
+  Name& on_operator_id();
+  Name& on_conversion_id();
+  Name& on_literal_id();
+  Name& on_template_id(Token, Decl&, Term_list const&);
+  Name& on_qualified_id(Decl&, Name&);
+  
+  Decl& on_nested_name_specifier();
+  Decl& on_nested_name_specifier(Decl&);
+  Decl& on_nested_name_specifier(Type&);
+  Decl& on_nested_name_specifier(Decl&, Token);
+  Decl& on_nested_name_specifier(Decl&, Name&);
+
   // Names
-  Name* on_simple_id(Token);
-  Name* on_destructor_id(Token, Type*);
-  Name* on_operator_id();
-  Name* on_conversion_id();
-  Name* on_literal_id();
-  Name* on_template_id(Token, Decl*, Term_list const&);
-  Name* on_qualified_id(Name*, Name*);
+  Type& on_class_name(Token);
+  Type& on_class_name(Name&);
+  Type& on_union_name(Token);
+  Type& on_union_name(Name&);
+  Type& on_enum_name(Token);
+  Type& on_enum_name(Name&);
+  Type& on_type_alias(Token);
+  Type& on_type_alias(Name&);
+  Decl& on_namespace_name(Token);
+  Decl& on_namespace_name(Name&);
+  Decl& on_namespace_alias(Token);
+  Decl& on_namespace_alias(Name&);
+  Decl& on_template_name(Token);
 
-  Term_list on_template_argument_list();
-  Name* on_nested_name_specifier(Token);
-  Name* on_nested_name_specifier(Decl*);
-  Name* on_nested_name_specifier(Type*);
-  Name* on_nested_name_specifier(Name*, Token);
-  Name* on_nested_name_specifier(Name*, Name*);
-
-  Type* on_class_name(Token);
-  Type* on_class_name(Name*);
-  Type* on_union_name(Token);
-  Type* on_union_name(Name*);
-  Type* on_enum_name(Token);
-  Type* on_enum_name(Name*);
-  Type* on_type_alias(Token);
-  Type* on_type_alias(Name*);
-  Decl* on_namespace_name(Token);
-  Decl* on_namespace_name(Name*);
-  Decl* on_namespace_alias(Token);
-  Decl* on_namespace_alias(Name*);
-  Decl* on_template_name(Token);
-
-  Type* on_simple_type(Token);
-  Type* on_decltype_type(Token, Expr*);
-  Type* on_function_type(Type_list const&, Type*);
-  Type* on_pointer_type(Token, Type*);
-  Type* on_const_type(Token, Type*);
-  Type* on_volatile_type(Token, Type*);
-  Type* on_sequence_type(Type*);
-  Type* on_reference_type(Token, Type*);
-  Type_list on_type_list();
+  // Types
+  Type& on_void_type(Token);
+  Type& on_bool_type(Token);
+  Type& on_int_type(Token);
+  Type& on_decltype_type(Token, Expr&);
+  Type& on_function_type(Type_list const&, Type&);
+  Type& on_pointer_type(Token, Type&);
+  Type& on_qualified_type(Token, Type&, Qualifier_set);
+  Type& on_const_type(Token, Type&);
+  Type& on_volatile_type(Token, Type&);
+  Type& on_sequence_type(Type&);
+  Type& on_reference_type(Token, Type&);
 
   // Expressions
-  Expr* on_id_expression(Name*);
-  Expr* on_integer_literal(Token);
+  Expr& on_id_expression(Name&);
+  Expr& on_integer_literal(Token);
 
   // Declarations
-  Decl* on_variable_declaration(Token, Name*, Type*, Init*);
-  Decl* on_function_declaration(Token, Name*, Decl_list const&, Type*, Init*);
-  Decl* on_parameter_declaration(Name*, Type*, Init*);
-  Decl* on_namespace_declaration(Token, Name*, Decl_list const&);
+  Decl& on_variable_declaration(Token, Name&, Type&, Expr&);
+  Decl& on_function_declaration(Token, Name&, Decl_list const&, Type&, Expr&);
+  Decl& on_parameter_declaration(Name&, Type&, Expr&);
+  Decl& on_namespace_declaration(Token, Name&, Decl_list const&);
   Decl_list on_declaration_seq();
 
-  Name* on_declarator(Name*);
-  Init* on_default_initializer();
-  Init* on_value_initializer(Expr*);
-  Init* on_direct_initializer(Expr_list const&);
-  Init* on_aggregate_initializer(Expr_list const&);
+  Name& on_declarator(Name&);
+  Expr& on_default_initializer();
+  Expr& on_value_initializer(Expr&);
+  Expr& on_direct_initializer(Expr_list const&);
+  Expr& on_aggregate_initializer(Expr_list const&);
 
   // Miscellaneous
   Term* start_translation_unit();
@@ -185,7 +190,7 @@ struct Parser
   Token      accept();
 
   // Tree matching.
-  template<typename T> T* match_if(T* (Parser::* p)());
+  template<typename T> T* match_if(T& (Parser::* p)());
 
   // Maintains the current parse state.
   struct State
@@ -203,6 +208,7 @@ struct Parser
   struct Assume_template;
 
   Context&      cxt;
+  Builder       build;
   Token_stream& tokens;
   State         state;
 };
@@ -269,11 +275,11 @@ struct Trial_parser
 // Match a given tree.
 template<typename R>
 inline R*
-Parser::match_if(R* (Parser::* f)())
+Parser::match_if(R& (Parser::* f)())
 {
   Trial_parser p(*this);
   try {
-    return (this->*f)();
+    return &(this->*f)();
   } catch(Syntax_error&) {
     p.failed();
   }

@@ -4,21 +4,26 @@
 # Add the core Banjo library.
 add_library(banjo
   prelude.cpp
+  context.cpp
+  # Lexical components
   token.cpp
   lexer.cpp
-  # parser.cpp
+  # Syntactic components
   ast.cpp
-  context.cpp
   builder.cpp
-  name.cpp
-  type.cpp
-  expr.cpp
-  init.cpp
-  decl.cpp
-  stmt.cpp
-  translation.cpp
+  # parser.cpp
+  parse_id.cpp
+  sema_id.cpp
+  sema_type.cpp
+  sema_expr.cpp
+  sema_init.cpp
+  sema_decl.cpp
+  sema_stmt.cpp
+  sema_unit.cpp
+  # Utilities
   hash.cpp
   equivalence.cpp
+  # Semantics
   lookup.cpp
   overload.cpp
   conversion.cpp

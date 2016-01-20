@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "context.hpp"
+#include "builder.hpp"
 #include "token.hpp"
 
 #include <lingo/io.hpp>
@@ -21,6 +22,10 @@ Context::Context()
 
   // Initialize all the tokens.
   init_tokens(syms);
+
+  // Initialize the global namepace.
+  Builder build(*this);
+  top = &build.get_global_namespace();
 }
 
 

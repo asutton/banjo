@@ -32,11 +32,13 @@ struct Builder
   // TODO: Implement more of these.
   Simple_id&      get_id(char const*);
   Simple_id&      get_id(std::string const&);
+  Simple_id&      get_id(Symbol const&);
+  Simple_id&      get_id(Symbol const*);
   Placeholder_id& get_id();
   // Operator_id&    get_id();
   // Conversion_id&  get_id();
   // Literal_id&     get_id();
-  Destructor_id&  get_id(Type const&);
+  Destructor_id&  get_destructor_id(Type const&);
   Template_id&    get_template_id(Template_decl&, Term_list const&);
   Qualified_id&   get_qualified_id(Decl&, Name&);
   Global_id&      get_global_id();
@@ -151,6 +153,22 @@ Builder::get_id(std::string const& s)
 }
 
 
+// Returns a simple identifier for the given symbol.
+inline Simple_id&
+Builder::get_id(Symbol const& sym)
+{
+  return make<Simple_id>(sym);
+}
+
+
+// Returns a simple identifier for the symbol.
+inline Simple_id&
+Builder::get_id(Symbol const* sym)
+{
+  return make<Simple_id>(*sym);
+}
+
+
 // Returns a placeholder for a name.
 inline Placeholder_id&
 Builder::get_id()
@@ -161,7 +179,7 @@ Builder::get_id()
 
 // Returns a destructor-id for the given type.
 inline Destructor_id&
-Builder::get_id(Type const& t)
+Builder::get_destructor_id(Type const& t)
 {
   lingo_unimplemented();
 }

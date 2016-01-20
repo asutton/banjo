@@ -10,6 +10,9 @@
 namespace banjo
 {
 
+struct Namespace_decl;
+
+
 // A repository of information to support translation.
 //
 // TODO: Add an allocator/object pool and management support.
@@ -21,9 +24,16 @@ struct Context
 {
   Context();
 
-  Symbol_table& symbols() { return syms; }
+  // Returns the symbol table.
+  Symbol_table const& symbols() const { return syms; }
+  Symbol_table&       symbols()       { return syms; }
 
-  Symbol_table syms;
+  // Returns the global namespace.
+  Namespace_decl const& global_namespace() const { return *top; }
+  Namespace_decl&       global_namespace()       { return *top; }
+
+  Symbol_table    syms;
+  Namespace_decl* top;  // The global namespace
 };
 
 

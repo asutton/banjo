@@ -9,31 +9,31 @@
 namespace banjo
 {
 
-Init*
+Expr&
 Parser::on_default_initializer()
 {
-  return nullptr;
+  lingo_unimplemented();
 }
 
 
-Init*
-Parser::on_value_initializer(Expr*)
+Expr&
+Parser::on_value_initializer(Expr&)
 {
-  return nullptr;
+  lingo_unimplemented();
 }
 
 
-Init*
+Expr&
 Parser::on_direct_initializer(Expr_list const&)
 {
-  return nullptr;
+  lingo_unimplemented();
 }
 
 
-Init*
+Expr&
 Parser::on_aggregate_initializer(Expr_list const&)
 {
-  return nullptr;
+  lingo_unimplemented();
 }
 
 
