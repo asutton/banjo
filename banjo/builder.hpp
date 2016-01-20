@@ -37,8 +37,8 @@ struct Builder
   // Conversion_id&  get_id();
   // Literal_id&     get_id();
   Destructor_id&  get_id(Type const&);
-  Template_id&    get_id(Template_decl&, Term_list const&);
-  Qualified_id&   get_id(Decl&, Name&);
+  Template_id&    get_template_id(Template_decl&, Term_list const&);
+  Qualified_id&   get_qualified_id(Decl&, Name&);
   Global_id&      get_global_id();
 
   // Types
@@ -168,7 +168,7 @@ Builder::get_id(Type const& t)
 
 
 inline Template_id&
-Builder::get_id(Template_decl& d, Term_list const& t)
+Builder::get_template_id(Template_decl& d, Term_list const& t)
 {
   return make<Template_id>(d, t);
 }
@@ -176,7 +176,7 @@ Builder::get_id(Template_decl& d, Term_list const& t)
 
 // Returns a qualified-id.
 inline Qualified_id&
-Builder::get_id(Decl& d, Name& n)
+Builder::get_qualified_id(Decl& d, Name& n)
 {
   return make<Qualified_id>(d, n);
 }

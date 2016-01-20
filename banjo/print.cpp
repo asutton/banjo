@@ -209,21 +209,30 @@ Printer::template_id(Template_id const& n)
 void
 Printer::qualified_id(Qualified_id const& n)
 {
-  nested_name_specifier(n);
-  Qualified_id const* p = &n;
-  while (is<Qualified_id>(&p->name()))
-    p = cast<Qualified_id>(&p->name());
-  unqualified_id(p->name());
+  nested_name_specifier(n.scope());
+  unqualified_id(n.name());
 }
 
 
+// TODO: Find the least qualification needed to make
+// the qualified-id valid. This currently generates 
 void
-Printer::nested_name_specifier(Qualified_id const& n)
+Printer::nested_name_specifier(Decl const& d)
 {
-  unqualified_id(n.context().name());
-  token(colon_colon_tok);
-  if (Qualified_id const* q = as<Qualified_id>(&n.name()))
-    nested_name_specifier(*q);
+  // Generate the list of enclosing scopes.
+  std::vector<Decl const*> scopes;
+  Decl const* p = &d;
+  while (p) {
+    scopes.push_back(p);
+    p = p->context();
+  }
+
+  // Print out the nested name specifier.
+  for (auto iter = scopes.rbegin(); iter != scopes.rend(); ++iter) {
+    Decl const* d = *iter;
+    unqualified_id(d->declared_name());
+    token(colon_colon_tok);
+  }  
 }
 
 

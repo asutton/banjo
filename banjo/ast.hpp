@@ -153,6 +153,10 @@ struct Name : Term
   struct Visitor;
 
   virtual void accept(Visitor&) const = 0;
+
+  // Returns an unqualified representation of the name.
+  virtual Name const& unqualified_name() const { return *this; }
+  virtual Name&       unqualified_name()       { return *this; }
 };
 
 
@@ -269,20 +273,39 @@ struct Template_id : Name
 };
 
 
-// An explicitly scoped identifier.
+// An unqualified identifier (i.e., one of the other names)
+// that is qualified by some enclosing scope. For example,
+// in the name:
+//
+//    N1::N2::x
+//
+// `x` is a simple-id, and the enclosing scope is `N2`.
+// Note that the complete qualification. Note that the
+// enclosing namespaces can be recovered by "walking"
+// up the declaration's context.
 struct Qualified_id : Name
 {
   Qualified_id(Decl& d, Name& n)
-    : decl(&d), first(&n)
+    : decl(&d), id(&n)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); };
 
-  Decl const& context() const { return *decl; }
-  Name const& name() const    { return *first; }
+  // Returns the qualifying scope (the enclosing declaration)
+  // for the unqualified id.
+  Decl const& scope() const { return *decl; }
+  Decl&       scope()       { return *decl; }
+  
+  // Returns the unqualified part of the id.
+  Name const& name() const { return *id; }
+  Name&       name()       { return *id; }
+
+  // Returns the unqualified part of the id.
+  Name const& unqualified_name() const { return *id; }
+  Name&       unqualified_name()       { return *id; }
 
   Decl* decl;
-  Name* first;
+  Name* id;
 };
 
 
@@ -1998,7 +2021,7 @@ struct Decl : Term
   struct Mutator;
 
   Decl(Name& n)
-    : spec(0), cxt(nullptr), first(&n)
+    : spec(0), cxt(nullptr), id(&n)
   { }
 
   virtual void accept(Visitor& v) const = 0;
@@ -2011,15 +2034,18 @@ struct Decl : Term
   Decl*       context()        { return cxt; }
   void        context(Decl& d) { cxt = &d; }
 
-  Name const& name() const { return *first; }
-  Name&       name()       { return *first; }
+  // Return the name of the declaration.
+  Name const& declared_name() const { return id->unqualified_name(); }
+  Name&       declared_name()       { return id->unqualified_name(); };
 
-  Name const& qualified_id() const;
-  Name const& fully_qualified_id() const;
+  // Returns the name with which the declaration was declared.
+  // Note that this can be a qualified id.
+  Name const& name() const { return *id; }
+  Name&       name()       { return *id; }
 
   Specifier spec;
   Decl*     cxt;
-  Name*     first;
+  Name*     id;
 };
 
 
@@ -2245,7 +2271,7 @@ struct Namespace_decl : Decl
   void accept(Mutator& v)       { v.visit(*this); }
 
   bool is_global() const    { return cxt == nullptr; }
-  bool is_anonymous() const { return is<Placeholder_id>(first); }
+  bool is_anonymous() const { return is<Placeholder_id>(id); }
 
   Decl_list second;
 };

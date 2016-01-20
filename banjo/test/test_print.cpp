@@ -21,14 +21,13 @@ test_names(Context& cxt)
   ns2.context(ns1);
 
   // TODO: How do I automate these tests?
-  Name& qn1 = build.get_id(global, n1);
+  Name& qn1 = build.get_qualified_id(global, n1);
   std::cout << qn1 << '\n'; // ::N1
 
-  Name& qn2 = build.get_id(ns1, n2);
-  std::cout << qn2 << '\n'; // N1::N2
+  Name& qn2 = build.get_qualified_id(ns1, n2);
+  std::cout << qn2 << '\n'; // ::N1::N2
 
-  std::cout << ns2.qualified_id() << '\n'; // N1::N2
-  std::cout << ns2.fully_qualified_id() << '\n'; // N1::N2
+  // Name& n = build.get_qualified_id(ns1, n1);
 }
 
 

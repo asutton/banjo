@@ -141,7 +141,7 @@ specialize_decl(Context& cxt, Variable_decl& d, Term_list& orig)
   Term_list args = initialize_template_parameters(cxt, parms, orig);
 
   // Create the specialization name.
-  Name& n = build.get_id(tmp, args);
+  Name& n = build.get_template_id(tmp, args);
 
   // Substitute into the type.
   //

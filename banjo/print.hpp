@@ -78,7 +78,7 @@ struct Printer
   void literal_id(Literal_id const&);
   void template_id(Template_id const&);
   void qualified_id(Qualified_id const&);
-  void nested_name_specifier(Qualified_id const&);
+  void nested_name_specifier(Decl const&);
 
   // Types
   void type(Type const&);
