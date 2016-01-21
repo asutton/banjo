@@ -21,6 +21,8 @@ struct Decl;
 // Note that an overload set is never empty.
 struct Overload_set : std::vector<Decl*>
 {
+  using std::vector<Decl*>::vector;
+
   // Returns the underlying list of declarations.
   std::vector<Decl*> const& base() const { return *this; }
   std::vector<Decl*>&       base()       { return *this; }

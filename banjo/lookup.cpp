@@ -27,7 +27,7 @@ unqualified_lookup(Scope& scope, Simple_id const& id)
   while (p) {
     // In general, a name used in any context must be declared
     // before it's use. Search this scope for such a declaration.
-    if (Binding* b = p->lookup(id.symbol()))
+    if (Binding* b = p->lookup(id))
       return b->second.base();
 
     // Depending on current scope, we might re-direct the scope

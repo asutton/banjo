@@ -30,9 +30,9 @@ struct Object_decl;
 // A scope defines a maximal lexical region of text where an
 // entity  may be referred to without qualification. A scope can
 // be (but is not always) associated with a declaration.
-struct Scope : Environment<Symbol const*, Overload_set>
+struct Scope : Environment<Name const*, Overload_set>
 {
-  using Base = Environment<Symbol const*, Overload_set>;
+  using Base = Environment<banjo::Name const*, Overload_set>;
 
   // Construct a new scope with the given parent. This is
   // used to create scopes that are not affiliated with a
@@ -69,10 +69,19 @@ struct Scope : Environment<Symbol const*, Overload_set>
   Decl const* context() const { return decl; }
   Decl*       context()       { return decl; }
 
+  // Create a name binding for the given declaration. Behavior
+  // is undefined if a name binding already exists.
+  //
+  // TODO: Assert that `n` is a form of simple id.
+  Binding& bind(Decl& d);
+  Binding& bind(Name const&, Decl&);
+
+  int count(Name const& n) const { return Base::count(&n); }
+
   // Return the binding for the given symbol, or nullptr
   // if no such binding exists.
-  Binding const* lookup(Symbol const& s) const { return Base::lookup(&s); }
-  Binding*       lookup(Symbol const& s)       { return Base::lookup(&s); }
+  Binding const* lookup(Name const& n) const { return Base::lookup(&n); }
+  Binding*       lookup(Name const& n)       { return Base::lookup(&n); }
 
   Scope* parent;
   Decl*  decl;
