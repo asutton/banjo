@@ -5,6 +5,7 @@
 #define BANJO_AST_HPP
 
 #include "prelude.hpp"
+#include "scope.hpp"
 
 #include <vector>
 #include <utility>
@@ -18,7 +19,6 @@ struct Type;
 struct Expr;
 struct Stmt;
 struct Decl;
-struct Scope;
 
 
 // -------------------------------------------------------------------------- //
@@ -93,10 +93,23 @@ struct List_iterator<T const>
 template<typename T>
 struct List : Term, std::vector<T*>
 {
+  using base_type = std::vector<T*>;
   using iterator = List_iterator<T>;
   using const_iterator = List_iterator<T const>;
 
-  using std::vector<T*>::vector;
+  List() = default;
+  
+  List(base_type const& x)
+    : base_type(x)
+  { }
+
+  List(base_type&& x)
+    : base_type(std::move(x))
+  { }
+
+  List(std::initializer_list<T*> list)
+    : base_type(list)
+  { }
 
   std::vector<T*> const& base() const { return *this; }
   std::vector<T*>&       base()       { return *this; }
@@ -148,7 +161,9 @@ struct Template_id;
 struct Qualified_id;
 
 
-// The base class of all identifiers.
+// A name denotes an entity in a progam. Most forms of names are
+// ids, which denote use the of those entities in expressions,
+// or types. 
 struct Name : Term
 {
   struct Visitor;
@@ -2276,7 +2291,7 @@ struct Namespace_decl : Decl
 
   // FIXME: This is totally broken.
   Scope const& scope() const { return *(Scope*)nullptr; }
-  Scope&       scope()       { return *(Scope*)nullptr;; }
+  Scope&       scope()       { return *(Scope*)nullptr; }
 
   Decl_list second;
 };

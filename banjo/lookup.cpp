@@ -8,67 +8,8 @@
 namespace banjo
 {
 
-// For convenience.
+// For convenience
 using Binding = Scope::Binding;
-
-
-Namespace_decl const& 
-Namespace_scope::declaration() const 
-{ 
-  return *cast<Namespace_decl>(context()); 
-}
-
-Namespace_decl&
-Namespace_scope::declaration()
-{ 
-  return *cast<Namespace_decl>(context()); 
-}
-
-
-Function_decl const&
-Function_scope::declaration() const
-{ 
-  return *cast<Function_decl>(context());
-}
-
-
-Function_decl&      
-Function_scope::declaration()      
-{ 
-  return *cast<Function_decl>(context());
-}
-
-
-Class_decl const&
-Class_scope::declaration() const
-{ 
-  return *cast<Class_decl>(context());
-}
-
-
-Class_decl&      
-Class_scope::declaration()      
-{ 
-  return *cast<Class_decl>(context());
-}
-
-
-Object_decl const&
-Initializer_scope::declaration() const
-{ 
-  return *cast<Object_decl>(context());
-}
-
-
-Object_decl&      
-Initializer_scope::declaration()      
-{ 
-  return *cast<Object_decl>(context());
-}
-
-
-// -------------------------------------------------------------------------- //
-// Lookup rules
 
 
 // Returns the set of declarations for give (unqualified) id.
@@ -86,7 +27,7 @@ unqualified_lookup(Scope& scope, Simple_id const& id)
     // In general, a name used in any context must be declared 
     // before it's use. Search this scope for such a declaration.
     if (Binding* b = p->lookup(id.symbol()))
-      return b->second;
+      return b->second.base();
 
     // Depending on current scope, we might re-direct the scope
     // to search different things.

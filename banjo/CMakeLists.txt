@@ -13,6 +13,9 @@ add_library(banjo
   builder.cpp
   # parser.cpp
   parse_id.cpp
+  parse_type.cpp
+  parse_expr.cpp
+  parse_decl.cpp
   sema_id.cpp
   sema_type.cpp
   sema_expr.cpp

@@ -5,14 +5,13 @@
 #define BANJO_OVERLOAD_HPP
 
 #include "prelude.hpp"
-#include "context.hpp"
-#include "ast.hpp"
 
 
 namespace banjo
 {
 
 struct Name;
+struct Decl;
 
 
 // Represents a set of overloaded declarations. All declarations have 
@@ -20,10 +19,12 @@ struct Name;
 // types and constraints.
 //
 // Note that an overload set is never empty.
-//
-// TODO: Do we really need this? Or can we just use a declaration list.
-struct Overload_set : Decl_list
+struct Overload_set : std::vector<Decl*>
 {
+  // Returns the underlying list of declarations.
+  std::vector<Decl*> const& base() const { return *this; }
+  std::vector<Decl*>&       base()       { return *this; }
+
   // Returns the name of the overloaded declaratin.
   Name const& name() const;
   Name&       name();

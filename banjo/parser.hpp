@@ -32,7 +32,7 @@ struct Parser
     : cxt(cxt), build(cxt), tokens(ts), state()
   { }
 
-  Term* operator()();
+  Term& operator()();
 
   // Syntax
   // Unresolved names
@@ -79,16 +79,16 @@ struct Parser
   Type_list type_list();
 
   // Expressions
-  Expr* id_expression();
-  Expr* grouped_expression();
-  Expr* lambda_expression();
-  Expr* primary_expression();
-  Expr* postfix_expression();
-  Expr* unary_expression();
-  Expr* multiplicative_expression();
-  Expr* additive_expression();
-  Expr* binary_expression();
-  Expr* expression();
+  Expr& id_expression();
+  Expr& grouped_expression();
+  Expr& lambda_expression();
+  Expr& primary_expression();
+  Expr& postfix_expression();
+  Expr& unary_expression();
+  Expr& multiplicative_expression();
+  Expr& additive_expression();
+  Expr& binary_expression();
+  Expr& expression();
 
   // Declarations
   Name& declarator();
@@ -115,7 +115,7 @@ struct Parser
   Expr& direct_initializer();
   Expr& aggregate_initializer();
 
-  Term* translation_unit();
+  Term& translation_unit();
 
   // Semantics
 
@@ -167,6 +167,7 @@ struct Parser
   Expr& on_integer_literal(Token);
 
   // Declarations
+  Decl& on_variable_declaration(Token, Name&, Type&);
   Decl& on_variable_declaration(Token, Name&, Type&, Expr&);
   Decl& on_function_declaration(Token, Name&, Decl_list const&, Type&, Expr&);
   Decl& on_parameter_declaration(Name&, Type&, Expr&);
