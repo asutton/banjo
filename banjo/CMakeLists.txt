@@ -11,7 +11,7 @@ add_library(banjo
   # Syntactic components
   ast.cpp
   builder.cpp
-  # parser.cpp
+  parser.cpp
   parse_id.cpp
   parse_type.cpp
   parse_expr.cpp
@@ -26,6 +26,7 @@ add_library(banjo
   hash.cpp
   equivalence.cpp
   # Semantics
+  scope.cpp
   lookup.cpp
   overload.cpp
   conversion.cpp
@@ -75,3 +76,7 @@ add_run_test(test_convert     test/test_convert.cpp)
 add_run_test(test_initialize  test/test_initialize.cpp)
 add_run_test(test_substitute  test/test_substitute.cpp)
 add_run_test(test_deduce      test/test_deduce.cpp)
+
+# Testing tools
+add_executable(test_parse test/test_parse.cpp)
+target_link_libraries(test_parse banjo)

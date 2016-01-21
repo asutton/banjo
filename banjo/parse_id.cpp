@@ -28,6 +28,21 @@ namespace banjo
 // `v`, the expression `v(x)`` is valid only if `v` has class
 // type and provides a function call operator.
 
+
+// Parse a name that refers to a declaration of any kind.
+//
+//    id:
+//      unqualified-id
+//      qualified-id
+Name&
+Parser::id()
+{
+  if (Name* n = match_if(&Parser::qualified_id))
+    return *n;
+  return unqualified_id();
+}
+
+
 // Parse an unqualified-id.
 //
 //    unqualified-id:
@@ -221,23 +236,6 @@ Parser::qualified_id()
   return on_qualified_id(scope, id);
 }
 
-
-// Parse a name that refers to a declaration of any kind.
-//
-//    id:
-//      unqualified-id
-//      qualified-id
-Name&
-Parser::id()
-{
-  Trial_parser p(*this);
-  try {
-    return qualified_id();
-  } catch (Syntax_error&) {
-    p.failed();
-  }
-  return unqualified_id();
-}
 
 
 // -------------------------------------------------------------------------- //

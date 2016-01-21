@@ -14,7 +14,6 @@
 namespace banjo
 {
 
-
 struct Decl;
 struct Namespace_decl;
 struct Function_decl;
@@ -28,24 +27,34 @@ struct Object_decl;
 // TODO: Do I need derived kinds of scopes?
 
 
-// A scope defines a maximal lexical region of text where an 
-// entity  may be referred to without qualification. A scope can 
+// A scope defines a maximal lexical region of text where an
+// entity  may be referred to without qualification. A scope can
 // be (but is not always) associated with a declaration.
 struct Scope : Environment<Symbol const*, Overload_set>
 {
   using Base = Environment<Symbol const*, Overload_set>;
 
-  Scope()
-    : parent(nullptr), decl(nullptr)
-  { }
-
+  // Construct a new scope with the given parent. This is
+  // used to create scopes that are not affiliated with a
+  // declaration.
   Scope(Scope& p)
     : parent(&p), decl(nullptr)
   { }
 
+  // Construct a scope for the given declaration, but with
+  // no enclosing scope. This is primarily used to create the
+  // global namespace.
+  Scope(Decl& d)
+    : parent(nullptr), decl(&d)
+  { }
+
+  // Construt a scope having the given parent and affiliated with
+  // the declaration.
   Scope(Scope& p, Decl& d)
     : parent(&p), decl(&d)
   { }
+
+  Scope(Decl&, Decl&);
 
   virtual ~Scope() { }
 
@@ -73,6 +82,8 @@ struct Scope : Environment<Symbol const*, Overload_set>
 // Represents a namespace scope.
 struct Namespace_scope : Scope
 {
+  using Scope::Scope;
+
   // Returns the namespace declaration associated with the scope.
   Namespace_decl const& declaration() const;
   Namespace_decl&       declaration();

@@ -215,7 +215,7 @@ Printer::qualified_id(Qualified_id const& n)
 
 
 // TODO: Find the least qualification needed to make
-// the qualified-id valid. This currently generates 
+// the qualified-id valid. This currently generates
 void
 Printer::nested_name_specifier(Decl const& d)
 {
@@ -232,7 +232,7 @@ Printer::nested_name_specifier(Decl const& d)
     Decl const* d = *iter;
     unqualified_id(d->declared_name());
     token(colon_colon_tok);
-  }  
+  }
 }
 
 
@@ -792,6 +792,14 @@ Printer::declaration(Decl const& d)
 }
 
 
+void
+Printer::declaration_seq(Decl_list const& ds)
+{
+  for (Decl const& d : ds)
+    declaration(d);
+}
+
+
 // FIXME: Print the initializer.
 void
 Printer::variable_declaration(Variable_decl const& d)
@@ -855,8 +863,17 @@ Printer::enum_declaration(Enum_decl const& d)
 void
 Printer::namespace_declaration(Namespace_decl const& d)
 {
-  os << "namespace " << d.name() << " {";
-  os << "}";
+  if (d.is_global()) {
+    declaration_seq(d.members());
+  } else {
+    token(namespace_tok);
+    id(d.name());
+    token(lbrace_tok);
+    newline_and_indent();
+    declaration_seq(d.members());
+    newline_and_undent();
+    token(rbrace_tok);
+  }
 }
 
 

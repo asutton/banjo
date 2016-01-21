@@ -16,10 +16,27 @@ namespace banjo
 struct Scope;
 
 
-// Denotes a syntactic error.
-struct Syntax_error : std::runtime_error
+
+// Denotes an error that occurs during translation.
+struct Translation_error : std::runtime_error
 {
   using std::runtime_error::runtime_error;
+};
+
+
+// Represents a syntactic error.
+struct Syntax_error : Translation_error
+{
+  using Translation_error::Translation_error;
+};
+
+
+// Represents a lookup error. Lookup errors occur when lookup
+// fails to find a declaration or fails to find a declaration
+// of the right kind.
+struct Lookup_error : Translation_error
+{
+  using Translation_error::Translation_error;
 };
 
 
@@ -111,9 +128,9 @@ struct Parser
 
   // Initializers
   Expr& initializer();
-  Expr& value_initializer();
-  Expr& direct_initializer();
-  Expr& aggregate_initializer();
+  Expr& equal_initializer();
+  Expr& paren_initializer();
+  Expr& brace_initializer();
 
   Term& translation_unit();
 
@@ -127,7 +144,7 @@ struct Parser
   Name& on_literal_id();
   Name& on_template_id(Token, Decl&, Term_list const&);
   Name& on_qualified_id(Decl&, Name&);
-  
+
   Decl& on_nested_name_specifier();
   Decl& on_nested_name_specifier(Decl&);
   Decl& on_nested_name_specifier(Type&);
@@ -170,15 +187,15 @@ struct Parser
   Decl& on_variable_declaration(Token, Name&, Type&);
   Decl& on_variable_declaration(Token, Name&, Type&, Expr&);
   Decl& on_function_declaration(Token, Name&, Decl_list const&, Type&, Expr&);
+  Decl& on_parameter_declaration(Name&, Type&);
   Decl& on_parameter_declaration(Name&, Type&, Expr&);
   Decl& on_namespace_declaration(Token, Name&, Decl_list const&);
   Decl_list on_declaration_seq();
 
   Name& on_declarator(Name&);
-  Expr& on_default_initializer();
-  Expr& on_value_initializer(Expr&);
-  Expr& on_direct_initializer(Expr_list const&);
-  Expr& on_aggregate_initializer(Expr_list const&);
+  Expr& on_equal_initializer(Expr&);
+  Expr& on_paren_initializer(Expr_list const&);
+  Expr& on_brace_initializer(Expr_list const&);
 
   // Token matching.
   Token      peek() const;
@@ -193,7 +210,9 @@ struct Parser
   template<typename T> T* match_if(T& (Parser::* p)());
 
   // Scope management
-  void enter_scope(Scope&);
+  void   enter_scope(Scope&);
+  Scope& current_scope();
+  Decl&  current_context();
 
   // Maintains the current parse state.
   struct State
@@ -228,7 +247,7 @@ struct Parser::Scope_sentinel
   Scope_sentinel(Parser& p, Namespace_decl& ns)
     : parser(p), prev(p.state.scope)
   {
-    parser.enter_scope(ns.scope());
+    parser.enter_scope(*ns.scope());
   }
 
   ~Scope_sentinel()
@@ -307,7 +326,7 @@ Parser::match_if(R& (Parser::* f)())
   Trial_parser p(*this);
   try {
     return &(this->*f)();
-  } catch(Syntax_error&) {
+  } catch(Translation_error&) {
     p.failed();
   }
   return nullptr;

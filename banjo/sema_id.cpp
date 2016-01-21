@@ -54,7 +54,7 @@ Parser::on_template_id(Token, Decl& d, Term_list const& a)
 }
 
 
-// TODO: As we 
+// TODO: As we
 Name&
 Parser::on_qualified_id(Decl& d, Name& n)
 {
@@ -94,7 +94,7 @@ Parser::on_nested_name_specifier(Type& t)
 
 
 // Returns the declaration for a nested name specifier of
-// an identifier. 
+// an identifier.
 Decl&
 Parser::on_nested_name_specifier(Decl&, Token)
 {
@@ -121,91 +121,91 @@ Parser::on_nested_name_specifier(Decl&, Name&)
 Type&
 Parser::on_class_name(Token)
 {
-  lingo_unimplemented();
+  throw Lookup_error("not a class");
 }
 
 
 Type&
 Parser::on_class_name(Name&)
 {
-  lingo_unimplemented();
+  throw Lookup_error("not a class");
 }
 
 
 Type&
 Parser::on_union_name(Token)
 {
-  lingo_unimplemented();
+  throw Lookup_error("not a union");
 }
 
 
 Type&
 Parser::on_union_name(Name&)
 {
-  lingo_unimplemented();
+  throw Lookup_error("not a union");
 }
 
 
 Type&
 Parser::on_enum_name(Token)
 {
-  lingo_unimplemented();
+  throw Lookup_error("not an enum");
 }
 
 
 Type&
 Parser::on_enum_name(Name&)
 {
-  lingo_unimplemented();
+  throw Lookup_error("not an enum");
 }
 
 
 Type&
 Parser::on_type_alias(Token)
 {
-  lingo_unimplemented();
+  throw Lookup_error("not a type alias");
 }
 
 
 Type&
 Parser::on_type_alias(Name&)
 {
-  lingo_unimplemented();
+  throw Lookup_error("not a type alias");
 }
 
 
 Decl&
-Parser::on_namespace_name(Token)
+Parser::on_namespace_name(Token id)
 {
-  lingo_unimplemented();
+  throw Lookup_error("not a namespace");
 }
 
 
 Decl&
 Parser::on_namespace_name(Name&)
 {
-  lingo_unimplemented();
+  throw Lookup_error("not a namespace");
 }
 
 
 Decl&
 Parser::on_namespace_alias(Token)
 {
-  lingo_unimplemented();
+  throw Lookup_error("not a namespace alias");
 }
 
 
 Decl&
 Parser::on_namespace_alias(Name&)
 {
-  lingo_unimplemented();
+  throw Lookup_error("not a namespace alias");
 }
 
 
 Decl&
 Parser::on_template_name(Token)
 {
-  lingo_unimplemented();
+  throw Lookup_error("not a template");
 }
 
 

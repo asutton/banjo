@@ -10,28 +10,21 @@ namespace banjo
 {
 
 Expr&
-Parser::on_default_initializer()
+Parser::on_equal_initializer(Expr&)
 {
   lingo_unimplemented();
 }
 
 
 Expr&
-Parser::on_value_initializer(Expr&)
+Parser::on_paren_initializer(Expr_list const&)
 {
   lingo_unimplemented();
 }
 
 
 Expr&
-Parser::on_direct_initializer(Expr_list const&)
-{
-  lingo_unimplemented();
-}
-
-
-Expr&
-Parser::on_aggregate_initializer(Expr_list const&)
+Parser::on_brace_initializer(Expr_list const&)
 {
   lingo_unimplemented();
 }

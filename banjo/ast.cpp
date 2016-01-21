@@ -2,11 +2,26 @@
 // All rights reserved
 
 #include "ast.hpp"
+#include "scope.hpp"
 #include "equivalence.hpp"
 
 
 namespace banjo
 {
+
+// Create a namespace with its own scope.
+Namespace_decl::Namespace_decl(Name& n)
+  : Decl(n), decls(), lookup(new Namespace_scope(*this))
+{ }
+
+
+// TODO: Manage the memory for the scope?
+Namespace_decl::Namespace_decl(Decl& cxt, Name& n)
+  : Decl(cxt, n)
+  , decls()
+  , lookup(new Namespace_scope(cxt, *this))
+{ }
+
 
 // Returns true if `t` is an object type. That is, any type
 // except function types and reference types.

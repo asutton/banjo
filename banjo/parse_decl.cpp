@@ -51,13 +51,13 @@ Parser::variable_declaration()
   Type& t = type();
   Name& n = declarator();
 
-  if (lookahead() != semicolon_tok) {
-    Expr& e = on_default_initializer();
-    match(semicolon_tok);
-    return on_variable_declaration(tok, n, t, e);
-  } else {
+  if (lookahead() == semicolon_tok) {
     match(semicolon_tok);
     return on_variable_declaration(tok, n, t);
+  } else {
+    Expr& e = initializer();
+    match(semicolon_tok);
+    return on_variable_declaration(tok, n, t, e);
   }
 }
 
@@ -82,7 +82,7 @@ Expr&
 Parser::initializer()
 {
   if (lookahead() == eq_tok)
-    return value_initializer();
+    return equal_initializer();
   else if (lookahead() == lparen_tok)
     return paren_initializer();
   else if (lookahead() == lbrace_tok)
@@ -99,7 +99,7 @@ Expr&
 Parser::equal_initializer()
 {
   require(eq_tok);
-  Expr* expr = expression();
+  Expr& expr = expression();
   return on_equal_initializer(expr);
 }
 
@@ -111,7 +111,7 @@ Parser::equal_initializer()
 Expr&
 Parser::paren_initializer()
 {
-  throw std::runtime_error("not implemented");
+  lingo_unimplemented();
 }
 
 
@@ -122,7 +122,7 @@ Parser::paren_initializer()
 Expr&
 Parser::brace_initializer()
 {
-  throw std::runtime_error("not implemented");
+  lingo_unimplemented();
 }
 
 
@@ -136,18 +136,18 @@ Parser::brace_initializer()
 Decl&
 Parser::parameter_declaration()
 {
-  Type* t = type();
+  Type& t = type();
 
-  Name& n = nullptr;
+  Name* n = nullptr;
   if (Token id = match_if(identifier_tok))
-    n = on_simple_id(id);
+    n = &on_simple_id(id);
 
-  Init* i = nullptr;
   if (lookahead() == eq_tok) {
-    i = value_initializer();
+    Expr& e = equal_initializer();
+    return on_parameter_declaration(*n, t, e);
+  } else {
+    return on_parameter_declaration(*n, t);
   }
-
-  return on_parameter_declaration(n, t, i);
 }
 
 #if 0
@@ -236,7 +236,7 @@ Parser::function_declaration()
 Decl&
 Parser::function_declaration()
 {
-  return nullptr;
+  lingo_unimplemented();
 }
 
 
@@ -288,7 +288,7 @@ Parser::template_parameter()
 //    typename-declaration:
 //      'typename' identifier ['=' type]
 Decl&
-Parser::type_template_declaration()
+Parser::type_template_parameter()
 {
   lingo_unimplemented();
 }
@@ -334,27 +334,12 @@ Parser::declarator()
 // -------------------------------------------------------------------------- //
 // Miscellaneous
 
-// Parse a declaration sequence.
-//
-//    declaration-seq:
-//      declaration
-//      declaration-seq declaration
-//
-Decl_list
-Parser::declaration_seq()
-{
-  // FIXME: Catch declaration errors and continue parsing.
-  declaration();
-  while (starts_declaration(*this))
-    declaration();
-
-  return {};
-}
-
 
 
 // Returns true if the current token kind indicates
 // the start of a declaration.
+//
+// TODO: There shoud be a simpler formulation.
 inline bool
 starts_declaration(Parser& p)
 {
@@ -371,6 +356,23 @@ starts_declaration(Parser& p)
     default:
       return false;
   }
+}
+
+// Parse a declaration sequence.
+//
+//    declaration-seq:
+//      declaration
+//      declaration-seq declaration
+//
+Decl_list
+Parser::declaration_seq()
+{
+  // FIXME: Catch declaration errors and continue parsing.
+  declaration();
+  while (starts_declaration(*this))
+    declaration();
+
+  return {};
 }
 
 

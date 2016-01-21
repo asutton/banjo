@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "parser.hpp"
+#include "scope.hpp"
 
 #include <iostream>
 
@@ -99,10 +100,6 @@ Parser::accept()
 }
 
 
-// -------------------------------------------------------------------------- //
-// Scopes
-
-
 // Enter the given scope. Unless `s` is the scope of the global
 // namespace, `s` must be linked through its enclosing scopes
 // to the global namespace.
@@ -115,20 +112,43 @@ Parser::enter_scope(Scope& s)
 }
 
 
+// Returns the current scope.
+Scope&
+Parser::current_scope()
+{
+  return *state.scope;
+}
 
 
+// Find the innermost declaration context. This is the first
+// scope associatd with a declaration.
+Decl&
+Parser::current_context()
+{
+  Scope* p = &current_scope();
+  while (!p->context())
+    p = p->enclosing_scope();
+  return *p->context();
+}
 
+
+// -------------------------------------------------------------------------- //
+// Miscellaneous parsing
 
 // Parse a translation unit.
 //
 //    translation-unit:
 //      [declaration-seq]
+//
+// FIXME: This currently returns the global namespace, but I'm not
+// entirely sure that this is what I want to do. Should we have
 Term&
 Parser::translation_unit()
 {
-  Scope_sentinel scope(cxt.global_namespace());
+  Scope_sentinel scope(*this, cxt.global_namespace());
   if (peek())
     declaration_seq();
+  return cxt.global_namespace();
 }
 
 

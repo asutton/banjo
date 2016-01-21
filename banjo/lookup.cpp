@@ -3,6 +3,7 @@
 
 #include "lookup.hpp"
 #include "ast.hpp"
+#include "scope.hpp"
 
 
 namespace banjo
@@ -24,7 +25,7 @@ unqualified_lookup(Scope& scope, Simple_id const& id)
 {
   Scope* p = &scope;
   while (p) {
-    // In general, a name used in any context must be declared 
+    // In general, a name used in any context must be declared
     // before it's use. Search this scope for such a declaration.
     if (Binding* b = p->lookup(id.symbol()))
       return b->second.base();

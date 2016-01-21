@@ -5,7 +5,6 @@
 #define BANJO_AST_HPP
 
 #include "prelude.hpp"
-#include "scope.hpp"
 
 #include <vector>
 #include <utility>
@@ -19,6 +18,8 @@ struct Type;
 struct Expr;
 struct Stmt;
 struct Decl;
+
+struct Scope;
 
 
 // -------------------------------------------------------------------------- //
@@ -98,7 +99,7 @@ struct List : Term, std::vector<T*>
   using const_iterator = List_iterator<T const>;
 
   List() = default;
-  
+
   List(base_type const& x)
     : base_type(x)
   { }
@@ -163,7 +164,7 @@ struct Qualified_id;
 
 // A name denotes an entity in a progam. Most forms of names are
 // ids, which denote use the of those entities in expressions,
-// or types. 
+// or types.
 struct Name : Term
 {
   struct Visitor;
@@ -311,7 +312,7 @@ struct Qualified_id : Name
   // for the unqualified id.
   Decl const& scope() const { return *decl; }
   Decl&       scope()       { return *decl; }
-  
+
   // Returns the unqualified part of the id.
   Name const& name() const { return *id; }
   Name&       name()       { return *id; }
@@ -2025,6 +2026,8 @@ struct Variadic_parm;
 
 
 // A specifier is a flag.
+//
+// FIXME: Make this a legitimate type.
 using Specifier = std::int32_t;
 
 
@@ -2038,6 +2041,10 @@ struct Decl : Term
 
   Decl(Name& n)
     : spec(0), cxt(nullptr), id(&n)
+  { }
+
+  Decl(Decl& cxt, Name& n)
+    : spec(0), cxt(&cxt), id(&n)
   { }
 
   virtual void accept(Visitor& v) const = 0;
@@ -2058,6 +2065,11 @@ struct Decl : Term
   // Note that this can be a qualified id.
   Name const& name() const { return *id; }
   Name&       name()       { return *id; }
+
+  // Returns the saved scope associated with the declaration, if any.
+  // Not all declarations have an associated scope.
+  virtual Scope const* scope() const { return nullptr; }
+  virtual Scope*       scope()       { return nullptr; }
 
   Specifier spec;
   Decl*     cxt;
@@ -2276,12 +2288,32 @@ struct Enum_decl : Type_decl
 };
 
 
-// Defines a namespace.
+// Represents the definition of a namespace and its enclosed declarations.
+// Each namespace definition points to a (shared) scope that contains the
+// aggregated declarations of all declarations of the same namespace. Note
+// that re-opened namespaces are distinct declarations that share the same
+// scope. For example:
+//
+//    naemspace N {
+//      int x;
+//    } // #1
+//
+//    namespace N {
+//      int y;
+//    } // #2
+//
+// At #1, there is a single namespace declaration named `N`, containing
+// only the declaration of `x`. At #2, there are 2 namespace declarations
+// of `N`. They share the same scope, which contains the declarations of
+// `x` and `y`.
+//
+// TODO: Every namespace has an anonymous namespace.
+//
+// TODO: Handle using directives.
 struct Namespace_decl : Decl
 {
-  Namespace_decl(Name& n)
-    : Decl(n), second()
-  { }
+  Namespace_decl(Name&);
+  Namespace_decl(Decl&, Name&);
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
@@ -2289,11 +2321,16 @@ struct Namespace_decl : Decl
   bool is_global() const    { return cxt == nullptr; }
   bool is_anonymous() const { return is<Placeholder_id>(id); }
 
-  // FIXME: This is totally broken.
-  Scope const& scope() const { return *(Scope*)nullptr; }
-  Scope&       scope()       { return *(Scope*)nullptr; }
+  // Returns a list of members in this namespace.
+  Decl_list const& members() const { return decls; }
+  Decl_list&       members()       { return decls; }
 
-  Decl_list second;
+  // Returns the totoal set of declarations within the namespace.
+  Scope const* scope() const { return lookup; }
+  Scope*       scope()       { return lookup; }
+
+  Decl_list decls;
+  Scope*    lookup;
 };
 
 
@@ -2537,6 +2574,7 @@ apply(Decl& d, F fn)
 // -------------------------------------------------------------------------- //
 // Miscellaneous
 
+// TODO: I'm not currently using this, but it might be useful.
 struct Translation_unit : Term
 {
   Decl_list first;
