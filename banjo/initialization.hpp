@@ -17,15 +17,15 @@ struct Init;
 struct Brace_init;
 
 
-Init& zero_initialize(Context&, Type&);
-Init& default_initialize(Context&, Type&);
-Init& value_initialize(Context&, Type&);
-Init& reference_initialize(Context&, Reference_type&, Init&);
-Init& aggregate_initialize(Context&, Type&, Brace_init&);
+Expr& zero_initialize(Context&, Type&);
+Expr& default_initialize(Context&, Type&);
+Expr& value_initialize(Context&, Type&);
+Expr& reference_initialize(Context&, Reference_type&, Init&);
+Expr& aggregate_initialize(Context&, Type&, Brace_init&);
 
-Init& initialize(Context&, Type&, Init&);
-Init& copy_initialize(Context&, Type&, Expr&);
-Init& direct_initialize(Context&, Type&, Init&);
+Expr& initialize(Context&, Type&, Init&);
+Expr& copy_initialize(Context&, Type&, Expr&);
+Expr& direct_initialize(Context&, Type&, Init&);
 
 
 } // namespace banjo

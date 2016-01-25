@@ -20,15 +20,15 @@ Scope::Scope(Decl& cxt, Decl& d)
 
 
 // FIXME: I don't like this.
-Binding& 
-Scope::bind(Name const& n, Decl& d) 
-{ 
+Binding&
+Scope::bind(Name const& n, Decl& d)
+{
   lingo_assert(!count(n));
-  return Base::bind(&n, {&d}); 
+  return Base::bind(&n, {&d});
 }
 
 
-// Create a binding for the declaration `d`. 
+// Create a binding for the declaration `d`.
 Binding&
 Scope::bind(Decl& d)
 {
@@ -76,6 +76,11 @@ Class_scope::declaration()
 {
   return *cast<Class_decl>(context());
 }
+
+
+Initializer_scope::Initializer_scope(Scope& s, Object_decl& d)
+  : Scope(s, d)
+{ }
 
 
 Object_decl const&

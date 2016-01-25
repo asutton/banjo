@@ -111,6 +111,15 @@ Printer::token(char const* str)
   prev = identifier_tok;
 }
 
+// Print a string as an identifier.
+void
+Printer::token(String const& str)
+{
+  space(identifier_tok);
+  os << str;
+  prev = identifier_tok;
+}
+
 
 // -------------------------------------------------------------------------- //
 // Names
@@ -534,21 +543,30 @@ Printer::expression(Expr const& e)
 void
 Printer::literal(Boolean_expr const& e)
 {
-  token(e.symbol());
+  if (e.value())
+    token(true_tok);
+  else
+    token(false_tok);
 }
 
 
 void
 Printer::literal(Integer_expr const& e)
 {
-  token(e.symbol());
+  // FIXME: Provide a to_string for the Integer class. Also, it might be
+  // nice to track radixes as part of the type so we don't have to print
+  // everything in base 10.
+  Integer_type const& t = cast<Integer_type>(e.type());
+  Integer const& n = e.value();
+  String const& s = n.impl().toString(10, t.is_signed());
+  token(s);
 }
 
 
 void
 Printer::literal(Real_expr const& e)
 {
-  token(e.symbol());
+  token("<real>");
 }
 
 
@@ -682,7 +700,16 @@ Printer::binary_expression(Binary_expr const& e, Token_kind k)
 // -------------------------------------------------------------------------- //
 // Initializers
 
-// TODO: Figure out how to print initializers.
+
+void
+Printer::initializer(Expr const& e)
+{
+  if (is<Init>(&e))
+    initializer(cast<Init>(e));
+  else
+    lingo_unreachable();
+}
+
 void
 Printer::initializer(Init const& i)
 {
@@ -808,6 +835,8 @@ Printer::variable_declaration(Variable_decl const& d)
   type(d.type());
   space();
   id(d.name());
+  space();
+  initializer(d.initializer());
   token(semicolon_tok);
 }
 

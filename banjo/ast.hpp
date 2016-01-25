@@ -6,6 +6,9 @@
 
 #include "prelude.hpp"
 
+#include <lingo/integer.hpp>
+#include <lingo/real.hpp>
+
 #include <vector>
 #include <utility>
 
@@ -20,6 +23,8 @@ struct Stmt;
 struct Decl;
 
 struct Scope;
+
+using lingo::Integer;
 
 
 // -------------------------------------------------------------------------- //
@@ -1008,16 +1013,22 @@ struct Expr::Mutator
 };
 
 
-// The base class of all literal values.
+// The family of base classes for literal. This holds a value
+// of the parameterized type.
+//
+// TODO: Integrate this with a value system?
+template<typename T>
 struct Literal_expr : Expr
 {
-  Literal_expr(Type& t, Symbol const& s)
-    : Expr(t), sym(&s)
+  Literal_expr(Type& t, T const& x)
+    : Expr(t), val(x)
   { }
 
-  Symbol const& symbol() const { return *sym; }
+  // Returns the interpreted value of the literal.
+  T const& value() const { return val; }
+  T&       value()       { return val; }
 
-  Symbol const* sym;
+  T val;
 };
 
 
@@ -1053,9 +1064,9 @@ struct Binary_expr : Expr
 
 
 // A boolean literal.
-struct Boolean_expr : Literal_expr
+struct Boolean_expr : Literal_expr<bool>
 {
-  using Literal_expr::Literal_expr;
+  using Literal_expr<bool>::Literal_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
@@ -1063,9 +1074,9 @@ struct Boolean_expr : Literal_expr
 
 
 // An integer-valued literal.
-struct Integer_expr : Literal_expr
+struct Integer_expr : Literal_expr<Integer>
 {
-  using Literal_expr::Literal_expr;
+  using Literal_expr<Integer>::Literal_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
@@ -1073,9 +1084,9 @@ struct Integer_expr : Literal_expr
 
 
 // A real-valued literal.
-struct Real_expr : Literal_expr
+struct Real_expr : Literal_expr<lingo::Real>
 {
-  using Literal_expr::Literal_expr;
+  using Literal_expr<Real>::Literal_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
@@ -2120,15 +2131,15 @@ struct Object_decl : Decl
     : Decl(n), ty(&t), init()
   { }
 
-  Object_decl(Name& n, Type& t, Init& i)
-    : Decl(n), ty(&t), init(&i)
+  Object_decl(Name& n, Type& t, Expr& e)
+    : Decl(n), ty(&t), init(&e)
   { }
 
   Type const& type() const { return *ty; }
   Type&       type()       { return *ty; }
 
   Type* ty;
-  Init* init;
+  Expr* init;
 };
 
 
@@ -2159,7 +2170,7 @@ struct Variable_decl : Object_decl
     : Object_decl(n, t)
   { }
 
-  Variable_decl(Name& n, Type& t, Init& i)
+  Variable_decl(Name& n, Type& t, Expr& i)
     : Object_decl(n, t, i)
   { }
 
@@ -2168,8 +2179,8 @@ struct Variable_decl : Object_decl
 
   // Returns the initializer for the variable. This is
   // defined iff has_initializer() is true.
-  Init const& initializer() const     { return *init; }
-  Init&       initializer()           { return *init; }
+  Expr const& initializer() const     { return *init; }
+  Expr&       initializer()           { return *init; }
   bool        has_initializer() const { return init; }
 };
 
@@ -2181,7 +2192,7 @@ struct Constant_decl : Object_decl
     : Object_decl(n, t)
   { }
 
-  Constant_decl(Name& n, Type& t, Init& i)
+  Constant_decl(Name& n, Type& t, Expr& i)
     : Object_decl(n, t, i)
   { }
 
@@ -2190,8 +2201,8 @@ struct Constant_decl : Object_decl
 
   // Returns the initializer for the variable. This is
   // defined iff has_initializer() is true.
-  Init const& initializer() const     { return *init; }
-  Init&       initializer()           { return *init; }
+  Expr const& initializer() const     { return *init; }
+  Expr&       initializer()           { return *init; }
   bool        has_initializer() const { return init; }
 };
 
@@ -2383,7 +2394,7 @@ struct Object_parm : Object_decl
     : Object_decl(n, t)
   { }
 
-  Object_parm(Name& n, Type& t, Init& i)
+  Object_parm(Name& n, Type& t, Expr& i)
     : Object_decl(n, t, i)
   { }
 
@@ -2392,8 +2403,8 @@ struct Object_parm : Object_decl
 
   // Returns the default argument for the parameter.
   // This is valid iff has_default_arguement() is true.
-  Init const& default_argument() const { return *init; }
-  Init&       default_argument()       { return *init; }
+  Expr const& default_argument() const { return *init; }
+  Expr&       default_argument()       { return *init; }
 
   bool has_default_arguement() const { return init; }
 };
@@ -2409,7 +2420,7 @@ struct Value_parm : Object_decl
     : Object_decl(n, t)
   { }
 
-  Value_parm(Name& n, Type& t, Init& i)
+  Value_parm(Name& n, Type& t, Expr& i)
     : Object_decl(n, t, i)
   { }
 
@@ -2418,8 +2429,8 @@ struct Value_parm : Object_decl
 
   // Returns the default argument for the parameter.
   // This is valid iff has_default_arguement() is true.
-  Init const& default_argument() const { return *init; }
-  Init&       default_argument()       { return *init; }
+  Expr const& default_argument() const { return *init; }
+  Expr&       default_argument()       { return *init; }
 
   bool has_default_arguement() const { return init; }
 };
@@ -2840,7 +2851,7 @@ is_ellipsis_conversion(Expr const& e)
 // Returns true if `i` is direct initialization from a
 // paren-enclosed sequence of expressions.
 inline bool
-is_paren_initialization(Init const& i)
+is_paren_initialization(Expr const& i)
 {
   return is<Paren_init>(&i);
 }
@@ -2849,7 +2860,7 @@ is_paren_initialization(Init const& i)
 // Returns true if `i` is direct initialization from a
 // brace-enclosed sequence of expressions.
 inline bool
-is_brace_initialization(Init const& i)
+is_brace_initialization(Expr const& i)
 {
   return is<Brace_init>(&i);
 }

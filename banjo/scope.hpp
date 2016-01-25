@@ -118,13 +118,14 @@ struct Class_scope : Scope
 };
 
 
-// Represents the scope of a variables initializer. This is
-// primarily used to support lookup of identifiers when the
-// variable is declared with a qualified-id (i.e., a static
-// member of a class or a namespace variable defined outside
-// of the namespace.
+// Represents the scope of a variables initializer. This is primarily
+// used to support lookup of identifiers when the variable is declared
+// with a qualified-id (i.e., a static member of a class or a namespace
+// variable defined outside of the namespace.
 struct Initializer_scope : Scope
 {
+  Initializer_scope(Scope&, Object_decl&);
+
   // Returns the function declaration associated with the scope.
   Object_decl const& declaration() const;
   Object_decl&       declaration();

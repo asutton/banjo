@@ -51,14 +51,20 @@ Parser::variable_declaration()
   Type& t = type();
   Name& n = declarator();
 
+  // Point of declaration.
+  Variable_decl& d = on_variable_declaration(tok, n, t);
+  Enter_scope s(*this, d);
+
+  // Initialization
   if (lookahead() == semicolon_tok) {
+    on_default_initialization(d);
     match(semicolon_tok);
-    return on_variable_declaration(tok, n, t);
   } else {
-    Expr& e = initializer();
+    initializer(d);
     match(semicolon_tok);
-    return on_variable_declaration(tok, n, t, e);
   }
+
+  return d;
 }
 
 
@@ -79,14 +85,14 @@ Parser::variable_declaration()
 // This term also applies to object initialization in new expressions,
 // static casts, functional conversion, and member initializers.
 Expr&
-Parser::initializer()
+Parser::initializer(Decl& d)
 {
   if (lookahead() == eq_tok)
-    return equal_initializer();
+    return equal_initializer(d);
   else if (lookahead() == lparen_tok)
-    return paren_initializer();
+    return paren_initializer(d);
   else if (lookahead() == lbrace_tok)
-    return brace_initializer();
+    return brace_initializer(d);
   throw Syntax_error("expected initializer");
 }
 
@@ -96,11 +102,11 @@ Parser::initializer()
 //    equal-initializer:
 //      '=' expression
 Expr&
-Parser::equal_initializer()
+Parser::equal_initializer(Decl& d)
 {
   require(eq_tok);
   Expr& expr = expression();
-  return on_equal_initializer(expr);
+  return on_equal_initialization(d, expr);
 }
 
 
@@ -109,8 +115,9 @@ Parser::equal_initializer()
 //    paren-initializer:
 //      '(' expression-list ')'
 Expr&
-Parser::paren_initializer()
+Parser::paren_initializer(Decl&)
 {
+  // on_paren
   lingo_unimplemented();
 }
 
@@ -120,7 +127,7 @@ Parser::paren_initializer()
 //    brace-initializer:
 //      '{' expression-list '}'
 Expr&
-Parser::brace_initializer()
+Parser::brace_initializer(Decl&)
 {
   lingo_unimplemented();
 }
@@ -136,6 +143,8 @@ Parser::brace_initializer()
 Decl&
 Parser::parameter_declaration()
 {
+  lingo_unimplemented();
+  /*
   Type& t = type();
 
   Name* n = nullptr;
@@ -148,6 +157,7 @@ Parser::parameter_declaration()
   } else {
     return on_parameter_declaration(*n, t);
   }
+  */
 }
 
 #if 0

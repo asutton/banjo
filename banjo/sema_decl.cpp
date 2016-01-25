@@ -27,7 +27,7 @@ Decl* declare(Overload_set&, Decl&);
 
 
 // Save a declaration `d` in the declaration context `cxt`.
-// If `d` is a re-declaration, returns a pointer to (the most 
+// If `d` is a re-declaration, returns a pointer to (the most
 // recent version of) `d`.
 Decl*
 declare(Decl& cxt, Decl& d)
@@ -50,7 +50,7 @@ declare(Namespace_decl& cxt, Decl& d)
   Scope& scope = *cxt.scope();
 
   // If there is already a declaration of `d` in this scope, then
-  // we are either re-declaring `d` or adding an overload. 
+  // we are either re-declaring `d` or adding an overload.
   //
   // TODO: Implement re-declaration.
   Decl* r = nullptr;
@@ -98,7 +98,7 @@ Parser::on_declarator(Name& n)
 // Variable declarations
 
 
-Decl&
+Variable_decl&
 Parser::on_variable_declaration(Token, Name& n, Type& t)
 {
   Decl& cxt = current_context();
@@ -107,14 +107,9 @@ Parser::on_variable_declaration(Token, Name& n, Type& t)
   // FIXME: Actually declare the variable.
   declare(cxt, var);
 
+  // FIXME: Select a default initializers for t.
+
   return var;
-}
-
-
-Decl&
-Parser::on_variable_declaration(Token, Name&, Type&, Expr&)
-{
-  lingo_unimplemented();
 }
 
 

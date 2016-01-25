@@ -70,10 +70,10 @@ struct Builder
   Boolean_expr&   get_bool(bool);
   Boolean_expr&   get_true();
   Boolean_expr&   get_false();
-  Integer_expr&   get_integer(Type&, int);
+  Integer_expr&   get_integer(Type&, Integer const&);
   Integer_expr&   get_zero(Type&);
-  Integer_expr&   get_int(int);
-  Integer_expr&   get_uint(unsigned);
+  Integer_expr&   get_int(Integer const&);
+  Integer_expr&   get_uint(Integer const&);
   Reference_expr& make_reference(Variable_decl& d);
   Reference_expr& make_reference(Constant_decl& d);
   Reference_expr& make_reference(Function_decl& d);
@@ -387,8 +387,7 @@ Builder::get_typename_type(Decl& d)
 inline Boolean_expr&
 Builder::get_bool(bool b)
 {
-  Symbol const* sym = symbols().get(b ? "true" : "false");
-  return make<Boolean_expr>(get_bool_type(), *sym);
+  return make<Boolean_expr>(get_bool_type(), b);
 }
 
 
@@ -409,16 +408,17 @@ Builder::get_false()
 // TODO: Verify that T can have an integer value?
 // I think that all scalars can have integer values.
 inline Integer_expr&
-Builder::get_integer(Type& t, int n)
+Builder::get_integer(Type& t, Integer const& n)
 {
-  Symbol const* sym = symbols().put_integer(integer_tok, std::to_string(n), n);
-  return make<Integer_expr>(t, *sym);
+  return make<Integer_expr>(t, n);
 }
 
 
 // Returns the 0 constant, with scalar type `t`.
 //
 // TODO: Verify that t is scalar.
+//
+// TODO: Produce zero interpratations for any T?
 inline Integer_expr&
 Builder::get_zero(Type& t)
 {
@@ -426,17 +426,17 @@ Builder::get_zero(Type& t)
 }
 
 
-
 inline Integer_expr&
-Builder::get_int(int n)
+Builder::get_int(Integer const& n)
 {
   return get_integer(get_int_type(), n);
 }
 
 
 inline Integer_expr&
-Builder::get_uint(unsigned n)
+Builder::get_uint(Integer const& n)
 {
+  // lingo_assert(n.is_nonnegative(n));
   return get_integer(get_uint_type(), n);
 }
 

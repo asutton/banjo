@@ -20,9 +20,18 @@ Parser::on_id_expression(Name&)
 
 
 Expr&
-Parser::on_integer_literal(Token)
+Parser::on_boolean_literal(Token, bool b)
 {
-  lingo_unimplemented();
+  return build.get_bool(b);
+}
+
+
+Expr&
+Parser::on_integer_literal(Token tok)
+{
+  Type& t = build.get_int_type();
+  Integer n = tok.spelling();
+  return build.get_integer(t, n);
 }
 
 

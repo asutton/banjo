@@ -22,7 +22,7 @@ namespace banjo
 //
 // It's possible that T[] counts as a scalar (that's what it
 // code-gens to).
-Init&
+Expr&
 zero_initialize(Context& cxt, Type& t)
 {
   lingo_assert(!is_function_type(t));
@@ -63,7 +63,7 @@ zero_initialize(Context& cxt, Type& t)
 //
 // TODO: Consider making these 0 initialized by defualt and
 // using a special syntax to select trivial initialization.
-Init&
+Expr&
 default_initialize(Context& cxt, Type& t)
 {
   Builder build(cxt);
@@ -89,7 +89,7 @@ default_initialize(Context& cxt, Type& t)
 
 
 // Select a procedure to value-initialize an object.
-Init&
+Expr&
 value_initialize(Context& cxt, Type& t)
 {
   Builder build(cxt);
@@ -114,7 +114,7 @@ value_initialize(Context& cxt, Type& t)
 // For non-class/union types, paren-initialization shall
 // have a single argument.
 inline void
-check_paren_initialization(Init& i)
+check_paren_initialization(Expr& i)
 {
   if (is_paren_initialization(i)) {
     Paren_init& p = cast<Paren_init>(i);
@@ -129,7 +129,7 @@ check_paren_initialization(Init& i)
 //
 // Note that the original initializer is a reflection of the syntax
 // given, not the final initialization procedure.
-Init&
+Expr&
 initialize(Context& cxt, Type& t, Init& i)
 {
   Builder build(cxt);
@@ -194,7 +194,7 @@ initialize(Context& cxt, Type& t, Init& i)
 //    T x = e;
 //
 // The full range of initializations and conversions apply.
-Init&
+Expr&
 copy_initialize(Context& cxt, Type& t, Expr& e)
 {
   Builder build(cxt);
@@ -207,7 +207,7 @@ copy_initialize(Context& cxt, Type& t, Expr& e)
 // TODO: This isn't just direct initialization. We need to account
 // for whether braces or parens are used. Maybe we should have two
 // function: brace_initialize() and paren_initialize().
-Init&
+Expr&
 direct_initialize(Context&, Type&, Expr_list const&)
 {
   lingo_unimplemented();
@@ -275,7 +275,7 @@ is_reference_compatible(Type const& t1, Type const& t2)
 // TODO: A reference binding may invoke a conversion in order
 // to bind to a sub-objet or a user-defined conversion. However,
 // these aren't conversions in the standard sense.
-Init&
+Expr&
 reference_initialize(Context& cxt, Reference_type& t1, Init& i)
 {
   Builder build(cxt);
@@ -319,7 +319,7 @@ reference_initialize(Context& cxt, Reference_type& t1, Init& i)
 // -------------------------------------------------------------------------- //
 // Aggregate initialization
 
-Init&
+Expr&
 aggregate_initialize(Context& cxt, Type& t, Brace_init& i)
 {
   lingo_unimplemented();

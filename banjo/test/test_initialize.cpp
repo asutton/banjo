@@ -21,10 +21,10 @@ test_init(Context& cxt)
   Variable_decl& v1 = build.make_variable("v1", i32);
   Expr& r_v1 = build.make_reference(v1);
 
-  Init& init1 = initialize(cxt, i32, build.make_equal_init(zero));
+  Expr& init1 = initialize(cxt, i32, build.make_equal_init(zero));
   std::cout << init1 << '\n';
 
-  Init& init2 = initialize(cxt, r_i32, build.make_equal_init(r_v1));
+  Expr& init2 = initialize(cxt, r_i32, build.make_equal_init(r_v1));
   std::cout << init2 << '\n';
 }
 
