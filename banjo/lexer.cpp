@@ -201,12 +201,19 @@ Lexer::letter()
 }
 
 
+inline bool
+is_identifier_alpha(char c)
+{
+  return is_alpha(c) || is_decimal_digit(c) || c == '_';
+}
+
+
 Token
 Lexer::word()
 {
   letter();
-  while (is_alpha(cs_.peek()))
-    letter();
+  while (is_identifier_alpha(lookahead()))
+    get();
   return on_word();
 }
 
