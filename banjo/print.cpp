@@ -798,8 +798,10 @@ Printer::declaration(Decl const& d)
 void
 Printer::declaration_seq(Decl_list const& ds)
 {
-  for (Decl const& d : ds)
+  for (Decl const& d : ds) {
     declaration(d);
+    newline();
+  }
 }
 
 
@@ -830,16 +832,19 @@ Printer::constant_declaration(Constant_decl const& d)
 }
 
 
-// FIXME: Print the definition.
 void
 Printer::function_declaration(Function_decl const& d)
 {
-  os << "def " << d.name();
-  os << '(';
-  if (!d.parameters().empty())
-    parameter_list(d.parameters());
-  os << ')' << ' ';
+  token(def_tok);
+  space();
+  id(d.name());
+  token(lparen_tok);
+  parameter_list(d.parameters());
+  token(rparen_tok);
   return_type(d.return_type());
+
+  // FIXME: Print a definition.
+  token(semicolon_tok);
 }
 
 
@@ -951,7 +956,6 @@ Printer::parameter(Variadic_parm const& p)
 }
 
 
-// TODO: Rename to parameter-clause?
 void
 Printer::parameter_list(Decl_list const& d)
 {

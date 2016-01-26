@@ -93,6 +93,9 @@ struct Parser
   Decl& namespace_declaration();
   Decl& template_declaration();
 
+  Decl_list parameter_list();
+  Def& function_definition();
+
   Decl& type_template_parameter();
   Decl& value_template_parameter();
   Decl& template_template_parameter();
@@ -160,10 +163,11 @@ struct Parser
 
   // Declarations
   Variable_decl& on_variable_declaration(Token, Name&, Type&);
-  Decl& on_function_declaration(Token, Name&, Decl_list&, Type&, Expr&);
-  Decl& on_parameter_declaration(Name&, Type&);
-  Decl& on_parameter_declaration(Name&, Type&, Expr&);
-  Decl& on_namespace_declaration(Token, Name&, Decl_list&);
+  Function_decl& on_function_declaration(Token, Name&, Decl_list&, Type&);
+  Namespace_decl& on_namespace_declaration(Token, Name&, Decl_list&);
+
+  Object_parm& on_function_parameter(Name&, Type&);
+
   Decl_list on_declaration_seq();
 
   Name& on_declarator(Name&);

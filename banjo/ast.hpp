@@ -1875,9 +1875,13 @@ struct Variadic_parm;
 using Specifier = std::int32_t;
 
 
-// The base class of all declarations. Each declaration
-// has a set of specifiers and a reference to the context
-// in which it the entity is declared.
+// The base class of all declarations. Each declaration has a set of
+// specifiers and a reference to the context in which it the entity
+// is declared.
+//
+// TODO: Factor named and typed declarations. Variables, constants, and
+// functions have names and types. Classes and namespaces have types.
+// Import directives and assertions have neither.
 struct Decl : Term
 {
   struct Visitor;

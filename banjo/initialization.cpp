@@ -11,6 +11,12 @@
 namespace banjo
 {
 
+// FIXME: Initialization does not apply to dependent types or
+// expressions. We should either extend the definition to accommodate
+// them gracefully, or we should simply return a placeholder for
+// the notation.
+
+
 // Select a zero-initialization procedure for an object or
 // reference of type `t`. Note that zero initialization never
 // chooses a constructor.

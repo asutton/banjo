@@ -117,7 +117,6 @@ Parser::equal_initializer(Decl& d)
 Expr&
 Parser::paren_initializer(Decl&)
 {
-  // on_paren
   lingo_unimplemented();
 }
 
@@ -136,85 +135,8 @@ Parser::brace_initializer(Decl&)
 // -------------------------------------------------------------------------- //
 // Function declarations
 
-// Parse a parameter declaration.
-//
-//    parameter-declaration:
-//      type [identifier] [value-initializer]
-Decl&
-Parser::parameter_declaration()
-{
-  lingo_unimplemented();
-  /*
-  Type& t = type();
 
-  Name* n = nullptr;
-  if (Token id = match_if(identifier_tok))
-    n = &on_simple_id(id);
-
-  if (lookahead() == eq_tok) {
-    Expr& e = equal_initializer();
-    return on_parameter_declaration(*n, t, e);
-  } else {
-    return on_parameter_declaration(*n, t);
-  }
-  */
-}
-
-#if 0
-// Parse a parameter list.
-//
-//    parameter-list:
-//      ...
-//      parameter-declaration
-//      parameter-list ',' parameter-declaration
-//
-// Only the last parameter in the list shall be an ellipsis.
-List*
-Parser::parameter_list()
-{
-  Decl_list ps;
-  while (true) {
-    // FIXME: Handle ellispes... Is an ellipsis a parameter
-    // or not?
-    Decl* p = parameter_declaration();
-    ps.push_back(p);
-    if (match_if(comma_tok))
-      continue;
-    else
-      break;
-  }
-  return on_parameter_list(ps);
-}
-
-
-// Parse an optional parameter list.
-Node*
-Parser::parameter_list
-{
-  match(lparen_tok);
-  if (match_if(rparen_tok))
-    return on_parameter_list();
-  Tree* p = parameter_list();
-  match(rparen_tok);
-  return p;
-}
-
-
-// Parse a function body.
-//
-//    function-body:
-//      compound-statement
-//      '=' expression ';'
-//      '=' 'default' ';'
-//      '=' 'delete' ';'
-Node*
-Parser::function_body()
-{
-  throw std::runtime_error("not implemeneted");
-}
-
-
-// Parse a function definition.
+// Parse a function declaration or definition.
 //
 //    function-declaration:
 //      'def' declarator '(' [parameter-list] ')' return-type function-definition
@@ -230,21 +152,102 @@ Parser::function_body()
 // TODO: Allow for additional specifiers after the ')' and before
 // the '->'. This would support qualifiers on member function
 // declarations.
-Decl*
+Decl&
 Parser::function_declaration()
 {
   Token tok = require(def_tok);
-  Tree* n = declarator();
-  Tree* p = parameter_list_opt();
-  Type* t = type();
-  Tree* def = function_definition();
-  return on_function_declaration(tok, name, parms, type, def);
-}
-#endif
+  Name& n = declarator();
 
-// FIXME: This is garbage.
+  // FIXME: Create a scope for parameters so that they can
+  // be resolved during the parsing of the return type.
+  Decl_list p;
+  match(lparen_tok);
+  if (lookahead() != rparen_tok)
+    p = parameter_list();
+  match(rparen_tok);
+  Type& t = return_type();
+
+  // Point of declaration. Enter function scope.
+  Function_decl& fn = on_function_declaration(tok, n, p, t);
+
+  // Parse the definition, if any.
+  if (lookahead() == semicolon_tok)
+    match(semicolon_tok);
+  else
+    function_definition();
+
+  return fn;
+}
+
+
+// Parse a parameter list.
+//
+//    parameter-list:
+//      parameter-declaration
+//      parameter-list ',' parameter-declaration
+Decl_list
+Parser::parameter_list()
+{
+  Decl_list ps;
+  while (true) {
+    Decl& p = parameter_declaration();
+    ps.push_back(p);
+    if (match_if(comma_tok))
+      continue;
+    else
+      break;
+  }
+  return ps;
+}
+
+
+// Parse a parameter declaration.
+//
+//    parameter-declaration:
+//      ... [identifier]
+//      type [identifier] [value-initializer]
+//
+// TODO: Consider two different parses. Default arguments are
+// not allowed for the ... parameter.
 Decl&
-Parser::function_declaration()
+Parser::parameter_declaration()
+{
+  // If ... precedes the type, then this will be the variadic
+  // parameter.
+  Type* t;
+  if (match_if(ellipsis_tok))
+    lingo_unimplemented();
+  else
+    t = &type();
+
+  // Guarantee a parameter name. This could be DeBruijn-numbered.
+  Name* n;
+  if (Token id = match_if(identifier_tok))
+    n = &on_simple_id(id);
+  else
+    n = &build.get_id();
+
+  // Point of declaration.
+  Object_parm& parm = on_function_parameter(*n, *t);
+
+  // Parse the default argument.
+  if (lookahead() == eq_tok)
+    equal_initializer(parm);
+
+  return parm;
+}
+
+
+// Parse a function definition.
+//
+//    function-body:
+//      compound-statement
+//      '=' 'default' ';'
+//      '=' 'delete' ';'
+//
+// TODO: Allow '= expression' as a viable definition.
+Def&
+Parser::function_definition()
 {
   lingo_unimplemented();
 }

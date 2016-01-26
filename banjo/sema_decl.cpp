@@ -61,7 +61,13 @@ declare(Namespace_decl& cxt, Decl& d)
 
   // If declaration is successful, add `d` to the list of
   // declarations in `cxt`.
-  cxt.members().push_back(d);
+  //
+  // FIXME: This is fundamentally broken. The addition of declarations
+  // to the context may be a somewhat different operation than
+  // establishing the binding. For examples, parameters are not
+  // added to an enclosing context.
+  if (!is<Object_parm>(&d))
+    cxt.members().push_back(d);
 
   return r;
 }
@@ -95,54 +101,45 @@ Parser::on_declarator(Name& n)
 
 
 // -------------------------------------------------------------------------- //
-// Variable declarations
+// Variables
 
 
 Variable_decl&
 Parser::on_variable_declaration(Token, Name& n, Type& t)
 {
-  Decl& cxt = current_context();
   Variable_decl& var = build.make_variable(n, t);
-
-  // FIXME: Actually declare the variable.
-  declare(cxt, var);
-
-  // FIXME: Select a default initializers for t.
-
+  declare(current_context(), var);
   return var;
 }
 
 
 // -------------------------------------------------------------------------- //
-// Function declarations
+// Functions
 
 
-Decl&
-Parser::on_function_declaration(Token, Name&, Decl_list&, Type&, Expr&)
+Function_decl&
+Parser::on_function_declaration(Token, Name& n, Decl_list& ps, Type& t)
 {
-  lingo_unimplemented();
+  Function_decl& fn = build.make_function(n, ps, t);
+  declare(current_context(), fn);
+  return fn;
 }
 
 
-Decl&
-Parser::on_parameter_declaration(Name&, Type&)
+Object_parm&
+Parser::on_function_parameter(Name& n, Type& t)
 {
-  lingo_unimplemented();
-}
-
-
-Decl&
-Parser::on_parameter_declaration(Name&, Type&, Expr&)
-{
-  lingo_unimplemented();
+  Object_parm& parm = build.make_object_parm(n, t);
+  declare(current_context(), parm);
+  return parm;
 }
 
 
 // -------------------------------------------------------------------------- //
-// Namespace declarations
+// Namespaces
 
 
-Decl&
+Namespace_decl&
 Parser::on_namespace_declaration(Token, Name&, Decl_list&)
 {
   lingo_unimplemented();

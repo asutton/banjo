@@ -166,6 +166,8 @@ Builder::get_id(Symbol const* sym)
 
 
 // Returns a placeholder for a name.
+//
+// TODO: Make placeholders unique. Globally?
 inline Placeholder_id&
 Builder::get_id()
 {
