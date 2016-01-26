@@ -67,6 +67,7 @@ struct Printer
   void token(Token_kind, Token_use);
   void token(Symbol const&);
   void token(char const*);
+  void token(String const&);
 
   // Unresolved names
   void id(Name const&);
@@ -119,13 +120,11 @@ struct Printer
   void binary_expression(Binary_expr const&, Token_kind);
 
   // Initializers
+  void initializer(Expr const&);
   void initializer(Init const&);
-  void equal_initializer(Trivial_init const&);
-  void equal_initializer(Zero_init const&);
-  void equal_initializer(Object_init const&);
-  void equal_initializer(Reference_init const&);
-  void paren_initializer(Constructor_init const&);
-  void brace_initializer(Structural_init const&);
+  void equal_initializer(Copy_init const&);
+  void equal_initializer(Bind_init const&);
+  void paren_initializer(Direct_init const&);
   void brace_initializer(Aggregate_init const&);
 
   // Declarations

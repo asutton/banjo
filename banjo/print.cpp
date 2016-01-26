@@ -111,6 +111,15 @@ Printer::token(char const* str)
   prev = identifier_tok;
 }
 
+// Print a string as an identifier.
+void
+Printer::token(String const& str)
+{
+  space(identifier_tok);
+  os << str;
+  prev = identifier_tok;
+}
+
 
 // -------------------------------------------------------------------------- //
 // Names
@@ -534,21 +543,30 @@ Printer::expression(Expr const& e)
 void
 Printer::literal(Boolean_expr const& e)
 {
-  token(e.symbol());
+  if (e.value())
+    token(true_tok);
+  else
+    token(false_tok);
 }
 
 
 void
 Printer::literal(Integer_expr const& e)
 {
-  token(e.symbol());
+  // FIXME: Provide a to_string for the Integer class. Also, it might be
+  // nice to track radixes as part of the type so we don't have to print
+  // everything in base 10.
+  Integer_type const& t = cast<Integer_type>(e.type());
+  Integer const& n = e.value();
+  String const& s = n.impl().toString(10, t.is_signed());
+  token(s);
 }
 
 
 void
 Printer::literal(Real_expr const& e)
 {
-  token(e.symbol());
+  token("<real>");
 }
 
 
@@ -681,46 +699,39 @@ Printer::binary_expression(Binary_expr const& e, Token_kind k)
 
 // -------------------------------------------------------------------------- //
 // Initializers
+//
+// Select a canonical form of initialization based on the semantics
+// selected by initialization.
 
-// TODO: Figure out how to print initializers.
+void
+Printer::initializer(Expr const& e)
+{
+  if (is<Init>(&e))
+    initializer(cast<Init>(e));
+  else
+    lingo_unreachable();
+}
+
+
 void
 Printer::initializer(Init const& i)
 {
   struct fn
   {
     Printer& p;
-    void operator()(Expr const&)               { lingo_unreachable(); }
-    void operator()(Trivial_init const& i)     { p.equal_initializer(i); }
-    void operator()(Zero_init const& i)        { p.equal_initializer(i); }
-    void operator()(Object_init const& i)      { p.equal_initializer(i); }
-    void operator()(Reference_init const& i)   { p.equal_initializer(i); }
-    void operator()(Constructor_init const& i) { p.paren_initializer(i); }
-    void operator()(Structural_init const& i)  { p.brace_initializer(i); }
-    void operator()(Aggregate_init const& i)   { p.brace_initializer(i); }
+    void operator()(Expr const&)             { lingo_unreachable(); }
+    void operator()(Trivial_init const& i)   { }
+    void operator()(Copy_init const& i)      { p.equal_initializer(i); }
+    void operator()(Bind_init const& i)      { p.equal_initializer(i); }
+    void operator()(Direct_init const& i)    { p.paren_initializer(i); }
+    void operator()(Aggregate_init const& i) { p.brace_initializer(i); }
   };
   apply(i, fn{*this});
 }
 
 
 void
-Printer::equal_initializer(Trivial_init const& i)
-{
-  token(eq_tok);
-  token("<trivial>");
-}
-
-
-// TODO: Can all scalar types be initialized by 0?
-void
-Printer::equal_initializer(Zero_init const& i)
-{
-  token(eq_tok);
-  token("0");
-}
-
-
-void
-Printer::equal_initializer(Object_init const& i)
+Printer::equal_initializer(Copy_init const& i)
 {
   token(eq_tok);
   space();
@@ -729,7 +740,7 @@ Printer::equal_initializer(Object_init const& i)
 
 
 void
-Printer::equal_initializer(Reference_init const& i)
+Printer::equal_initializer(Bind_init const& i)
 {
   token(eq_tok);
   space();
@@ -739,17 +750,9 @@ Printer::equal_initializer(Reference_init const& i)
 
 // TODO: Implement me.
 void
-Printer::paren_initializer(Constructor_init const& i)
+Printer::paren_initializer(Direct_init const& i)
 {
   token("(...)");
-}
-
-
-// TODO: Implement me.
-void
-Printer::brace_initializer(Structural_init const&)
-{
-  token("{...}");
 }
 
 
@@ -795,8 +798,10 @@ Printer::declaration(Decl const& d)
 void
 Printer::declaration_seq(Decl_list const& ds)
 {
-  for (Decl const& d : ds)
+  for (Decl const& d : ds) {
     declaration(d);
+    newline();
+  }
 }
 
 
@@ -808,6 +813,10 @@ Printer::variable_declaration(Variable_decl const& d)
   type(d.type());
   space();
   id(d.name());
+  if (d.has_initializer()) {
+    space();
+    initializer(d.initializer());
+  }
   token(semicolon_tok);
 }
 
@@ -823,16 +832,19 @@ Printer::constant_declaration(Constant_decl const& d)
 }
 
 
-// FIXME: Print the definition.
 void
 Printer::function_declaration(Function_decl const& d)
 {
-  os << "def " << d.name();
-  os << '(';
-  if (!d.parameters().empty())
-    parameter_list(d.parameters());
-  os << ')' << ' ';
+  token(def_tok);
+  space();
+  id(d.name());
+  token(lparen_tok);
+  parameter_list(d.parameters());
+  token(rparen_tok);
   return_type(d.return_type());
+
+  // FIXME: Print a definition.
+  token(semicolon_tok);
 }
 
 
@@ -944,7 +956,6 @@ Printer::parameter(Variadic_parm const& p)
 }
 
 
-// TODO: Rename to parameter-clause?
 void
 Printer::parameter_list(Decl_list const& d)
 {

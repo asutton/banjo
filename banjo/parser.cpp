@@ -145,7 +145,7 @@ Parser::current_context()
 Term&
 Parser::translation_unit()
 {
-  Scope_sentinel scope(*this, cxt.global_namespace());
+  Enter_scope scope(*this, cxt.global_namespace());
   if (peek())
     declaration_seq();
   return cxt.global_namespace();

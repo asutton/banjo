@@ -17,4 +17,7 @@ using namespace lingo;
 
 } // namespace banjo
 
+
+#include "error.hpp"
+
 #endif

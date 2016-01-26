@@ -39,7 +39,7 @@ Parser::on_decltype_type(Token, Expr&)
 
 
 Type&
-Parser::on_function_type(Type_list const& p, Type& r)
+Parser::on_function_type(Type_list& p, Type& r)
 {
   return build.get_function_type(p, r);
 }
@@ -52,12 +52,12 @@ Parser::on_reference_type(Token, Type& t)
 }
 
 
-// Returns a type with the quaification that includes `q`. 
+// Returns a type with the quaification that includes `q`.
 // If `t` is already qualified, union `q` into the qualifier
 // of `t`.
 //
 // TODO: Verify that we can actually qualify this type.
-Type& 
+Type&
 Parser::on_qualified_type(Token, Type& t, Qualifier_set q)
 {
   if (Qualified_type* qt = as<Qualified_type>(&t)) {
@@ -69,7 +69,7 @@ Parser::on_qualified_type(Token, Type& t, Qualifier_set q)
 }
 
 
-// Returns a const-qualified type. 
+// Returns a const-qualified type.
 Type&
 Parser::on_const_type(Token tok, Type& t)
 {
@@ -77,7 +77,7 @@ Parser::on_const_type(Token tok, Type& t)
 }
 
 
-// Returns a volatile-qualified type. 
+// Returns a volatile-qualified type.
 Type&
 Parser::on_volatile_type(Token tok, Type& t)
 {

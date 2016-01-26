@@ -16,16 +16,16 @@ test_init(Context& cxt)
 
   Type& i32 = build.get_int_type();
   Type& r_i32 = build.get_reference_type(i32);
+
   Expr& zero = build.get_zero(i32);
+  Expr& init1 = copy_initialize(cxt, i32, zero);
+  Variable_decl& v1 = build.make_variable("v1", i32, init1);
+  std::cout << v1 << '\n';
 
-  Variable_decl& v1 = build.make_variable("v1", i32);
   Expr& r_v1 = build.make_reference(v1);
-
-  Init& init1 = initialize(cxt, i32, build.make_equal_init(zero));
-  std::cout << init1 << '\n';
-
-  Init& init2 = initialize(cxt, r_i32, build.make_equal_init(r_v1));
-  std::cout << init2 << '\n';
+  Expr& init2 = copy_initialize(cxt, r_i32, r_v1);
+  Variable_decl& v2 = build.make_variable("v2", r_i32, init2);
+  std::cout << v2 << '\n';
 }
 
 

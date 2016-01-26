@@ -6,26 +6,19 @@
 
 #include "prelude.hpp"
 #include "context.hpp"
+#include "ast.hpp"
 
 namespace banjo
 {
 
-struct Type;
-struct Reference_type;
-struct Expr;
-struct Init;
-struct Brace_init;
-
-
-Init& zero_initialize(Context&, Type&);
-Init& default_initialize(Context&, Type&);
-Init& value_initialize(Context&, Type&);
-Init& reference_initialize(Context&, Reference_type&, Init&);
-Init& aggregate_initialize(Context&, Type&, Brace_init&);
-
-Init& initialize(Context&, Type&, Init&);
-Init& copy_initialize(Context&, Type&, Expr&);
-Init& direct_initialize(Context&, Type&, Init&);
+Expr& zero_initialize(Context&, Type&);
+Expr& default_initialize(Context&, Type&);
+Expr& value_initialize(Context&, Type&);
+Expr& copy_initialize(Context&, Type&, Expr&);
+Expr& direct_initialize(Context&, Type&, Expr_list&);
+Expr& list_initialize(Context&, Type&, Expr_list&);
+Expr& reference_initialize(Context&, Reference_type&, Expr&);
+Expr& aggregate_initialize(Context&, Type&, Expr_list&);
 
 
 } // namespace banjo

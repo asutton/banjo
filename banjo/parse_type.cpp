@@ -209,7 +209,7 @@ Parser::decltype_type()
 Type&
 Parser::return_type()
 {
-  require(arrow_tok);
+  match(arrow_tok);
   return type();
 }
 

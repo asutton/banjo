@@ -7,38 +7,12 @@
 #include "lexer.hpp"
 #include "token.hpp"
 #include "ast.hpp"
+#include "scope.hpp"
 #include "builder.hpp"
 
 
 namespace banjo
 {
-
-struct Scope;
-
-
-
-// Denotes an error that occurs during translation.
-struct Translation_error : std::runtime_error
-{
-  using std::runtime_error::runtime_error;
-};
-
-
-// Represents a syntactic error.
-struct Syntax_error : Translation_error
-{
-  using Translation_error::Translation_error;
-};
-
-
-// Represents a lookup error. Lookup errors occur when lookup
-// fails to find a declaration or fails to find a declaration
-// of the right kind.
-struct Lookup_error : Translation_error
-{
-  using Translation_error::Translation_error;
-};
-
 
 // The parser is responsible for transforming a stream of tokens
 // into nodes. The parser owns a reference to the buffer for its
@@ -119,6 +93,9 @@ struct Parser
   Decl& namespace_declaration();
   Decl& template_declaration();
 
+  Decl_list parameter_list();
+  Def& function_definition();
+
   Decl& type_template_parameter();
   Decl& value_template_parameter();
   Decl& template_template_parameter();
@@ -127,10 +104,10 @@ struct Parser
   Decl_list declaration_seq();
 
   // Initializers
-  Expr& initializer();
-  Expr& equal_initializer();
-  Expr& paren_initializer();
-  Expr& brace_initializer();
+  Expr& initializer(Decl&);
+  Expr& equal_initializer(Decl&);
+  Expr& paren_initializer(Decl&);
+  Expr& brace_initializer(Decl&);
 
   Term& translation_unit();
 
@@ -171,7 +148,7 @@ struct Parser
   Type& on_bool_type(Token);
   Type& on_int_type(Token);
   Type& on_decltype_type(Token, Expr&);
-  Type& on_function_type(Type_list const&, Type&);
+  Type& on_function_type(Type_list&, Type&);
   Type& on_pointer_type(Token, Type&);
   Type& on_qualified_type(Token, Type&, Qualifier_set);
   Type& on_const_type(Token, Type&);
@@ -181,21 +158,23 @@ struct Parser
 
   // Expressions
   Expr& on_id_expression(Name&);
+  Expr& on_boolean_literal(Token, bool);
   Expr& on_integer_literal(Token);
 
   // Declarations
-  Decl& on_variable_declaration(Token, Name&, Type&);
-  Decl& on_variable_declaration(Token, Name&, Type&, Expr&);
-  Decl& on_function_declaration(Token, Name&, Decl_list const&, Type&, Expr&);
-  Decl& on_parameter_declaration(Name&, Type&);
-  Decl& on_parameter_declaration(Name&, Type&, Expr&);
-  Decl& on_namespace_declaration(Token, Name&, Decl_list const&);
+  Variable_decl& on_variable_declaration(Token, Name&, Type&);
+  Function_decl& on_function_declaration(Token, Name&, Decl_list&, Type&);
+  Namespace_decl& on_namespace_declaration(Token, Name&, Decl_list&);
+
+  Object_parm& on_function_parameter(Name&, Type&);
+
   Decl_list on_declaration_seq();
 
   Name& on_declarator(Name&);
-  Expr& on_equal_initializer(Expr&);
-  Expr& on_paren_initializer(Expr_list const&);
-  Expr& on_brace_initializer(Expr_list const&);
+  Expr& on_default_initialization(Decl&);
+  Expr& on_equal_initialization(Decl&, Expr&);
+  Expr& on_paren_initialization(Decl&, Expr_list&);
+  Expr& on_brace_initialization(Decl&, Expr_list&);
 
   // Token matching.
   Token      peek() const;
@@ -230,7 +209,7 @@ struct Parser
     Scope* scope;
   };
 
-  struct Scope_sentinel;
+  struct Enter_scope;
   struct Assume_template;
 
   Context&      cxt;
@@ -240,23 +219,32 @@ struct Parser
 };
 
 
-// An RAII helper that manages the entry and exit of
-// scopes.
-struct Parser::Scope_sentinel
+// An RAII helper that manages the entry and exit of scopes.
+//
+// TODO: Handle scopes for more declarations.
+struct Parser::Enter_scope
 {
-  Scope_sentinel(Parser& p, Namespace_decl& ns)
-    : parser(p), prev(p.state.scope)
+  Enter_scope(Parser& p, Namespace_decl& ns)
+    : parser(p), prev(p.state.scope), alloc(nullptr)
   {
     parser.enter_scope(*ns.scope());
   }
 
-  ~Scope_sentinel()
+  Enter_scope(Parser& p, Variable_decl& var)
+    : parser(p), prev(p.state.scope), alloc(new Initializer_scope(*prev, var))
+  {
+    parser.enter_scope(*alloc);
+  }
+
+  ~Enter_scope()
   {
     parser.enter_scope(*prev);
+    delete alloc;
   }
 
   Parser& parser;
-  Scope* prev;
+  Scope* prev;  // The previous socpe.
+  Scope* alloc; // Only set when locally allocated.
 };
 
 

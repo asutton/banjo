@@ -2,6 +2,8 @@
 // All rights reserved
 
 #include "parser.hpp"
+#include "initialization.hpp"
+#include "print.hpp"
 
 #include <iostream>
 
@@ -9,24 +11,74 @@
 namespace banjo
 {
 
-Expr&
-Parser::on_equal_initializer(Expr&)
+// Update `d` with the initializer `e`.
+static inline void
+initialize_declaration(Decl& d, Expr& e)
 {
-  lingo_unimplemented();
+  if (Variable_decl* var = as<Variable_decl>(&d))
+    var->init = &e;
+  else
+    lingo_unreachable();
 }
 
 
-Expr&
-Parser::on_paren_initializer(Expr_list const&)
+// FIXME: This is dumb. We should have a base class that contributes
+// a type to the declaration hiearchy (Typed_decl).
+static inline Type&
+declared_type(Decl& d)
 {
-  lingo_unimplemented();
+  if (Variable_decl* var = as<Variable_decl>(&d))
+    return var->type();
+
+  // We can initialize other things too.
+  lingo_unreachable();
 }
 
 
+// Select a default initializer for `d`.
+//
+// FIXME: This relies on the construction of placeholder nodes
+// in the initialization branch. That seems wrong. We should be
+// able to convey syntax via flags.
 Expr&
-Parser::on_brace_initializer(Expr_list const&)
+Parser::on_default_initialization(Decl& d)
 {
-  lingo_unimplemented();
+  Type& t = declared_type(d);
+  Expr& i = default_initialize(cxt, t);
+  initialize_declaration(d, i);
+  return i;
+}
+
+
+// Copy initialize the declaration `d` with `e`.
+Expr&
+Parser::on_equal_initialization(Decl& d, Expr& e)
+{
+  Expr& i = copy_initialize(cxt, declared_type(d), e);
+  initialize_declaration(d, i);
+  return i;
+}
+
+
+// Direct initialize `d` by a paren-enclosed list of expressions
+// `es`.
+Expr&
+Parser::on_paren_initialization(Decl& d, Expr_list& es)
+{
+  Expr& i = direct_initialize(cxt, declared_type(d), es);
+  initialize_declaration(d, i);
+  return i;
+}
+
+
+// Direct initialzie `d` by a brace-enclosed list of expressions
+// `es`.
+Expr&
+Parser::on_brace_initialization(Decl& d, Expr_list& es)
+{
+  Expr& i = list_initialize(cxt, declared_type(d), es);
+  initialize_declaration(d, i);
+  return i;
 }
 
 

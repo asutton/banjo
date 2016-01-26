@@ -70,10 +70,10 @@ struct Builder
   Boolean_expr&   get_bool(bool);
   Boolean_expr&   get_true();
   Boolean_expr&   get_false();
-  Integer_expr&   get_integer(Type&, int);
+  Integer_expr&   get_integer(Type&, Integer const&);
   Integer_expr&   get_zero(Type&);
-  Integer_expr&   get_int(int);
-  Integer_expr&   get_uint(unsigned);
+  Integer_expr&   get_int(Integer const&);
+  Integer_expr&   get_uint(Integer const&);
   Reference_expr& make_reference(Variable_decl& d);
   Reference_expr& make_reference(Constant_decl& d);
   Reference_expr& make_reference(Function_decl& d);
@@ -82,16 +82,11 @@ struct Builder
   Not_expr&       make_not(Type&, Expr&);
   Call_expr&      make_call(Type&, Function_decl&, Expr_list const&);
 
-  Equal_init&        make_equal_init(Expr&);
-  Paren_init&        make_paren_init(Expr_list const&);
-  Brace_init&        make_brace_init(Expr_list const&);
-  Structural_init&   make_structural_init(Type&, Expr_list const&);
-  Trivial_init&      make_trivial_init(Type&);
-  Zero_init&         make_zero_init(Type&, Expr&);
-  Constructor_init&  make_constructor_init(Type&, Decl&, Expr_list const&);
-  Object_init&       make_object_init(Type&, Expr&);
-  Reference_init&    make_reference_init(Type&, Expr&);
-  Aggregate_init&    make_aggregate_init(Type&);
+  Trivial_init&   make_trivial_init(Type&);
+  Copy_init&      make_copy_init(Type&, Expr&);
+  Bind_init&      make_bind_init(Type&, Expr&);
+  Direct_init&    make_direct_init(Type&, Decl&, Expr_list const&);
+  Aggregate_init& make_aggregate_init(Type&, Expr_list const&);
 
   Namespace_decl& make_namespace(Name&);
   Namespace_decl& make_namespace(char const*);
@@ -99,7 +94,8 @@ struct Builder
 
   Variable_decl& make_variable(Name&, Type&);
   Variable_decl& make_variable(char const*, Type&);
-  Variable_decl& make_variable(Name&, Type&, Init&);
+  Variable_decl& make_variable(Name&, Type&, Expr&);
+  Variable_decl& make_variable(char const*, Type&, Expr&);
 
   Function_decl& make_function(Name&, Decl_list const&, Type&);
   Function_decl& make_function(char const*, Decl_list const&, Type&);
@@ -170,6 +166,8 @@ Builder::get_id(Symbol const* sym)
 
 
 // Returns a placeholder for a name.
+//
+// TODO: Make placeholders unique. Globally?
 inline Placeholder_id&
 Builder::get_id()
 {
@@ -387,8 +385,7 @@ Builder::get_typename_type(Decl& d)
 inline Boolean_expr&
 Builder::get_bool(bool b)
 {
-  Symbol const* sym = symbols().get(b ? "true" : "false");
-  return make<Boolean_expr>(get_bool_type(), *sym);
+  return make<Boolean_expr>(get_bool_type(), b);
 }
 
 
@@ -409,16 +406,17 @@ Builder::get_false()
 // TODO: Verify that T can have an integer value?
 // I think that all scalars can have integer values.
 inline Integer_expr&
-Builder::get_integer(Type& t, int n)
+Builder::get_integer(Type& t, Integer const& n)
 {
-  Symbol const* sym = symbols().put_integer(integer_tok, std::to_string(n), n);
-  return make<Integer_expr>(t, *sym);
+  return make<Integer_expr>(t, n);
 }
 
 
 // Returns the 0 constant, with scalar type `t`.
 //
 // TODO: Verify that t is scalar.
+//
+// TODO: Produce zero interpratations for any T?
 inline Integer_expr&
 Builder::get_zero(Type& t)
 {
@@ -426,17 +424,17 @@ Builder::get_zero(Type& t)
 }
 
 
-
 inline Integer_expr&
-Builder::get_int(int n)
+Builder::get_int(Integer const& n)
 {
   return get_integer(get_int_type(), n);
 }
 
 
 inline Integer_expr&
-Builder::get_uint(unsigned n)
+Builder::get_uint(Integer const& n)
 {
+  // lingo_assert(n.is_nonnegative(n));
   return get_integer(get_uint_type(), n);
 }
 
@@ -474,35 +472,6 @@ Builder::make_call(Type& t, Function_decl& f, Expr_list const& a)
 // -------------------------------------------------------------------------- //
 // Initializers
 
-
-inline Equal_init&
-Builder::make_equal_init(Expr& e)
-{
-  return make<Equal_init>(e);
-}
-
-
-inline Paren_init&
-Builder::make_paren_init(Expr_list const& es)
-{
-  return make<Paren_init>(es);
-}
-
-
-inline Brace_init&
-Builder::make_brace_init(Expr_list const& es)
-{
-  return make<Brace_init>(es);
-}
-
-
-inline Structural_init&
-Builder::make_structural_init(Type& t, Expr_list const& es)
-{
-  return make<Structural_init>(t, es);
-}
-
-
 inline Trivial_init&
 Builder::make_trivial_init(Type& t)
 {
@@ -510,38 +479,31 @@ Builder::make_trivial_init(Type& t)
 }
 
 
-inline Zero_init&
-Builder::make_zero_init(Type& t, Expr& e)
+inline Copy_init&
+Builder::make_copy_init(Type& t, Expr& e)
 {
-  return make<Zero_init>(t, e);
+  return make<Copy_init>(t, e);
 }
 
 
-inline Constructor_init&
-Builder::make_constructor_init(Type& t, Decl& d, Expr_list const& es)
+inline Bind_init&
+Builder::make_bind_init(Type& t, Expr& e)
 {
-  return make<Constructor_init>(t, d, es);
+  return make<Bind_init>(t, e);
 }
 
 
-inline Object_init&
-Builder::make_object_init(Type& t, Expr& e)
+inline Direct_init&
+Builder::make_direct_init(Type& t, Decl& d, Expr_list const& es)
 {
-  return make<Object_init>(t, e);
-}
-
-
-inline Reference_init&
-Builder::make_reference_init(Type& t, Expr& e)
-{
-  return make<Reference_init>(t, e);
+  return make<Direct_init>(t, d, es);
 }
 
 
 inline Aggregate_init&
-Builder::make_aggregate_init(Type&)
+Builder::make_aggregate_init(Type& t, Expr_list const& es)
 {
-  lingo_unimplemented();
+  return make<Aggregate_init>(t, es);
 }
 
 
@@ -567,9 +529,17 @@ Builder::make_variable(char const* s, Type& t)
 
 
 inline Variable_decl&
-Builder::make_variable(Name& n, Type& t, Init& i)
+Builder::make_variable(Name& n, Type& t, Expr& i)
 {
+  lingo_assert(is<Init>(&i));
   return make<Variable_decl>(n, t, i);
+}
+
+
+inline Variable_decl&
+Builder::make_variable(char const* s, Type& t, Expr& i)
+{
+  return make_variable(get_id(s), t, i);
 }
 
 

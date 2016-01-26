@@ -13,7 +13,7 @@ namespace banjo
 Expr&
 Parser::expression()
 {
-  lingo_unimplemented();
+  return postfix_expression();
 }
 
 
@@ -21,7 +21,7 @@ Parser::expression()
 Expr&
 Parser::postfix_expression()
 {
-  lingo_unimplemented();
+  return primary_expression();
 }
 
 
@@ -33,8 +33,22 @@ Parser::postfix_expression()
 Expr&
 Parser::primary_expression()
 {
-  if (Token tok = match_if(integer_tok))
-    return on_integer_literal(tok);
+  switch (lookahead()) {
+    case true_tok:
+      return on_boolean_literal(accept(), true);
+    case false_tok:
+      return on_boolean_literal(accept(), false);
+    case integer_tok:
+      return on_integer_literal(accept());
+
+    case lparen_tok:
+      // FIXME: Add fold expressions.
+      return grouped_expression();
+
+    default:
+      break;
+  }
+
   if (lookahead() == lparen_tok)
     return grouped_expression();
 

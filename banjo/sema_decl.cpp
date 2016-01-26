@@ -27,7 +27,7 @@ Decl* declare(Overload_set&, Decl&);
 
 
 // Save a declaration `d` in the declaration context `cxt`.
-// If `d` is a re-declaration, returns a pointer to (the most 
+// If `d` is a re-declaration, returns a pointer to (the most
 // recent version of) `d`.
 Decl*
 declare(Decl& cxt, Decl& d)
@@ -50,7 +50,7 @@ declare(Namespace_decl& cxt, Decl& d)
   Scope& scope = *cxt.scope();
 
   // If there is already a declaration of `d` in this scope, then
-  // we are either re-declaring `d` or adding an overload. 
+  // we are either re-declaring `d` or adding an overload.
   //
   // TODO: Implement re-declaration.
   Decl* r = nullptr;
@@ -61,7 +61,13 @@ declare(Namespace_decl& cxt, Decl& d)
 
   // If declaration is successful, add `d` to the list of
   // declarations in `cxt`.
-  cxt.members().push_back(d);
+  //
+  // FIXME: This is fundamentally broken. The addition of declarations
+  // to the context may be a somewhat different operation than
+  // establishing the binding. For examples, parameters are not
+  // added to an enclosing context.
+  if (!is<Object_parm>(&d))
+    cxt.members().push_back(d);
 
   return r;
 }
@@ -95,60 +101,46 @@ Parser::on_declarator(Name& n)
 
 
 // -------------------------------------------------------------------------- //
-// Variable declarations
+// Variables
 
 
-Decl&
+Variable_decl&
 Parser::on_variable_declaration(Token, Name& n, Type& t)
 {
-  Decl& cxt = current_context();
   Variable_decl& var = build.make_variable(n, t);
-
-  // FIXME: Actually declare the variable.
-  declare(cxt, var);
-
+  declare(current_context(), var);
   return var;
 }
 
 
-Decl&
-Parser::on_variable_declaration(Token, Name&, Type&, Expr&)
+// -------------------------------------------------------------------------- //
+// Functions
+
+
+Function_decl&
+Parser::on_function_declaration(Token, Name& n, Decl_list& ps, Type& t)
 {
-  lingo_unimplemented();
+  Function_decl& fn = build.make_function(n, ps, t);
+  declare(current_context(), fn);
+  return fn;
+}
+
+
+Object_parm&
+Parser::on_function_parameter(Name& n, Type& t)
+{
+  Object_parm& parm = build.make_object_parm(n, t);
+  declare(current_context(), parm);
+  return parm;
 }
 
 
 // -------------------------------------------------------------------------- //
-// Function declarations
+// Namespaces
 
 
-Decl&
-Parser::on_function_declaration(Token, Name&, Decl_list const&, Type&, Expr&)
-{
-  lingo_unimplemented();
-}
-
-
-Decl&
-Parser::on_parameter_declaration(Name&, Type&)
-{
-  lingo_unimplemented();
-}
-
-
-Decl&
-Parser::on_parameter_declaration(Name&, Type&, Expr&)
-{
-  lingo_unimplemented();
-}
-
-
-// -------------------------------------------------------------------------- //
-// Namespace declarations
-
-
-Decl&
-Parser::on_namespace_declaration(Token, Name&, Decl_list const&)
+Namespace_decl&
+Parser::on_namespace_declaration(Token, Name&, Decl_list&)
 {
   lingo_unimplemented();
 }
