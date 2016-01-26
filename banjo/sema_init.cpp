@@ -35,17 +35,6 @@ declared_type(Decl& d)
 }
 
 
-// Perform initialization.
-static inline Expr&
-do_initialization(Context& cxt, Decl& d, Init& i)
-{
-  Type& t = declared_type(d);
-  Expr& e = initialize(cxt, t, i);
-  initialize_declaration(d, e);
-  return i;
-}
-
-
 // Select a default initializer for `d`.
 //
 // FIXME: This relies on the construction of placeholder nodes
@@ -61,31 +50,35 @@ Parser::on_default_initialization(Decl& d)
 }
 
 
+// Copy initialize the declaration `d` with `e`.
 Expr&
 Parser::on_equal_initialization(Decl& d, Expr& e)
 {
-  // FIXME: Call copy initialize.
-  Init& i = build.make_equal_init(e);
-  return do_initialization(cxt, d, i);
+  Expr& i = copy_initialize(cxt, declared_type(d), e);
+  initialize_declaration(d, i);
+  return i;
 }
 
 
+// Direct initialize `d` by a paren-enclosed list of expressions
+// `es`.
 Expr&
-Parser::on_paren_initialization(Decl& d, Expr_list const& es)
+Parser::on_paren_initialization(Decl& d, Expr_list& es)
 {
-  // FIXME: Call paren initialize?
-  Init& i = build.make_paren_init(es);
-  return do_initialization(cxt, d, i);
+  Expr& i = direct_initialize(cxt, declared_type(d), es);
+  initialize_declaration(d, i);
+  return i;
 }
 
 
-// TODO: Perform analysis?
+// Direct initialzie `d` by a brace-enclosed list of expressions
+// `es`.
 Expr&
-Parser::on_brace_initialization(Decl& d, Expr_list const& es)
+Parser::on_brace_initialization(Decl& d, Expr_list& es)
 {
-  // FIXME: Call brace initialize?
-  Init& i = build.make_brace_init(es);
-  return do_initialization(cxt, d, i);
+  Expr& i = list_initialize(cxt, declared_type(d), es);
+  initialize_declaration(d, i);
+  return i;
 }
 
 

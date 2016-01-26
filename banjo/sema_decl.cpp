@@ -118,7 +118,7 @@ Parser::on_variable_declaration(Token, Name& n, Type& t)
 
 
 Decl&
-Parser::on_function_declaration(Token, Name&, Decl_list const&, Type&, Expr&)
+Parser::on_function_declaration(Token, Name&, Decl_list&, Type&, Expr&)
 {
   lingo_unimplemented();
 }
@@ -143,7 +143,7 @@ Parser::on_parameter_declaration(Name&, Type&, Expr&)
 
 
 Decl&
-Parser::on_namespace_declaration(Token, Name&, Decl_list const&)
+Parser::on_namespace_declaration(Token, Name&, Decl_list&)
 {
   lingo_unimplemented();
 }

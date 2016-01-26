@@ -14,29 +14,6 @@
 namespace banjo
 {
 
-// Denotes an error that occurs during translation.
-struct Translation_error : std::runtime_error
-{
-  using std::runtime_error::runtime_error;
-};
-
-
-// Represents a syntactic error.
-struct Syntax_error : Translation_error
-{
-  using Translation_error::Translation_error;
-};
-
-
-// Represents a lookup error. Lookup errors occur when lookup
-// fails to find a declaration or fails to find a declaration
-// of the right kind.
-struct Lookup_error : Translation_error
-{
-  using Translation_error::Translation_error;
-};
-
-
 // The parser is responsible for transforming a stream of tokens
 // into nodes. The parser owns a reference to the buffer for its
 // tokens. This supports the resolution of source code locations.
@@ -168,7 +145,7 @@ struct Parser
   Type& on_bool_type(Token);
   Type& on_int_type(Token);
   Type& on_decltype_type(Token, Expr&);
-  Type& on_function_type(Type_list const&, Type&);
+  Type& on_function_type(Type_list&, Type&);
   Type& on_pointer_type(Token, Type&);
   Type& on_qualified_type(Token, Type&, Qualifier_set);
   Type& on_const_type(Token, Type&);
@@ -183,17 +160,17 @@ struct Parser
 
   // Declarations
   Variable_decl& on_variable_declaration(Token, Name&, Type&);
-  Decl& on_function_declaration(Token, Name&, Decl_list const&, Type&, Expr&);
+  Decl& on_function_declaration(Token, Name&, Decl_list&, Type&, Expr&);
   Decl& on_parameter_declaration(Name&, Type&);
   Decl& on_parameter_declaration(Name&, Type&, Expr&);
-  Decl& on_namespace_declaration(Token, Name&, Decl_list const&);
+  Decl& on_namespace_declaration(Token, Name&, Decl_list&);
   Decl_list on_declaration_seq();
 
   Name& on_declarator(Name&);
   Expr& on_default_initialization(Decl&);
   Expr& on_equal_initialization(Decl&, Expr&);
-  Expr& on_paren_initialization(Decl&, Expr_list const&);
-  Expr& on_brace_initialization(Decl&, Expr_list const&);
+  Expr& on_paren_initialization(Decl&, Expr_list&);
+  Expr& on_brace_initialization(Decl&, Expr_list&);
 
   // Token matching.
   Token      peek() const;

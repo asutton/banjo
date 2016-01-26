@@ -699,7 +699,9 @@ Printer::binary_expression(Binary_expr const& e, Token_kind k)
 
 // -------------------------------------------------------------------------- //
 // Initializers
-
+//
+// Select a canonical form of initialization based on the semantics
+// selected by initialization.
 
 void
 Printer::initializer(Expr const& e)
@@ -710,44 +712,26 @@ Printer::initializer(Expr const& e)
     lingo_unreachable();
 }
 
+
 void
 Printer::initializer(Init const& i)
 {
   struct fn
   {
     Printer& p;
-    void operator()(Expr const&)               { lingo_unreachable(); }
-    void operator()(Trivial_init const& i)     { p.equal_initializer(i); }
-    void operator()(Zero_init const& i)        { p.equal_initializer(i); }
-    void operator()(Object_init const& i)      { p.equal_initializer(i); }
-    void operator()(Reference_init const& i)   { p.equal_initializer(i); }
-    void operator()(Constructor_init const& i) { p.paren_initializer(i); }
-    void operator()(Structural_init const& i)  { p.brace_initializer(i); }
-    void operator()(Aggregate_init const& i)   { p.brace_initializer(i); }
+    void operator()(Expr const&)             { lingo_unreachable(); }
+    void operator()(Trivial_init const& i)   { }
+    void operator()(Copy_init const& i)      { p.equal_initializer(i); }
+    void operator()(Bind_init const& i)      { p.equal_initializer(i); }
+    void operator()(Direct_init const& i)    { p.paren_initializer(i); }
+    void operator()(Aggregate_init const& i) { p.brace_initializer(i); }
   };
   apply(i, fn{*this});
 }
 
 
 void
-Printer::equal_initializer(Trivial_init const& i)
-{
-  token(eq_tok);
-  token("<trivial>");
-}
-
-
-// TODO: Can all scalar types be initialized by 0?
-void
-Printer::equal_initializer(Zero_init const& i)
-{
-  token(eq_tok);
-  token("0");
-}
-
-
-void
-Printer::equal_initializer(Object_init const& i)
+Printer::equal_initializer(Copy_init const& i)
 {
   token(eq_tok);
   space();
@@ -756,7 +740,7 @@ Printer::equal_initializer(Object_init const& i)
 
 
 void
-Printer::equal_initializer(Reference_init const& i)
+Printer::equal_initializer(Bind_init const& i)
 {
   token(eq_tok);
   space();
@@ -766,17 +750,9 @@ Printer::equal_initializer(Reference_init const& i)
 
 // TODO: Implement me.
 void
-Printer::paren_initializer(Constructor_init const& i)
+Printer::paren_initializer(Direct_init const& i)
 {
   token("(...)");
-}
-
-
-// TODO: Implement me.
-void
-Printer::brace_initializer(Structural_init const&)
-{
-  token("{...}");
 }
 
 
@@ -835,8 +811,10 @@ Printer::variable_declaration(Variable_decl const& d)
   type(d.type());
   space();
   id(d.name());
-  space();
-  initializer(d.initializer());
+  if (d.has_initializer()) {
+    space();
+    initializer(d.initializer());
+  }
   token(semicolon_tok);
 }
 

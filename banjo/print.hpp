@@ -122,12 +122,9 @@ struct Printer
   // Initializers
   void initializer(Expr const&);
   void initializer(Init const&);
-  void equal_initializer(Trivial_init const&);
-  void equal_initializer(Zero_init const&);
-  void equal_initializer(Object_init const&);
-  void equal_initializer(Reference_init const&);
-  void paren_initializer(Constructor_init const&);
-  void brace_initializer(Structural_init const&);
+  void equal_initializer(Copy_init const&);
+  void equal_initializer(Bind_init const&);
+  void paren_initializer(Direct_init const&);
   void brace_initializer(Aggregate_init const&);
 
   // Declarations

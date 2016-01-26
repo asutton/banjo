@@ -4,6 +4,7 @@
 # Add the core Banjo library.
 add_library(banjo
   prelude.cpp
+  error.cpp
   context.cpp
   # Lexical components
   token.cpp

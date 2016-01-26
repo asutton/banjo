@@ -8,7 +8,6 @@
 #include "ast.hpp"
 #include "builder.hpp"
 
-
 namespace banjo
 {
 
@@ -47,8 +46,10 @@ zero_initialize(Context& cxt, Type& t)
   if (is_union_type(u))
     lingo_unimplemented();
 
+  // FIXME: Determine the kind of zero that best matches the
+  // type (i.e., produce an appropriate literal).
   if (is_scalar_type(u))
-    return build.make_zero_init(t, build.get_zero(t));
+    return build.make_copy_init(t, build.get_zero(t));
 
   // FIXME: I'm not sure that we should have an error here.
   throw std::runtime_error("cannot zero initialize type");
@@ -95,7 +96,7 @@ value_initialize(Context& cxt, Type& t)
   Builder build(cxt);
 
   if (is_reference_type(t))
-    throw std::runtime_error("value initialization of reference");
+    throw Translation_error("value initialization of reference");
 
   // FIXME: Can you value initialize a T[]?
   if (is_array_type(t))
@@ -111,104 +112,126 @@ value_initialize(Context& cxt, Type& t)
 }
 
 
-// For non-class/union types, paren-initialization shall
-// have a single argument.
-inline void
-check_paren_initialization(Expr& i)
-{
-  if (is_paren_initialization(i)) {
-    Paren_init& p = cast<Paren_init>(i);
-    if (p.arguments().size() > 1)
-      throw std::runtime_error("scalar initialized from multiple arguments");
-  }
-}
-
-
-// Given a destination type and a syntactic initializer, select an
-// initialization procedure.
-//
-// Note that the original initializer is a reflection of the syntax
-// given, not the final initialization procedure.
-Expr&
-initialize(Context& cxt, Type& t, Init& i)
-{
-  Builder build(cxt);
-
-  // If the initializer is {...}, then perform aggregate initalization.
-  if (is_brace_initialization(i))
-    return aggregate_initialize(cxt, t, cast<Brace_init>(i));
-
-  // If the destination type is a T&, then perform reference
-  // initialization.
-  if (is_reference_type(t))
-    return reference_initialize(cxt, cast<Reference_type>(t), i);
-
-  // If the destination type is T[N] or T[] and the initializer
-  // is `= s` where `s` is a string literal, perform string
-  // initialization.
-  // if (is_array_type(t) || is_sequence_type(t))
-  //   lingo_unimplemented();
-
-  // If the initializer is (), the object is value initialized.
-  if (is_paren_initialization(i)) {
-    Paren_init& p = cast<Paren_init>(i);
-    if (p.arguments().empty())
-      return value_initialize(cxt, t);
-  }
-
-  // Find an initialization procedure for user-defined compound
-  // types, given the initializer i. Note that this can find
-  // user-defined conversions for `t` from the initializer.
-  if (is_maybe_qualified_class_type(t) || is_maybe_qualified_union_type(t))
-    lingo_unimplemented();
-  else
-    check_paren_initialization(i);
-
-  // If the initializer has a source type, then try to find a
-  // user-defined conversion from s to the destination type.
-  if (Type* s = i.source_type()) {
-    Type& u = s->unqualified_type();
-    if (is_class_type(u))
-      lingo_unimplemented();
-  }
-
-  // If all else fails, try a a standard conversion.
-  //
-  // TODO: Explicitly disregard qualifiers here, or allow that to
-  // happen in the conversion rules.
-  //
-  // NOTE: We must be guaranteed a source expression in this case.
-  //
-  // TODO: Catch exceptions and restructure the error with
-  // the conversion error as an explanation.
-  Expr& c = standard_conversion(*i.source(), t);
-  return build.make_object_init(t, c);
-}
-
-
-// Perform copy initialization. Find an initialization procedure
-// for an object of type `t` by the given expression. This performs
-// initializations as for a variable of type T as if we had
-// written:
+// Select a procedure to copy initialize an object or reference of type
+// `t` by an expression `e`. This corresponds to the initialization of
+// a variable by the syntax:
 //
 //    T x = e;
 //
-// The full range of initializations and conversions apply.
+// This also applies in parameter passing, function return, exception
+// throwing, and handling.
 Expr&
 copy_initialize(Context& cxt, Type& t, Expr& e)
 {
   Builder build(cxt);
-  return initialize(cxt, t, build.make_equal_init(e));
+
+  // If the destination type is a T&, then perform reference
+  // initialization.
+  if (is_reference_type(t))
+    return reference_initialize(cxt, cast<Reference_type>(t), e);
+
+  // If the destination type is T[N] or T[] and the initializer
+  // is `= s` where `s` is a string literal, perform string
+  // initialization.
+  if (is_array_type(t) || is_sequence_type(t))
+    lingo_unimplemented();
+
+  // Find a constructor taking `e` as an argument or if not available,
+  // find a user-defined conversion from `e` to `t`.
+  if (is_maybe_qualified_class_type(t) || is_maybe_qualified_union_type(t))
+    lingo_unimplemented();
+
+  // If the initializer has a source type, then try to find a
+  // user-defined conversion from s to the destination type, which
+  // should be a (possibly qualified) fundamental type.
+  Type& s = e.type();
+  if (is_maybe_qualified_class_type(s) || is_maybe_qualified_union_type(s))
+    lingo_unimplemented();
+
+  // If all else fails, try a a standard conversion. This should be
+  // the case that we have a non-class, fundamental type.
+  //
+  // TODO: Catch exceptions and restructure the error with
+  // the conversion error as an explanation.
+  Expr& c = standard_conversion(e, t);
+  return build.make_copy_init(t, c);
 }
 
 
-// Perform direct initialization.
+// Select a procedure to direct-initialize an object or reference of
+// type `t` by a paren-enclosed list of expressions `es`. This corresponds
+// to the initialization of a variable by the syntax:
 //
-// TODO: This isn't just direct initialization. We need to account
-// for whether braces or parens are used. Maybe we should have two
-// function: brace_initialize() and paren_initialize().
+//    T x(e1, e2, ..., en);
+//
+// When the list of expressions is empty, this selects value
+// initialization.
+//
+// This also applies in new expressions, etc.
 Expr&
-direct_initialize(Context&, Type&, Expr_list const&)
+direct_initialize(Context& cxt, Type& t, Expr_list& es)
+{
+  Builder build(cxt);
+
+  // Arrays must be copy or list-initialized.
+  //
+  // FIXME: Provide a better diagnostic.
+  if (is_array_type(t) || is_sequence_type(t))
+    throw Translation_error("invalid array initialization");
+
+  // If the initializer is (), the object is value initialized.
+  if (es.empty())
+    return value_initialize(cxt, t);
+
+  // If t is not a class type, then there shall be a single
+  // expression. Save the source expression for later.
+  if (!is_maybe_qualified_class_type(t)) {
+    if (es.size() > 1)
+      throw Translation_error("scalar initialized from multiple arguments");
+  }
+  Expr& e = es.front();
+
+  // If the destination type is a T&, then perform reference
+  // initialization on the only element in the list of expressions.
+  if (is_reference_type(t))
+    return reference_initialize(cxt, cast<Reference_type>(t), es.front());
+
+  // Find a constructor taking the given arguments.
+  if (is_maybe_qualified_class_type(t) || is_maybe_qualified_union_type(t))
+    lingo_unimplemented();
+
+  // If the initializer has a source type, then try to find a
+  // user-defined conversion from s to the destination type, which
+  // should be a (possibly qualified) fundamental type.
+  Type& s = e.type();
+  if (is_maybe_qualified_class_type(s))
+    lingo_unimplemented();
+
+  // If all else fails, try a a standard conversion. This should be
+  // the case that we have a non-class, fundamental type.
+  //
+  // TODO: Catch exceptions and restructure the error with
+  // the conversion error as an explanation.
+  Expr& c = standard_conversion(e, t);
+  return build.make_copy_init(t, c);
+}
+
+
+// -------------------------------------------------------------------------- //
+// List initialization
+
+// Select a procedure to direct-initialize an object or reference of
+// type `t` by a brace-enclosed list of expressions `es`. This corresponds
+// to the initialization of a variable by the syntax:
+//
+//    T x{e1, e2, ..., en};
+//
+// When the list of expressions is empty, this selects value
+// initialization.
+//
+// TODO: Implement me.
+Expr&
+list_initialize(Context& cxt, Type& t, Expr_list& es)
 {
   lingo_unimplemented();
 }
@@ -266,27 +289,24 @@ is_reference_compatible(Type const& t1, Type const& t2)
 }
 
 
-// Construct a reference initializer. This will produce temporary
-// bindings as needed.
+// Select an initialization of the refernce type `t1` by an expression
+// `e`.
 //
-// TODO: Without rvaule references, every reference is an lvalue
-// reference.
+// NOTE: This doesn't currently handle rvalue references (because the
+// language doesn't define them).
 //
 // TODO: A reference binding may invoke a conversion in order
 // to bind to a sub-objet or a user-defined conversion. However,
 // these aren't conversions in the standard sense.
+//
+// TODO: Finish implementing me.
 Expr&
-reference_initialize(Context& cxt, Reference_type& t1, Init& i)
+reference_initialize(Context& cxt, Reference_type& t1, Expr& e)
 {
   Builder build(cxt);
 
-  // Reference initializaiton must have a source object.
-  Expr* s = i.source();
-  if (!s)
-    throw std::runtime_error("reference initialized from multiple objects");
-  Type& t2 = s->type();
-
   // The initializer has reference type.
+  Type& t2 = e.type();
   if (is_reference_type(t2)) {
     // If t1 is reference-compatible with t2, then bind directly.
     //
@@ -294,7 +314,7 @@ reference_initialize(Context& cxt, Reference_type& t1, Init& i)
     // base class conversion in order to explicitly adjust pointer
     // offsets.
     if (is_reference_compatible(t1, t2))
-      return build.make_reference_init(t1, *s);
+      return build.make_bind_init(t1, e);
 
     // t2 has class type and has a user-defined conversion that is
     // reference compatible with t1, then bind the the to the
@@ -320,7 +340,7 @@ reference_initialize(Context& cxt, Reference_type& t1, Init& i)
 // Aggregate initialization
 
 Expr&
-aggregate_initialize(Context& cxt, Type& t, Brace_init& i)
+aggregate_initialize(Context& cxt, Type& t, Expr_list& i)
 {
   lingo_unimplemented();
 }
