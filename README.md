@@ -15,6 +15,38 @@ Banjo has several external dependencies.
 - [LLVM](http://llvm.org/) is a highly portable and optimizable intermediate   
   representation for programming languages.
 
+## Forking Banjo
+
+Use the fork feature on github to fork the repo to your page.
+
+Add the original repo to your upstream:
+
+```shell
+git remote add upstream https://github.com/asutton/banjo.git
+```
+
+Run
+
+```shell
+git remote -v
+```
+
+to make sure the upstream has been added.
+
+## Syncing your Fork
+
+To get the latest updates to Banjo:
+
+```shell
+git fetch upstream
+```
+
+To merge your local changes, checkout your local master and run:
+
+```shell
+git merge upstream/master
+```
+
 ## Building Banjo
 
 After cloning the repository (or a fork of the repository), go into the
