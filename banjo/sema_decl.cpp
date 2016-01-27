@@ -135,6 +135,54 @@ Parser::on_function_parameter(Name& n, Type& t)
 }
 
 
+// FIXME: Move these into a new module, sema_def.cpp,
+
+
+static inline void
+define_function(Function_decl& fn, Def& def)
+{
+  fn.def = &def;
+}
+
+
+// A helper function that hides the ugliness of assinging the
+// function definition.
+static inline void
+define_function(Decl& decl, Def& def)
+{
+  define_function(cast<Function_decl>(decl), def);
+}
+
+
+Function_def&
+Parser::on_function_definition(Decl& d, Stmt& s)
+{
+  Function_def& def = build.make_function_def(s);
+  define_function(d, def);
+  return def;
+}
+
+
+Deleted_def&
+Parser::on_deleted_definition(Decl& d)
+{
+  // FIXME: This could apply to other kinds of declarations too.
+  Deleted_def& def = build.make_deleted_def();
+  define_function(d, def);
+  return def;
+}
+
+
+Defaulted_def&
+Parser::on_defaulted_definition(Decl& d)
+{
+  // FIXME: This could apply to other kinds of declarations too.
+  Defaulted_def& def = build.make_defaulted_def();
+  define_function(d, def);
+  return def;
+}
+
+
 // -------------------------------------------------------------------------- //
 // Namespaces
 
@@ -143,13 +191,6 @@ Namespace_decl&
 Parser::on_namespace_declaration(Token, Name&, Decl_list&)
 {
   lingo_unimplemented();
-}
-
-
-Decl_list
-Parser::on_declaration_seq()
-{
-  return {};
 }
 
 

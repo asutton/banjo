@@ -67,6 +67,8 @@ enum Token_kind
   const_tok,
   decltype_tok,
   def_tok,
+  default_tok,
+  delete_tok,
   do_tok,
   double_tok,
   dynamic_tok,

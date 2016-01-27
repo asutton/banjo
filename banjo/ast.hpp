@@ -1670,9 +1670,20 @@ struct Stmt::Visitor
 // A blocked sequence of statements.
 struct Compound_stmt : Stmt
 {
+  Compound_stmt()
+    : Stmt()
+  { }
+
+  Compound_stmt(Stmt_list const& ss)
+    : Stmt(), stmts(ss)
+  { }
+
   void accept(Visitor& v) const { v.visit(*this); }
 
-  Stmt_list stms;
+  Stmt_list const& statements() const { return stmts; }
+  Stmt_list&       statements()       { return stmts; }
+
+  Stmt_list stmts;
 };
 
 
@@ -1680,7 +1691,15 @@ struct Compound_stmt : Stmt
 // the result.
 struct Expression_stmt : Stmt
 {
+  Expression_stmt(Expr& e)
+    : expr(&e)
+  { }
+
   void accept(Visitor& v) const { v.visit(*this); }
+
+  // Returns the expression of the statement.
+  Expr const& expression() const { return *expr; }
+  Expr&       expression()       { return *expr; }
 
   Expr* expr;
 };
@@ -1689,7 +1708,15 @@ struct Expression_stmt : Stmt
 // A statemnt that declares a variable.
 struct Declaration_stmt : Stmt
 {
+  Declaration_stmt(Decl& d)
+    : decl(&d)
+  { }
+
   void accept(Visitor& v) const { v.visit(*this); }
+
+  // Returns the declaration of the statement.
+  Decl const& declaration() const { return *decl; }
+  Decl&       declaration()       { return *decl; }
 
   Decl* decl;
 };
@@ -1704,7 +1731,9 @@ struct Return_stmt : Stmt
 
   void accept(Visitor& v) const { v.visit(*this); }
 
+  // Returns the expression returned by the statement.
   Expr const& expression() const { return *expr; }
+  Expr&       expression()       { return *expr; }
 
   Expr* expr;
 };
@@ -1753,11 +1782,11 @@ struct Enum_def;
 // and types is largely one of syntactic convenience. Care
 // must be taken to ensure that a class declaration does not
 // have e.g., a function definition (that doesn't make sense).
-struct Def
+struct Def : Term
 {
   struct Visitor;
 
-  virtual void accept(Visitor&) = 0;
+  virtual void accept(Visitor&) const = 0;
 };
 
 
@@ -1780,6 +1809,7 @@ struct Def::Visitor
 // be made far more general.
 struct Defaulted_def : Def
 {
+  void accept(Visitor& v) const { return v.visit(*this); }
 };
 
 
@@ -1789,6 +1819,7 @@ struct Defaulted_def : Def
 // variables) make sense for partial specializations.
 struct Deleted_def : Def
 {
+  void accept(Visitor& v) const { return v.visit(*this); }
 };
 
 
@@ -1799,13 +1830,26 @@ struct Deleted_def : Def
 // lists of member functions.
 struct Function_def : Def
 {
-  Stmt* first;
+  Function_def(Stmt& s)
+    : stmt(&s)
+  { }
+
+  void accept(Visitor& v) const { return v.visit(*this); }
+
+  // Returnse the statement associated with the function
+  // definition.
+  Stmt const& statement() const { return *stmt; }
+  Stmt&       statement()       { return *stmt; }
+
+  Stmt* stmt;
 };
 
 
 // A definition of a class.
 struct Class_def : Def
 {
+  void accept(Visitor& v) const { return v.visit(*this); }
+
   // List* first;  // bases
   // List* second; // members
 };
@@ -1814,12 +1858,14 @@ struct Class_def : Def
 // A definition of a union.
 struct Union_def : Def
 {
+  void accept(Visitor& v) const { return v.visit(*this); }
 };
 
 
 // A definition of an enumeration.
 struct Enum_def : Def
 {
+  void accept(Visitor& v) const { return v.visit(*this); }
 };
 
 
@@ -1840,13 +1886,12 @@ struct Generic_def_visitor : Def::Visitor, Generic_visitor<F, T>
 };
 
 
-// Apply a function to the given type.
 template<typename F, typename T = typename std::result_of<F(Defaulted_def const&)>::type>
-inline T
-apply(Def const& d, F fn)
+inline decltype(auto)
+apply(Def const& t, F fn)
 {
   Generic_def_visitor<F, T> vis(fn);
-  return accept(d, vis);
+  return accept(t, vis);
 }
 
 
@@ -2077,19 +2122,23 @@ struct Function_decl : Decl
 
   // Returns the function constraints. This is valid iff
   // is_constrained() is true.
-  Expr const& constraint() const { return *constr; }
-  Expr&       constraint()       { return *constr; }
+  Expr const& constraint() const     { return *constr; }
+  Expr&       constraint()           { return *constr; }
 
-  bool is_constrained() const { return constr; }
 
   // TODO: Implelemnt pre- and post-conditions.
   // Expr const& precondition() const  { return *constr; }
   // Expr const& postcondition() const { return *constr; }
 
-  Def const& definition() const { return *def; }
-  Def&       definition()       { return *def; }
+  Def const& definition() const    { return *def; }
+  Def&       definition()          { return *def; }
 
-  bool is_defined() const     { return def; }
+  // Returns true if this declaration has function constraints.
+  bool is_constrained() const { return constr; }
+
+
+  // Returns true iff this declaration is also a definition.
+  bool is_definition() const { return def; }
 
   Type*     ty;
   Decl_list parms;

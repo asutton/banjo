@@ -7,7 +7,7 @@ namespace banjo
 {
 
 
-// NOTE: Apparently GCC-4.9 does not provide a default hash 
+// NOTE: Apparently GCC-4.9 does not provide a default hash
 // function  for scalar types.
 struct Token_kind_hash
 {
@@ -107,6 +107,8 @@ init_tokens(Symbol_table& syms)
   init_token(syms, const_tok, "const");
   init_token(syms, decltype_tok, "decltype");
   init_token(syms, def_tok, "def");
+  init_token(syms, default_tok, "default");
+  init_token(syms, delete_tok, "delete");
   init_token(syms, do_tok, "do");
   init_token(syms, double_tok, "double");
   init_token(syms, dynamic_tok, "dynamic");

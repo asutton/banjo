@@ -17,21 +17,18 @@ Decl&
 Parser::declaration()
 {
   switch (lookahead()) {
-    case var_tok:
-      return variable_declaration();
-    case def_tok:
-      return function_declaration();
+    case var_tok: return variable_declaration();
+    case def_tok: return function_declaration();
+
     // case struct_tok:
     // case class_tok:
     //   return class_declaration();
-    // case enum_tok:
-    //   return enum_declaration();
-    case namespace_tok:
-      return namespace_declaration();
-    // case template_tok:
-    //   return template_declaration();
-    default:
-      break;
+
+    // case enum_tok: //   return enum_declaration();
+
+    case namespace_tok: return namespace_declaration();
+    // case template_tok:return template_declaration();
+    default: break;
   }
   throw Syntax_error("invalid declaration");
 }
@@ -174,7 +171,7 @@ Parser::function_declaration()
   if (lookahead() == semicolon_tok)
     match(semicolon_tok);
   else
-    function_definition();
+    function_definition(fn);
 
   return fn;
 }
@@ -247,9 +244,18 @@ Parser::parameter_declaration()
 //
 // TODO: Allow '= expression' as a viable definition.
 Def&
-Parser::function_definition()
+Parser::function_definition(Decl& d)
 {
-  lingo_unimplemented();
+  if (lookahead() == lbrace_tok) {
+    Stmt& s = compound_statement();
+    return on_function_definition(d, s);
+  } else if (match_if(eq_tok)) {
+    if (match_if(delete_tok))
+      return on_deleted_definition(d);
+    if (match_if(default_tok))
+      return on_defaulted_definition(d);
+  }
+  throw Syntax_error("expected function-definition");
 }
 
 

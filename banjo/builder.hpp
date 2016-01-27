@@ -82,11 +82,17 @@ struct Builder
   Not_expr&       make_not(Type&, Expr&);
   Call_expr&      make_call(Type&, Function_decl&, Expr_list const&);
 
+  // Initializers
   Trivial_init&   make_trivial_init(Type&);
   Copy_init&      make_copy_init(Type&, Expr&);
   Bind_init&      make_bind_init(Type&, Expr&);
   Direct_init&    make_direct_init(Type&, Decl&, Expr_list const&);
   Aggregate_init& make_aggregate_init(Type&, Expr_list const&);
+
+  // Definitions
+  Function_def&   make_function_def(Stmt&);
+  Deleted_def&    make_deleted_def();
+  Defaulted_def&  make_defaulted_def();
 
   Namespace_decl& make_namespace(Name&);
   Namespace_decl& make_namespace(char const*);
@@ -509,6 +515,27 @@ Builder::make_aggregate_init(Type& t, Expr_list const& es)
 
 // -------------------------------------------------------------------------- //
 // Definitions
+
+
+inline Function_def&
+Builder::make_function_def(Stmt& s)
+{
+  return make<Function_def>(s);
+}
+
+
+inline Deleted_def&
+Builder::make_deleted_def()
+{
+  return make<Deleted_def>();
+}
+
+
+inline Defaulted_def&
+Builder::make_defaulted_def()
+{
+  return make<Defaulted_def>();
+}
 
 
 // -------------------------------------------------------------------------- //

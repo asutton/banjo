@@ -54,8 +54,8 @@ struct Printer
   void operator()(Name const& n) { id(n); }
   void operator()(Type const& t) { type(t); }
   void operator()(Expr const& e) { expression(e); }
+  void operator()(Stmt const& s) { statement(s); }
   void operator()(Decl const& d) { declaration(d); }
-  void operator()(Init const& i) { initializer(i); }
 
   // Lexical terms.
   void space(Token_info);
@@ -119,6 +119,12 @@ struct Printer
   void unary_expression(Unary_expr const&, Token_kind);
   void binary_expression(Binary_expr const&, Token_kind);
 
+  // Statements
+  void statement(Stmt const&);
+  void expression_statement(Expression_stmt const&);
+  void declaration_statement(Declaration_stmt const&);
+  void compound_statement(Compound_stmt const&);
+
   // Initializers
   void initializer(Expr const&);
   void initializer(Init const&);
@@ -126,6 +132,12 @@ struct Printer
   void equal_initializer(Bind_init const&);
   void paren_initializer(Direct_init const&);
   void brace_initializer(Aggregate_init const&);
+
+  // Definitions
+  void function_definition(Def const&);
+  void function_definition(Function_def const&);
+  void function_definition(Deleted_def const&);
+  void function_definition(Defaulted_def const&);
 
   // Declarations
   void declaration(Decl const&);
@@ -164,8 +176,8 @@ std::ostream& operator<<(std::ostream&, Term const&);
 std::ostream& operator<<(std::ostream&, Name const&);
 std::ostream& operator<<(std::ostream&, Type const&);
 std::ostream& operator<<(std::ostream&, Expr const&);
+std::ostream& operator<<(std::ostream&, Stmt const&);
 std::ostream& operator<<(std::ostream&, Decl const&);
-std::ostream& operator<<(std::ostream&, Init const&);
 
 
 } // namespace banjo
