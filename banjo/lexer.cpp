@@ -91,8 +91,13 @@ Lexer::scan()
     case '*': get(); return symbol();
 
     case '/':
-      // FIXME: Implement '// omments
       get();
+      if (lookahead() == '/') {
+        get();
+        comment();
+        continue;
+      }
+
       return symbol();
 
     case '&':
@@ -162,6 +167,17 @@ Lexer::space()
 {
   while (is_space(cs_.peek()))
     cs_.ignore();
+}
+
+
+// Consume all characters through the end of line. Clear the character
+// cache before continuing.
+void
+Lexer::comment()
+{
+  while (lookahead() != '\n')
+    cs_.ignore();
+  buf_.clear();
 }
 
 
