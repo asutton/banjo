@@ -26,6 +26,8 @@ bool is_equivalent(Array_type const&, Array_type const&);
 bool is_equivalent(Sequence_type const&, Sequence_type const&);
 bool is_equivalent(User_defined_type const&, User_defined_type const&);
 
+bool are_same(Name const&, Name const&);
+
 
 template<typename T>
 inline bool
@@ -78,6 +80,31 @@ is_equivalent(Type const& t1, Type const& t2)
   return apply(t1, fn{t2});
 }
 
+bool are_Same(Name const& n1, Name const& n2){
+
+  // Need to check scope
+
+  //they are identifiers composed of the same character sequence
+  if (auto id1 = as<Simple_id>(&n1)){
+    if (auto id2 = as<Simple_id>(&n2)){
+      return id1->first->spelling() == id2->first->spelling();
+    }
+  }
+
+  // they are operator-function-ids formed with the same operator
+
+  // they are conversion-function-ids formed with the same type
+
+  // they are template-ids that refer to the same class or function
+  if (auto id1 = as<Template_id>(&n1)){
+    if (Template_id *id2 = as<Template_id>(&n2)){
+
+    }
+  }
+  // they are the names of literal operators (13.5.8) formed with the same literal suffix identifier.
+
+  return false;
+}
 
 bool
 is_equivalent(Void_type const&, Void_type const&)
