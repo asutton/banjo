@@ -179,17 +179,11 @@ struct Parser
   Variable_decl& on_variable_declaration(Token, Name&, Type&);
   Function_decl& on_function_declaration(Token, Name&, Decl_list&, Type&);
   Namespace_decl& on_namespace_declaration(Token, Name&, Decl_list&);
-<<<<<<< HEAD
   // Function parameters
   Object_parm& on_function_parameter(Name&, Type&);
   // Template parameters
   // Initializers
-=======
-  // Parameters
-  Object_parm& on_function_parameter(Name&, Type&);
 
-  Name& on_declarator(Name&);
->>>>>>> f374cef30efe3f708b4606418a83321a9821af31
   Expr& on_default_initialization(Decl&);
   Expr& on_equal_initialization(Decl&, Expr&);
   Expr& on_paren_initialization(Decl&, Expr_list&);

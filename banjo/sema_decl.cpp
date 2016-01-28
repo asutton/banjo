@@ -170,8 +170,6 @@ Parser::on_namespace_declaration(Token, Name&, Decl_list&)
 }
 
 
-<<<<<<< HEAD
-=======
 // -------------------------------------------------------------------------- //
 // Translation units
 
@@ -186,6 +184,4 @@ Parser::on_translation_unit(Decl_list& ds)
 }
 
 
-
->>>>>>> f374cef30efe3f708b4606418a83321a9821af31
 } // namespace banjo

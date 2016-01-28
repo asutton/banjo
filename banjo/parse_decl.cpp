@@ -170,16 +170,11 @@ Parser::function_declaration()
   // Parse the definition, if any.
   if (lookahead() == semicolon_tok) {
     match(semicolon_tok);
-<<<<<<< HEAD
-  else
-    function_definition(fn);
-=======
   } else {
     // Enter function scope and parse the function definition.
     Enter_scope fscope(*this, fn);
-    function_definition();
+    function_definition(fn);
   }
->>>>>>> f374cef30efe3f708b4606418a83321a9821af31
 
   return fn;
 }
@@ -283,45 +278,6 @@ Parser::namespace_declaration()
 
 
 // -------------------------------------------------------------------------- //
-// Template parameters
-
-// Parse a template parameter list.
-//
-//    template-parameter-list:
-//      template-parameter
-//      template-parameter-list template parameter
-Decl_list
-Parser::template_parameter_list()
-{
-  lingo_unimplemented();
-}
-
-
-// Parse a template parameter declaration:
-//
-//    template-parameter:
-//      type-template-parameter
-//      value-template-parameter
-//      template-template-declaration
-Decl&
-Parser::template_parameter()
-{
-  lingo_unimplemented();
-}
-
-
-// Parse a typename declaration.
-//
-//    typename-declaration:
-//      'typename' identifier ['=' type]
-Decl&
-Parser::type_template_parameter()
-{
-  lingo_unimplemented();
-}
-
-
-// -------------------------------------------------------------------------- //
 // Template declarations
 
 // Parse a template declaration.
@@ -390,15 +346,20 @@ Parser::template_parameter()
 }
 
 
-// Parse a template parameter.
+// Parse a type template parameter.
+//
+//    type-template-parameter:
+//        typename [identifier] ['='' type]
 Decl&
 Parser::type_template_parameter()
 {
   match(typename_tok);
-  Tok id = identifier();
-  if (lookahead() == eq_tok) {
 
-  }
+  Token id = match_if(identifier_tok);
+
+  // FIXME: Handle the default arguments.
+
+  lingo_unimplemented();
 }
 
 
@@ -459,24 +420,13 @@ Parser::declarator()
 Decl_list
 Parser::declaration_seq()
 {
-<<<<<<< HEAD
-  // FIXME: Catch declaration errors and continue parsing.
-  //
-  // FIXME: I don't like starts_declaration. What are the different
-  // ways that we can end the loop. EOF or '}'. Anything else?
-  declaration();
-  while (starts_declaration(*this))
-    declaration();
-
-  return {};
-=======
   Decl_list ds;
+  // FIXME: Catch declaration errors and continue parsing.
   do {
     Decl& d = declaration();
     ds.push_back(d);
   } while (peek() && lookahead() != rbrace_tok);
   return ds;
->>>>>>> f374cef30efe3f708b4606418a83321a9821af31
 }
 
 
