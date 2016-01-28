@@ -4,28 +4,171 @@
 #include "hash.hpp"
 #include "ast.hpp"
 
+#include <typeinfo>
 
 namespace banjo
 {
 
-std::size_t hash_value(Type const&);
-std::size_t hash_value(Void_type const&);
-std::size_t hash_value(Boolean_type const&);
-std::size_t hash_value(Integer_type const&);
-std::size_t hash_value(Float_type const&);
-std::size_t hash_value(Auto_type const&);
-std::size_t hash_value(Decltype_type const&);
-std::size_t hash_value(Declauto_type const&);
-std::size_t hash_value(Function_type const&);
+// Returns an initial hash value for an object of type T.
+template<typename T>
+std::size_t hash_init(T const& t)
+{
+  return typeid(t).hash_code();
+}
 
 
-// Default hash values for empty types.
-enum {
-  void_type_hash     = 0,
-  bool_type_hash     = 1,
-  auto_type_hash     = 2,
-  declauto_type_hash = 3
-};
+// -------------------------------------------------------------------------- //
+// Names
+
+
+inline std::size_t
+hash_value(Simple_id const& n)
+{
+  std::size_t h = hash_init(n);
+  boost::hash_combine(h, &n.symbol());
+  return h;
+}
+
+
+inline std::size_t
+hash_value(Global_id const& n)
+{
+  return hash_init(n);
+}
+
+
+inline std::size_t
+hash_value(Placeholder_id const&)
+{
+  lingo_unimplemented();
+}
+
+
+inline std::size_t
+hash_value(Operator_id const&)
+{
+  lingo_unimplemented();
+}
+
+
+inline std::size_t
+hash_value(Conversion_id const&)
+{
+  lingo_unimplemented();
+}
+
+
+inline std::size_t
+hash_value(Literal_id const&)
+{
+  lingo_unimplemented();
+}
+
+
+inline std::size_t
+hash_value(Destructor_id const&)
+{
+  lingo_unimplemented();
+}
+
+
+inline std::size_t
+hash_value(Template_id const&)
+{
+  lingo_unimplemented();
+}
+
+
+inline std::size_t
+hash_value(Qualified_id const&)
+{
+  lingo_unimplemented();
+}
+
+
+std::size_t
+hash_value(Name const& n)
+{
+  struct fn
+  {
+    std::size_t operator()(Simple_id const& n)      { return hash_value(n); }
+    std::size_t operator()(Global_id const& n)      { return hash_value(n); }
+    std::size_t operator()(Placeholder_id const& n) { return hash_value(n); }
+    std::size_t operator()(Operator_id const& n)    { return hash_value(n); }
+    std::size_t operator()(Conversion_id const& n)  { return hash_value(n); }
+    std::size_t operator()(Literal_id const& n)     { return hash_value(n); }
+    std::size_t operator()(Destructor_id const& n)  { return hash_value(n); }
+    std::size_t operator()(Template_id const& n)    { return hash_value(n); }
+    std::size_t operator()(Qualified_id const& n)   { return hash_value(n); }
+  };
+  return apply(n, fn{});
+}
+
+
+// -------------------------------------------------------------------------- //
+// Types
+
+inline std::size_t
+hash_value(Void_type const& t)
+{
+  return hash_init(t);
+}
+
+
+inline std::size_t
+hash_value(Boolean_type const& t)
+{
+  return hash_init(t);
+}
+
+
+inline std::size_t
+hash_value(Integer_type const& t)
+{
+  std::size_t h = hash_init(t);
+  boost::hash_combine(h, t.sign());
+  boost::hash_combine(h, t.precision());
+  return h;
+}
+
+inline std::size_t
+hash_value(Float_type const& t)
+{
+  std::size_t h = hash_init(t);
+  boost::hash_combine(h, t.precision());
+  return h;
+}
+
+
+inline std::size_t
+hash_value(Auto_type const& t)
+{
+  lingo_unreachable();
+}
+
+
+inline std::size_t
+hash_value(Decltype_type const&)
+{
+  lingo_unreachable();
+}
+
+
+inline std::size_t
+hash_value(Declauto_type const& t)
+{
+  lingo_unreachable();
+}
+
+
+inline std::size_t
+hash_value(Function_type const& t)
+{
+  std::size_t h = hash_init(t);
+  boost::hash_combine(h, t.parameter_types());
+  boost::hash_combine(h, t.return_type());
+  return h;
+}
 
 
 // Compute the hash value of a type.
@@ -52,69 +195,8 @@ hash_value(Type const& t)
     std::size_t operator()(Enum_type const& t) const      { lingo_unimplemented(); }
     std::size_t operator()(Typename_type const& t) const  { lingo_unimplemented(); }
   };
-
   return apply(t, fn{});
 }
-
-
-std::size_t
-hash_value(Void_type const&)
-{
-  return void_type_hash;
-}
-
-std::size_t
-hash_value(Boolean_type const&)
-{
-  return bool_type_hash;
-}
-
-std::size_t
-hash_value(Integer_type const& t)
-{
-  std::size_t seed = 0;
-  boost::hash_combine(seed, t.is_signed());
-  boost::hash_combine(seed, t.precision());
-  return seed;
-}
-
-std::size_t
-hash_value(Float_type const& t)
-{
-  return t.precision();
-}
-
-
-std::size_t
-hash_value(Auto_type const&)
-{
-  return auto_type_hash;
-}
-
-
-std::size_t
-hash_value(Decltype_type const&)
-{
-  lingo_unreachable();
-}
-
-
-std::size_t
-hash_value(Declauto_type const&)
-{
-  return declauto_type_hash;
-}
-
-
-std::size_t
-hash_value(Function_type const& t)
-{
-  std::size_t seed = 0;
-  boost::hash_combine(seed, t.parameter_types());
-  boost::hash_combine(seed, t.return_type());
-  return seed;
-}
-
 
 
 } // namespace banjo

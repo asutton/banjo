@@ -155,23 +155,31 @@ Parser::function_declaration()
   Token tok = require(def_tok);
   Name& n = declarator();
 
-  // FIXME: Create a scope for parameters so that they can
-  // be resolved during the parsing of the return type.
-  Decl_list p;
+  // Enter function parameter scope and parse function parameters.
+  Enter_scope pscope(*this, make_function_parameter_scope());
+  Decl_list ps;
   match(lparen_tok);
   if (lookahead() != rparen_tok)
-    p = parameter_list();
+    ps = parameter_list();
   match(rparen_tok);
   Type& t = return_type();
 
-  // Point of declaration. Enter function scope.
-  Function_decl& fn = on_function_declaration(tok, n, p, t);
+  // Point of declaration.
+  Function_decl& fn = on_function_declaration(tok, n, ps, t);
 
   // Parse the definition, if any.
-  if (lookahead() == semicolon_tok)
+  if (lookahead() == semicolon_tok) {
     match(semicolon_tok);
+<<<<<<< HEAD
   else
     function_definition(fn);
+=======
+  } else {
+    // Enter function scope and parse the function definition.
+    Enter_scope fscope(*this, fn);
+    function_definition();
+  }
+>>>>>>> f374cef30efe3f708b4606418a83321a9821af31
 
   return fn;
 }
@@ -439,38 +447,19 @@ Parser::declarator()
 // Miscellaneous
 
 
-
-// Returns true if the current token kind indicates
-// the start of a declaration.
-//
-// TODO: There shoud be a simpler formulation.
-inline bool
-starts_declaration(Parser& p)
-{
-  switch (p.lookahead()) {
-    case var_tok:
-    case def_tok:
-    case struct_tok:
-    case class_tok:
-    case union_tok:
-    case enum_tok:
-    case namespace_tok:
-    case template_tok:
-      return true;
-    default:
-      return false;
-  }
-}
-
 // Parse a declaration sequence.
 //
 //    declaration-seq:
 //      declaration
 //      declaration-seq declaration
 //
+// Note that declaration-seqs is only referenced from translation-unit
+// and namespace-definition. Therefore, it must terminate on EOF or
+// a '}'.
 Decl_list
 Parser::declaration_seq()
 {
+<<<<<<< HEAD
   // FIXME: Catch declaration errors and continue parsing.
   //
   // FIXME: I don't like starts_declaration. What are the different
@@ -480,6 +469,14 @@ Parser::declaration_seq()
     declaration();
 
   return {};
+=======
+  Decl_list ds;
+  do {
+    Decl& d = declaration();
+    ds.push_back(d);
+  } while (peek() && lookahead() != rbrace_tok);
+  return ds;
+>>>>>>> f374cef30efe3f708b4606418a83321a9821af31
 }
 
 

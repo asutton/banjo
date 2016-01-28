@@ -4,6 +4,7 @@
 #include "parser.hpp"
 #include "scope.hpp"
 #include "overload.hpp"
+#include "print.hpp"
 
 #include <iostream>
 
@@ -26,50 +27,25 @@ Decl* declare(Namespace_decl&, Decl&);
 Decl* declare(Overload_set&, Decl&);
 
 
-// Save a declaration `d` in the declaration context `cxt`.
-// If `d` is a re-declaration, returns a pointer to (the most
-// recent version of) `d`.
-Decl*
-declare(Decl& cxt, Decl& d)
-{
-  struct fn
-  {
-    Decl& d;
-    Decl* operator()(Decl& cxt)           { lingo_unimplemented(); }
-    Decl* operator()(Namespace_decl& cxt) { return declare(cxt, d); }
-  };
-  return apply(cxt, fn{d});
-}
-
-
+// Try to declare a name binding in the current scope.
+//
+// FIXME: The specific rules probably depend on a) the kind of scope,
+// and b) the kind of declaration.
+//
+// FIXME: Check for re-declaration and overloading. This probably
+// requires that we match on the entity declared.
+//
 // FIXME: If `d`'s name is a qualified-id, then we need to adjust
 // the context to that specified by `d`s nested name specifier.
 Decl*
-declare(Namespace_decl& cxt, Decl& d)
+declare(Scope& scope, Decl& d)
 {
-  Scope& scope = *cxt.scope();
-
-  // If there is already a declaration of `d` in this scope, then
-  // we are either re-declaring `d` or adding an overload.
-  //
-  // TODO: Implement re-declaration.
-  Decl* r = nullptr;
-  if (Binding* bind = scope.lookup(d.declared_name()))
-    declare(bind->second, d);
-  else
+  if (Overload_set* ovl = scope.lookup(d.declared_name())) {
+    return declare(*ovl, d);
+  } else {
     scope.bind(d);
-
-  // If declaration is successful, add `d` to the list of
-  // declarations in `cxt`.
-  //
-  // FIXME: This is fundamentally broken. The addition of declarations
-  // to the context may be a somewhat different operation than
-  // establishing the binding. For examples, parameters are not
-  // added to an enclosing context.
-  if (!is<Object_parm>(&d))
-    cxt.members().push_back(d);
-
-  return r;
+    return nullptr;
+  }
 }
 
 
@@ -108,7 +84,7 @@ Variable_decl&
 Parser::on_variable_declaration(Token, Name& n, Type& t)
 {
   Variable_decl& var = build.make_variable(n, t);
-  declare(current_context(), var);
+  declare(current_scope(), var);
   return var;
 }
 
@@ -121,7 +97,7 @@ Function_decl&
 Parser::on_function_declaration(Token, Name& n, Decl_list& ps, Type& t)
 {
   Function_decl& fn = build.make_function(n, ps, t);
-  declare(current_context(), fn);
+  declare(current_scope(), fn);
   return fn;
 }
 
@@ -130,7 +106,7 @@ Object_parm&
 Parser::on_function_parameter(Name& n, Type& t)
 {
   Object_parm& parm = build.make_object_parm(n, t);
-  declare(current_context(), parm);
+  declare(current_scope(), parm);
   return parm;
 }
 
@@ -194,4 +170,22 @@ Parser::on_namespace_declaration(Token, Name&, Decl_list&)
 }
 
 
+<<<<<<< HEAD
+=======
+// -------------------------------------------------------------------------- //
+// Translation units
+
+
+// Merge the parsed declarations into the global namespace.
+Namespace_decl&
+Parser::on_translation_unit(Decl_list& ds)
+{
+  Namespace_decl& ns = cxt.global_namespace();
+  ns.decls.append(ds.begin(), ds.end());
+  return ns;
+}
+
+
+
+>>>>>>> f374cef30efe3f708b4606418a83321a9821af31
 } // namespace banjo

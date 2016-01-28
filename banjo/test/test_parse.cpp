@@ -51,6 +51,6 @@ main(int argc, char* argv[])
   if (error_count())
     return 1;
 
-  std::cout << unit << '\n';
+  std::cout << unit;
 
 }

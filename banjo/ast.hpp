@@ -83,6 +83,10 @@ struct List_iterator<T const>
     : iter(i)
   { }
 
+  List_iterator(List_iterator<T> i)
+    : iter(i.iter)
+  { }
+
   reference operator*() const { return **iter; }
   pointer  operator->() const { return *iter; }
 
@@ -129,12 +133,29 @@ struct List : Term, std::vector<T*>
   void push_back(T& x) { base().push_back(&x); }
   void push_back(T* x) { base().push_back(x); }
 
+  template<typename I>
+  void append(I, I);
+
   iterator begin() { return base().begin(); }
   iterator end()   { return base().end(); }
 
   const_iterator begin() const { return base().begin(); }
   const_iterator end() const   { return base().end(); }
 };
+
+
+// Insert a range of iterators at the end of the list.
+template<typename T>
+template<typename I>
+inline void
+List<T>::append(I first, I last)
+{
+  while (first != last) {
+    push_back(*first);
+    ++first;
+  }
+}
+
 
 
 // Lists

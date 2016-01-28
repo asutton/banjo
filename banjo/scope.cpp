@@ -19,21 +19,13 @@ Scope::Scope(Decl& cxt, Decl& d)
 { }
 
 
-// FIXME: I don't like this.
-Binding&
-Scope::bind(Name const& n, Decl& d)
-{
-  lingo_assert(!count(n));
-  return Base::bind(&n, {&d});
-}
-
-
-// Create a binding for the declaration `d`.
+// Register a name binding for the declaration `d`.
 Binding&
 Scope::bind(Decl& d)
 {
   return bind(d.declared_name(), d);
 }
+
 
 
 Namespace_decl const&

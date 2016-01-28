@@ -104,11 +104,44 @@ Parser::accept()
 // namespace, `s` must be linked through its enclosing scopes
 // to the global namespace.
 //
-// Use Parser::Scope_sentinel to enter a new scope.
+// Do not call this function directly. Use Parser::Scope_sentinel
+// to enter a new scope, and guarantee cleanup and scope exit.
 void
-Parser::enter_scope(Scope& s)
+Parser::set_scope(Scope& s)
 {
   state.scope = &s;
+}
+
+
+// Create a new initializer scope.
+Scope&
+Parser::make_initializer_scope(Variable_decl& var)
+{
+  return *new Initializer_scope(current_scope(), var);
+}
+
+
+// Create a new function scope.
+Scope&
+Parser::make_function_scope(Function_decl& fn)
+{
+  return *new Function_scope(current_scope(), fn);
+}
+
+
+// Create a new function parameter scope.
+Scope&
+Parser::make_function_parameter_scope()
+{
+  return *new Function_parameter_scope(current_scope());
+}
+
+
+// Create a new template parameter scope.
+Scope&
+Parser::make_template_parameter_scope()
+{
+  return *new Template_parameter_scope(current_scope());
 }
 
 
@@ -146,9 +179,10 @@ Term&
 Parser::translation_unit()
 {
   Enter_scope scope(*this, cxt.global_namespace());
+  Decl_list ds;
   if (peek())
-    declaration_seq();
-  return cxt.global_namespace();
+    ds = declaration_seq();
+  return on_translation_unit(ds);
 }
 
 

@@ -13,9 +13,11 @@
 namespace banjo
 {
 
+struct Name;
 struct Type;
 
 
+bool is_equivalent(Name const&, Name const&);
 bool is_equivalent(Type const&, Type const&);
 
 
@@ -30,20 +32,9 @@ struct Term_eq
 };
 
 
+using Name_eq = Term_eq<Name>;
 using Type_eq = Term_eq<Type>;
 
-
-
-
-
-// -------------------------------------------------------------------------- //
-// Equivalence closure
-
-template<typename T>
-struct Equivalence_closure
-{
-
-};
 
 } // namespace banjo
 
