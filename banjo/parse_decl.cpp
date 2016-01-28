@@ -17,19 +17,22 @@ Decl&
 Parser::declaration()
 {
   switch (lookahead()) {
-    case var_tok: return variable_declaration();
-    case def_tok: return function_declaration();
-
-    // case struct_tok:
-    // case class_tok:
-    //   return class_declaration();
-
-    // case enum_tok: //   return enum_declaration();
-
-    case namespace_tok: return namespace_declaration();
-    // case template_tok:return template_declaration();
+    case var_tok:
+      return variable_declaration();
+    case def_tok:
+      return function_declaration();
+    case struct_tok:
+    case class_tok:
+      lingo_unimplemented();
+    case enum_tok:
+      lingo_unimplemented();
+    case namespace_tok:
+      return namespace_declaration();
+    case template_tok:
+      return template_declaration();
     default: break;
   }
+  std::cout << "HERE: " << peek() << '\n';
   throw Syntax_error("invalid declaration");
 }
 
@@ -294,14 +297,14 @@ Parser::template_declaration()
 
   // TODO: Allow >> to close the template parameter list in the
   // case of default template arguments.
+  Enter_scope scope(*this, make_template_parameter_scope());
   match(lt_tok);
-  Decl_list p = template_parameter_list();
+  Decl_list ps = template_parameter_list();
   match(gt_tok);
 
-  Decl& d = declaration();
-
-  // FIXME: Semantic analysis?
-  return d;
+  // Parse the underlying declaration.
+  Parsing_template save(*this, ps);
+  return declaration();
 }
 
 
@@ -350,16 +353,34 @@ Parser::template_parameter()
 //
 //    type-template-parameter:
 //        typename [identifier] ['='' type]
+//
+// Note that the point of declaration for a template parameter is
+// past the full definition (after the default argument, if present).
 Decl&
 Parser::type_template_parameter()
 {
   match(typename_tok);
 
-  Token id = match_if(identifier_tok);
+  // Get the optional identifier. Create a placeholder
+  // if no name is given.
+  Name* n;
+  if (Token id = match_if(identifier_tok))
+    n = &on_simple_id(id);
+  else
+    n = &build.get_id();
 
-  // FIXME: Handle the default arguments.
+  // Parse the default argument.
+  Type* t = nullptr;
+  if (lookahead() == eq_tok)
+    t = &type();
 
-  lingo_unimplemented();
+  // Point of declaration.
+  Decl* d;
+  if (t)
+    d = &on_type_template_parameter(*n, *t);
+  else
+    d = &on_type_template_parameter(*n);
+  return *d;
 }
 
 

@@ -919,6 +919,7 @@ Printer::variable_declaration(Variable_decl const& d)
   space();
   id(d.name());
   if (d.has_initializer()) {
+    // FIXME: This is printing a space for trivial initializers.
     space();
     initializer(d.initializer());
   }

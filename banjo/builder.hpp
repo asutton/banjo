@@ -1,3 +1,4 @@
+
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
@@ -121,6 +122,8 @@ struct Builder
   Value_parm&  make_value_parm(char const*, Type&);
   Type_parm&   make_type_parameter(Name&);
   Type_parm&   make_type_parameter(char const*);
+  Type_parm&   make_type_parameter(Name&, Type&);
+  Type_parm&   make_type_parameter(char const*, Type&);
 
   // Resources
   Symbol_table& symbols() { return cxt.symbols(); }
@@ -681,6 +684,22 @@ inline Type_parm&
 Builder::make_type_parameter(char const* n)
 {
   return make_type_parameter(get_id(n));
+}
+
+
+// Make a type parameter with a default type.
+inline Type_parm&
+Builder::make_type_parameter(Name& n, Type& t)
+{
+  return make<Type_parm>(n, t);
+}
+
+
+// Make a type parameter with a default type.
+inline Type_parm&
+Builder::make_type_parameter(char const* n, Type& t)
+{
+  return make_type_parameter(get_id(n), t);
 }
 
 

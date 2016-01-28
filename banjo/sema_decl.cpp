@@ -171,6 +171,27 @@ Parser::on_namespace_declaration(Token, Name&, Decl_list&)
 
 
 // -------------------------------------------------------------------------- //
+// Templates
+
+Type_parm&
+Parser::on_type_template_parameter(Name& n)
+{
+  Type_parm& parm = build.make_type_parameter(n);
+  declare(current_scope(), parm);
+  return parm;
+}
+
+
+Type_parm&
+Parser::on_type_template_parameter(Name& n, Type& t)
+{
+  Type_parm& parm = build.make_type_parameter(n, t);
+  declare(current_scope(), parm);
+  return parm;
+}
+
+
+// -------------------------------------------------------------------------- //
 // Translation units
 
 

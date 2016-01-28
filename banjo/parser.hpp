@@ -181,6 +181,8 @@ struct Parser
   Namespace_decl& on_namespace_declaration(Token, Name&, Decl_list&);
   // Function parameters
   Object_parm& on_function_parameter(Name&, Type&);
+  Type_parm& on_type_template_parameter(Name&, Type&);
+  Type_parm& on_type_template_parameter(Name&);
   // Template parameters
   // Initializers
 
@@ -222,7 +224,8 @@ struct Parser
   // Maintains the current parse state.
   struct State
   {
-    Scope* scope;                    // The current scope.
+    Scope*     scope;                    // The current scope.
+    Decl_list* template_parms = nullptr; // The current (innermost) template parameters
 
     // Parsing flags.
     bool parsing_declarator = false; // True if parsing a declarator.
@@ -232,6 +235,7 @@ struct Parser
 
   struct Enter_scope;
   struct Assume_template;
+  struct Parsing_template;
 
   Context&      cxt;
   Builder       build;
@@ -316,6 +320,26 @@ struct Parser::Assume_template
 
   Parser& parser;
   bool    saved;
+};
+
+
+// An RAII helper that manages parsing state related to the parsing
+// of a declaration nested within a template.
+struct Parser::Parsing_template
+{
+  Parsing_template(Parser& p, Decl_list& ps)
+    : parser(p), saved(p.state.template_parms)
+  {
+    parser.state.template_parms = &ps;
+  }
+
+  ~Parsing_template()
+  {
+    parser.state.template_parms = saved;
+  }
+
+  Parser&    parser;
+  Decl_list* saved;
 };
 
 

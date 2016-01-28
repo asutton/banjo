@@ -2365,11 +2365,11 @@ struct Variadic_parm : Decl
 struct Type_parm : Decl
 {
   Type_parm(Name& n)
-    : Decl(n), init()
+    : Decl(n), def()
   { }
 
-  Type_parm(Name& n, Init& d)
-    : Decl(n), init(&d)
+  Type_parm(Name& n, Type& t)
+    : Decl(n), def(&t)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -2377,12 +2377,12 @@ struct Type_parm : Decl
 
   // Returns the default argument for the parameter.
   // This is valid iff has_default_arguement() is true.
-  Init const& default_argument() const { return *init; }
-  Init&       default_argument()       { return *init; }
+  Type const& default_argument() const { return *def; }
+  Type&       default_argument()       { return *def; }
 
-  bool has_default_arguement() const { return init; }
+  bool has_default_arguement() const { return def; }
 
-  Init* init;
+  Type* def;
 };
 
 
