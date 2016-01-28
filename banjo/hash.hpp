@@ -13,6 +13,7 @@ namespace banjo
 struct Type;
 
 
+std::size_t hash_value(Name const&);
 std::size_t hash_value(Type const&);
 
 
@@ -26,6 +27,7 @@ struct Term_hash
 };
 
 
+using Name_hash = Term_hash<Name>;
 using Type_hash = Term_hash<Type>;
 
 

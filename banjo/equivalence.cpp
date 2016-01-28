@@ -10,22 +10,6 @@
 namespace banjo
 {
 
-bool is_equivalent(Type const&, Type const&);
-bool is_equivalent(Void_type const&, Void_type const&);
-bool is_equivalent(Boolean_type const&, Boolean_type const&);
-bool is_equivalent(Integer_type const&, Integer_type const&);
-bool is_equivalent(Float_type const&, Float_type const&);
-bool is_equivalent(Auto_type const&, Auto_type const&);
-bool is_equivalent(Decltype_type const&, Decltype_type const&);
-bool is_equivalent(Declauto_type const&, Declauto_type const&);
-bool is_equivalent(Function_type const&, Function_type const&);
-bool is_equivalent(Qualified_type const&, Qualified_type const&);
-bool is_equivalent(Reference_type const&, Reference_type const&);
-bool is_equivalent(Pointer_type const&, Pointer_type const&);
-bool is_equivalent(Array_type const&, Array_type const&);
-bool is_equivalent(Sequence_type const&, Sequence_type const&);
-bool is_equivalent(User_defined_type const&, User_defined_type const&);
-
 
 template<typename T>
 inline bool
@@ -38,47 +22,108 @@ is_equivalent(List<T> const& a, List<T> const& b)
 }
 
 
-// Returns true if the types a and b are equivalent.
-//
-// TODO: Finish implementing this function.
+// -------------------------------------------------------------------------- //
+// Names
+
+// Two simple-ids are equal iff they have the same spelling. This is the
+// case when the underlying symbols are the same.
+inline bool
+is_equivalent(Simple_id const& n1, Simple_id const& n2)
+{
+  return &n1.symbol() == &n2.symbol();
+}
+
+
+inline bool
+is_equivalent(Global_id const& n1, Global_id const& n2)
+{
+  lingo_unimplemented();
+}
+
+
+inline bool
+is_equivalent(Placeholder_id const& n1, Placeholder_id const& n2)
+{
+  lingo_unimplemented();
+}
+
+
+inline bool
+is_equivalent(Operator_id const& n1, Operator_id const& n2)
+{
+  lingo_unimplemented();
+}
+
+
+inline bool
+is_equivalent(Conversion_id const& n1, Conversion_id const& n2)
+{
+  lingo_unimplemented();
+}
+
+
+inline bool
+is_equivalent(Literal_id const& n1, Literal_id const& n2)
+{
+  lingo_unimplemented();
+}
+
+
+inline bool
+is_equivalent(Destructor_id const& n1, Destructor_id const& n2)
+{
+  lingo_unimplemented();
+}
+
+
+inline bool
+is_equivalent(Template_id const& n1, Template_id const& n2)
+{
+  lingo_unimplemented();
+}
+
+
+inline bool
+is_equivalent(Qualified_id const& n1, Qualified_id const& n2)
+{
+  lingo_unimplemented();
+}
+
+
 bool
-is_equivalent(Type const& t1, Type const& t2)
+is_equivalent(Name const& n1, Name const& n2)
 {
   struct fn
   {
-    Type const& t2;
-    bool operator()(Void_type const& t1) const         { return is_equivalent(t1, cast<Void_type>(t2)); }
-    bool operator()(Boolean_type const& t1) const      { return is_equivalent(t1, cast<Boolean_type>(t2)); }
-    bool operator()(Integer_type const& t1) const      { return is_equivalent(t1, cast<Integer_type>(t2)); }
-    bool operator()(Float_type const& t1) const        { return is_equivalent(t1, cast<Float_type>(t2)); }
-    bool operator()(Auto_type const& t1) const         { return is_equivalent(t1, cast<Auto_type>(t2)); }
-    bool operator()(Decltype_type const& t1) const     { return is_equivalent(t1, cast<Decltype_type>(t2)); }
-    bool operator()(Declauto_type const& t1) const     { return is_equivalent(t1, cast<Declauto_type>(t2)); }
-    bool operator()(Function_type const& t1) const     { return is_equivalent(t1, cast<Function_type>(t2)); }
-    bool operator()(Qualified_type const& t1) const    { return is_equivalent(t1, cast<Qualified_type>(t2)); }
-    bool operator()(Reference_type const& t1) const    { return is_equivalent(t1, cast<Reference_type>(t2)); }
-    bool operator()(Pointer_type const& t1) const      { return is_equivalent(t1, cast<Pointer_type>(t2)); }
-    bool operator()(Array_type const& t1) const        { return is_equivalent(t1, cast<Array_type>(t2)); }
-    bool operator()(Sequence_type const& t1) const     { return is_equivalent(t1, cast<Sequence_type>(t2)); }
-    bool operator()(User_defined_type const& t1) const { return is_equivalent(t1, cast<User_defined_type>(t2)); }
-    bool operator()(Typename_type const& t1) const     { lingo_unimplemented(); }
+    Name const& n2;
+    bool operator()(Simple_id const& n1)      { return is_equivalent(n1, cast<Simple_id>(n2)); }
+    bool operator()(Global_id const& n1)      { return is_equivalent(n1, cast<Global_id>(n2)); }
+    bool operator()(Placeholder_id const& n1) { return is_equivalent(n1, cast<Placeholder_id>(n2)); }
+    bool operator()(Operator_id const& n1)    { return is_equivalent(n1, cast<Operator_id>(n2)); }
+    bool operator()(Conversion_id const& n1)  { return is_equivalent(n1, cast<Conversion_id>(n2)); }
+    bool operator()(Literal_id const& n1)     { return is_equivalent(n1, cast<Literal_id>(n2)); }
+    bool operator()(Destructor_id const& n1)  { return is_equivalent(n1, cast<Destructor_id>(n2)); }
+    bool operator()(Template_id const& n1)    { return is_equivalent(n1, cast<Template_id>(n2)); }
+    bool operator()(Qualified_id const& n1)   { return is_equivalent(n1, cast<Qualified_id>(n2)); }
   };
 
   // The same objects represent the same types.
-  if (&t1 == &t2)
+  if (&n1 == &n2)
     return true;
 
   // Types of different kinds are not the same.
-  std::type_index ti1 = typeid(t1);
-  std::type_index ti2 = typeid(t2);
+  std::type_index ti1 = typeid(n1);
+  std::type_index ti2 = typeid(n2);
   if (ti1 != ti2)
     return false;
 
   // Find a comparison of the types.
-  return apply(t1, fn{t2});
+  return apply(n1, fn{n2});
 }
 
 
+// -------------------------------------------------------------------------- //
+// Types
 bool
 is_equivalent(Void_type const&, Void_type const&)
 {
@@ -179,6 +224,47 @@ bool
 is_equivalent(User_defined_type const& t1, User_defined_type const& t2)
 {
   return &t1.declaration() == &t2.declaration();
+}
+
+
+// Returns true if the types a and b are equivalent.
+//
+// TODO: Finish implementing this function.
+bool
+is_equivalent(Type const& t1, Type const& t2)
+{
+  struct fn
+  {
+    Type const& t2;
+    bool operator()(Void_type const& t1) const         { return is_equivalent(t1, cast<Void_type>(t2)); }
+    bool operator()(Boolean_type const& t1) const      { return is_equivalent(t1, cast<Boolean_type>(t2)); }
+    bool operator()(Integer_type const& t1) const      { return is_equivalent(t1, cast<Integer_type>(t2)); }
+    bool operator()(Float_type const& t1) const        { return is_equivalent(t1, cast<Float_type>(t2)); }
+    bool operator()(Auto_type const& t1) const         { return is_equivalent(t1, cast<Auto_type>(t2)); }
+    bool operator()(Decltype_type const& t1) const     { return is_equivalent(t1, cast<Decltype_type>(t2)); }
+    bool operator()(Declauto_type const& t1) const     { return is_equivalent(t1, cast<Declauto_type>(t2)); }
+    bool operator()(Function_type const& t1) const     { return is_equivalent(t1, cast<Function_type>(t2)); }
+    bool operator()(Qualified_type const& t1) const    { return is_equivalent(t1, cast<Qualified_type>(t2)); }
+    bool operator()(Reference_type const& t1) const    { return is_equivalent(t1, cast<Reference_type>(t2)); }
+    bool operator()(Pointer_type const& t1) const      { return is_equivalent(t1, cast<Pointer_type>(t2)); }
+    bool operator()(Array_type const& t1) const        { return is_equivalent(t1, cast<Array_type>(t2)); }
+    bool operator()(Sequence_type const& t1) const     { return is_equivalent(t1, cast<Sequence_type>(t2)); }
+    bool operator()(User_defined_type const& t1) const { return is_equivalent(t1, cast<User_defined_type>(t2)); }
+    bool operator()(Typename_type const& t1) const     { lingo_unimplemented(); }
+  };
+
+  // The same objects represent the same types.
+  if (&t1 == &t2)
+    return true;
+
+  // Types of different kinds are not the same.
+  std::type_index ti1 = typeid(t1);
+  std::type_index ti2 = typeid(t2);
+  if (ti1 != ti2)
+    return false;
+
+  // Find a comparison of the types.
+  return apply(t1, fn{t2});
 }
 
 
