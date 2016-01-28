@@ -105,15 +105,12 @@ struct Builder
   Namespace_decl& make_namespace(Name&);
   Namespace_decl& make_namespace(char const*);
   Namespace_decl& get_global_namespace();
-
   Variable_decl& make_variable(Name&, Type&);
   Variable_decl& make_variable(char const*, Type&);
   Variable_decl& make_variable(Name&, Type&, Expr&);
   Variable_decl& make_variable(char const*, Type&, Expr&);
-
   Function_decl& make_function(Name&, Decl_list const&, Type&);
   Function_decl& make_function(char const*, Decl_list const&, Type&);
-
   Template_decl& make_template(Decl_list const&, Decl&);
 
   Object_parm& make_object_parm(Name&, Type&);

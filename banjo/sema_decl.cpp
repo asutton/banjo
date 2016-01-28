@@ -12,19 +12,40 @@
 namespace banjo
 {
 
-// TODO: Factor each kind of declaration into its own file.
+// If we have an unassigned list of template parameters, then they
+// provide the context for this declaration. Transform the declaration
+// into a template. Clear the parameters so they aren't "re-used" for
+// a nested declaration.
+//
+Decl&
+Parser::templatize_declaration(Decl& d)
+{
+  if (state.template_parms) {
+    Decl& tmp = build.make_template(*state.template_parms, d);
+    state.template_parms = nullptr;
+    return tmp;
+  }
+  return d;
+}
 
 
 // -------------------------------------------------------------------------- //
 // Declaration
 //
-// TODO: Move this into a separate semantic module.
+// TODO: Move this into a separate semantic module?
 
-using Binding = Scope::Binding;
-
-
-Decl* declare(Namespace_decl&, Decl&);
-Decl* declare(Overload_set&, Decl&);
+// Save `d` as a new declaration in the given overload set.
+//
+// TODO: Implement me.
+//
+// TODO: Actually check for overloading and re-definition
+// errors.
+Decl*
+declare(Overload_set& ovl, Decl& d)
+{
+  lingo_unimplemented();
+  return nullptr;
+}
 
 
 // Try to declare a name binding in the current scope.
@@ -38,28 +59,15 @@ Decl* declare(Overload_set&, Decl&);
 // FIXME: If `d`'s name is a qualified-id, then we need to adjust
 // the context to that specified by `d`s nested name specifier.
 Decl*
-declare(Scope& scope, Decl& d)
+Parser::declare(Scope& scope, Decl& d)
 {
+  // Declare the ajusted declaration.
   if (Overload_set* ovl = scope.lookup(d.declared_name())) {
-    return declare(*ovl, d);
+    return banjo::declare(*ovl, d);
   } else {
     scope.bind(d);
     return nullptr;
   }
-}
-
-
-// Save `d` as a new declaration in the given overload set.
-//
-// TODO: Implement me.
-//
-// TODO: Actually check for overloading and re-definition
-// errors.
-Decl*
-declare(Overload_set& ovl, Decl& d)
-{
-  lingo_unimplemented();
-  return nullptr;
 }
 
 
@@ -80,12 +88,13 @@ Parser::on_declarator(Name& n)
 // Variables
 
 
-Variable_decl&
+Decl&
 Parser::on_variable_declaration(Token, Name& n, Type& t)
 {
-  Variable_decl& var = build.make_variable(n, t);
-  declare(current_scope(), var);
-  return var;
+  Decl& d1 = build.make_variable(n, t);
+  Decl& d2 = templatize_declaration(d1);
+  declare(current_scope(), d2);
+  return d2;
 }
 
 

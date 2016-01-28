@@ -27,7 +27,6 @@ Scope::bind(Decl& d)
 }
 
 
-
 Namespace_decl const&
 Namespace_scope::declaration() const
 {
@@ -39,20 +38,6 @@ Namespace_decl&
 Namespace_scope::declaration()
 {
   return *cast<Namespace_decl>(context());
-}
-
-
-Function_decl const&
-Function_scope::declaration() const
-{
-  return *cast<Function_decl>(context());
-}
-
-
-Function_decl&
-Function_scope::declaration()
-{
-  return *cast<Function_decl>(context());
 }
 
 
@@ -69,23 +54,5 @@ Class_scope::declaration()
   return *cast<Class_decl>(context());
 }
 
-
-Initializer_scope::Initializer_scope(Scope& s, Object_decl& d)
-  : Scope(s, d)
-{ }
-
-
-Object_decl const&
-Initializer_scope::declaration() const
-{
-  return *cast<Object_decl>(context());
-}
-
-
-Object_decl&
-Initializer_scope::declaration()
-{
-  return *cast<Object_decl>(context());
-}
 
 } // namespace banjo

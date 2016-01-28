@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "parser.hpp"
+#include "print.hpp"
 
 #include <iostream>
 
@@ -52,8 +53,8 @@ Parser::variable_declaration()
   Name& n = declarator();
 
   // Point of declaration.
-  Variable_decl& d = on_variable_declaration(tok, n, t);
-  Enter_scope s(*this, d);
+  Decl& d = on_variable_declaration(tok, n, t);
+  Enter_scope s(*this, make_initializer_scope(d));
 
   // Initialization
   if (lookahead() == semicolon_tok) {

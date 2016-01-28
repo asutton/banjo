@@ -29,7 +29,6 @@ struct Object_decl;
 using Name_map = std::unordered_map<Name const*, Overload_set, Name_hash, Name_eq>;
 
 
-
 // A scope defines a maximal lexical region of text where an
 // entity  may be referred to without qualification. A scope can
 // be (but is not always) associated with a declaration.
@@ -143,13 +142,15 @@ struct Namespace_scope : Scope
 
 
 // Represents function scope. Only labels have function scope.
+//
+// Note that the corresponding declaration may be a template.
 struct Function_scope : Scope
 {
   using Scope::Scope;
 
   // Returns the function declaration associated with the scope.
-  Function_decl const& declaration() const;
-  Function_decl&       declaration();
+  Decl const& declaration() const;
+  Decl&       declaration();
 };
 
 
@@ -189,13 +190,17 @@ struct Class_scope : Scope
 // used to support lookup of identifiers when the variable is declared
 // with a qualified-id (i.e., a static member of a class or a namespace
 // variable defined outside of the namespace.
+//
+// The corresponding declaration is a variable or variable template.
 struct Initializer_scope : Scope
 {
-  Initializer_scope(Scope&, Object_decl&);
+  Initializer_scope(Scope& s, Decl& d)
+    : Scope(s, d)
+  { }
 
   // Returns the function declaration associated with the scope.
-  Object_decl const& declaration() const;
-  Object_decl&       declaration();
+  Decl const& declaration() const { return *context(); }
+  Decl&       declaration()       { return *context(); }
 };
 
 

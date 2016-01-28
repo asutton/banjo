@@ -115,17 +115,17 @@ Parser::set_scope(Scope& s)
 
 // Create a new initializer scope.
 Scope&
-Parser::make_initializer_scope(Variable_decl& var)
+Parser::make_initializer_scope(Decl& d)
 {
-  return *new Initializer_scope(current_scope(), var);
+  return *new Initializer_scope(current_scope(), d);
 }
 
 
 // Create a new function scope.
 Scope&
-Parser::make_function_scope(Function_decl& fn)
+Parser::make_function_scope(Decl& d)
 {
-  return *new Function_scope(current_scope(), fn);
+  return *new Function_scope(current_scope(), d);
 }
 
 

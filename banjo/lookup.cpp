@@ -34,7 +34,7 @@ unqualified_lookup(Scope& scope, Simple_id const& id)
     // to search different things.
 
     if (Function_scope* s = as<Function_scope>(p)) {
-      Function_decl& f = s->declaration();
+      Decl& f = s->declaration();
       (void)f;
 
       // TODO: If fn is defined by a qualified-id, then we should
@@ -52,7 +52,7 @@ unqualified_lookup(Scope& scope, Simple_id const& id)
 
 
     else if (Initializer_scope* s = as<Initializer_scope>(p)) {
-      Object_decl& v = s->declaration();
+      Decl& v = s->declaration();
       (void)v;
 
       // TODO: If v is declared by a qualified-id, then re-direct

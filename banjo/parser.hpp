@@ -176,7 +176,7 @@ struct Parser
   Expression_stmt& on_expression_statement(Expr&);
 
   // Declarations
-  Variable_decl& on_variable_declaration(Token, Name&, Type&);
+  Decl& on_variable_declaration(Token, Name&, Type&);
   Function_decl& on_function_declaration(Token, Name&, Decl_list&, Type&);
   Namespace_decl& on_namespace_declaration(Token, Name&, Decl_list&);
   // Function parameters
@@ -214,12 +214,16 @@ struct Parser
 
   // Scope management
   void   set_scope(Scope&);
-  Scope& make_initializer_scope(Variable_decl&);
-  Scope& make_function_scope(Function_decl&);
+  Scope& make_initializer_scope(Decl&);
+  Scope& make_function_scope(Decl&);
   Scope& make_function_parameter_scope();
   Scope& make_template_parameter_scope();
   Scope& current_scope();
   Decl&  current_context();
+
+  // Declarations
+  Decl* declare(Scope&, Decl&);
+  Decl& templatize_declaration(Decl&);
 
   // Maintains the current parse state.
   struct State
