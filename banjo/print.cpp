@@ -708,26 +708,12 @@ Printer::statement(Stmt const& s)
   {
     Printer& p;
     void operator()(Stmt const&)               { lingo_unimplemented(); }
+    void operator()(Compound_stmt const& s)    { p.compound_statement(s); }
+    void operator()(Return_stmt const& s)      { p.return_statement(s); }
     void operator()(Expression_stmt const& s)  { p.expression_statement(s); }
     void operator()(Declaration_stmt const& s) { p.declaration_statement(s); }
-    void operator()(Compound_stmt const& s)    { p.compound_statement(s); }
   };
   apply(s, fn{*this});
-}
-
-
-void
-Printer::expression_statement(Expression_stmt const& s)
-{
-  expression(s.expression());
-  token(semicolon_tok);
-}
-
-
-void
-Printer::declaration_statement(Declaration_stmt const& s)
-{
-  declaration(s.declaration());
 }
 
 
@@ -744,6 +730,30 @@ Printer::compound_statement(Compound_stmt const& s)
   }
   newline_and_undent();
   token(rbrace_tok);
+}
+
+
+void
+Printer::return_statement(Return_stmt const& s)
+{
+  token(return_tok);
+  expression(s.expression());
+  token(semicolon_tok);
+}
+
+
+void
+Printer::expression_statement(Expression_stmt const& s)
+{
+  expression(s.expression());
+  token(semicolon_tok);
+}
+
+
+void
+Printer::declaration_statement(Declaration_stmt const& s)
+{
+  declaration(s.declaration());
 }
 
 

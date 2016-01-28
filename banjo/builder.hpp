@@ -67,6 +67,7 @@ struct Builder
   Enum_type&      get_enum_type(Decl&);
   Typename_type&  get_typename_type(Decl&);
 
+  // Expressions
   Boolean_expr&   get_bool(bool);
   Boolean_expr&   get_true();
   Boolean_expr&   get_false();
@@ -81,6 +82,12 @@ struct Builder
   And_expr&       make_and(Type&, Expr&, Expr&);
   Not_expr&       make_not(Type&, Expr&);
   Call_expr&      make_call(Type&, Function_decl&, Expr_list const&);
+
+  // Statements
+  Compound_stmt&    make_compound_statement(Stmt_list const&);
+  Return_stmt&      make_return_statement(Expr&);
+  Expression_stmt&  make_expression_statement(Expr&);
+  Declaration_stmt& make_declaration_statement(Decl&);
 
   // Initializers
   Trivial_init&   make_trivial_init(Type&);
@@ -476,6 +483,37 @@ Builder::make_call(Type& t, Function_decl& f, Expr_list const& a)
 
 
 // -------------------------------------------------------------------------- //
+// Statements
+
+inline Compound_stmt&
+Builder::make_compound_statement(Stmt_list const& ss)
+{
+  return make<Compound_stmt>(ss);
+}
+
+
+inline Return_stmt&
+Builder::make_return_statement(Expr& e)
+{
+  return make<Return_stmt>(e);
+}
+
+
+inline Expression_stmt&
+Builder::make_expression_statement(Expr& e)
+{
+  return make<Expression_stmt>(e);
+}
+
+
+inline Declaration_stmt&
+Builder::make_declaration_statement(Decl& d)
+{
+  return make<Declaration_stmt>(d);
+}
+
+
+// -------------------------------------------------------------------------- //
 // Initializers
 
 inline Trivial_init&
@@ -515,7 +553,6 @@ Builder::make_aggregate_init(Type& t, Expr_list const& es)
 
 // -------------------------------------------------------------------------- //
 // Definitions
-
 
 inline Function_def&
 Builder::make_function_def(Stmt& s)

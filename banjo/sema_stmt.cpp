@@ -11,15 +11,23 @@ namespace banjo
 Compound_stmt&
 Parser::on_compound_statement(Stmt_list const& ss)
 {
-  return *new Compound_stmt(ss);
+  return build.make_compound_statement(ss);
 }
 
 
-// FIXME: Use the builder.
+Return_stmt&
+Parser::on_return_statement(Token, Expr& e)
+{
+  // FIXME: Verify that the return statement matches the
+  // declared type of the function.
+  return build.make_return_statement(e);
+}
+
+
 Declaration_stmt&
 Parser::on_declaration_statement(Decl& d)
 {
-  return *new Declaration_stmt(d);
+  return build.make_declaration_statement(d);
 }
 
 
@@ -27,7 +35,7 @@ Parser::on_declaration_statement(Decl& d)
 Expression_stmt&
 Parser::on_expression_statement(Expr& d)
 {
-  return *new Expression_stmt(d);
+  return build.make_expression_statement(d);
 }
 
 

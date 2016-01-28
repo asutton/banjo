@@ -121,9 +121,10 @@ struct Printer
 
   // Statements
   void statement(Stmt const&);
+  void compound_statement(Compound_stmt const&);
+  void return_statement(Return_stmt const&);
   void expression_statement(Expression_stmt const&);
   void declaration_statement(Declaration_stmt const&);
-  void compound_statement(Compound_stmt const&);
 
   // Initializers
   void initializer(Expr const&);

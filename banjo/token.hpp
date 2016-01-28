@@ -93,6 +93,7 @@ enum Token_kind
   int128_tok,
   namespace_tok,
   requires_tok,
+  return_tok,
   static_tok,
   struct_tok,
   switch_tok,

@@ -133,6 +133,7 @@ init_tokens(Symbol_table& syms)
   init_token(syms, int128_tok, "int128");
   init_token(syms, namespace_tok, "namespace");
   init_token(syms, requires_tok, "requires");
+  init_token(syms, return_tok, "return");
   init_token(syms, static_tok, "static");
   init_token(syms, struct_tok, "struct");
   init_token(syms, switch_tok, "switch");

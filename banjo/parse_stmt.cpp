@@ -22,6 +22,8 @@ Parser::statement()
   switch (lookahead()) {
     case lbrace_tok:
       return compound_statement();
+    case return_tok:
+      return return_statement();
 
     case var_tok:
     case def_tok:
@@ -51,6 +53,16 @@ Parser::compound_statement()
     ss = statement_seq();
   match(rbrace_tok);
   return on_compound_statement(ss);
+}
+
+
+Stmt&
+Parser::return_statement()
+{
+  Token tok = require(return_tok);
+  Expr& e = expression();
+  match(semicolon_tok);
+  return on_return_statement(tok, e);
 }
 
 

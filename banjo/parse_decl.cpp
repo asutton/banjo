@@ -320,10 +320,95 @@ Parser::type_template_parameter()
 //
 //    tempate-declaration:
 //      'template' '<' template-parameter-list '>' declaration
+//
+// FIXME: Support explicit template instantations in one way or
+// another.
 Decl&
 Parser::template_declaration()
 {
-    lingo_unimplemented();
+  require(template_tok);
+
+  // TODO: Allow >> to close the template parameter list in the
+  // case of default template arguments.
+  match(lt_tok);
+  Decl_list p = template_parameter_list();
+  match(gt_tok);
+
+  Decl& d = declaration();
+
+  // FIXME: Semantic analysis?
+  return d;
+}
+
+
+// Parse a template parameter list.
+//
+//    template-parameter-list:
+//      template-parameter
+//      template-parameter-list ',' template-parameter
+Decl_list
+Parser::template_parameter_list()
+{
+  Decl_list ds;
+
+  // TOOD: Could terminate on >>.
+  while (lookahead() != gt_tok) {
+    Decl& d = template_parameter();
+    ds.push_back(d);
+  }
+
+  return ds;
+}
+
+
+// Parse a template parameter.
+//
+//    template-parameter:
+//      type-template-parameter
+//      value-template-parameter
+//      template-template-parameter
+Decl&
+Parser::template_parameter()
+{
+  switch (lookahead()) {
+    case typename_tok: return type_template_parameter();
+    case const_tok: return value_template_parameter();
+    case template_tok: return template_template_parameter();
+
+    default:
+      // FIXME: Concepts!
+      lingo_unimplemented();
+  }
+}
+
+
+// Parse a template parameter.
+Decl&
+Parser::type_template_parameter()
+{
+  match(typename_tok);
+  Tok id = identifier();
+  if (lookahead() == eq_tok) {
+
+  }
+}
+
+
+// Parse a value template parameter.
+//
+//    value-template-parameter:
+//      'const' type [identifier] [equal-initializer]
+Decl&
+Parser::value_template_parameter()
+{
+  lingo_unimplemented();
+}
+
+
+Decl&
+Parser::template_template_parameter()
+{
+  lingo_unimplemented();
 }
 
 
@@ -387,6 +472,9 @@ Decl_list
 Parser::declaration_seq()
 {
   // FIXME: Catch declaration errors and continue parsing.
+  //
+  // FIXME: I don't like starts_declaration. What are the different
+  // ways that we can end the loop. EOF or '}'. Anything else?
   declaration();
   while (starts_declaration(*this))
     declaration();

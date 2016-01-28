@@ -84,6 +84,7 @@ struct Parser
   // Statements
   Stmt& statement();
   Stmt& compound_statement();
+  Stmt& return_statement();
   Stmt& declaration_statement();
   Stmt& expression_statement();
   Stmt_list statement_seq();;
@@ -168,7 +169,9 @@ struct Parser
   Expr& on_boolean_literal(Token, bool);
   Expr& on_integer_literal(Token);
 
+  // Statements
   Compound_stmt& on_compound_statement(Stmt_list const&);
+  Return_stmt& on_return_statement(Token, Expr&);
   Declaration_stmt& on_declaration_statement(Decl&);
   Expression_stmt& on_expression_statement(Expr&);
 
