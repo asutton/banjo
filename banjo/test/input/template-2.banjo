@@ -6,5 +6,5 @@ template<typename T>
 var int x = 0;
 
 template<typename U>
-  requires false
+  requires (true || false) && !true
 def f() -> int { return 0; }

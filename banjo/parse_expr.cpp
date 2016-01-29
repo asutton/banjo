@@ -13,11 +13,145 @@ namespace banjo
 Expr&
 Parser::expression()
 {
-  return postfix_expression();
+  return logical_or_expression();
 }
 
 
+// Parse a logical or-expression.
+//
+//    logical-or-expression:
+//      logical-and-expression:
+//      logical-or-expression '||' logical-and-expression
+Expr&
+Parser::logical_or_expression()
+{
+  Expr* e1 = &logical_and_expression();
+  while (true) {
+    if (Token tok = match_if(bar_bar_tok)) {
+      Expr& e2 = logical_and_expression();
+      e1 = &on_logical_or_expression(tok, *e1, e2);
+    } else {
+      break;
+    }
+  }
+  return *e1;
+}
 
+
+// Parser a logical and-expression.
+//
+//    logical-and-expression:
+//      equality-expression:
+//      logical-and-expression '&&' equality-expression
+//
+// FIXME: This skips the bitwise expressions.
+Expr&
+Parser::logical_and_expression()
+{
+  Expr* e1 = &equality_expression();
+  while (true) {
+    if (Token tok = match_if(amp_amp_tok)) {
+      Expr& e2 = equality_expression();
+      e1 = &on_logical_and_expression(tok, *e1, e2);
+    } else {
+      break;
+    }
+  }
+  return *e1;
+}
+
+
+// Parser an equality expression.
+//
+//    equality-expression:
+//      relational-expression:
+//      equality-expression '==' relational-expression
+//      equality-expression '!=' relational-expression
+Expr&
+Parser::equality_expression()
+{
+  Expr* e1 = &relational_expression();
+  while (true) {
+    if (Token tok = match_if(eq_eq_tok)) {
+      Expr& e2 = relational_expression();
+      e1 = &on_eq_expression(tok, *e1, e2);
+    } else if (Token tok = match_if(bang_eq_tok)) {
+      Expr& e2 = relational_expression();
+      e1 = &on_ne_expression(tok, *e1, e2);
+    } else {
+      break;
+    }
+  }
+  return *e1;
+}
+
+
+// Parser an relational expression.
+//
+//    relational-expression:
+//      unary-expression:
+//      relational-expression '<' unary-expression
+//      relational-expression '>' unary-expression
+//      relational-expression '<=' unary-expression
+//      relational-expression '>=' unary-expression
+//
+// FIXME: This omits the arithmetic expressions.
+Expr&
+Parser::relational_expression()
+{
+  Expr* e1 = &unary_expression();
+  while (true) {
+    // Use a switch?
+    if (Token tok = match_if(lt_tok)) {
+      Expr& e2 = unary_expression();
+      e1 = &on_lt_expression(tok, *e1, e2);
+    } else if (Token tok = match_if(gt_tok)) {
+      Expr& e2 = unary_expression();
+      e1 = &on_gt_expression(tok, *e1, e2);
+    } else if (Token tok = match_if(lt_eq_tok)) {
+      Expr& e2 = unary_expression();
+      e1 = &on_le_expression(tok, *e1, e2);
+    } else if (Token tok = match_if(gt_eq_tok)) {
+      Expr& e2 = unary_expression();
+      e1 = &on_ge_expression(tok, *e1, e2);
+    } else {
+      break;
+    }
+  }
+  return *e1;
+}
+
+
+// Parse a unary expression.
+//
+//    unary-expression:
+//      postfix-expression
+//      '!' unary-expression
+//
+// TODO: This omits the arithmetic, bitwise, and object unary operators.
+//
+// TODO: The recursive part might include cast epxressions.
+Expr&
+Parser::unary_expression()
+{
+  // Use a switch?
+  if (Token tok = match_if(bang_tok)) {
+    Expr& e = unary_expression();
+    return on_logical_not_expression(tok, e);
+  } else {
+    return postfix_expression();
+  }
+}
+
+
+// Parse a postfix-expression.
+//
+//    postfix-expression:
+//      primary-expression
+//      postfix-expression '(' [expression-list] ')'
+//      postfix-expression '[' [expression-list] ']'
+//
+// TODO: Add lots of stuff here.
 Expr&
 Parser::postfix_expression()
 {

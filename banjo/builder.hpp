@@ -81,7 +81,14 @@ struct Builder
   Reference_expr& make_reference(Function_decl& d);
 
   And_expr&       make_and(Type&, Expr&, Expr&);
+  Or_expr&        make_or(Type&, Expr&, Expr&);
   Not_expr&       make_not(Type&, Expr&);
+  Eq_expr&        make_eq(Type&, Expr&, Expr&);
+  Ne_expr&        make_ne(Type&, Expr&, Expr&);
+  Lt_expr&        make_lt(Type&, Expr&, Expr&);
+  Gt_expr&        make_gt(Type&, Expr&, Expr&);
+  Le_expr&        make_le(Type&, Expr&, Expr&);
+  Ge_expr&        make_ge(Type&, Expr&, Expr&);
   Call_expr&      make_call(Type&, Function_decl&, Expr_list const&);
 
   // Statements
@@ -468,11 +475,63 @@ Builder::make_and(Type& t, Expr& e1, Expr& e2)
 }
 
 
+inline Or_expr&
+Builder::make_or(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Or_expr>(t, e1, e2);
+}
+
+
 inline Not_expr&
 Builder::make_not(Type& t, Expr& e)
 {
   return make<Not_expr>(t, e);
 }
+
+
+inline Eq_expr&
+Builder::make_eq(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Eq_expr>(t, e1, e2);
+}
+
+
+inline Ne_expr&
+Builder::make_ne(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Ne_expr>(t, e1, e2);
+}
+
+
+inline Lt_expr&
+Builder::make_lt(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Lt_expr>(t, e1, e2);
+}
+
+
+inline Gt_expr&
+Builder::make_gt(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Gt_expr>(t, e1, e2);
+}
+
+
+inline Le_expr&
+Builder::make_le(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Le_expr>(t, e1, e2);
+}
+
+
+inline Ge_expr&
+Builder::make_ge(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Ge_expr>(t, e1, e2);
+}
+
+
+
 
 
 inline Call_expr&

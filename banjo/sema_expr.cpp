@@ -9,6 +9,79 @@
 namespace banjo
 {
 
+// FIXME: Actually perform semantic anlaysis.
+
+Expr&
+Parser::on_logical_and_expression(Token tok, Expr& e1, Expr& e2)
+{
+  Type& t = build.get_bool_type();
+  return build.make_and(t, e1, e2);
+}
+
+
+Expr&
+Parser::on_logical_or_expression(Token tok, Expr& e1, Expr& e2)
+{
+  Type& t = build.get_bool_type();
+  return build.make_or(t, e1, e2);
+}
+
+
+Expr&
+Parser::on_logical_not_expression(Token tok, Expr& e)
+{
+  Type& t = build.get_bool_type();
+  return build.make_not(t, e);
+}
+
+
+Expr&
+Parser::on_eq_expression(Token tok, Expr& e1, Expr& e2)
+{
+  Type& t = build.get_bool_type();
+  return build.make_eq(t, e1, e2);
+}
+
+
+Expr&
+Parser::on_ne_expression(Token tok, Expr& e1, Expr& e2)
+{
+  Type& t = build.get_bool_type();
+  return build.make_ne(t, e1, e2);
+}
+
+
+Expr&
+Parser::on_lt_expression(Token tok, Expr& e1, Expr& e2)
+{
+  Type& t = build.get_bool_type();
+  return build.make_lt(t, e1, e2);
+}
+
+
+Expr&
+Parser::on_gt_expression(Token tok, Expr& e1, Expr& e2)
+{
+  Type& t = build.get_bool_type();
+  return build.make_gt(t, e1, e2);
+}
+
+
+Expr&
+Parser::on_le_expression(Token tok, Expr& e1, Expr& e2)
+{
+  Type& t = build.get_bool_type();
+  return build.make_le(t, e1, e2);
+}
+
+
+Expr&
+Parser::on_ge_expression(Token tok, Expr& e1, Expr& e2)
+{
+  Type& t = build.get_bool_type();
+  return build.make_ge(t, e1, e2);
+}
+
 
 // TOOD: Resolve the id as either a variable name, a function
 // name, or an overload name. It can be nothing else.

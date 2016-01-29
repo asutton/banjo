@@ -70,16 +70,19 @@ struct Parser
   Type_list type_list();
 
   // Expressions
+  Expr& expression();
+  Expr& logical_or_expression();
+  Expr& logical_and_expression();
+  Expr& equality_expression();
+  Expr& relational_expression();
+  Expr& multiplicative_expression();
+  Expr& additive_expression();
+  Expr& unary_expression();
+  Expr& postfix_expression();
+  Expr& primary_expression();
   Expr& id_expression();
   Expr& grouped_expression();
   Expr& lambda_expression();
-  Expr& primary_expression();
-  Expr& postfix_expression();
-  Expr& unary_expression();
-  Expr& multiplicative_expression();
-  Expr& additive_expression();
-  Expr& binary_expression();
-  Expr& expression();
 
   // Statements
   Stmt& statement();
@@ -167,6 +170,15 @@ struct Parser
   Type& on_reference_type(Token, Type&);
 
   // Expressions
+  Expr& on_logical_and_expression(Token, Expr&, Expr&);
+  Expr& on_logical_or_expression(Token, Expr&, Expr&);
+  Expr& on_logical_not_expression(Token, Expr&);
+  Expr& on_eq_expression(Token, Expr&, Expr&);
+  Expr& on_ne_expression(Token, Expr&, Expr&);
+  Expr& on_lt_expression(Token, Expr&, Expr&);
+  Expr& on_gt_expression(Token, Expr&, Expr&);
+  Expr& on_le_expression(Token, Expr&, Expr&);
+  Expr& on_ge_expression(Token, Expr&, Expr&);
   Expr& on_id_expression(Name&);
   Expr& on_boolean_literal(Token, bool);
   Expr& on_integer_literal(Token);

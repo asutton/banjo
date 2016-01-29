@@ -1018,6 +1018,7 @@ void
 Printer::requires_clause(Expr const& e)
 {
   token(requires_tok);
+  space();
   expression(e);
 }
 
