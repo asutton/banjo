@@ -430,13 +430,10 @@ Decl_list
 Parser::template_parameter_list()
 {
   Decl_list ds;
-
-  // TOOD: Could terminate on >>.
-  while (lookahead() != gt_tok) {
+  do {
     Decl& d = template_parameter();
     ds.push_back(d);
-  }
-
+  } while (match_if(comma_tok));
   return ds;
 }
 
