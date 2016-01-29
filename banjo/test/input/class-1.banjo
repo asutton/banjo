@@ -1,0 +1,8 @@
+
+// Simple tests for parsing classes.
+
+struct S1;
+
+struct S2 { }
+
+struct S3 { var int x; }
