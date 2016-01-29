@@ -113,24 +113,32 @@ Parser::on_variable_declaration(Token, Name& n, Type& t)
 // FIXME: Move these into a new module, sema_def.cpp, Or put
 // them in sema_init?
 
-static inline void
-define_function(Decl* d, Def& def)
-{
-  d = &d->parameterized_declaration();
-  if (Function_decl* fn = as<Function_decl>(d))
-    fn->def = &def;
-  else
-    lingo_unreachable();
-}
-
 
 // A helper function that hides the ugliness of assinging the
 // function definition.
-static inline void
+static inline Def&
 define_function(Decl& decl, Def& def)
 {
-  return define_function(&decl, def);
+  Decl* d = &decl.parameterized_declaration();
+  if (Function_decl* f = as<Function_decl>(d))
+    return *(f->def = &def);
+  lingo_unreachable();
 }
+
+
+// Define a function, class, enum, or entity.
+static inline Def&
+define_entity(Decl& decl, Def& def)
+{
+  Decl* d = &decl.parameterized_declaration();
+  if (Function_decl* f = as<Function_decl>(d))
+    return *(f->def = &def);
+  if (Class_decl* c = as<Class_decl>(d))
+    return *(c->def = &def);
+  lingo_unreachable();
+}
+
+
 
 
 Decl&
@@ -152,32 +160,49 @@ Parser::on_function_parameter(Name& n, Type& t)
 }
 
 
-Function_def&
+Def&
 Parser::on_function_definition(Decl& d, Stmt& s)
 {
-  Function_def& def = build.make_function_def(s);
-  define_function(d, def);
-  return def;
+  Def& def = build.make_function_definition(s);
+  return define_function(d, def);
 }
 
 
-Deleted_def&
+Def&
 Parser::on_deleted_definition(Decl& d)
 {
-  // FIXME: This could apply to other kinds of declarations too.
-  Deleted_def& def = build.make_deleted_def();
-  define_function(d, def);
-  return def;
+  Def& def = build.make_deleted_definition();
+  return define_entity(d, def);
 }
 
 
-Defaulted_def&
+Def&
 Parser::on_defaulted_definition(Decl& d)
 {
-  // FIXME: This could apply to other kinds of declarations too.
-  Defaulted_def& def = build.make_defaulted_def();
-  define_function(d, def);
-  return def;
+  Def& def = build.make_defaulted_definition();
+  return define_function(d, def);
+}
+
+
+// -------------------------------------------------------------------------- //
+// Classes
+
+// FIXME: Differentiate between classes and structures.
+Decl&
+Parser::on_class_declaration(Token tok, Name& n)
+{
+  Decl& d1 = build.make_class(n);
+  Decl& d2 = templatize_declaration(d1);
+  declare(current_scope(), d2);
+  return d2;
+}
+
+
+Def&
+Parser::on_class_definition(Decl& d, Decl_list& ds)
+{
+  Def& def = build.make_class_definition(ds);
+  return define_entity(d, def);
 }
 
 
@@ -185,7 +210,7 @@ Parser::on_defaulted_definition(Decl& d)
 // Namespaces
 
 
-Namespace_decl&
+Decl&
 Parser::on_namespace_declaration(Token, Name&, Decl_list&)
 {
   lingo_unimplemented();

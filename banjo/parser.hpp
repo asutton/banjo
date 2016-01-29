@@ -122,8 +122,12 @@ struct Parser
   Expr& brace_initializer(Decl&);
   // Definitions
   Def& function_definition(Decl&);
+  Def& class_definition(Decl&);
   // Constraints
   Expr& requires_clause();
+  // Classes
+  Decl_list member_seq();
+  Decl& member_declaration();
 
   Term& translation_unit();
 
@@ -198,22 +202,24 @@ struct Parser
   // Declarations
   Decl& on_variable_declaration(Token, Name&, Type&);
   Decl& on_function_declaration(Token, Name&, Decl_list&, Type&);
-  Namespace_decl& on_namespace_declaration(Token, Name&, Decl_list&);
+  Decl& on_class_declaration(Token, Name&);
+  Decl& on_namespace_declaration(Token, Name&, Decl_list&);
   // Function parameters
   Object_parm& on_function_parameter(Name&, Type&);
+  // Template parameters
   Type_parm& on_type_template_parameter(Name&, Type&);
   Type_parm& on_type_template_parameter(Name&);
-  // Template parameters
   // Initializers
-
   Expr& on_default_initialization(Decl&);
   Expr& on_equal_initialization(Decl&, Expr&);
   Expr& on_paren_initialization(Decl&, Expr_list&);
   Expr& on_brace_initialization(Decl&, Expr_list&);
   // Definitions
-  Function_def& on_function_definition(Decl&, Stmt&);
-  Deleted_def& on_deleted_definition(Decl&);
-  Defaulted_def& on_defaulted_definition(Decl&);
+  Def& on_function_definition(Decl&, Stmt&);
+  Def& on_class_definition(Decl&, Decl_list&);
+  Def& on_deleted_definition(Decl&);
+  Def& on_defaulted_definition(Decl&);
+  // Members
 
   Name& on_declarator(Name&);
 

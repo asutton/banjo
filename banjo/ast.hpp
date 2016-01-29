@@ -1869,12 +1869,21 @@ struct Function_def : Def
 
 
 // A definition of a class.
+//
+// FIXME: Add base classes.
 struct Class_def : Def
 {
+  Class_def(Decl_list const& ds)
+    : decls(ds)
+  { }
+
   void accept(Visitor& v) const { return v.visit(*this); }
 
-  // List* first;  // bases
-  // List* second; // members
+  // Returns the list of member declarations.
+  Decl_list const& members() const { return decls; }
+  Decl_list      & members()       { return decls; }
+
+  Decl_list decls;
 };
 
 
@@ -2178,6 +2187,7 @@ struct Function_decl : Decl
 };
 
 
+// Represents the declaration of a class.
 struct Class_decl : Type_decl
 {
   using Type_decl::Type_decl;
@@ -2185,8 +2195,13 @@ struct Class_decl : Type_decl
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
+  // Returns the definition for the class, if given. Behavior is
+  // defined iff is_definition() is true.
   Class_def const& definition() const { return *cast<Class_def>(def); }
   Class_def&       definition()       { return *cast<Class_def>(def); }
+
+  // Returns true if the declaration is also a definition.
+  bool is_definition() const { return def; }
 };
 
 

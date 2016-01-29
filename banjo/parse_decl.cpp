@@ -24,7 +24,7 @@ Parser::declaration()
       return function_declaration();
     case struct_tok:
     case class_tok:
-      lingo_unimplemented();
+      return class_declaration();
     case enum_tok:
       lingo_unimplemented();
     case namespace_tok:
@@ -264,6 +264,107 @@ Parser::function_definition(Decl& d)
   throw Syntax_error("expected function-definition");
 }
 
+
+// -------------------------------------------------------------------------- //
+// Classes
+
+// Parse a class declaration.
+//
+//    class-declaration:
+//      struct declarator ';'
+//      struct class-definition
+//      class declarator ';'
+//      class class-definition
+//
+// TODO: Add support for classes.
+Decl&
+Parser::class_declaration()
+{
+  lingo_assert(lookahead() == struct_tok || lookahead() == class_tok);
+  Token tok = accept();
+  Name& n = declarator();
+
+  // Point of declaration.
+  Decl& cls = on_class_declaration(tok, n);
+
+  if (!match_if(semicolon_tok)) {
+    // FIXME: Enter class scpoe.
+    class_definition(cls);
+  }
+
+  return cls;
+};
+
+
+// Parse a class definition (it's body).
+//
+//    class-definition:
+//      '=' 'delete' ';'
+//      [base-clause] class-body
+//
+//    class-body:
+//      '{' [member-seq] '}'
+//
+// TODO: Implment base class parsing.
+Def&
+Parser::class_definition(Decl& d)
+{
+  // Match deleted definitions.
+  if (match_if(eq_tok)) {
+    match(delete_tok);
+    match(semicolon_tok);
+    return on_deleted_definition(d);
+  }
+
+  // Match the class body.
+  Decl_list ds;
+  match(lbrace_tok);
+  if (lookahead() != rbrace_tok)
+    ds = member_seq();
+  match(rbrace_tok);
+  return on_class_definition(d, ds);
+}
+
+
+// Parse a sequence of class members.
+//
+//    member-seq:
+//      member-declaration:
+//      member-seq member-declaration
+Decl_list
+Parser::member_seq()
+{
+  Decl_list ds;
+  do {
+    Decl& d = member_declaration();
+    ds.push_back(d);
+  } while (lookahead() != rbrace_tok);
+  return ds;
+}
+
+
+// Parse a member-declaration.
+//
+//    member-declaration:
+//      variable-declaration
+//      function-declaration
+//
+// FIXME: Have different declarations for members and non-members?
+Decl&
+Parser::member_declaration()
+{
+  switch (lookahead()) {
+    case var_tok:
+      return variable_declaration();
+    default:
+      break;
+  }
+  throw Syntax_error("expected member-declaration");
+}
+
+
+// -------------------------------------------------------------------------- //
+// Namespaces
 
 // Parse a namespace declaration.
 //

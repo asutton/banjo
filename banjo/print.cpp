@@ -869,6 +869,59 @@ Printer::function_definition(Defaulted_def const&)
 }
 
 
+void
+Printer::class_definition(Def const& d)
+{
+  struct fn
+  {
+    Printer& p;
+    void operator()(Def const&) { lingo_unimplemented(); }
+    void operator()(Class_def const& d) { p.class_definition(d); }
+    void operator()(Deleted_def const& d) { p.class_definition(d); }
+  };
+  apply(d, fn{*this});
+}
+
+void
+Printer::class_definition(Class_def const& d)
+{
+  if (d.members().empty()) {
+    space();
+    token(lbrace_tok);
+    space();
+    token(rbrace_tok);
+  } else {
+    newline();
+    token(lbrace_tok);
+    newline_and_indent();
+    member_seq(d.members());
+    newline_and_undent();
+    token(rbrace_tok);
+  }
+}
+
+
+void
+Printer::member_seq(Decl_list const& ds)
+{
+  for (auto iter = ds.begin(); iter != ds.end(); ++iter) {
+    declaration(*iter);
+    if (std::next(iter) != ds.end())
+      newline();
+  }
+}
+
+
+void
+Printer::class_definition(Deleted_def const&)
+{
+  space();
+  token(eq_tok);
+  space();
+  token(delete_tok);
+}
+
+
 // -------------------------------------------------------------------------- //
 // Declarations
 
@@ -958,7 +1011,12 @@ Printer::function_declaration(Function_decl const& d)
 void
 Printer::class_declaration(Class_decl const& d)
 {
-  lingo_unreachable();
+  token(class_tok);
+  id(d.name());
+  if (d.is_definition())
+    class_definition(d.definition());
+  else
+    token(semicolon_tok);
 }
 
 

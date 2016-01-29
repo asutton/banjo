@@ -108,9 +108,10 @@ struct Builder
   Aggregate_init& make_aggregate_init(Type&, Expr_list const&);
 
   // Definitions
-  Function_def&   make_function_def(Stmt&);
-  Deleted_def&    make_deleted_def();
-  Defaulted_def&  make_defaulted_def();
+  Function_def&   make_function_definition(Stmt&);
+  Class_def&      make_class_definition(Decl_list const&);
+  Deleted_def&    make_deleted_definition();
+  Defaulted_def&  make_defaulted_definition();
 
   Namespace_decl& make_namespace(Name&);
   Namespace_decl& make_namespace(char const*);
@@ -121,6 +122,8 @@ struct Builder
   Variable_decl& make_variable(char const*, Type&, Expr&);
   Function_decl& make_function(Name&, Decl_list const&, Type&);
   Function_decl& make_function(char const*, Decl_list const&, Type&);
+  Class_decl& make_class(Name&);
+  Class_decl& make_class(char const*);
   Template_decl& make_template(Decl_list const&, Decl&);
 
   Object_parm& make_object_parm(Name&, Type&);
@@ -623,21 +626,28 @@ Builder::make_aggregate_init(Type& t, Expr_list const& es)
 // Definitions
 
 inline Function_def&
-Builder::make_function_def(Stmt& s)
+Builder::make_function_definition(Stmt& s)
 {
   return make<Function_def>(s);
 }
 
 
+inline Class_def&
+Builder::make_class_definition(Decl_list const& ds)
+{
+  return make<Class_def>(ds);
+}
+
+
 inline Deleted_def&
-Builder::make_deleted_def()
+Builder::make_deleted_definition()
 {
   return make<Deleted_def>();
 }
 
 
 inline Defaulted_def&
-Builder::make_defaulted_def()
+Builder::make_defaulted_definition()
 {
   return make<Defaulted_def>();
 }
@@ -689,6 +699,20 @@ inline Function_decl&
 Builder::make_function(char const* s, Decl_list const& ps, Type& r)
 {
   return make_function(get_id(s), ps, r);
+}
+
+
+inline Class_decl&
+Builder::make_class(Name& n)
+{
+  return make<Class_decl>(n);
+}
+
+
+inline Class_decl&
+Builder::make_class(char const* s)
+{
+  return make<Class_decl>(get_id(s));
 }
 
 

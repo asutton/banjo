@@ -134,23 +134,30 @@ struct Printer
   void paren_initializer(Direct_init const&);
   void brace_initializer(Aggregate_init const&);
 
-  // Definitions
-  void function_definition(Def const&);
-  void function_definition(Function_def const&);
-  void function_definition(Deleted_def const&);
-  void function_definition(Defaulted_def const&);
 
   // Declarations
   void declaration(Decl const&);
   void declaration_seq(Decl_list const&);
   void variable_declaration(Variable_decl const&);
   void constant_declaration(Constant_decl const&);
-  void function_declaration(Function_decl const&);
-  void class_declaration(Class_decl const&);
   void union_declaration(Union_decl const&);
   void enum_declaration(Enum_decl const&);
   void namespace_declaration(Namespace_decl const&);
   void template_declaration(Template_decl const&);
+
+  // Functions
+  void function_declaration(Function_decl const&);
+  void function_definition(Def const&);
+  void function_definition(Function_def const&);
+  void function_definition(Deleted_def const&);
+  void function_definition(Defaulted_def const&);
+
+  // Classes
+  void class_declaration(Class_decl const&);
+  void class_definition(Def const&);
+  void class_definition(Class_def const&);
+  void class_definition(Deleted_def const&);
+  void member_seq(Decl_list const&);
 
   void parameter(Decl const&);
   void parameter(Object_parm const&);
