@@ -531,9 +531,6 @@ Builder::make_ge(Type& t, Expr& e1, Expr& e2)
 }
 
 
-
-
-
 inline Call_expr&
 Builder::make_call(Type& t, Function_decl& f, Expr_list const& a)
 {

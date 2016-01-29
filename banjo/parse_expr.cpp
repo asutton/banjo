@@ -155,7 +155,48 @@ Parser::unary_expression()
 Expr&
 Parser::postfix_expression()
 {
-  return primary_expression();
+  Expr* e = &primary_expression();
+  while (true) {
+    if (lookahead() == lparen_tok)
+      e = &call_expression(*e);
+    else
+      break;
+  }
+  return *e;
+}
+
+
+// Parse a call expression. This is a subroutine of the postfix
+// expression parser.
+//
+//    postfix-expression:
+//      postfix-expression '(' [expression-list] ')'
+Expr&
+Parser::call_expression(Expr& e)
+{
+  Expr_list es;
+  require(lparen_tok);
+  if (lookahead() != rparen_tok)
+    es = expression_list();
+  match(rparen_tok);
+  return on_call_expression(e, es);
+}
+
+
+// Parse a comma-separated list of expressions.
+//
+//    expression-list;
+//      expression
+//      expression-list ',' expression
+Expr_list
+Parser::expression_list()
+{
+  Expr_list es;
+  do {
+    Expr& e = expression();
+    es.push_back(e);
+  } while (match_if(comma_tok));
+  return es;
 }
 
 
@@ -175,9 +216,6 @@ Parser::primary_expression()
     case integer_tok:
       return on_integer_literal(accept());
 
-    case lparen_tok:
-      // FIXME: Add fold expressions.
-      return grouped_expression();
 
     default:
       break;

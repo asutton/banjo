@@ -71,6 +71,7 @@ struct Parser
 
   // Expressions
   Expr& expression();
+  Expr_list expression_list();
   Expr& logical_or_expression();
   Expr& logical_and_expression();
   Expr& equality_expression();
@@ -79,6 +80,8 @@ struct Parser
   Expr& additive_expression();
   Expr& unary_expression();
   Expr& postfix_expression();
+  Expr& call_expression(Expr&);
+  Expr& subscript_expression(Expr&);
   Expr& primary_expression();
   Expr& id_expression();
   Expr& grouped_expression();
@@ -179,6 +182,7 @@ struct Parser
   Expr& on_gt_expression(Token, Expr&, Expr&);
   Expr& on_le_expression(Token, Expr&, Expr&);
   Expr& on_ge_expression(Token, Expr&, Expr&);
+  Expr& on_call_expression(Expr&, Expr_list&);
   Expr& on_id_expression(Name&);
   Expr& on_boolean_literal(Token, bool);
   Expr& on_integer_literal(Token);

@@ -83,6 +83,14 @@ Parser::on_ge_expression(Token tok, Expr& e1, Expr& e2)
 }
 
 
+// TODO: This is going to be non-trivial.
+Expr&
+Parser::on_call_expression(Expr& e, Expr_list& es)
+{
+  lingo_unimplemented();
+}
+
+
 // TOOD: Resolve the id as either a variable name, a function
 // name, or an overload name. It can be nothing else.
 Expr&
