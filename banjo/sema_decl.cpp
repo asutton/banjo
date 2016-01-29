@@ -198,6 +198,8 @@ Parser::on_class_declaration(Token tok, Name& n)
 }
 
 
+// FIXME: Analyze the class body and nominate special
+// constructors, identify class properties, etc.
 Def&
 Parser::on_class_definition(Decl& d, Decl_list& ds)
 {

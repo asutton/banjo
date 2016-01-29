@@ -756,6 +756,8 @@ struct Type_parm;
 // TODO: Factor a base class for all of these: user-defined type.
 struct Class_type : User_defined_type
 {
+  using User_defined_type::User_defined_type;
+
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
@@ -767,6 +769,8 @@ struct Class_type : User_defined_type
 
 struct Union_type : User_defined_type
 {
+  using User_defined_type::User_defined_type;
+
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
@@ -778,6 +782,8 @@ struct Union_type : User_defined_type
 
 struct Enum_type : User_defined_type
 {
+  using User_defined_type::User_defined_type;
+
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 

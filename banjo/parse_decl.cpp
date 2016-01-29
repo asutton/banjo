@@ -349,7 +349,9 @@ Parser::member_seq()
 //      variable-declaration
 //      function-declaration
 //
-// FIXME: Have different declarations for members and non-members?
+// TODO: Support member types and templates.
+//
+// TODO: Have different declarations for members and non-members?
 Decl&
 Parser::member_declaration()
 {

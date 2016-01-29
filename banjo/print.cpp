@@ -300,7 +300,7 @@ Printer::type(Type const& t)
     void operator()(Reference_type const& t) { p.reference_type(t); }
     void operator()(Array_type const& t)     { p.postfix_type(t); }
     void operator()(Sequence_type const& t)  { p.sequence_type(t); }
-    void operator()(Class_type const& t)     { lingo_unimplemented(); }
+    void operator()(Class_type const& t)     { p.simple_type(t); }
     void operator()(Union_type const& t)     { lingo_unimplemented(); }
     void operator()(Enum_type const& t)      { lingo_unimplemented(); }
     void operator()(Typename_type const& t)  { p.simple_type(t); }
@@ -383,6 +383,16 @@ Printer::simple_type(Function_type const& t)
   token(rparen_tok);
   return_type(t.return_type());
 }
+
+// FIXME: Print a qualification of the name that uniquely
+// identifiers the type, given the current context. Naturally,
+// this means we need to track scopes...
+void
+Printer::simple_type(Class_type const& t)
+{
+  id(t.declaration().name());
+}
+
 
 
 // FIXME: Print the qualified id? Print a qualification that
@@ -881,6 +891,7 @@ Printer::class_definition(Def const& d)
   };
   apply(d, fn{*this});
 }
+
 
 void
 Printer::class_definition(Class_def const& d)

@@ -386,10 +386,11 @@ Builder::get_sequence_type(Type& t)
 }
 
 
+// FIXME: Canonicalize class types?
 inline Class_type&
 Builder::get_class_type(Decl& d)
 {
-  lingo_unimplemented();
+  return make<Class_type>(d);
 }
 
 

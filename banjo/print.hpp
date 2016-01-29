@@ -92,6 +92,7 @@ struct Printer
   void simple_type(Decltype_type const&);
   void simple_type(Declauto_type const&);
   void simple_type(Function_type const&);
+  void simple_type(Class_type const&);
   void simple_type(Typename_type const&);
   void grouped_type(Type const&, Type const&);
   void postfix_type(Pointer_type const&);

@@ -6,3 +6,5 @@ struct S1;
 struct S2 { }
 
 struct S3 { var int x; }
+
+var S2 s2;
