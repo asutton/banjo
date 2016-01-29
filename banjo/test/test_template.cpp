@@ -52,7 +52,7 @@ main(int argc, char* argv[])
     Type_parm& p = build.make_type_parameter("T");
     Decl& var = build.make_variable("v2", build.get_typename_type(p));
     Template_decl& tmp = build.make_template({&p}, var);
-    tmp.constraint(build.get_true());
+    tmp.constrain(build.get_true());
     std::cout << tmp << '\n';
   }
 

@@ -2266,10 +2266,14 @@ struct Namespace_decl : Decl
 // to a requires clause. Note that this is transformed into
 // a logical proposition for the purpose of constraint checking
 // and comparison.
+//
+// TODO: Consider making a template parameter list a special
+// term. We can linke template parameter lists and their
+// constraints. Of course, this may not be necessary.
 struct Template_decl : Decl
 {
   Template_decl(Decl_list const& p, Decl& d)
-    : Decl(d.name()), parms(p), constr(nullptr), decl(&d)
+    : Decl(d.name()), parms(p), cons(nullptr), decl(&d)
   {
     lingo_assert(!d.context());
     d.context(*this);
@@ -2284,19 +2288,23 @@ struct Template_decl : Decl
 
   // Returns the constraint associated with the template.
   // This is valid iff is_constrained() is true.
-  Expr const& constraint() const  { return *constr; }
-  Expr&       constraint()        { return *constr; }
-  void        constraint(Expr& e) { constr = &e; }
+  Expr const& constraint() const  { return *cons; }
+  Expr&       constraint()        { return *cons; }
+
+  // Set the template constraints.
+  //
+  // TODO: Is this used anywhere?
+  void        constrain(Expr& e)  { cons = &e; }
 
   // Returns true if the template declaration has constraints.
-  bool is_constrained() const { return constr; }
+  bool is_constrained() const { return cons; }
 
   // Returns the underlying pattern.
   Decl const& parameterized_declaration() const { return *decl; }
   Decl&       parameterized_declaration()       { return *decl; }
 
   Decl_list parms;
-  Expr*     constr;
+  Expr*     cons;
   Decl*     decl;
 };
 

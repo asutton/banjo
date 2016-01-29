@@ -17,12 +17,20 @@ namespace banjo
 // into a template. Clear the parameters so they aren't "re-used" for
 // a nested declaration.
 //
+// If we are not parsing a template, no changes are made to d.
 Decl&
 Parser::templatize_declaration(Decl& d)
 {
   if (state.template_parms) {
-    Decl& tmp = build.make_template(*state.template_parms, d);
+    // Build the template.
+    Template_decl& tmp = build.make_template(*state.template_parms, d);
     state.template_parms = nullptr;
+
+    // Apply constraints, if any.
+    if (state.template_cons) {
+      tmp.cons = state.template_cons;
+      state.template_cons = nullptr;
+    }
     return tmp;
   }
   return d;

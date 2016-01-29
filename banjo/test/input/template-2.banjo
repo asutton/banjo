@@ -2,7 +2,9 @@
 // Simple tests for parsing templates.
 
 template<typename T>
+  requires true
 var int x = 0;
 
 template<typename U>
+  requires false
 def f() -> int { return 0; }

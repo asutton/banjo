@@ -286,7 +286,7 @@ Parser::namespace_declaration()
 // Parse a template declaration.
 //
 //    tempate-declaration:
-//      'template' '<' template-parameter-list '>' declaration
+//      'template' '<' template-parameter-list '>' [requires-clause] declaration
 //
 // FIXME: Support explicit template instantations in one way or
 // another.
@@ -302,9 +302,21 @@ Parser::template_declaration()
   Decl_list ps = template_parameter_list();
   match(gt_tok);
 
-  // Parse the underlying declaration.
-  Parsing_template save(*this, ps);
-  return declaration();
+  // Parse the optional requires clause, followed by the
+  // definition.
+  //
+  // The definition is parsed in different branches in case I may,
+  // in the future, want to establish a new scope for constrained
+  // declarations (i.e., separate checking).
+  if (lookahead() == requires_tok) {
+    Expr& c = requires_clause();
+    Parsing_template save(*this, ps, c);
+    return declaration();
+  } else {
+    Parsing_template save(*this, ps);
+    return declaration();
+  }
+
 }
 
 
@@ -400,6 +412,15 @@ Parser::template_template_parameter()
 {
   lingo_unimplemented();
 }
+
+
+Expr&
+Parser::requires_clause()
+{
+  require(requires_tok);
+  return expression();
+}
+
 
 
 // -------------------------------------------------------------------------- //

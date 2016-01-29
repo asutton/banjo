@@ -116,6 +116,8 @@ struct Parser
   Expr& brace_initializer(Decl&);
   // Definitions
   Def& function_definition(Decl&);
+  // Constraints
+  Expr& requires_clause();
 
   Term& translation_unit();
 
@@ -225,11 +227,14 @@ struct Parser
   Decl* declare(Scope&, Decl&);
   Decl& templatize_declaration(Decl&);
 
-  // Maintains the current parse state.
+  // Maintains the current parse state. This is used to provide
+  // context for various parsing routines, and is used by the
+  // trial parser for caching parse state.
   struct State
   {
     Scope*     scope;                    // The current scope.
     Decl_list* template_parms = nullptr; // The current (innermost) template parameters
+    Expr*      template_cons = nullptr;  // The current (innermost) template constraints
 
     // Parsing flags.
     bool parsing_declarator = false; // True if parsing a declarator.
@@ -331,20 +336,45 @@ struct Parser::Assume_template
 // of a declaration nested within a template.
 struct Parser::Parsing_template
 {
-  Parsing_template(Parser& p, Decl_list& ps)
-    : parser(p), saved(p.state.template_parms)
-  {
-    parser.state.template_parms = &ps;
-  }
-
-  ~Parsing_template()
-  {
-    parser.state.template_parms = saved;
-  }
+  Parsing_template(Parser&, Decl_list&s);
+  Parsing_template(Parser&, Decl_list&s, Expr&);
+  ~Parsing_template();
 
   Parser&    parser;
-  Decl_list* saved;
+  Decl_list* saved_parms;
+  Expr*      saved_cons;
 };
+
+
+inline
+Parser::Parsing_template::Parsing_template(Parser& p, Decl_list& ps)
+  : parser(p)
+  , saved_parms(p.state.template_parms)
+  , saved_cons(p.state.template_cons)
+{
+  parser.state.template_parms = &ps;
+  parser.state.template_cons = nullptr;
+}
+
+
+inline
+Parser::Parsing_template::Parsing_template(Parser& p, Decl_list& ps, Expr& c)
+  : parser(p)
+  , saved_parms(p.state.template_parms)
+  , saved_cons(p.state.template_cons)
+{
+  parser.state.template_parms = &ps;
+  parser.state.template_cons = &c;
+}
+
+
+inline
+Parser::Parsing_template::~Parsing_template()
+{
+  parser.state.template_parms = saved_parms;
+  parser.state.template_cons = saved_cons;
+}
+
 
 
 // The trial parser provides recovery information for the parser
