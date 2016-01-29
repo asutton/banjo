@@ -285,6 +285,8 @@ Parser::union_name()
 //    enum-name:
 //      identifier
 //      simple-template-id
+//
+// C++ does not allow for enum templates.
 Type&
 Parser::enum_name()
 {
@@ -292,34 +294,6 @@ Parser::enum_name()
     return on_enum_name(*n);
   Token id = match(identifier_tok);
   return on_enum_name(id);
-}
-
-
-// Parse a type name.
-//
-//    type-name:
-//      class-name
-//      union-name
-//      enum-name
-//      type-alias
-//
-// TODO: Optimize this by factoring the template-id from
-// each of the alternatives and performing semantic analysis
-// separately.
-Type&
-Parser::type_name()
-{
-  // FIXME: Specific errors are being trapped in match_if.
-  // 
-  if (Type* id = match_if(&Parser::class_name))
-    return *id;
-  if (Type* id = match_if(&Parser::union_name))
-    return *id;
-  if (Type* id = match_if(&Parser::enum_name))
-    return *id;
-  if (Type* id = match_if(&Parser::type_alias))
-    return *id;
-  throw Syntax_error("expected type-name");
 }
 
 
@@ -335,6 +309,27 @@ Parser::type_alias()
     return on_type_alias(*n);
   Token id = match(identifier_tok);
   return on_type_alias(id);
+}
+
+
+// Parse a type name.
+//
+//    type-name:
+//      class-name
+//      union-name
+//      enum-name
+//      type-alias
+//
+// Note that all of these names are either identifiers or
+// simple-template-ids. Match syntactically and differentiate
+// semantically.
+Type&
+Parser::type_name()
+{
+  if (Name* n = match_if(&Parser::simple_template_id))
+    return on_type_name(*n);
+  Token id = match(identifier_tok);
+  return on_type_name(id);
 }
 
 

@@ -2,8 +2,8 @@
 // All rights reserved
 
 #include "lookup.hpp"
-#include "ast.hpp"
 #include "scope.hpp"
+#include "print.hpp"
 
 
 namespace banjo
@@ -62,6 +62,26 @@ unqualified_lookup(Scope& scope, Simple_id const& id)
     p = p->enclosing_scope();
   }
   return {};
+}
+
+
+// Simple lookup is a form of unqualified lookup that returns the
+// single declaration associated with the name.
+Decl&
+simple_lookup(Scope& scope, Simple_id const& id)
+{
+  Decl_list result = unqualified_lookup(scope, id);
+
+  // FIXME: Can we find names that are *like* id?
+  if (result.empty())
+    throw Lookup_error("no matching declaration for '{}'", id);
+
+  // FIXME: Find some way of attaching informative diagnotics
+  // to the error (i.e., candidates).
+  if (result.size() > 1)
+    throw Lookup_error("lookup of '{}' is ambiguous", id);
+
+  return result.front();
 }
 
 

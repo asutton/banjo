@@ -153,6 +153,8 @@ struct Parser
   Type& on_enum_name(Name&);
   Type& on_type_alias(Token);
   Type& on_type_alias(Name&);
+  Type& on_type_name(Token);
+  Type& on_type_name(Name&);
   Decl& on_namespace_name(Token);
   Decl& on_namespace_name(Name&);
   Decl& on_namespace_alias(Token);

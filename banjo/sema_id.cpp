@@ -166,22 +166,9 @@ Type&
 Parser::on_type_alias(Token tok)
 {
   Simple_id& id = build.get_id(tok);
-  Decl_list result = unqualified_lookup(current_scope(), id);
+  Decl& decl = simple_lookup(current_scope(), id);
 
-  // FIXME: Can we find names that are *like* id?
-  if (result.empty())
-    throw Lookup_error("no matching declaration for '{}'", id);
-
-  // FIXME: Find some way of attaching informative diagnotics
-  // to the error (i.e., candidates).
-  if (result.size() > 1)
-    throw Lookup_error("lookup of '{}' is ambiguous", id);
-
-
-  // A type template parameter defines its identifier to be
-  // a type alias.
-  Decl* decl = &result.front();
-  if (Type_parm* d = as<Type_parm>(decl))
+  if (Type_parm* d = as<Type_parm>(&decl))
     return build.get_typename_type(*d);
 
   // TODO: Actually support type aliases.
@@ -194,6 +181,41 @@ Type&
 Parser::on_type_alias(Name&)
 {
   throw Lookup_error("not a type alias");
+}
+
+
+Type&
+Parser::on_type_name(Token tok)
+{
+  Simple_id& id = build.get_id(tok);
+  Decl& decl = simple_lookup(current_scope(), id);
+
+  // Match a class name.
+  if (Class_decl* d = as<Class_decl>(&decl))
+    return build.get_class_type(*d);
+
+  // Match a union name.
+  if (Union_decl* d = as<Union_decl>(&decl))
+    return build.get_union_type(*d);
+
+  // Match an enum name.
+  if (Enum_decl* d = as<Enum_decl>(&decl))
+    return build.get_enum_type(*d);
+
+  // Match a type alias name.
+  if (Type_parm* d = as<Type_parm>(&decl))
+    return build.get_typename_type(*d);
+
+  // TODO: Actually support type aliases.
+
+  throw Lookup_error("'{}' does not name a type", id);
+}
+
+
+Type&
+Parser::on_type_name(Name&)
+{
+  throw Lookup_error("not a type name");
 }
 
 
