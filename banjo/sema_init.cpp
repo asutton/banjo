@@ -15,12 +15,7 @@ namespace banjo
 static inline void
 initialize_declaration(Decl* d, Expr& e)
 {
-  // Adjust for template declarations.
-  //
-  // TODO: Make it easier to access the pattern.
-  if (Template_decl* tmp = as<Template_decl>(d))
-    d = &tmp->pattern();
-
+  d = &d->parameterized_declaration();
   if (Variable_decl* var = as<Variable_decl>(d))
     var->init = &e;
   else
@@ -42,12 +37,7 @@ initialize_declaration(Decl& d, Expr& e)
 static inline Type&
 declared_type(Decl* d)
 {
-  // Adjust for template declarations.
-  //
-  // TODO: Make it easier to access the pattern.
-  if (Template_decl* tmp = as<Template_decl>(d))
-    d = &tmp->pattern();
-
+  d = &d->parameterized_declaration();
   if (Variable_decl* var = as<Variable_decl>(d))
     return var->type();
 

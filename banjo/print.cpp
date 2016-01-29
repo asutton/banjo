@@ -1010,7 +1010,7 @@ Printer::template_declaration(Template_decl const& d)
   } else {
     newline();
   }
-  declaration(d.pattern());
+  declaration(d.parameterized_declaration());
 }
 
 

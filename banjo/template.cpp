@@ -163,7 +163,7 @@ specialize_decl(Context& cxt, Variable_decl& d, Term_list& orig)
 Decl&
 specialize_template(Context& cxt, Template_decl& tmp, Term_list& args)
 {
-  return specialize_decl(cxt, tmp.pattern(), args);
+  return specialize_decl(cxt, tmp.parameterized_declaration(), args);
 }
 
 

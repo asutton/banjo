@@ -33,7 +33,6 @@ Parser::declaration()
       return template_declaration();
     default: break;
   }
-  std::cout << "HERE: " << peek() << '\n';
   throw Syntax_error("invalid declaration");
 }
 
@@ -169,14 +168,14 @@ Parser::function_declaration()
   Type& t = return_type();
 
   // Point of declaration.
-  Function_decl& fn = on_function_declaration(tok, n, ps, t);
+  Decl& fn = on_function_declaration(tok, n, ps, t);
 
   // Parse the definition, if any.
   if (lookahead() == semicolon_tok) {
     match(semicolon_tok);
   } else {
     // Enter function scope and parse the function definition.
-    Enter_scope fscope(*this, fn);
+    Enter_scope fscope(*this, make_function_scope(fn));
     function_definition(fn);
   }
 

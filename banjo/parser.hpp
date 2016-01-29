@@ -177,7 +177,7 @@ struct Parser
 
   // Declarations
   Decl& on_variable_declaration(Token, Name&, Type&);
-  Function_decl& on_function_declaration(Token, Name&, Decl_list&, Type&);
+  Decl& on_function_declaration(Token, Name&, Decl_list&, Type&);
   Namespace_decl& on_namespace_declaration(Token, Name&, Decl_list&);
   // Function parameters
   Object_parm& on_function_parameter(Name&, Type&);

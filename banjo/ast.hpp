@@ -1445,6 +1445,8 @@ struct Ellipsis_conv : Conv
 
 // An initializer is an expressio that provides a value for an
 // object or reference.
+//
+// TODO: Should all initializers have type void?
 struct Init : Expr
 {
   using Expr::Expr;
@@ -1980,6 +1982,12 @@ struct Decl : Term
   Name const& name() const { return *id; }
   Name&       name()       { return *id; }
 
+  // If the declaration is a template, this returns the templated
+  // declaration.
+  virtual Decl const& parameterized_declaration() const { return *this; }
+  virtual Decl&       parameterized_declaration()       { return *this; }
+
+
   // Returns the saved scope associated with the declaration, if any.
   // Not all declarations have an associated scope.
   virtual Scope const* scope() const { return nullptr; }
@@ -2280,10 +2288,12 @@ struct Template_decl : Decl
   Expr&       constraint()        { return *constr; }
   void        constraint(Expr& e) { constr = &e; }
 
+  // Returns true if the template declaration has constraints.
   bool is_constrained() const { return constr; }
 
-  Decl const& pattern() const { return *decl; }
-  Decl&       pattern()       { return *decl; }
+  // Returns the underlying pattern.
+  Decl const& parameterized_declaration() const { return *decl; }
+  Decl&       parameterized_declaration()       { return *decl; }
 
   Decl_list parms;
   Expr*     constr;

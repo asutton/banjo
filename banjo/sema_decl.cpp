@@ -102,12 +102,36 @@ Parser::on_variable_declaration(Token, Name& n, Type& t)
 // Functions
 
 
-Function_decl&
+// FIXME: Move these into a new module, sema_def.cpp, Or put
+// them in sema_init?
+
+static inline void
+define_function(Decl* d, Def& def)
+{
+  d = &d->parameterized_declaration();
+  if (Function_decl* fn = as<Function_decl>(d))
+    fn->def = &def;
+  else
+    lingo_unreachable();
+}
+
+
+// A helper function that hides the ugliness of assinging the
+// function definition.
+static inline void
+define_function(Decl& decl, Def& def)
+{
+  return define_function(&decl, def);
+}
+
+
+Decl&
 Parser::on_function_declaration(Token, Name& n, Decl_list& ps, Type& t)
 {
-  Function_decl& fn = build.make_function(n, ps, t);
-  declare(current_scope(), fn);
-  return fn;
+  Decl& d1 = build.make_function(n, ps, t);
+  Decl& d2 = templatize_declaration(d1);
+  declare(current_scope(), d2);
+  return d2;
 }
 
 
@@ -117,25 +141,6 @@ Parser::on_function_parameter(Name& n, Type& t)
   Object_parm& parm = build.make_object_parm(n, t);
   declare(current_scope(), parm);
   return parm;
-}
-
-
-// FIXME: Move these into a new module, sema_def.cpp,
-
-
-static inline void
-define_function(Function_decl& fn, Def& def)
-{
-  fn.def = &def;
-}
-
-
-// A helper function that hides the ugliness of assinging the
-// function definition.
-static inline void
-define_function(Decl& decl, Def& def)
-{
-  define_function(cast<Function_decl>(decl), def);
 }
 
 
