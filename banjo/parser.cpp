@@ -29,6 +29,14 @@ token_spelling(Token_stream& ts)
 } // namespace
 
 
+// Return the symbol table.
+Symbol_table&
+Parser::symbols()
+{
+  return cxt.symbols();
+}
+
+
 // Returns the current token.
 Token
 Parser::peek() const

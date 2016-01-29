@@ -2,6 +2,8 @@
 // All rights reserved
 
 #include "parser.hpp"
+#include "lookup.hpp"
+#include "print.hpp"
 
 #include <iostream>
 
@@ -161,9 +163,30 @@ Parser::on_enum_name(Name&)
 
 
 Type&
-Parser::on_type_alias(Token)
+Parser::on_type_alias(Token tok)
 {
-  throw Lookup_error("not a type alias");
+  Simple_id& id = build.get_id(tok);
+  Decl_list result = unqualified_lookup(current_scope(), id);
+
+  // FIXME: Can we find names that are *like* id?
+  if (result.empty())
+    throw Lookup_error("no matching declaration for '{}'", id);
+
+  // FIXME: Find some way of attaching informative diagnotics
+  // to the error (i.e., candidates).
+  if (result.size() > 1)
+    throw Lookup_error("lookup of '{}' is ambiguous", id);
+
+
+  // A type template parameter defines its identifier to be
+  // a type alias.
+  Decl* decl = &result.front();
+  if (Type_parm* d = as<Type_parm>(decl))
+    return build.get_typename_type(*d);
+
+  // TODO: Actually support type aliases.
+
+  throw Lookup_error("'{}' does not name a type", id);
 }
 
 

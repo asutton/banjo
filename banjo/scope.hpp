@@ -149,8 +149,8 @@ struct Function_scope : Scope
   using Scope::Scope;
 
   // Returns the function declaration associated with the scope.
-  Decl const& declaration() const;
-  Decl&       declaration();
+  Decl const& declaration() const { return *context(); }
+  Decl&       declaration()       { return *context(); }
 };
 
 

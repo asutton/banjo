@@ -218,6 +218,9 @@ struct Parser
   // Miscellaneous
   Namespace_decl& on_translation_unit(Decl_list&);
 
+  // Symbol table.
+  Symbol_table& symbols();
+
   // Token matching.
   Token      peek() const;
   Token_kind lookahead() const;

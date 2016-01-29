@@ -13,7 +13,18 @@ namespace banjo
 // Denotes an error that occurs during translation.
 struct Translation_error : std::runtime_error
 {
-  using std::runtime_error::runtime_error;
+  Translation_error(std::string const& s)
+    : std::runtime_error(s)
+  { }
+
+  Translation_error(char const* s)
+    : std::runtime_error(s)
+  { }
+
+  template<typename... Args>
+  Translation_error(char const* s, Args const&... args)
+    : Translation_error(format(s, args...))
+  { }
 };
 
 

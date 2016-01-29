@@ -1,8 +1,11 @@
 
 // Simple tests for parsing templates.
 
-template<typename T>
-var int x = 0;
+// template<typename T>
+// var int x = 0;
+//
+// template<typename U>
+// def f() -> int { return 0; }
 
-template<typename U>
-def f() -> int { return 0; }
+template<typename T>
+var T t1;

@@ -309,6 +309,8 @@ Parser::enum_name()
 Type&
 Parser::type_name()
 {
+  // FIXME: Specific errors are being trapped in match_if.
+  // 
   if (Type* id = match_if(&Parser::class_name))
     return *id;
   if (Type* id = match_if(&Parser::union_name))

@@ -10,6 +10,8 @@
 #include "token.hpp"
 #include "ast.hpp"
 
+#include <lingo/token.hpp>
+
 
 namespace banjo
 {
@@ -35,6 +37,7 @@ struct Builder
   Simple_id&      get_id(std::string const&);
   Simple_id&      get_id(Symbol const&);
   Simple_id&      get_id(Symbol const*);
+  Simple_id&      get_id(Token tok);
   Placeholder_id& get_id();
   // Operator_id&    get_id();
   // Conversion_id&  get_id();
@@ -173,6 +176,7 @@ Builder::get_id(std::string const& s)
 inline Simple_id&
 Builder::get_id(Symbol const& sym)
 {
+  lingo_assert(is<Identifier_sym>(&sym));
   return make<Simple_id>(sym);
 }
 
@@ -181,7 +185,15 @@ Builder::get_id(Symbol const& sym)
 inline Simple_id&
 Builder::get_id(Symbol const* sym)
 {
-  return make<Simple_id>(*sym);
+  return get_id(*sym);
+}
+
+
+// Returns a simple id for the given token.
+inline Simple_id&
+Builder::get_id(Token tok)
+{
+  return get_id(tok.symbol());
 }
 
 
