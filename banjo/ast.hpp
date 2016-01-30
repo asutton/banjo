@@ -1948,6 +1948,7 @@ struct Union_decl;
 struct Enum_decl;
 struct Namespace_decl;
 struct Template_decl;
+struct Concept_decl;
 struct Object_parm;
 struct Value_parm;
 struct Type_parm;
@@ -2027,6 +2028,7 @@ struct Decl::Visitor
   virtual void visit(Enum_decl const&)      { }
   virtual void visit(Namespace_decl const&) { }
   virtual void visit(Template_decl const&)  { }
+  virtual void visit(Concept_decl const&)  { }
   virtual void visit(Object_parm const&)    { }
   virtual void visit(Value_parm const&)     { }
   virtual void visit(Type_parm const&)      { }
@@ -2045,6 +2047,7 @@ struct Decl::Mutator
   virtual void visit(Enum_decl&)      { }
   virtual void visit(Namespace_decl&) { }
   virtual void visit(Template_decl&)  { }
+  virtual void visit(Concept_decl&)  { }
   virtual void visit(Object_parm&)    { }
   virtual void visit(Value_parm&)     { }
   virtual void visit(Type_parm&)      { }
@@ -2333,6 +2336,32 @@ struct Template_decl : Decl
 };
 
 
+// Represents a concept definition.
+//
+// TODO: How do I want to handle syntactic requirements? Make a
+// Concept_def that is either an expression or a body.
+struct Concept_decl : Decl
+{
+  Concept_decl(Name& n, Decl_list const& ps, Expr& e)
+    : Decl(n), parms(ps), def(&e)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the template parameters of the declaration.
+  Decl_list const& parameters() const { return parms; }
+  Decl_list&       parameters()       { return parms; }
+
+  // Returns the constraint associated with the template.
+  // This is valid iff is_constrained() is true.
+  Expr const& definition() const  { return *def; }
+  Expr&       definition()        { return *def; }
+
+  Decl_list parms;
+  Expr*     def;
+};
+
 // An object paramter of a function.
 //
 // TODO: Name this variable_parm to be consistent with variable
@@ -2479,6 +2508,7 @@ struct Generic_decl_visitor : Decl::Visitor, Generic_visitor<F, T>
   void visit(Enum_decl const& d)      { this->invoke(d); }
   void visit(Namespace_decl const& d) { this->invoke(d); }
   void visit(Template_decl const& d)  { this->invoke(d); }
+  void visit(Concept_decl const& d)   { this->invoke(d); }
   void visit(Object_parm const& d)    { this->invoke(d); }
   void visit(Value_parm const& d)     { this->invoke(d); }
   void visit(Type_parm const& d)      { this->invoke(d); }
@@ -2513,6 +2543,7 @@ struct Generic_decl_mutator : Decl::Mutator, Generic_mutator<F, T>
   void visit(Enum_decl& d)      { this->invoke(d); }
   void visit(Namespace_decl& d) { this->invoke(d); }
   void visit(Template_decl& d)  { this->invoke(d); }
+  void visit(Concept_decl& d)   { this->invoke(d); }
   void visit(Object_parm& d)    { this->invoke(d); }
   void visit(Value_parm& d)     { this->invoke(d); }
   void visit(Type_parm& d)      { this->invoke(d); }
