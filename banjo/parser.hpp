@@ -39,6 +39,7 @@ struct Parser
   // Name helpers
   Name& simple_template_id();
   Term_list template_argument_list();
+  Term& template_argument();
 
   // Nested name specifiers
   Decl& leading_name_specifier();

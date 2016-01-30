@@ -4,7 +4,10 @@
 #include "template.hpp"
 #include "initialization.hpp"
 #include "substitution.hpp"
+#include "print.hpp"
 #include "builder.hpp"
+
+#include <iostream>
 
 
 namespace banjo
@@ -100,43 +103,14 @@ initialize_template_parameters(Context& cxt, Decl_list& parms, Term_list& args)
 // -------------------------------------------------------------------------- //
 // Template specialization
 
-Decl& specialize_decl(Context&, Decl&, Term_list&);
-Decl& specialize_decl(Context&, Variable_decl&, Term_list&);
-
-
-// Specialize a templated declaration `d` (`d` is the pattern of
-// a template).
-//
-// This is distinct from substitution. Here, we produce a new
-// declaration with a distinct name. We do not, however, substitute
-// into its initializer. That is done only when the the definition
-// is actually needed for use.
-//
-// TODO: Finish implementing this.
-Decl&
-specialize_decl(Context& cxt, Decl& d, Term_list& args)
-{
-  struct fn
-  {
-    Context&   cxt;
-    Term_list& args;
-    Decl& operator()(Decl& d)           { lingo_unimplemented(); }
-    Decl& operator()(Variable_decl& d)  { return specialize_decl(cxt, d, args); }
-    Decl& operator()(Template_decl& d)  { lingo_unreachable(); }
-  };
-  return apply(d, fn{cxt, args});
-}
-
-
 // TODO: This is basically what happens for every single declaration.
 // Find a way of generalizing it.
 Decl&
-specialize_decl(Context& cxt, Variable_decl& d, Term_list& orig)
+specialize_variable(Context& cxt, Template_decl& tmp, Variable_decl& d, Term_list& orig)
 {
   Builder build(cxt);
 
   // Convert parameter.
-  Template_decl& tmp = cast<Template_decl>(*d.context());
   Decl_list& parms = tmp.parameters();
   Term_list args = initialize_template_parameters(cxt, parms, orig);
 
@@ -150,9 +124,55 @@ specialize_decl(Context& cxt, Variable_decl& d, Term_list& orig)
   Substitution sub(parms, args);
   Type& t = substitute(cxt, d.type(), sub);
 
-  // TODO: Issue declaration or later?
   return build.make_variable(n, t);
 }
+
+
+// TODO: This is basically what happens for every single declaration.
+// Find a way of generalizing it.
+Decl&
+specialize_class(Context& cxt, Template_decl& tmp, Class_decl& d, Term_list& orig)
+{
+  Builder build(cxt);
+
+  // Convert parameter.
+  Decl_list& parms = tmp.parameters();
+  Term_list args = initialize_template_parameters(cxt, parms, orig);
+
+  Name& n = build.get_template_id(tmp, args);
+
+  return build.make_class(n);
+}
+
+
+// Specialize a templated declaration `decl` (`decl` is parameterized
+// by the template `tmp`).
+//
+// This is distinct from substitution. Here, we produce a new declaration
+// with a distinct name. We do not, however, substitute into its
+// initializer. That is done only when the the definition is actually
+// needed for use.
+//
+// TODO: Finish implementing this.
+Decl&
+specialize_decl(Context& cxt, Template_decl& tmp, Decl& decl, Term_list& args)
+{
+  struct fn
+  {
+    Context&       cxt;
+    Template_decl& tmp;
+    Term_list&     args;
+    Decl& operator()(Decl& d)           { lingo_unimplemented(); }
+    Decl& operator()(Variable_decl& d)  { return specialize_variable(cxt, tmp, d, args); }
+    Decl& operator()(Function_decl& d)  { lingo_unimplemented(); }
+    Decl& operator()(Class_decl& d)     { return specialize_class(cxt, tmp, d, args); }
+    Decl& operator()(Template_decl& d)  { lingo_unreachable(); }
+  };
+  return apply(decl, fn{cxt, tmp, args});
+}
+
+
+
 
 
 // Produce an implicit specialization of the template declaration
@@ -163,7 +183,8 @@ specialize_decl(Context& cxt, Variable_decl& d, Term_list& orig)
 Decl&
 specialize_template(Context& cxt, Template_decl& tmp, Term_list& args)
 {
-  return specialize_decl(cxt, tmp.parameterized_declaration(), args);
+  Decl& decl = tmp.parameterized_declaration();
+  return specialize_decl(cxt, tmp, decl, args);
 }
 
 

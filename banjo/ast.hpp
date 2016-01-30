@@ -300,6 +300,9 @@ struct Destructor_id : Name
 };
 
 
+struct Template_decl;
+
+
 // An identifier that refers a template specialization.
 //
 // FIXME: Make the declaration a template declaration.
@@ -311,8 +314,8 @@ struct Template_id : Name
 
   void accept(Visitor& v) const { v.visit(*this); };
 
-  Decl const& declaration() const { return *decl; }
-  Decl&       declaration()       { return *decl; }
+  Template_decl const& declaration() const;
+  Template_decl&       declaration();
 
   Term_list const& arguments() const { return args; }
   Term_list&       arguments()       { return args; }
@@ -2540,6 +2543,22 @@ struct Translation_unit : Term
 
 // -------------------------------------------------------------------------- //
 // Implementation
+
+// Template_id
+
+inline Template_decl const&
+Template_id::declaration() const
+{
+  return cast<Template_decl>(*decl);
+}
+
+
+inline Template_decl&
+Template_id::declaration()
+{
+  return cast<Template_decl>(*decl);
+}
+
 
 // Class type
 

@@ -5,6 +5,8 @@
 #include "scope.hpp"
 #include "print.hpp"
 
+#include <iostream>
+
 
 namespace banjo
 {

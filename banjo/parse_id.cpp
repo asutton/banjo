@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "parser.hpp"
+#include "print.hpp"
 
 #include <iostream>
 
@@ -126,7 +127,7 @@ Parser::simple_template_id()
 {
   Token tok = match_if(template_tok);
 
-  // FIXME: This is kind of gross.
+  // FIXME: This is kind of gross. Can we make it prettier?
   Decl* temp;
   {
     Assume_template a(*this, (bool)tok);
@@ -155,7 +156,35 @@ Parser::simple_template_id()
 Term_list
 Parser::template_argument_list()
 {
-  return {};
+  Term_list args;
+  do {
+    Term& arg = template_argument();
+    args.push_back(arg);
+  } while(lookahead() == comma_tok);
+  return args;
+}
+
+
+// Parse a template argument.
+//
+//    template-argument:
+//      type
+//      expression
+//      template-name
+//
+// FIXME: The expression must be a constant expression.
+//
+// FIXME: In the last instance, the template name can be qualified.
+Term&
+Parser::template_argument()
+{
+  if (Type* t = match_if(&Parser::type))
+    return *t;
+  if (Expr* e = match_if(&Parser::expression))
+    return *e;
+  if (Decl* d = match_if(&Parser::template_name))
+    return *d;
+  throw Syntax_error("expected template-argument");
 }
 
 
