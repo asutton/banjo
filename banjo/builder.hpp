@@ -44,6 +44,7 @@ struct Builder
   // Literal_id&     get_id();
   Destructor_id&  get_destructor_id(Type const&);
   Template_id&    get_template_id(Template_decl&, Term_list const&);
+  Concept_id&     get_concept_id(Concept_decl&, Term_list const&);
   Qualified_id&   get_qualified_id(Decl&, Name&);
   Global_id&      get_global_id();
 
@@ -70,6 +71,7 @@ struct Builder
   Union_type&     get_union_type(Decl&);
   Enum_type&      get_enum_type(Decl&);
   Typename_type&  get_typename_type(Decl&);
+  Synthetic_type& synthesize_type(Decl&);
 
   // Expressions
   Boolean_expr&   get_bool(bool);
@@ -82,6 +84,7 @@ struct Builder
   Reference_expr& make_reference(Variable_decl& d);
   Reference_expr& make_reference(Constant_decl& d);
   Reference_expr& make_reference(Function_decl& d);
+  Check_expr&     make_check(Concept_decl& d, Term_list const&);
 
   And_expr&       make_and(Type&, Expr&, Expr&);
   Or_expr&        make_or(Type&, Expr&, Expr&);
@@ -93,6 +96,7 @@ struct Builder
   Le_expr&        make_le(Type&, Expr&, Expr&);
   Ge_expr&        make_ge(Type&, Expr&, Expr&);
   Call_expr&      make_call(Type&, Function_decl&, Expr_list const&);
+  Synthetic_expr& synthesize_expression(Decl&);
 
   // Statements
   Compound_stmt&    make_compound_statement(Stmt_list const&);
@@ -116,15 +120,16 @@ struct Builder
   Namespace_decl& make_namespace(Name&);
   Namespace_decl& make_namespace(char const*);
   Namespace_decl& get_global_namespace();
-  Variable_decl& make_variable(Name&, Type&);
-  Variable_decl& make_variable(char const*, Type&);
-  Variable_decl& make_variable(Name&, Type&, Expr&);
-  Variable_decl& make_variable(char const*, Type&, Expr&);
-  Function_decl& make_function(Name&, Decl_list const&, Type&);
-  Function_decl& make_function(char const*, Decl_list const&, Type&);
-  Class_decl& make_class(Name&);
-  Class_decl& make_class(char const*);
-  Template_decl& make_template(Decl_list const&, Decl&);
+  Variable_decl&  make_variable(Name&, Type&);
+  Variable_decl&  make_variable(char const*, Type&);
+  Variable_decl&  make_variable(Name&, Type&, Expr&);
+  Variable_decl&  make_variable(char const*, Type&, Expr&);
+  Function_decl&  make_function(Name&, Decl_list const&, Type&);
+  Function_decl&  make_function(char const*, Decl_list const&, Type&);
+  Class_decl&     make_class(Name&);
+  Class_decl&     make_class(char const*);
+  Template_decl&  make_template(Decl_list const&, Decl&);
+  Concept_decl&   make_concept(Name&, Decl_list const&);
 
   Object_parm& make_object_parm(Name&, Type&);
   Object_parm& make_object_parm(char const*, Type&);
@@ -222,6 +227,13 @@ inline Template_id&
 Builder::get_template_id(Template_decl& d, Term_list const& t)
 {
   return make<Template_id>(d, t);
+}
+
+
+inline Concept_id&
+Builder::get_concept_id(Concept_decl& d, Term_list const& t)
+{
+  return make<Concept_id>(d, t);
 }
 
 
@@ -415,6 +427,13 @@ Builder::get_typename_type(Decl& d)
 }
 
 
+inline Synthetic_type&
+Builder::synthesize_type(Decl& d)
+{
+  return make<Synthetic_type>(d);
+}
+
+
 // -------------------------------------------------------------------------- //
 // Expressions
 
@@ -481,6 +500,14 @@ inline Reference_expr&
 Builder::make_reference(Variable_decl& d)
 {
   return make<Reference_expr>(get_reference_type(d.type()), d);
+}
+
+
+// Make a concept check. The type is bool.
+inline Check_expr&
+Builder::make_check(Concept_decl& d, Term_list const& as)
+{
+  return make<Check_expr>(get_bool_type(), d, as);
 }
 
 
@@ -551,6 +578,13 @@ inline Call_expr&
 Builder::make_call(Type& t, Function_decl& f, Expr_list const& a)
 {
   return make<Call_expr>(t, make_reference(f), a);
+}
+
+
+inline Synthetic_expr&
+Builder::synthesize_expression(Decl& d)
+{
+  return make<Synthetic_expr>(declared_type(d), d);
 }
 
 
@@ -744,6 +778,13 @@ inline Template_decl&
 Builder::make_template(Decl_list const& p, Decl& d)
 {
   return make<Template_decl>(p, d);
+}
+
+
+inline Concept_decl&
+Builder::make_concept(Name& n, Decl_list const& ps)
+{
+  return make<Concept_decl>(n, ps);
 }
 
 

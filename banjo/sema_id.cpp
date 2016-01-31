@@ -57,7 +57,13 @@ Parser::on_template_id(Token, Decl& d, Term_list const& a)
 }
 
 
-// TODO: As we
+Name&
+Parser::on_concept_id(Decl& d, Term_list const& a)
+{
+  return build.get_concept_id(cast<Concept_decl>(d), a);
+}
+
+
 Name&
 Parser::on_qualified_id(Decl& d, Name& n)
 {
@@ -271,11 +277,20 @@ Parser::on_template_name(Token tok)
 {
   Simple_id& id = build.get_id(tok);
   Decl& decl = simple_lookup(current_scope(), id);
-
   if (is<Template_decl>(&decl))
     return decl;
-
   throw Lookup_error("'{}' does not name a template", id);
+}
+
+
+Decl&
+Parser::on_concept_name(Token tok)
+{
+  Simple_id& id = build.get_id(tok);
+  Decl& decl = simple_lookup(current_scope(), id);
+  if (is<Concept_decl>(&decl))
+    return decl;
+  throw Lookup_error("'{}' does not name a concept", id);
 }
 
 

@@ -44,6 +44,7 @@ is_value_type(Type const& t)
 {
   struct fn
   {
+    bool operator()(Type const&)             { lingo_unimplemented(); }
     bool operator()(Void_type const&)        { return true; }
     bool operator()(Boolean_type const&)     { return true; }
     bool operator()(Integer_type const&)     { return true; }
@@ -65,6 +66,23 @@ is_value_type(Type const& t)
   return apply(t, fn{});
 }
 
+// Return the type of a declaration. A type describes objects,
+// references, and functions.
+//
+// FIXME: This is kind of dumb. We should have a base class that
+// contributes a type to the declaration hiearchy (Typed_decl).
+Type&
+declared_type(Decl& decl)
+{
+  struct fn
+  {
+    Type& operator()(Decl&)            { lingo_unreachable(); }
+    Type& operator()(Object_decl& d)   { return d.type(); }
+    Type& operator()(Function_decl& d) { return d.type(); }
+  };
+  Decl& d = decl.parameterized_declaration();
+  return apply(d, fn{});
+}
 
 
 } // namespace banjo

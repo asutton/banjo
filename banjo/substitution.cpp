@@ -41,22 +41,21 @@ substitute(Context& cxt, Type& t, Substitution& sub)
   {
     Context&      cxt;
     Substitution& sub;
-    Type& operator()(Void_type& t)      { return t; }
-    Type& operator()(Boolean_type& t)   { return t; }
-    Type& operator()(Integer_type& t)   { return t; }
-    Type& operator()(Float_type& t)     { return t; }
+
+    // Most types cannot be substituted into.
+    Type& operator()(Type& t)           { return t; }
+
     Type& operator()(Auto_type& t)      { lingo_unimplemented(); }
     Type& operator()(Decltype_type& t)  { lingo_unimplemented(); }
     Type& operator()(Declauto_type& t)  { lingo_unimplemented(); }
+
+    // Recrusively substitute through compound types.
     Type& operator()(Function_type& t)  { return substitute_type(cxt, t, sub); }
     Type& operator()(Reference_type& t) { return substitute_type(cxt, t, sub); }
     Type& operator()(Qualified_type& t) { return substitute_type(cxt, t, sub); }
     Type& operator()(Pointer_type& t)   { return substitute_type(cxt, t, sub); }
     Type& operator()(Array_type& t)     { return substitute_type(cxt, t, sub); }
     Type& operator()(Sequence_type& t)  { return substitute_type(cxt, t, sub); }
-    Type& operator()(Class_type& t)     { return t; }
-    Type& operator()(Union_type& t)     { return t; }
-    Type& operator()(Enum_type& t)      { return t; }
     Type& operator()(Typename_type& t)  { return substitute_type(cxt, t, sub); }
   };
   return apply(t, fn{cxt, sub});
@@ -146,8 +145,38 @@ substitute(Context& cxt, Expr& e, Substitution& sub)
 // the name of the declaration. Specialization, however, is a
 // special form of substitution where we generate a newly named
 // declaration.
+//
+// FIXME: Substitution is kind of like parsing. We need to interpret
+// the resulting constructs as if they were parsed. That means we
+// need to maintain binding environments to support lookup and
+// resolution.
 
-Decl& substitute_decl(Context&, Variable_decl&, Substitution&);
+
+// FIXME: Rebuild the variable as if parsed.
+Decl&
+substitute_decl(Context& cxt, Variable_decl& d, Substitution& sub)
+{
+  Name& n = d.name();
+  Type& t = substitute(cxt, d.type(), sub);
+
+  Builder build(cxt);
+  return build.make_variable(n, t);
+}
+
+
+// FIXME: Rebuild the parameter as if parsed.
+//
+// FIXME: Do we substitute into a default argument? It probably
+// depends on context, but I assume that the general answer is yes.
+Decl&
+substitute_decl(Context& cxt, Object_parm& d, Substitution& sub)
+{
+  Name& n = d.name();
+  Type& t = substitute(cxt, d.type(), sub);
+
+  Builder build(cxt);
+  return build.make_object_parm(n, t);
+}
 
 
 Decl&
@@ -159,23 +188,9 @@ substitute(Context& cxt, Decl& d, Substitution& sub)
     Substitution& sub;
     Decl& operator()(Decl& d)           { lingo_unimplemented(); }
     Decl& operator()(Variable_decl& d)  { return substitute_decl(cxt, d, sub); }
+    Decl& operator()(Object_parm& d)    { return substitute_decl(cxt, d, sub); }
   };
   return apply(d, fn{cxt, sub});
-}
-
-
-// TODO: Substitute into the initializer.
-//
-// TODO: Should we declare the variable? In general, how should we
-// handle elaboration?
-Decl&
-substitute_decl(Context& cxt, Variable_decl& d, Substitution& sub)
-{
-  Name& n = d.name();
-  Type& t = substitute(cxt, d.type(), sub);
-
-  Builder build(cxt);
-  return build.make_variable(n, t);
 }
 
 

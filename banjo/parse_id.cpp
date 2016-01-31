@@ -38,8 +38,9 @@ namespace banjo
 Name&
 Parser::id()
 {
-  if (Name* n = match_if(&Parser::qualified_id))
-    return *n;
+  // FIXME: Re-enable this when I add scoped stuff.
+  // if (Name* n = match_if(&Parser::qualified_id))
+  //   return *n;
   return unqualified_id();
 }
 
@@ -53,6 +54,7 @@ Parser::id()
 //      literal-id
 //      destructor-id
 //      template-id
+//      concept-id
 //
 // TODO: Support operator, conversion, and literal ids. Note that
 // all of those begin with 'operator', but can be syntactically
@@ -68,11 +70,16 @@ Parser::unqualified_id()
   if (lookahead() == tilde_tok)
     return destructor_id();
 
-  // Use a trial parser to determine if we're looking
-  // at a template-id instead of a plain identifier.
+  // Use a trial parser to determine if we're looking at a template-id
+  // or concept-id instead of a plain old identifier.
   //
-  // FIXME: This doesn't really need to be a trial parse.
+  // FIXME: This doesn't really need to be a trial parse. Just get
+  // the identifier, and depending on a) its resolution and b) whether
+  // we assume it should be interpreted as a template or concept via
+  // a prior keyword, handle the template argument.
   if (Name* n = match_if(&Parser::template_id))
+    return *n;
+  if (Name* n = match_if(&Parser::concept_id))
     return *n;
 
   Token tok = match(identifier_tok);
@@ -143,6 +150,23 @@ Parser::simple_template_id()
     args = template_argument_list();
   match(gt_tok);
   return on_template_id(tok, *temp, args);
+}
+
+
+// Parse a template id.
+//
+//    concept-id:
+//      cocncept-name '< [template-argument-list] '>'
+Name&
+Parser::concept_id()
+{
+  Decl& con = concept_name();
+  Term_list args;
+  match(lt_tok);
+  if (lookahead() != gt_tok)
+    args = template_argument_list();
+  match(gt_tok);
+  return on_concept_id(con, args);
 }
 
 
@@ -403,6 +427,19 @@ Parser::template_name()
 {
   Token id = match(identifier_tok);
   return on_template_name(id);
+}
+
+
+// Parse a concept-name. A concept-name is an identifier
+// that refers to a template declaration.
+//
+//    concept-name:
+//      identifier
+Decl&
+Parser::concept_name()
+{
+  Token id = match(identifier_tok);
+  return on_concept_name(id);
 }
 
 

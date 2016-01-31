@@ -299,6 +299,36 @@ Parser::on_type_template_parameter(Name& n, Type& t)
 
 
 // -------------------------------------------------------------------------- //
+// Concepts
+
+static inline void
+define_concept(Decl& decl, Expr& expr)
+{
+  Concept_decl& con = cast<Concept_decl>(decl);
+  con.def = &expr;
+}
+
+
+Decl&
+Parser::on_concept_declaration(Token, Name& n, Decl_list& ps)
+{
+  Decl& decl = build.make_concept(n, ps);
+  declare(current_scope(), decl);
+  return decl;
+}
+
+
+// FIXME: Make this return a concept definition.
+Decl&
+Parser::on_concept_definition(Decl& decl, Expr& e)
+{
+  define_concept(decl, e);
+  return decl;
+}
+
+
+
+// -------------------------------------------------------------------------- //
 // Translation units
 
 

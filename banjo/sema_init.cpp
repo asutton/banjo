@@ -30,29 +30,6 @@ initialize_declaration(Decl& d, Expr& e)
 }
 
 
-// Return the type of a declaration.
-//
-// FIXME: This is dumb. We should have a base class that contributes
-// a type to the declaration hiearchy (Typed_decl).
-static inline Type&
-declared_type(Decl* d)
-{
-  d = &d->parameterized_declaration();
-  if (Variable_decl* var = as<Variable_decl>(d))
-    return var->type();
-
-  // We can initialize other things too.
-  lingo_unreachable();
-}
-
-
-static inline Type&
-declared_type(Decl& d)
-{
-  return declared_type(&d);
-}
-
-
 // Select a default initializer for `d`.
 //
 // FIXME: This relies on the construction of placeholder nodes

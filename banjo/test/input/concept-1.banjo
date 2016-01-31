@@ -1,0 +1,7 @@
+
+concept C1<typename T> = true;
+concept C2<typename T> = true;
+
+template<typename T>
+  requires C1<T> && C2<T>
+def f(T a, T b) -> void { }

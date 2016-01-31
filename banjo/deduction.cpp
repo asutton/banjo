@@ -32,10 +32,7 @@ deduce(Type& p, Type& a, Substitution& sub)
   {
     Type& a;
     Substitution& sub;
-    void operator()(Void_type& p)      { }
-    void operator()(Boolean_type& p)   { }
-    void operator()(Integer_type& p)   { }
-    void operator()(Float_type& p)     { }
+    void operator()(Type& p)           { }
     void operator()(Auto_type& p)      { lingo_unimplemented(); }
     void operator()(Decltype_type& p)  { lingo_unimplemented(); }
     void operator()(Declauto_type& p)  { lingo_unimplemented(); }
@@ -45,9 +42,6 @@ deduce(Type& p, Type& a, Substitution& sub)
     void operator()(Pointer_type& p)   { deduce_type(p, a, sub); }
     void operator()(Array_type& p)     { lingo_unimplemented(); }
     void operator()(Sequence_type& p)  { deduce_type(p, a, sub); }
-    void operator()(Class_type& p)     { }
-    void operator()(Union_type& p)     { }
-    void operator()(Enum_type& p)      { }
     void operator()(Typename_type& p)  { deduce_type(p, a, sub); }
   };
 
@@ -93,14 +87,23 @@ deduce_type(Sequence_type& p, Type& a, Substitution& sub)
 }
 
 
+// Deduce an assignment of a type parrameter to a corresponding
+// argument type. For example, given
+//
+//    p: T
+//    a: int const
+//
+// This will deduce the substitution of T -> int const. If a prior
+// and different assignment was deduced for T, template argument
+// deduction fails.
 void
 deduce_type(Typename_type& p, Type& a, Substitution& sub)
 {
   Decl& d = p.declaration();
 
-  // Check for multiple deductins against `a`.
+  // Check for multiple deductions against `a`.
   //
-  // FIXME: Is this right?
+  // FIXME: Throw a better expression.
   if (Type* t = as<Type>(sub.get(d)))
     if (!is_equivalent(a, *t))
       throw std::runtime_error("deduction error");

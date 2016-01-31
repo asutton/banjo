@@ -94,6 +94,7 @@ struct Printer
   void simple_type(Function_type const&);
   void simple_type(Class_type const&);
   void simple_type(Typename_type const&);
+  void simple_type(Synthetic_type const&);
   void grouped_type(Type const&, Type const&);
   void postfix_type(Pointer_type const&);
   void postfix_type(Qualified_type const&);
@@ -108,6 +109,8 @@ struct Printer
   void literal(Integer_expr const&);
   void literal(Real_expr const&);
   void id_expression(Reference_expr const&);
+  void id_expression(Check_expr const&);
+  void id_expression(Synthetic_expr const&);
   void grouped_expression(Expr const&, Expr const&);
   void postfix_expression(Call_expr const&);
   void postfix_expression(Value_conv const&);
@@ -145,6 +148,7 @@ struct Printer
   void enum_declaration(Enum_decl const&);
   void namespace_declaration(Namespace_decl const&);
   void template_declaration(Template_decl const&);
+  void concept_declaration(Concept_decl const&);
 
   // Functions
   void function_declaration(Function_decl const&);
@@ -171,6 +175,7 @@ struct Printer
   void template_parameter(Decl const&);
   void template_parameter_list(Decl_list const&);
   void template_argument(Term const&);
+  void template_argument_list(Term_list const&);
 
   void requires_clause(Expr const&);
 

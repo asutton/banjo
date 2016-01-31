@@ -31,6 +31,8 @@ Parser::declaration()
       return namespace_declaration();
     case template_tok:
       return template_declaration();
+    case concept_tok:
+      return concept_declaration();
     default: break;
   }
   throw Syntax_error("invalid declaration");
@@ -521,6 +523,33 @@ Parser::requires_clause()
   return expression();
 }
 
+
+// -------------------------------------------------------------------------- //
+// Concept declarations
+
+
+Decl&
+Parser::concept_declaration()
+{
+  Token tok = require(concept_tok);
+  Name& n = declarator();
+
+  Enter_scope pscope(*this, make_template_parameter_scope());
+  match(lt_tok);
+  Decl_list ps = template_parameter_list();
+  match(gt_tok);
+
+  // Point of declaration.
+  Decl& con = on_concept_declaration(tok, n, ps);
+
+  // TODO: Isn't this just an equal-init? Probably not since
+  // we're not converting (we except bool everywhere).
+  match(eq_tok);
+  Expr& e = expression();
+  on_concept_definition(con, e);
+  match(semicolon_tok);
+  return con;
+}
 
 
 // -------------------------------------------------------------------------- //

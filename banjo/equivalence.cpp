@@ -84,6 +84,13 @@ is_equivalent(Template_id const& n1, Template_id const& n2)
 
 
 inline bool
+is_equivalent(Concept_id const& n1, Concept_id const& n2)
+{
+  lingo_unimplemented();
+}
+
+
+inline bool
 is_equivalent(Qualified_id const& n1, Qualified_id const& n2)
 {
   lingo_unimplemented();
@@ -104,6 +111,7 @@ is_equivalent(Name const& n1, Name const& n2)
     bool operator()(Literal_id const& n1)     { return is_equivalent(n1, cast<Literal_id>(n2)); }
     bool operator()(Destructor_id const& n1)  { return is_equivalent(n1, cast<Destructor_id>(n2)); }
     bool operator()(Template_id const& n1)    { return is_equivalent(n1, cast<Template_id>(n2)); }
+    bool operator()(Concept_id const& n1)     { return is_equivalent(n1, cast<Concept_id>(n2)); }
     bool operator()(Qualified_id const& n1)   { return is_equivalent(n1, cast<Qualified_id>(n2)); }
   };
 
@@ -227,6 +235,15 @@ is_equivalent(User_defined_type const& t1, User_defined_type const& t2)
 }
 
 
+// Two synthetic types are equivalent only when they are identical.
+// Here, t1 and t2 are known not to be identical.
+inline bool
+is_equivalent(Synthetic_type const& t1, Synthetic_type const& t2)
+{
+  return false;
+}
+
+
 // Returns true if the types a and b are equivalent.
 //
 // TODO: Finish implementing this function.
@@ -251,6 +268,7 @@ is_equivalent(Type const& t1, Type const& t2)
     bool operator()(Sequence_type const& t1) const     { return is_equivalent(t1, cast<Sequence_type>(t2)); }
     bool operator()(User_defined_type const& t1) const { return is_equivalent(t1, cast<User_defined_type>(t2)); }
     bool operator()(Typename_type const& t1) const     { lingo_unimplemented(); }
+    bool operator()(Synthetic_type const& t1) const    { return is_equivalent(t1, cast<Synthetic_type>(t2)); }
   };
 
   // The same objects represent the same types.

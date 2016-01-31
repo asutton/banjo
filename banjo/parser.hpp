@@ -34,6 +34,7 @@ struct Parser
   Name& conversion_id();
   Name& literal_id();
   Name& template_id();
+  Name& concept_id();
   Name& qualified_id();
 
   // Name helpers
@@ -55,6 +56,7 @@ struct Parser
   Decl& namespace_name();
   Decl& namespace_alias();
   Decl& template_name();
+  Decl& concept_name();
 
   // Types
   Type& type();
@@ -106,6 +108,7 @@ struct Parser
   Decl& enum_declaration();
   Decl& namespace_declaration();
   Decl& template_declaration();
+  Decl& concept_declaration();
   Decl_list declaration_seq();
   // Function parameters
   Decl& parameter_declaration();
@@ -141,6 +144,7 @@ struct Parser
   Name& on_conversion_id();
   Name& on_literal_id();
   Name& on_template_id(Token, Decl&, Term_list const&);
+  Name& on_concept_id(Decl&, Term_list const&);
   Name& on_qualified_id(Decl&, Name&);
 
   Decl& on_nested_name_specifier();
@@ -165,6 +169,7 @@ struct Parser
   Decl& on_namespace_alias(Token);
   Decl& on_namespace_alias(Name&);
   Decl& on_template_name(Token);
+  Decl& on_concept_name(Token);
 
   // Types
   Type& on_void_type(Token);
@@ -205,6 +210,7 @@ struct Parser
   Decl& on_function_declaration(Token, Name&, Decl_list&, Type&);
   Decl& on_class_declaration(Token, Name&);
   Decl& on_namespace_declaration(Token, Name&, Decl_list&);
+  Decl& on_concept_declaration(Token, Name&, Decl_list&);
   // Function parameters
   Object_parm& on_function_parameter(Name&, Type&);
   // Template parameters
@@ -218,6 +224,7 @@ struct Parser
   // Definitions
   Def& on_function_definition(Decl&, Stmt&);
   Def& on_class_definition(Decl&, Decl_list&);
+  Decl& on_concept_definition(Decl&, Expr&);
   Def& on_deleted_definition(Decl&);
   Def& on_defaulted_definition(Decl&);
   // Members

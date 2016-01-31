@@ -14,6 +14,66 @@ namespace banjo
 {
 
 // -------------------------------------------------------------------------- //
+// Synthesis of template arguments from parameters
+
+Type&
+synthesize_template_argument(Context& cxt, Type_parm& parm)
+{
+  Builder build(cxt);
+  return build.synthesize_type(parm);
+}
+
+
+Expr&
+synthesize_template_argument(Context& cxt, Value_parm& parm)
+{
+  Builder build(cxt);
+  return build.synthesize_expression(parm);
+}
+
+
+// TODO: Synthesize a template declaration with exactly the
+// the parameters of the template parameter.
+Decl&
+synthesize_template_argument(Context& cxt, Template_parm& parm)
+{
+  lingo_unimplemented();
+}
+
+
+// Synthesize a unique type, value, or template from a corresponding
+// template parameter.
+//
+// TODO: Handle template parameter packs.
+Term&
+synthesize_template_argument(Context& cxt, Decl& parm)
+{
+  if (Type_parm* t = as<Type_parm>(&parm))
+    return synthesize_template_argument(cxt, *t);
+  if (Value_parm* e = as<Value_parm>(&parm))
+    return synthesize_template_argument(cxt, *e);
+  if (Template_parm* x = as<Template_parm>(&parm))
+    return synthesize_template_argument(cxt, *x);
+  lingo_unreachable();
+}
+
+
+// Synthesize a list of template arguments from a list of
+// template parameter list.
+Term_list
+synthesize_template_arguments(Context& cxt, Decl_list& parms)
+{
+  Term_list args;
+  args.reserve(parms.size());
+  for (Decl& p : parms) {
+    Term& arg = synthesize_template_argument(cxt, p);
+    args.push_back(arg);
+  }
+  return args;
+}
+
+
+// -------------------------------------------------------------------------- //
 // Template argument matching
 
 // TODO: Is there anything else to do here?
@@ -110,7 +170,7 @@ specialize_variable(Context& cxt, Template_decl& tmp, Variable_decl& d, Term_lis
 {
   Builder build(cxt);
 
-  // Convert parameter.
+  // Convert parameters.
   Decl_list& parms = tmp.parameters();
   Term_list args = initialize_template_parameters(cxt, parms, orig);
 
@@ -128,14 +188,49 @@ specialize_variable(Context& cxt, Template_decl& tmp, Variable_decl& d, Term_lis
 }
 
 
-// TODO: This is basically what happens for every single declaration.
-// Find a way of generalizing it.
+Decl&
+specialize_function(Context& cxt, Template_decl& tmp, Function_decl& d, Term_list& orig)
+{
+  Builder build(cxt);
+
+  // Convert parameters.
+  Decl_list& tparms = tmp.parameters();
+  Term_list targs = initialize_template_parameters(cxt, tparms, orig);
+
+  // Create the specialization name.
+  Name& n = build.get_template_id(tmp, targs);
+
+  // Substitute into the type.
+  //
+  // TODO: Don't substitute or re-declare if we've already
+  // created a specialization for these arguments.
+  Substitution sub(tparms, targs);
+
+  // Substitute through parameters.
+  //
+  // TODO: I think I need to re-establish name bindings during substitution
+  // because we are going to be resolving types at the same time. This
+  // means that I am going to have to move scoping facilities from the
+  // parser to the context (which makes some sense).
+  Decl_list parms;
+  for (Decl& p1 : d.parameters()) {
+    Decl& p2 = substitute(cxt, p1, sub);
+    parms.push_back(p2);
+  }
+
+  // Substitute through the return type.
+  Type& ret = substitute(cxt, d.return_type(), sub);
+
+  return build.make_function(n, parms, ret);
+}
+
+
 Decl&
 specialize_class(Context& cxt, Template_decl& tmp, Class_decl& d, Term_list& orig)
 {
   Builder build(cxt);
 
-  // Convert parameter.
+  // Convert parameters.
   Decl_list& parms = tmp.parameters();
   Term_list args = initialize_template_parameters(cxt, parms, orig);
 
@@ -155,7 +250,7 @@ specialize_class(Context& cxt, Template_decl& tmp, Class_decl& d, Term_list& ori
 //
 // TODO: Finish implementing this.
 Decl&
-specialize_decl(Context& cxt, Template_decl& tmp, Decl& decl, Term_list& args)
+specialize_declaration(Context& cxt, Template_decl& tmp, Decl& decl, Term_list& args)
 {
   struct fn
   {
@@ -164,15 +259,12 @@ specialize_decl(Context& cxt, Template_decl& tmp, Decl& decl, Term_list& args)
     Term_list&     args;
     Decl& operator()(Decl& d)           { lingo_unimplemented(); }
     Decl& operator()(Variable_decl& d)  { return specialize_variable(cxt, tmp, d, args); }
-    Decl& operator()(Function_decl& d)  { lingo_unimplemented(); }
+    Decl& operator()(Function_decl& d)  { return specialize_function(cxt, tmp, d, args); }
     Decl& operator()(Class_decl& d)     { return specialize_class(cxt, tmp, d, args); }
     Decl& operator()(Template_decl& d)  { lingo_unreachable(); }
   };
   return apply(decl, fn{cxt, tmp, args});
 }
-
-
-
 
 
 // Produce an implicit specialization of the template declaration
@@ -184,7 +276,7 @@ Decl&
 specialize_template(Context& cxt, Template_decl& tmp, Term_list& args)
 {
   Decl& decl = tmp.parameterized_declaration();
-  return specialize_decl(cxt, tmp, decl, args);
+  return specialize_declaration(cxt, tmp, decl, args);
 }
 
 

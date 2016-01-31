@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "parser.hpp"
+#include "print.hpp"
 
 #include <iostream>
 
@@ -204,6 +205,7 @@ Parser::expression_list()
 //
 //    primary-expression:
 //      literal
+//      id-expression
 //      '(' expression ')'
 Expr&
 Parser::primary_expression()
@@ -216,7 +218,8 @@ Parser::primary_expression()
     case integer_tok:
       return on_integer_literal(accept());
 
-
+    case identifier_tok:
+      return id_expression();
     default:
       break;
   }
@@ -232,7 +235,13 @@ Parser::primary_expression()
 // Parse an id-expression.
 //
 //    id-expression:
-//      id
+//      variable-name
+//      function-name
+//      overloaded-name
+//      concept-check
+//
+// A concept-check is a sequence of template arguments applied
+// to a concept-name.
 Expr&
 Parser::id_expression()
 {
@@ -254,77 +263,6 @@ Parser::grouped_expression()
 }
 
 
-#if 0
-// Parse a unary epxression. A unary expressions is one
-// that begins with an operator and is followed by a
-// unary expression.
-//
-//    unary-expression ::=
-//        primary-expression
-//      | unary-operator unary-expression.
-Expr const*
-Parser::unary_expression()
-{
-  if (Token tok = match_if(plus_tok))
-    return on_unary(tok, unary());
-  if (Token tok = match_if(minus_tok))
-    return on_unary(tok, unary());
-  return primary();
-}
-
-
-// Parse a multiplicative expression.
-//
-//    multiplicative-expression:
-//      unary-expression
-//      multiplicative-expression multiplicative-operator unary-expression
-Expr const*
-Parser::multiplicative_expression()
-{
-  Expr const* e = unary();
-  while (true) {
-    if (Token tok = match_if(star_tok))
-      e = on_binary(tok, e, unary());
-    else if (Token tok = match_if(slash_tok))
-      e = on_binary(tok, e, unary());
-    else if (Token tok = match_if(percent_tok))
-      e = on_binary(tok, e, unary());
-    else
-      break;
-  }
-  return e;
-}
-
-
-// Parse an additive expression.
-//
-//    additive-expression ::=
-//        multiplicative-expression
-//      | additive-expression additive-operator multiplicative-expression
-Expr const*
-Parser::additive_expression()
-{
-  Expr const* e = multiplicative();
-  while (true) {
-    if (Token tok = match_if(plus_tok))
-      e = on_binary(tok, e, multiplicative());
-    else if (Token tok = match_if(minus_tok))
-      e = on_binary(tok, e, multiplicative());
-    else
-      break;
-  }
-  return e;
-}
-
-
-// Parse a binary expression. This is the top-level entry point
-// for the binary precedence parser.
-inline Expr const*
-Parser::binary_expression()
-{
-  return additive();
-}
-#endif
 
 
 } // namespace banjo

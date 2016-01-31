@@ -94,8 +94,22 @@ Parser::on_call_expression(Expr& e, Expr_list& es)
 // TOOD: Resolve the id as either a variable name, a function
 // name, or an overload name. It can be nothing else.
 Expr&
-Parser::on_id_expression(Name&)
+Parser::on_id_expression(Name& n)
 {
+  // FIXME: There are a lot of questions to ask here... Presumably,
+  // I must ensure that this resoles to a legitimate check, and the
+  // arguments should match in kind (and type?). What if they don't.
+  //
+  // Also, if the arguments are non-dependent, should I fold the
+  // constant?
+  //
+  // If the arguments are dependent, should I enter into a constrained
+  // scope?
+  //
+  // As mentioned... lots of interesting things to do here.
+  if (Concept_id* id = as<Concept_id>(&n)) {
+    return build.make_check(id->declaration(), id->arguments());
+  }
   lingo_unimplemented();
 }
 
