@@ -25,16 +25,20 @@ namespace banjo
 // hash on identity rather than syntax.
 struct Substitution : std::unordered_map<Decl*, Term*>
 {
-  Substitution()
-    : ok(true)
-  { }
-
+  Substitution();
+  Substitution(Decl_list&);
   Substitution(Decl_list&, Term_list&);
 
-  void send(Decl& d, Term& t);
+  void map_to(Decl& d, Term& t);
 
-  Term const* get(Decl& d) const;
-  Term*       get(Decl& d);
+  // Returns the mapping for this parameter. Note that the mapping
+  // can be null, indicating that the a value has not been deduced
+  // or assigned. Behavior is undefined if has_mapping(d) is false.
+  Term const* get_mapping(Decl& d) const;
+  Term*       get_mapping(Decl& d);
+
+  // Returns true if there is a mapping for this parameter.
+  bool has_mapping(Decl&) const;
 
   // Contextually convert to true whe the substitution is valid.
   explicit operator bool() const { return ok; }
@@ -46,6 +50,24 @@ struct Substitution : std::unordered_map<Decl*, Term*>
 };
 
 
+// Initialize an empty substitution.
+inline
+Substitution::Substitution()
+  : ok(true)
+{ }
+
+
+// Initialize a partial substitution for the purpose of deducing
+// mappings to parameters. Initially map each parameter to a null
+// pointer.
+inline
+Substitution::Substitution(Decl_list& p)
+{
+  for (Decl& d : p)
+    insert({&d, nullptr});
+}
+
+
 // Initialize the substitution with a mapping from each
 // `pi` in `p` to its corresponding `ai` in `a`.
 inline
@@ -55,7 +77,7 @@ Substitution::Substitution(Decl_list& p, Term_list& a)
   auto pi = p.begin();
   auto ai = a.begin();
   while (pi != p.end()) {
-    send(*pi, *ai);
+    map_to(*pi, *ai);
     ++pi;
     ++ai;
   }
@@ -63,40 +85,41 @@ Substitution::Substitution(Decl_list& p, Term_list& a)
 
 
 // Create a substitution that sends each occurrence of `d` to
-// its a corresponding `t`. Note that the kind and type of `t`
-// must agree with that of `d`.
+// its a corresponding `t`. If t is mapped to nothing (a nullptr),
+// then, re-mapping is allowed (to support deduction). Otherwise,
+// a declaration shall not be re-mapped to a different value.
 //
-// FIXME: If we use this during template argument deduction, do we
-// need this to act as a unifier (i.e. reject re-mappings of
-// previously deduced terms?). Probably.
 inline void
-Substitution::send(Decl& d, Term& t)
+Substitution::map_to(Decl& d, Term& t)
 {
-  emplace(&d, &t);
+  auto iter = find(&d);
+  if (iter == end()) {
+    emplace(&d, &t);
+  } else {
+    lingo_assert(!iter->second);
+    iter->second = &t;
+  }
 }
 
 
-// Returns the term substituted for the declaration d
-// or nullptr if there is no such term.
-inline Term const*
-Substitution::get(Decl& d) const
+inline bool
+Substitution::has_mapping(Decl& d) const
 {
-  auto iter = find(&d);
-  if (iter != end())
-    return iter->second;
-  else
-    return nullptr;
+  return count(&d) != 0;
+}
+
+
+inline Term const*
+Substitution::get_mapping(Decl& d) const
+{
+  return find(&d)->second;
 }
 
 
 inline Term*
-Substitution::get(Decl& d)
+Substitution::get_mapping(Decl& d)
 {
-  auto iter = find(&d);
-  if (iter != end())
-    return iter->second;
-  else
-    return nullptr;
+  return find(&d)->second;
 }
 
 

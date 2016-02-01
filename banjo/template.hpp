@@ -30,11 +30,8 @@ enum Partial_ordering
 };
 
 
-Partial_ordering more_specialized_call(Context&, Template_decl&, Template_decl&);
-Partial_ordering more_specialized_conversion(Context&, Template_decl&, Template_decl&);
-Partial_ordering more_specialized_function(Context&, Template_decl&, Template_decl&);
-
-Partial_ordering more_constrained(Context&, Template_decl&, Template_decl&);
+bool is_more_specialized(Context&, Template_decl&, Template_decl&);
+bool is_more_constrained(Context&, Template_decl&, Template_decl&);
 
 
 } // namespace banjo

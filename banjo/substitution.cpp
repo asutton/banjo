@@ -20,8 +20,14 @@ std::ostream&
 operator<<(std::ostream& os, Substitution const& s)
 {
   os << "{\n";
-  for (auto& x : s)
-    os << "  " << *x.first << " => " << *x.second << '\n';
+  for (auto& x : s) {
+    os << "  " << *x.first << " => ";
+    if (x.second)
+      os << *x.second;
+    else
+      os << "<nullptr>";
+    os << '\n';
+  }
   os << "}\n";
   return os;
 }
@@ -141,8 +147,9 @@ substitute_type(Context& cxt, Sequence_type& t, Substitution& sub)
 Type&
 substitute_type(Context& cxt, Typename_type& t, Substitution& sub)
 {
-  if (Term* x = sub.get(t.declaration()))
-    return cast<Type>(*x);
+  Decl& d = t.declaration();
+  if (sub.has_mapping(d))
+    return cast<Type>(*sub.get_mapping(d));
   else
     return t;
 }

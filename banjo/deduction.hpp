@@ -22,7 +22,9 @@ struct Deduction_failure : Translation_error
   using Translation_error::Translation_error;
 };
 
-void deduce_from_type(Type&, Type&, Substitution&);
+bool deduce_from_type(Type&, Type&, Substitution&);
+bool deduce_from_types(Type_list&, Type_list&, Substitution&);
+
 void deduce_from_call(Type&, Type&, Substitution&);
 void deduce_from_address(Type&, Type&, Substitution&);
 void deduce_from_conversion(Type&, Type&, Substitution&);

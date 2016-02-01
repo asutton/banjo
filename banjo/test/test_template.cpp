@@ -61,7 +61,7 @@ test_specialize(Context& cxt)
 void
 test_synthesis(Context& cxt)
 {
-  std::cout << "--- synthesis ---\n";
+  std::cout << "--- ordering ---\n";
   Builder build(cxt);
 
   Type_parm& tp1 = build.make_type_parameter("T");
@@ -80,8 +80,10 @@ test_synthesis(Context& cxt)
   Decl& f2 = build.make_function("f", {&p3, &p2}, t1);
   Template_decl& tmp2 = build.make_template({&tp1, &tp2}, f2);
 
-  more_specialized_call(cxt, tmp1, tmp2);
-
+  std::cout << "tmp1\n" << tmp1 << '\n';
+  std::cout << "tmp2\n" << tmp2 << '\n';
+  std::cout << is_more_specialized(cxt, tmp1, tmp2) << ' '
+            << is_more_specialized(cxt, tmp2, tmp1) << '\n';
 }
 
 

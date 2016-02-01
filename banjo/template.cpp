@@ -288,11 +288,8 @@ synthesize_template_arguments(Context& cxt, Decl_list& parms)
 // Produce a transformed function template type for a function
 // template `tmp`.
 Function_type&
-transform_template_type(Context& cxt, Template_decl& tmp)
+transform_template_type(Context& cxt, Function_type& t, Decl_list& parms)
 {
-  Function_decl& fn = cast<Function_decl>(tmp.parameterized_declaration());
-  Decl_list& parms = tmp.parameters();
-
   // Synthesize a unique type, value, or template for each parameter.
   Term_list args = synthesize_template_arguments(cxt, parms);
 
@@ -301,10 +298,10 @@ transform_template_type(Context& cxt, Template_decl& tmp)
   // class (or class template specialization) of the member.
 
   // Replace each parameter with a synthesized argument in the
-  // fucntion type.
+  // function type.
   Substitution sub(parms, args);
-  Type& t = substitute(cxt, fn.type(), sub);
-  return cast<Function_type>(t);
+  Type& r = substitute(cxt, t, sub);
+  return cast<Function_type>(r);
 }
 
 
@@ -318,10 +315,6 @@ get_function_type(Template_decl& t)
 }
 
 
-// FIXME: This is a bad name.
-using Deductions = std::pair<Type_list, Type_list>;
-
-
 // Select the set of types from which deduction is performed.
 //
 // FIXME: From different contexts, we will return different lists.
@@ -332,10 +325,10 @@ using Deductions = std::pair<Type_list, Type_list>;
 // For now, I am simply assuming that all parameters are used.
 //
 // FIXME: What do I do with non-dependent parameters?
-Deductions
-nominate_types_for_ordering(Function_type& p, Function_type& a)
+Type_list
+nominate_types_for_ordering(Function_type& t)
 {
-  return {p.parameter_types(), a.parameter_types()};
+  return t.parameter_types();
 }
 
 
@@ -345,8 +338,45 @@ nominate_types_for_ordering(Function_type& p, Function_type& a)
 Type&
 transform_type_for_ordering(Type& t)
 {
-  return t.non_reference_type().unqualified_type();
+  Type& t1 = t.non_reference_type();
+  return t1.unqualified_type();
 }
+
+
+// Returns true if tmpl1 is at least as specialized as tmpl2. This
+// is the case when template argument duduction, using the transformed
+// type of tmpl1 succeeds type of tmpl2. Adjustments are made depending
+// on cvontext.
+bool
+is_at_least_as_specialized(Context& cxt, Template_decl& tmp1, Template_decl& tmp2)
+{
+  Function_decl& f1 = cast<Function_decl>(tmp1.parameterized_declaration());
+  Function_decl& f2 = cast<Function_decl>(tmp2.parameterized_declaration());
+
+  // Transform the template type of tmp1 and use the
+  // original function type of tmp2 for deduction.
+  Function_type& atype = transform_template_type(cxt, f1.type(), tmp1.parameters());
+  Function_type& ptype = f2.type();
+
+  // Get the types of each parameter/argument to be used in
+  // the deduction.
+  Type_list parms = nominate_types_for_ordering(ptype);
+  Type_list args = nominate_types_for_ordering(atype);
+
+  // If deduction succeeds, then the argument is at least as specialized
+  // as the parameter. If deduction fails, then the parameter may be
+  // at least as specialized as the argument. Consider no more deductions
+  // in this directtion.
+  Substitution sub = tmp2.parameters();
+  if (!deduce_from_types(parms, args, sub))
+    return false;
+
+  // FIXME: Guarantee that each paramete has a mapping or that
+  // it is not used in one of the parameter types.
+
+  return true;
+}
+
 
 
 // Determine whether tmp1 is more specialized than tmp2, or vice
@@ -359,57 +389,11 @@ transform_type_for_ordering(Type& t)
 // for parameters that have explicit function call arguments. No packs
 // or default arguments apply. I wonder if we can truncate the transformed
 // function type by "trimming" those un-deduced parameters.
-Partial_ordering
-more_specialized_call(Context& cxt, Template_decl& tmp1, Template_decl& tmp2)
+bool
+is_more_specialized(Context& cxt, Template_decl& tmp1, Template_decl& tmp2)
 {
-  Function_type& p1 = get_function_type(tmp1);
-  Function_type& p2 = get_function_type(tmp2);
-
-  // Transform the type of each template.
-  Function_type& a1 = transform_template_type(cxt, tmp1);
-  Function_type& a2 = transform_template_type(cxt, tmp2);
-
-  // Nominate types to be used inthe partial ordering depending
-  // on context.
-  Deductions ts1 = nominate_types_for_ordering(p1, a1);
-  Deductions ts2 = nominate_types_for_ordering(p2, a2);
-
-  // Determine a partial ordering of the nominated types.
-  for (std::size_t i = 0; i < ts1.first.size(); ++i) {
-    // Set up the first deduction.
-    Type_list& ps1 = ts1.first;
-    Type_list& as1 = ts2.second;
-    Type& p1 = transform_type_for_ordering(*ps1[i]);
-    Type& a1 = transform_type_for_ordering(*as1[i]);
-
-    // Set up the second deduction.
-    Type_list& ps2 = ts2.first;
-    Type_list& as2 = ts1.second;
-    Type& p2 = transform_type_for_ordering(*ps2[i]);
-    Type& a2 = transform_type_for_ordering(*as2[i]);
-
-    // FIXME: Fail if px is a pack and ax is not.
-
-    // Perform each deduction in turn.
-    Substitution s1 = deduce_from_type(p1, a1);
-    Substitution s2 = deduce_from_type(p2, a2);
-
-    // FIXME: Check that the ordering is correct. It's probably
-    // wrong at the moment.
-    if (s1 && !s2)
-      return lt_ord;
-    if (s2 && !s1)
-      return gt_ord;
-    if (!s1 && !s2)
-      return un_ord;
-
-    // These
-    // Tie-brekers
-
-    std::cout << s1 << s2 << '\n';
-  }
-
-  return {};
+  return is_at_least_as_specialized(cxt, tmp1, tmp2)
+     && !is_at_least_as_specialized(cxt, tmp2, tmp1);
 }
 
 } // namespace banjo
