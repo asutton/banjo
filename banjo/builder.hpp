@@ -130,6 +130,8 @@ struct Builder
   Class_decl&     make_class(char const*);
   Template_decl&  make_template(Decl_list const&, Decl&);
   Concept_decl&   make_concept(Name&, Decl_list const&);
+  Concept_decl&   make_concept(Name&, Decl_list const&, Expr&);
+  Concept_decl&   make_concept(char const*, Decl_list const&, Expr&);
 
   Object_parm& make_object_parm(Name&, Type&);
   Object_parm& make_object_parm(char const*, Type&);
@@ -793,6 +795,20 @@ inline Concept_decl&
 Builder::make_concept(Name& n, Decl_list const& ps)
 {
   return make<Concept_decl>(n, ps);
+}
+
+
+inline Concept_decl&
+Builder::make_concept(Name& n, Decl_list const& ps, Expr& e)
+{
+  return make<Concept_decl>(n, ps, e);
+}
+
+
+inline Concept_decl&
+Builder::make_concept(char const* s, Decl_list const& ps, Expr& e)
+{
+  return make_concept(get_id(s), ps, e);
 }
 
 

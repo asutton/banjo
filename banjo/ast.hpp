@@ -2468,6 +2468,10 @@ struct Concept_decl : Decl
     : Decl(n), parms(ps), def(nullptr)
   { }
 
+  Concept_decl(Name& n, Decl_list const& ps, Expr& e)
+    : Decl(n), parms(ps), def(&e)
+  { }
+
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
