@@ -140,6 +140,14 @@ struct Builder
   Type_parm&   make_type_parameter(Name&, Type&);
   Type_parm&   make_type_parameter(char const*, Type&);
 
+  // Constraints
+  //
+  // FIXME: Canonicalize constraints?
+  Concept_cons& make_concept_constraint(Decl&, Term_list&);
+  Predicate_cons& make_predicate_constraint(Expr&);
+  Conjunction_cons& make_conjunction_constraint(Cons&, Cons&);
+  Disjunction_cons& make_disjunction_constraint(Cons&, Cons&);
+
   // Resources
   Symbol_table& symbols() { return cxt.symbols(); }
 
@@ -845,6 +853,37 @@ inline Value_parm&
 Builder::make_value_parm(char const* s, Type& t)
 {
   return make_value_parm(get_id(s), t);
+}
+
+
+// -------------------------------------------------------------------------- //
+// Constraints
+
+inline Concept_cons&
+Builder::make_concept_constraint(Decl& d, Term_list& ts)
+{
+  return make<Concept_cons>(d, ts);
+}
+
+
+inline Predicate_cons&
+Builder::make_predicate_constraint(Expr& e)
+{
+  return make<Predicate_cons>(e);
+}
+
+
+inline Conjunction_cons&
+Builder::make_conjunction_constraint(Cons& c1, Cons& c2)
+{
+  return make<Conjunction_cons>(c1, c2);
+}
+
+
+inline Disjunction_cons&
+Builder::make_disjunction_constraint(Cons& c1, Cons& c2)
+{
+  return make<Disjunction_cons>(c1, c2);
 }
 
 

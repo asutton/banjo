@@ -2709,7 +2709,7 @@ struct Cons : Term
   struct Mutator;
 
   virtual void accept(Visitor&) const = 0;
-  virtual void accept(Mutator&)       = 0;
+  virtual void accept(Mutator&) = 0;
 };
 
 
@@ -2741,6 +2741,88 @@ struct Cons::Mutator
 };
 
 
+// Represents the checking of a nested concepts. These are kept
+// in the constraint language in order to facilitate optimization
+// in subsumption algorithms.
+struct Concept_cons : Cons
+{
+  Concept_cons(Decl& d, Term_list& ts)
+    : decl(&d), args(ts)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the resolved concept declaration.
+  //
+  // FIXME: Make this return a concept declaration.
+  Decl const& declaration() const { return *decl; }
+  Decl&       declaration()       { return *decl; }
+
+  // Returns the template arguments used to check the template.
+  Term_list const& arguments() const { return args; }
+  Term_list&       arguments()       { return args; }
+
+  Decl*     decl;
+  Term_list args;
+};
+
+
+// Represents the evaluation of a constant expression as a constraint.
+struct Predicate_cons : Cons
+{
+  Predicate_cons(Expr& e)
+    : expr(&e)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the expression to be evaluated.
+  Expr const& expression() const { return *expr; }
+  Expr&       expression()       { return *expr; }
+
+  Expr* expr;
+};
+
+
+struct Binary_cons : Cons
+{
+  Binary_cons(Cons& c1, Cons& c2)
+    : c1(&c1), c2(&c2)
+  { }
+
+  // Returns the left operand.
+  Cons const& left() const { return *c1; }
+  Cons&       left()       { return *c1; }
+
+  // Returns the right operand.
+  Cons const& right() const { return *c2; }
+  Cons&       right()       { return *c2; }
+
+  Cons* c1;
+  Cons* c2;
+};
+
+
+// Represents the conjunction of constraints.
+struct Conjunction_cons : Binary_cons
+{
+  using Binary_cons::Binary_cons;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// Represents the disjunction of constraints.
+struct Disjunction_cons : Binary_cons
+{
+  using Binary_cons::Binary_cons;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
 
 
 // A generic visitor for constraints.

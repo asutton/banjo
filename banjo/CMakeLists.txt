@@ -38,6 +38,7 @@ add_library(banjo
   substitution.cpp
   deduction.cpp
   template.cpp
+  normalization.cpp
   print.cpp
 )
 target_compile_definitions(banjo PUBLIC ${LLVM_DEFINITIONS})
@@ -78,6 +79,7 @@ add_run_test(test_convert     test/test_convert.cpp)
 add_run_test(test_initialize  test/test_initialize.cpp)
 add_run_test(test_substitute  test/test_substitute.cpp)
 add_run_test(test_deduce      test/test_deduce.cpp)
+add_run_test(test_constraint  test/test_constraint.cpp)
 
 # Testing tools
 add_executable(test_parse test/test_parse.cpp)
