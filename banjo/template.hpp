@@ -19,8 +19,22 @@ Term&     synthesize_template_argument(Context&, Decl&);
 Term_list synthesize_template_arguments(Context&, Decl_list&);
 
 Decl& specialize_template(Context&, Template_decl&, Term_list&);
-bool  more_specialized(Context&, Template_decl&, Template_decl&);
-bool  more_constrained(Context&, Template_decl&, Template_decl&);
+
+
+// Encapsulates the results from a partial order.
+enum Partial_ordering
+{
+  lt_ord = -1, // The left operand is preferred
+  un_ord = 0,  // Neither operand is preferred
+  gt_ord = 1   // The right operand is preferred
+};
+
+
+Partial_ordering more_specialized_call(Context&, Template_decl&, Template_decl&);
+Partial_ordering more_specialized_conversion(Context&, Template_decl&, Template_decl&);
+Partial_ordering more_specialized_function(Context&, Template_decl&, Template_decl&);
+
+Partial_ordering more_constrained(Context&, Template_decl&, Template_decl&);
 
 
 } // namespace banjo

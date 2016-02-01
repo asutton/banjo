@@ -1172,6 +1172,7 @@ void
 Printer::parameter(Object_parm const& p)
 {
   type(p.type());
+  space();
   id(p.name());
 }
 

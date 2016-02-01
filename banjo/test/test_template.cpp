@@ -68,25 +68,20 @@ test_synthesis(Context& cxt)
   Type_parm& tp2 = build.make_type_parameter("U");
   Type& t1 = build.get_typename_type(tp1);
   Type& t2 = build.get_typename_type(tp2);
+  Type& rt1 = build.get_reference_type(t1);
 
   Object_parm p1 = build.make_object_parm("a", t1);
   Object_parm p2 = build.make_object_parm("b", t2);
-  Decl& fn = build.make_function("f", {&p1, &p2}, t1);
+  Object_parm p3 = build.make_object_parm("c", rt1);
 
-  Template_decl& tmp = build.make_template({&tp1, &tp2}, fn);
+  Decl& f1 = build.make_function("f", {&p1, &p2}, t1);
+  Template_decl& tmp1 = build.make_template({&tp1, &tp2}, f1);
 
-  Decl_list& parms = tmp.parameters();
+  Decl& f2 = build.make_function("f", {&p3, &p2}, t1);
+  Template_decl& tmp2 = build.make_template({&tp1, &tp2}, f2);
 
-  // Synthesize template arguemnts.
-  Term_list args = synthesize_template_arguments(cxt, parms);
-  std::cout << "ARGS: ";
-  for (Term& t : args)
-    std::cout << t << ' ';
-  std::cout << '\n';
+  more_specialized_call(cxt, tmp1, tmp2);
 
-  // Substitute into declaration.
-  Decl& spec = specialize_template(cxt, tmp, args);
-  std::cout << "SPEC: " << spec << '\n';
 }
 
 

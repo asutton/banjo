@@ -25,13 +25,24 @@ namespace banjo
 // hash on identity rather than syntax.
 struct Substitution : std::unordered_map<Decl*, Term*>
 {
-  Substitution() = default;
+  Substitution()
+    : ok(true)
+  { }
+
   Substitution(Decl_list&, Term_list&);
 
   void send(Decl& d, Term& t);
 
   Term const* get(Decl& d) const;
   Term*       get(Decl& d);
+
+  // Contextually convert to true whe the substitution is valid.
+  explicit operator bool() const { return ok; }
+
+  // Invalidate the substitution.
+  void fail() { ok = false; }
+
+  bool ok; // Used to invalidate a substitution.
 };
 
 
@@ -39,6 +50,7 @@ struct Substitution : std::unordered_map<Decl*, Term*>
 // `pi` in `p` to its corresponding `ai` in `a`.
 inline
 Substitution::Substitution(Decl_list& p, Term_list& a)
+  : ok(true)
 {
   auto pi = p.begin();
   auto ai = a.begin();
@@ -86,6 +98,9 @@ Substitution::get(Decl& d)
   else
     return nullptr;
 }
+
+
+std::ostream& operator<<(std::ostream&, Substitution const&);
 
 
 // -------------------------------------------------------------------------- //

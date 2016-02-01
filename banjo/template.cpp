@@ -4,6 +4,7 @@
 #include "template.hpp"
 #include "initialization.hpp"
 #include "substitution.hpp"
+#include "deduction.hpp"
 #include "print.hpp"
 #include "builder.hpp"
 
@@ -12,66 +13,6 @@
 
 namespace banjo
 {
-
-// -------------------------------------------------------------------------- //
-// Synthesis of template arguments from parameters
-
-Type&
-synthesize_template_argument(Context& cxt, Type_parm& parm)
-{
-  Builder build(cxt);
-  return build.synthesize_type(parm);
-}
-
-
-Expr&
-synthesize_template_argument(Context& cxt, Value_parm& parm)
-{
-  Builder build(cxt);
-  return build.synthesize_expression(parm);
-}
-
-
-// TODO: Synthesize a template declaration with exactly the
-// the parameters of the template parameter.
-Decl&
-synthesize_template_argument(Context& cxt, Template_parm& parm)
-{
-  lingo_unimplemented();
-}
-
-
-// Synthesize a unique type, value, or template from a corresponding
-// template parameter.
-//
-// TODO: Handle template parameter packs.
-Term&
-synthesize_template_argument(Context& cxt, Decl& parm)
-{
-  if (Type_parm* t = as<Type_parm>(&parm))
-    return synthesize_template_argument(cxt, *t);
-  if (Value_parm* e = as<Value_parm>(&parm))
-    return synthesize_template_argument(cxt, *e);
-  if (Template_parm* x = as<Template_parm>(&parm))
-    return synthesize_template_argument(cxt, *x);
-  lingo_unreachable();
-}
-
-
-// Synthesize a list of template arguments from a list of
-// template parameter list.
-Term_list
-synthesize_template_arguments(Context& cxt, Decl_list& parms)
-{
-  Term_list args;
-  args.reserve(parms.size());
-  for (Decl& p : parms) {
-    Term& arg = synthesize_template_argument(cxt, p);
-    args.push_back(arg);
-  }
-  return args;
-}
-
 
 // -------------------------------------------------------------------------- //
 // Template argument matching
@@ -279,5 +220,196 @@ specialize_template(Context& cxt, Template_decl& tmp, Term_list& args)
   return specialize_declaration(cxt, tmp, decl, args);
 }
 
+
+// -------------------------------------------------------------------------- //
+// Synthesis of template arguments from parameters
+
+Type&
+synthesize_template_argument(Context& cxt, Type_parm& parm)
+{
+  Builder build(cxt);
+  return build.synthesize_type(parm);
+}
+
+
+Expr&
+synthesize_template_argument(Context& cxt, Value_parm& parm)
+{
+  Builder build(cxt);
+  return build.synthesize_expression(parm);
+}
+
+
+// TODO: Synthesize a template declaration with exactly the
+// the parameters of the template parameter.
+Decl&
+synthesize_template_argument(Context& cxt, Template_parm& parm)
+{
+  lingo_unimplemented();
+}
+
+
+// Synthesize a unique type, value, or template from a corresponding
+// template parameter.
+//
+// TODO: Handle template parameter packs.
+Term&
+synthesize_template_argument(Context& cxt, Decl& parm)
+{
+  if (Type_parm* t = as<Type_parm>(&parm))
+    return synthesize_template_argument(cxt, *t);
+  if (Value_parm* e = as<Value_parm>(&parm))
+    return synthesize_template_argument(cxt, *e);
+  if (Template_parm* x = as<Template_parm>(&parm))
+    return synthesize_template_argument(cxt, *x);
+  lingo_unreachable();
+}
+
+
+// Synthesize a list of template arguments from a list of
+// template parameter list.
+Term_list
+synthesize_template_arguments(Context& cxt, Decl_list& parms)
+{
+  Term_list args;
+  args.reserve(parms.size());
+  for (Decl& p : parms) {
+    Term& arg = synthesize_template_argument(cxt, p);
+    args.push_back(arg);
+  }
+  return args;
+}
+
+
+// -------------------------------------------------------------------------- //
+// Partial ordering of function templates
+
+
+// Produce a transformed function template type for a function
+// template `tmp`.
+Function_type&
+transform_template_type(Context& cxt, Template_decl& tmp)
+{
+  Function_decl& fn = cast<Function_decl>(tmp.parameterized_declaration());
+  Decl_list& parms = tmp.parameters();
+
+  // Synthesize a unique type, value, or template for each parameter.
+  Term_list args = synthesize_template_arguments(cxt, parms);
+
+  // TODO: For member functions, we also need to substitute the
+  // implic this object. That gets synthesized from the enclosing
+  // class (or class template specialization) of the member.
+
+  // Replace each parameter with a synthesized argument in the
+  // fucntion type.
+  Substitution sub(parms, args);
+  Type& t = substitute(cxt, fn.type(), sub);
+  return cast<Function_type>(t);
+}
+
+
+// FIXME. Make derived classes Function_temp that saves me from
+// typing all this crap.
+inline Function_type&
+get_function_type(Template_decl& t)
+{
+  Function_decl& f = cast<Function_decl>(t.parameterized_declaration());
+  return f.type();
+}
+
+
+// FIXME: This is a bad name.
+using Deductions = std::pair<Type_list, Type_list>;
+
+
+// Select the set of types from which deduction is performed.
+//
+// FIXME: From different contexts, we will return different lists.
+// For function calls, we use only parameters for which arguments
+// have been specified. For conversions, we use the return types.
+// For everything else, we just use t.
+//
+// For now, I am simply assuming that all parameters are used.
+//
+// FIXME: What do I do with non-dependent parameters?
+Deductions
+nominate_types_for_ordering(Function_type& p, Function_type& a)
+{
+  return {p.parameter_types(), a.parameter_types()};
+}
+
+
+// Certain transformations are applied before ordering.
+// In particular, remove references and qualfiiers. We'll appeal
+// to the original types as tie-breakers later.
+Type&
+transform_type_for_ordering(Type& t)
+{
+  return t.non_reference_type().unqualified_type();
+}
+
+
+// Determine whether tmp1 is more specialized than tmp2, or vice
+// versa.
+//
+// FIXME: We also want to return if tmp1 and tmp2 are equivalent or
+// specialized or unordered.
+//
+// FIXME: When ordering from a function call, we only perform deductions
+// for parameters that have explicit function call arguments. No packs
+// or default arguments apply. I wonder if we can truncate the transformed
+// function type by "trimming" those un-deduced parameters.
+Partial_ordering
+more_specialized_call(Context& cxt, Template_decl& tmp1, Template_decl& tmp2)
+{
+  Function_type& p1 = get_function_type(tmp1);
+  Function_type& p2 = get_function_type(tmp2);
+
+  // Transform the type of each template.
+  Function_type& a1 = transform_template_type(cxt, tmp1);
+  Function_type& a2 = transform_template_type(cxt, tmp2);
+
+  // Nominate types to be used inthe partial ordering depending
+  // on context.
+  Deductions ts1 = nominate_types_for_ordering(p1, a1);
+  Deductions ts2 = nominate_types_for_ordering(p2, a2);
+
+  // Determine a partial ordering of the nominated types.
+  for (std::size_t i = 0; i < ts1.first.size(); ++i) {
+    // Set up the first deduction.
+    Type_list& ps1 = ts1.first;
+    Type_list& as1 = ts2.second;
+    Type& p1 = transform_type_for_ordering(*ps1[i]);
+    Type& a1 = transform_type_for_ordering(*as1[i]);
+
+    // Set up the second deduction.
+    Type_list& ps2 = ts2.first;
+    Type_list& as2 = ts1.second;
+    Type& p2 = transform_type_for_ordering(*ps2[i]);
+    Type& a2 = transform_type_for_ordering(*as2[i]);
+
+    // FIXME: Fail if px is a pack and ax is not.
+
+    // Perform each deduction in turn.
+    Substitution s1 = deduce_from_type(p1, a1);
+    Substitution s2 = deduce_from_type(p2, a2);
+
+    // FIXME: Check that the ordering is correct. It's probably
+    // wrong at the moment.
+    if (s1 && !s2)
+      return lt_ord;
+    if (s2 && !s1)
+      return gt_ord;
+    if (!s1 && !s2)
+      return un_ord;
+
+    // These
+    // Tie-brekers
+
+    std::cout << s1 << s2 << '\n';
+  }
+
+  return {};
+}
 
 } // namespace banjo

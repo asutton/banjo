@@ -501,6 +501,10 @@ struct Type : Term
   // Returns the unqualified version of this type.
   virtual Type const& unqualified_type() const { return *this; }
   virtual Type&       unqualified_type()       { return *this; }
+
+  // Returns the non-reference version of this type.
+  virtual Type const& non_reference_type() const { return *this; }
+  virtual Type&       non_reference_type()       { return *this; }
 };
 
 
@@ -734,6 +738,10 @@ struct Reference_type : Type
 
   Type const& type() const { return *ty; }
   Type&       type()       { return *ty; }
+
+  // Returns the non-reference version of this type.
+  Type const& non_reference_type() const { return type(); }
+  Type&       non_reference_type()       { return type(); }
 
   Type* ty;
 };

@@ -3,12 +3,32 @@
 
 #include "substitution.hpp"
 #include "builder.hpp"
+#include "print.hpp"
 
 #include <iostream>
 
 
 namespace banjo
 {
+
+// -------------------------------------------------------------------------- //
+// Substitution class
+
+
+// Helper debug output.
+std::ostream&
+operator<<(std::ostream& os, Substitution const& s)
+{
+  os << "{\n";
+  for (auto& x : s)
+    os << "  " << *x.first << " => " << *x.second << '\n';
+  os << "}\n";
+  return os;
+}
+
+
+// -------------------------------------------------------------------------- //
+// Substitution helpers
 
 template<typename T>
 List<T>

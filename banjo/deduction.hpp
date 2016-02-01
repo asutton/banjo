@@ -6,13 +6,41 @@
 
 #include "prelude.hpp"
 #include "substitution.hpp"
+#include "ast.hpp"
+#include "error.hpp"
 
 
 namespace banjo
 {
 
+struct Function_type;
 
-void deduce(Type&, Type&, Substitution&);
+
+// Represents an template argument deduction error.
+struct Deduction_failure : Translation_error
+{
+  using Translation_error::Translation_error;
+};
+
+void deduce_from_type(Type&, Type&, Substitution&);
+void deduce_from_call(Type&, Type&, Substitution&);
+void deduce_from_address(Type&, Type&, Substitution&);
+void deduce_from_conversion(Type&, Type&, Substitution&);
+void deduce_from_declaration(Type&, Type&, Substitution&);
+
+
+// Return the substitution mapping paramters in t2 to arguments in t2.
+inline Substitution
+deduce_from_type(Type& t1, Type& t2)
+{
+  Substitution sub;
+  try {
+    deduce_from_type(t1, t2, sub);
+  } catch(Deduction_failure& err) {
+    sub.fail();
+  }
+  return sub;
+}
 
 
 } // namespace banjo
