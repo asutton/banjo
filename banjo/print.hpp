@@ -56,6 +56,7 @@ struct Printer
   void operator()(Expr const& e) { expression(e); }
   void operator()(Stmt const& s) { statement(s); }
   void operator()(Decl const& d) { declaration(d); }
+  void operator()(Cons const& c) { constraint(c); }
 
   // Lexical terms.
   void space(Token_info);
@@ -179,6 +180,16 @@ struct Printer
 
   void requires_clause(Expr const&);
 
+  // Constraints
+  // These don't really have an external syntax, but it's
+  // helpful for debugging.
+  void constraint(Cons const&);
+  void constraint(Concept_cons const&);
+  void constraint(Predicate_cons const&);
+  void constraint(Conjunction_cons const&);
+  void constraint(Disjunction_cons const&);
+  void grouped_constraint(Cons const&);
+
   std::ostream& os;
   int           indent; // The current indentation
   Token_info    prev;   // The previous token printed
@@ -192,6 +203,7 @@ std::ostream& operator<<(std::ostream&, Type const&);
 std::ostream& operator<<(std::ostream&, Expr const&);
 std::ostream& operator<<(std::ostream&, Stmt const&);
 std::ostream& operator<<(std::ostream&, Decl const&);
+std::ostream& operator<<(std::ostream&, Cons const&);
 
 
 } // namespace banjo

@@ -18,7 +18,11 @@ test_normalize(Context& cxt)
   Expr& f = build.get_false();
   Expr& e1 = build.make_not(b, f);
   Expr& e2 = build.make_and(b, t, e1);
-  std::cout << e2 << '\n';
+  Expr& e3 = build.make_and(b, e2, t);
+  std::cout << e3 << '\n';
+
+  Cons& c = normalize(cxt, e3);
+  std::cout << c << '\n';
 }
 
 

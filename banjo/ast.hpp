@@ -2786,6 +2786,42 @@ struct Predicate_cons : Cons
 };
 
 
+// FIXME: Implement me.
+struct Expression_cons : Cons
+{
+  using Cons::Cons;
+};
+
+
+// FIXME: Implement me.
+struct Type_cons : Cons
+{
+  using Cons::Cons;
+};
+
+
+// FIXME: Implement me.
+struct Conversion_cons : Cons
+{
+  using Cons::Cons;
+};
+
+
+// FIXME: Implement me.
+struct Deduction_cons : Cons
+{
+  using Cons::Cons;
+};
+
+
+// FIXME: Implement me.
+struct Parameterized_cons : Cons
+{
+  using Cons::Cons;
+};
+
+
+// The base class of binary constraints.
 struct Binary_cons : Cons
 {
   Binary_cons(Cons& c1, Cons& c2)

@@ -1267,6 +1267,88 @@ Printer::template_argument_list(Term_list const& ts)
 
 
 // -------------------------------------------------------------------------- //
+// Constraints
+
+void
+Printer::constraint(Cons const& c)
+{
+  struct fn
+  {
+    Printer& p;
+    void operator()(Cons const& c)             { lingo_unimplemented(); }
+    void operator()(Concept_cons const& c)     { p.constraint(c); }
+    void operator()(Predicate_cons const& c)   { p.constraint(c); }
+    void operator()(Conjunction_cons const& c) { p.constraint(c); }
+    void operator()(Disjunction_cons const& c) { p.constraint(c); }
+  };
+  apply(c, fn{*this});
+}
+
+
+void
+Printer::constraint(Concept_cons const& c)
+{
+  id(c.declaration().name());
+  token(lt_tok);
+  template_argument_list(c.arguments());
+  token(gt_tok);
+}
+
+
+// Write this as [e]
+void
+Printer::constraint(Predicate_cons const& c)
+{
+  token(lbracket_tok);
+  expression(c.expression());
+  token(rbracket_tok);
+}
+
+
+void
+Printer::constraint(Conjunction_cons const& c)
+{
+  grouped_constraint(c.left());
+  space();
+  token("/\\");
+  space();
+  grouped_constraint(c.right());
+}
+
+
+void
+Printer::constraint(Disjunction_cons const& c)
+{
+  grouped_constraint(c.left());
+  space();
+  token("\\/");
+  space();
+  grouped_constraint(c.right());
+}
+
+
+// Write parens for every non-atomic constraint. The language
+// doesn't have explicit precedence.
+void
+Printer::grouped_constraint(Cons const& c)
+{
+  struct fn
+  {
+    bool operator()(Cons const& c) const        { return false; }
+    bool operator()(Binary_cons const& c) const { return true; }
+  };
+
+  if (apply(c, fn{})) {
+    token(lparen_tok);
+    constraint(c);
+    token(rparen_tok);
+  } else {
+    constraint(c);
+  }
+}
+
+
+// -------------------------------------------------------------------------- //
 // Streaming
 
 
@@ -1326,6 +1408,15 @@ operator<<(std::ostream& os, Decl const& d)
 {
   Printer print(os);
   print(d);
+  return os;
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Cons const& c)
+{
+  Printer print(os);
+  print(c);
   return os;
 }
 
