@@ -21,6 +21,7 @@ struct Type;
 struct Expr;
 struct Stmt;
 struct Decl;
+struct Cons;
 
 struct Scope;
 
@@ -221,7 +222,7 @@ struct Name::Visitor
   virtual void visit(Literal_id const& n)     { }
   virtual void visit(Destructor_id const& n)  { }
   virtual void visit(Template_id const& n)    { }
-  virtual void visit(Concept_id const& n)    { }
+  virtual void visit(Concept_id const& n)     { }
   virtual void visit(Qualified_id const& n)   { }
 };
 
@@ -2681,6 +2682,126 @@ apply(Decl& d, F fn)
   Generic_decl_mutator<F, T> vis(fn);
   return accept(d, vis);
 }
+
+
+// -------------------------------------------------------------------------- //
+// Constraints
+
+
+struct Cons;
+struct Concept_cons;
+struct Expression_cons;
+struct Type_cons;
+struct Predicate_cons;
+struct Conversion_cons;
+struct Deduction_cons;
+struct Conjunction_cons;
+struct Disjunction_cons;
+struct Parameterized_cons;
+
+
+// A name denotes an entity in a progam. Most forms of names are
+// ids, which denote use the of those entities in expressions,
+// or types.
+struct Cons : Term
+{
+  struct Visitor;
+  struct Mutator;
+
+  virtual void accept(Visitor&) const = 0;
+  virtual void accept(Mutator&)       = 0;
+};
+
+
+struct Cons::Visitor
+{
+  virtual void visit(Concept_cons const&)       { }
+  virtual void visit(Expression_cons const&)    { }
+  virtual void visit(Type_cons const&)          { }
+  virtual void visit(Predicate_cons const&)     { }
+  virtual void visit(Conversion_cons const&)    { }
+  virtual void visit(Deduction_cons const&)     { }
+  virtual void visit(Conjunction_cons const&)   { }
+  virtual void visit(Disjunction_cons const&)   { }
+  virtual void visit(Parameterized_cons const&) { }
+};
+
+
+struct Cons::Mutator
+{
+  virtual void visit(Concept_cons&)       { }
+  virtual void visit(Expression_cons&)    { }
+  virtual void visit(Type_cons&)          { }
+  virtual void visit(Predicate_cons&)     { }
+  virtual void visit(Conversion_cons&)    { }
+  virtual void visit(Deduction_cons&)     { }
+  virtual void visit(Conjunction_cons&)   { }
+  virtual void visit(Disjunction_cons&)   { }
+  virtual void visit(Parameterized_cons&) { }
+};
+
+
+
+
+// A generic visitor for constraints.
+template<typename F, typename T>
+struct Generic_cons_visitor : Cons::Visitor, Generic_visitor<F, T>
+{
+  Generic_cons_visitor(F f)
+    : Generic_visitor<F, T>(f)
+  { }
+
+  void visit(Concept_cons const& c)       { this->invoke(c); }
+  void visit(Expression_cons const& c)    { this->invoke(c); }
+  void visit(Type_cons const& c)          { this->invoke(c); }
+  void visit(Predicate_cons const& c)     { this->invoke(c); }
+  void visit(Conversion_cons const& c)    { this->invoke(c); }
+  void visit(Deduction_cons const& c)     { this->invoke(c); }
+  void visit(Conjunction_cons const& c)   { this->invoke(c); }
+  void visit(Disjunction_cons const& c)   { this->invoke(c); }
+  void visit(Parameterized_cons const& c) { this->invoke(c); }
+};
+
+
+// Apply a function to the given constraint.
+template<typename F, typename T = typename std::result_of<F(Concept_cons const&)>::type>
+inline T
+apply(Cons const& c, F fn)
+{
+  Generic_cons_visitor<F, T> vis(fn);
+  return accept(c, vis);
+}
+
+
+// A generic mutator for names.
+template<typename F, typename T>
+struct Generic_cons_mutator : Cons::Mutator, Generic_mutator<F, T>
+{
+  Generic_cons_mutator(F f)
+    : Generic_mutator<F, T>(f)
+  { }
+
+  void visit(Concept_cons& c)       { this->invoke(c); }
+  void visit(Expression_cons& c)    { this->invoke(c); }
+  void visit(Type_cons& c)          { this->invoke(c); }
+  void visit(Predicate_cons& c)     { this->invoke(c); }
+  void visit(Conversion_cons& c)    { this->invoke(c); }
+  void visit(Deduction_cons& c)     { this->invoke(c); }
+  void visit(Conjunction_cons& c)   { this->invoke(c); }
+  void visit(Disjunction_cons& c)   { this->invoke(c); }
+  void visit(Parameterized_cons& c) { this->invoke(c); }
+};
+
+
+// Apply a function to the given name.
+template<typename F, typename T = typename std::result_of<F(Concept_cons&)>::type>
+inline T
+apply(Cons& c, F fn)
+{
+  Generic_cons_mutator<F, T> vis(fn);
+  return accept(c, vis);
+}
+
 
 
 // -------------------------------------------------------------------------- //
