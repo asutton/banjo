@@ -15,10 +15,14 @@ namespace banjo
 
 struct Name;
 struct Type;
+struct Expr;
+struct Cons;
 
 
 bool is_equivalent(Name const&, Name const&);
 bool is_equivalent(Type const&, Type const&);
+bool is_equivalent(Expr const&, Expr const&);
+bool is_equivalent(Cons const&, Cons const&);
 
 
 // Equality comparison for pointers.
@@ -34,6 +38,8 @@ struct Term_eq
 
 using Name_eq = Term_eq<Name>;
 using Type_eq = Term_eq<Type>;
+using Expr_eq = Term_eq<Expr>;
+using Cons_eq = Term_eq<Cons>;
 
 
 } // namespace banjo

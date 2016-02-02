@@ -39,6 +39,7 @@ add_library(banjo
   deduction.cpp
   template.cpp
   normalization.cpp
+  subsumption.cpp
   print.cpp
 )
 target_compile_definitions(banjo PUBLIC ${LLVM_DEFINITIONS})

@@ -10,11 +10,11 @@
 namespace banjo
 {
 
-struct Type;
-
 
 std::size_t hash_value(Name const&);
 std::size_t hash_value(Type const&);
+std::size_t hash_value(Expr const&);
+std::size_t hash_value(Cons const&);
 
 
 template<typename T>
@@ -29,6 +29,8 @@ struct Term_hash
 
 using Name_hash = Term_hash<Name>;
 using Type_hash = Term_hash<Type>;
+using Expr_hash = Term_hash<Expr>;
+using Cons_hash = Term_hash<Cons>;
 
 
 } // namespace banjo
