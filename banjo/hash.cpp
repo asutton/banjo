@@ -20,7 +20,6 @@ std::size_t hash_init(T const& t)
 // -------------------------------------------------------------------------- //
 // Names
 
-
 inline std::size_t
 hash_value(Simple_id const& n)
 {
@@ -205,6 +204,35 @@ hash_value(Type const& t)
     std::size_t operator()(Synthetic_type const& t) const { lingo_unimplemented(); }
   };
   return apply(t, fn{});
+}
+
+
+// -------------------------------------------------------------------------- //
+// Expressions
+
+std::size_t
+hash_value(Expr const& e)
+{
+  struct fn
+  {
+    std::size_t operator()(Expr const& e) const { lingo_unimplemented(); }
+  };
+  return apply(e, fn{});
+}
+
+
+
+// -------------------------------------------------------------------------- //
+// Constraints
+
+std::size_t
+hash_value(Cons const& c)
+{
+  struct fn
+  {
+    std::size_t operator()(Cons const& c) const { lingo_unimplemented(); }
+  };
+  return apply(c, fn{});
 }
 
 

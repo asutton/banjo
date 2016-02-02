@@ -286,4 +286,101 @@ is_equivalent(Type const& t1, Type const& t2)
 }
 
 
+// -------------------------------------------------------------------------- //
+// Expressions
+
+bool
+is_equivalent(Boolean_expr const& e1, Boolean_expr const& e2)
+{
+  return e1.value() == e2.value();
+}
+
+
+bool
+is_equivalent(Unary_expr const& e1, Unary_expr const& e2)
+{
+  return is_equivalent(e1.operand(), e2.operand());
+}
+
+
+bool
+is_equivalent(Binary_expr const& e1, Binary_expr const& e2)
+{
+  return is_equivalent(e1.left(), e2.left())
+      && is_equivalent(e1.right(), e2.right());
+}
+
+
+bool
+is_equivalent(Expr const& e1, Expr const& e2)
+{
+  struct fn
+  {
+    Expr const& e2;
+    bool operator()(Expr const&) const            { lingo_unimplemented(); }
+    bool operator()(Boolean_expr const& e1) const { return is_equivalent(e1, cast<Boolean_expr>(e2)); }
+    bool operator()(Unary_expr const& e1) const   { return is_equivalent(e1, cast<Unary_expr>(e2)); }
+    bool operator()(Binary_expr const& e1) const  { return is_equivalent(e1, cast<Binary_expr>(e2)); }
+  };
+
+  // The same objects represent the same types.
+  if (&e1 == &e2)
+    return true;
+
+  // Types of different kinds are not the same.
+  std::type_index ti1 = typeid(e1);
+  std::type_index ti2 = typeid(e2);
+  if (ti1 != ti2)
+    return false;
+
+  // Delegate to specific rules.
+  return apply(e1, fn{e2});
+}
+
+
+// -------------------------------------------------------------------------- //
+// Constraints
+
+bool
+is_equivalent(Predicate_cons const& c1, Predicate_cons const& c2)
+{
+  return is_equivalent(c1.expression(), c2.expression());
+}
+
+
+bool
+is_equivalent(Binary_cons const& c1, Binary_cons const& c2)
+{
+  return is_equivalent(c1.left(), c2.left())
+      && is_equivalent(c1.right(), c2.right());
+}
+
+
+
+bool
+is_equivalent(Cons const& c1, Cons const& c2)
+{
+  struct fn
+  {
+    Cons const& c2;
+    bool operator()(Cons const& c1) const           { lingo_unimplemented(); }
+    bool operator()(Predicate_cons const& c1) const { return is_equivalent(c1, cast<Predicate_cons>(c2)); }
+    bool operator()(Binary_cons const& c1) const    { return is_equivalent(c1, cast<Binary_cons>(c2)); }
+  };
+
+  // The same objects represent the same types.
+  if (&c1 == &c2)
+    return true;
+
+  // Types of different kinds are not the same.
+  std::type_index ti1 = typeid(c1);
+  std::type_index ti2 = typeid(c2);
+  if (ti1 != ti2)
+    return false;
+
+  // Delegate to specific rules.
+  return apply(c1, fn{c2});
+}
+
+
 } // namespace banjo
