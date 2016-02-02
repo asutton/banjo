@@ -18,7 +18,9 @@ namespace banjo
 struct Simple_id;
 
 
+Decl&     simple_lookup(Scope&, Simple_id const&);
 Decl_list unqualified_lookup(Scope&, Simple_id const&);
+
 // Decl_list qualified_lookup(Scope&, Symbol const&);
 // Decl_list argument_dependent_lookup(Scope&, Expr_list&);
 

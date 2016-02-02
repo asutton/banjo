@@ -1,0 +1,10 @@
+
+// Simple tests for parsing templates.
+
+template<typename T>
+  requires true
+var int x = 0;
+
+template<typename U>
+  requires (true || false) && !true
+def f() -> int { return 0; }

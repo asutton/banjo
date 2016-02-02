@@ -15,12 +15,7 @@ namespace banjo
 static inline void
 initialize_declaration(Decl* d, Expr& e)
 {
-  // Adjust for template declarations.
-  //
-  // TODO: Make it easier to access the pattern.
-  if (Template_decl* tmp = as<Template_decl>(d))
-    d = &tmp->pattern();
-
+  d = &d->parameterized_declaration();
   if (Variable_decl* var = as<Variable_decl>(d))
     var->init = &e;
   else
@@ -32,34 +27,6 @@ static inline void
 initialize_declaration(Decl& d, Expr& e)
 {
   return initialize_declaration(&d, e);
-}
-
-
-// Return the type of a declaration.
-//
-// FIXME: This is dumb. We should have a base class that contributes
-// a type to the declaration hiearchy (Typed_decl).
-static inline Type&
-declared_type(Decl* d)
-{
-  // Adjust for template declarations.
-  //
-  // TODO: Make it easier to access the pattern.
-  if (Template_decl* tmp = as<Template_decl>(d))
-    d = &tmp->pattern();
-
-  if (Variable_decl* var = as<Variable_decl>(d))
-    return var->type();
-
-  // We can initialize other things too.
-  lingo_unreachable();
-}
-
-
-static inline Type&
-declared_type(Decl& d)
-{
-  return declared_type(&d);
 }
 
 

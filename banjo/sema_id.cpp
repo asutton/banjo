@@ -2,6 +2,9 @@
 // All rights reserved
 
 #include "parser.hpp"
+#include "lookup.hpp"
+#include "template.hpp"
+#include "print.hpp"
 
 #include <iostream>
 
@@ -54,7 +57,13 @@ Parser::on_template_id(Token, Decl& d, Term_list const& a)
 }
 
 
-// TODO: As we
+Name&
+Parser::on_concept_id(Decl& d, Term_list const& a)
+{
+  return build.get_concept_id(cast<Concept_decl>(d), a);
+}
+
+
 Name&
 Parser::on_qualified_id(Decl& d, Name& n)
 {
@@ -161,9 +170,17 @@ Parser::on_enum_name(Name&)
 
 
 Type&
-Parser::on_type_alias(Token)
+Parser::on_type_alias(Token tok)
 {
-  throw Lookup_error("not a type alias");
+  Simple_id& id = build.get_id(tok);
+  Decl& decl = simple_lookup(current_scope(), id);
+
+  if (Type_parm* d = as<Type_parm>(&decl))
+    return build.get_typename_type(*d);
+
+  // TODO: Actually support type aliases.
+
+  throw Lookup_error("'{}' does not name a type", id);
 }
 
 
@@ -171,6 +188,59 @@ Type&
 Parser::on_type_alias(Name&)
 {
   throw Lookup_error("not a type alias");
+}
+
+
+// Returns a type pointer if the declaraiton declares a type.
+// Otherwise, returns nullptr.
+//
+// TODO: Perhpas we should have a base class for all type
+// declarations?
+inline Type*
+get_type_for_decl(Context& cxt, Decl& decl)
+{
+  Builder build(cxt);
+
+  if (Class_decl* d = as<Class_decl>(&decl))
+    return &build.get_class_type(*d);
+
+  if (Union_decl* d = as<Union_decl>(&decl))
+    return &build.get_union_type(*d);
+
+  if (Enum_decl* d = as<Enum_decl>(&decl))
+    return &build.get_enum_type(*d);
+
+  if (Type_parm* d = as<Type_parm>(&decl))
+    return &build.get_typename_type(*d);
+
+  // TODO: Handle type aliases.
+
+  return nullptr;
+}
+
+
+Type&
+Parser::on_type_name(Token tok)
+{
+  Simple_id& id = build.get_id(tok);
+  Decl& decl = simple_lookup(current_scope(), id);
+  if (Type* type = get_type_for_decl(cxt, decl))
+    return *type;
+  throw Lookup_error("'{}' does not name a type", id);
+}
+
+
+// Check if the template-id n refers to a type.
+Type&
+Parser::on_type_name(Name& n)
+{
+  Template_id& id = cast<Template_id>(n);
+  Template_decl& tmp = id.declaration();
+  Term_list& args = id.arguments();
+  Decl& decl = specialize_template(cxt, tmp, args);
+  if (Type* type = get_type_for_decl(cxt, decl))
+    return *type;
+  throw Lookup_error("not a type name");
 }
 
 
@@ -203,9 +273,24 @@ Parser::on_namespace_alias(Name&)
 
 
 Decl&
-Parser::on_template_name(Token)
+Parser::on_template_name(Token tok)
 {
-  throw Lookup_error("not a template");
+  Simple_id& id = build.get_id(tok);
+  Decl& decl = simple_lookup(current_scope(), id);
+  if (is<Template_decl>(&decl))
+    return decl;
+  throw Lookup_error("'{}' does not name a template", id);
+}
+
+
+Decl&
+Parser::on_concept_name(Token tok)
+{
+  Simple_id& id = build.get_id(tok);
+  Decl& decl = simple_lookup(current_scope(), id);
+  if (is<Concept_decl>(&decl))
+    return decl;
+  throw Lookup_error("'{}' does not name a concept", id);
 }
 
 

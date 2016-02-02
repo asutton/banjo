@@ -176,46 +176,13 @@ convert_value(Expr& e, Type& t)
 // Type similarity
 //
 // Two types are similar if they have the same syntax modulo
-// qualifications.
+// sequences of qualifications. For example, the following types
+// are similar:
+//
+//    int const* const
+//    int*
 
 bool is_similar(Type const&, Type const&);
-bool is_similar(Pointer_type const&, Pointer_type const&);
-bool is_similar(Array_type const&, Array_type const&);
-bool is_similar(Sequence_type const&, Sequence_type const&);
-
-bool
-is_similar(Type const& a, Type const& b)
-{
-  struct fn
-  {
-    Type const& b;
-    bool operator()(Void_type const& a)      { return is_equivalent(a, cast<Void_type>(b)); }
-    bool operator()(Boolean_type const& a)   { return is_equivalent(a, cast<Boolean_type>(b)); }
-    bool operator()(Integer_type const& a)   { return is_equivalent(a, cast<Integer_type>(b)); }
-    bool operator()(Float_type const& a)     { return is_equivalent(a, cast<Float_type>(b)); }
-    bool operator()(Auto_type const& a)      { return is_equivalent(a, cast<Auto_type>(b)); }
-    bool operator()(Decltype_type const& a)  { return is_equivalent(a, cast<Decltype_type>(b)); }
-    bool operator()(Declauto_type const& a)  { return is_equivalent(a, cast<Declauto_type>(b)); }
-    bool operator()(Function_type const& a)  { return is_equivalent(a, cast<Function_type>(b)); }
-    bool operator()(Reference_type const& a) { return is_equivalent(a, cast<Reference_type>(b)); }
-    bool operator()(Qualified_type const&)   { lingo_unreachable(); }
-    bool operator()(Pointer_type const& a)   { return is_similar(a, cast<Pointer_type>(b)); }
-    bool operator()(Array_type const& a)     { return is_similar(a, cast<Array_type>(b)); }
-    bool operator()(Sequence_type const& a)  { return is_similar(a, cast<Sequence_type>(b)); }
-    bool operator()(Class_type const& a)     { return is_equivalent(a, cast<Class_type>(b)); }
-    bool operator()(Union_type const& a)     { return is_equivalent(a, cast<Union_type>(b)); }
-    bool operator()(Enum_type const& a)      { return is_equivalent(a, cast<Enum_type>(b)); }
-    bool operator()(Typename_type const& a)  { return is_equivalent(a, cast<Typename_type>(b)); }
-  };
-
-  Type const& ua = a.unqualified_type();
-  Type const& ub = b.unqualified_type();
-  std::type_index t1 = typeid(ua);
-  std::type_index t2 = typeid(ub);
-  if (t1 != t2)
-    return false;
-  return apply(ua, fn{ub});
-}
 
 
 bool
@@ -241,6 +208,42 @@ is_similar(Sequence_type const& a, Sequence_type const& b)
 }
 
 
+bool
+is_similar(Type const& a, Type const& b)
+{
+  struct fn
+  {
+    Type const& b;
+    bool operator()(Void_type const& a)      { return is_equivalent(a, cast<Void_type>(b)); }
+    bool operator()(Boolean_type const& a)   { return is_equivalent(a, cast<Boolean_type>(b)); }
+    bool operator()(Integer_type const& a)   { return is_equivalent(a, cast<Integer_type>(b)); }
+    bool operator()(Float_type const& a)     { return is_equivalent(a, cast<Float_type>(b)); }
+    bool operator()(Auto_type const& a)      { return is_equivalent(a, cast<Auto_type>(b)); }
+    bool operator()(Decltype_type const& a)  { return is_equivalent(a, cast<Decltype_type>(b)); }
+    bool operator()(Declauto_type const& a)  { return is_equivalent(a, cast<Declauto_type>(b)); }
+    bool operator()(Function_type const& a)  { return is_equivalent(a, cast<Function_type>(b)); }
+    bool operator()(Reference_type const& a) { return is_equivalent(a, cast<Reference_type>(b)); }
+    bool operator()(Qualified_type const&)   { lingo_unreachable(); }
+    bool operator()(Pointer_type const& a)   { return is_similar(a, cast<Pointer_type>(b)); }
+    bool operator()(Array_type const& a)     { return is_similar(a, cast<Array_type>(b)); }
+    bool operator()(Sequence_type const& a)  { return is_similar(a, cast<Sequence_type>(b)); }
+    bool operator()(Class_type const& a)     { return is_equivalent(a, cast<Class_type>(b)); }
+    bool operator()(Union_type const& a)     { return is_equivalent(a, cast<Union_type>(b)); }
+    bool operator()(Enum_type const& a)      { return is_equivalent(a, cast<Enum_type>(b)); }
+    bool operator()(Typename_type const& a)  { return is_equivalent(a, cast<Typename_type>(b)); }
+    bool operator()(Synthetic_type const& a) { return is_equivalent(a, cast<Synthetic_type>(b)); }
+  };
+
+  Type const& ua = a.unqualified_type();
+  Type const& ub = b.unqualified_type();
+  std::type_index t1 = typeid(ua);
+  std::type_index t2 = typeid(ub);
+  if (t1 != t2)
+    return false;
+  return apply(ua, fn{ub});
+}
+
+
 // -------------------------------------------------------------------------- //
 // Qualifier signature
 //
@@ -259,23 +262,11 @@ get_qualification_signature(Type const& t, Qualifier_list& sig)
   struct fn
   {
     Qualifier_list& sig;
-    void operator()(Void_type const&)        { }
-    void operator()(Boolean_type const&)     { }
-    void operator()(Integer_type const&)     { }
-    void operator()(Float_type const&)       { }
-    void operator()(Auto_type const&)        { }
-    void operator()(Decltype_type const&)    { }
-    void operator()(Declauto_type const&)    { }
-    void operator()(Function_type const&)    { }
-    void operator()(Reference_type const&)   { }
+    void operator()(Type const&)             { }
     void operator()(Qualified_type const& t) { lingo_unreachable(); }
     void operator()(Pointer_type const& t)   { get_qualification_signature(t.type(), sig); }
     void operator()(Array_type const& t)     { lingo_unimplemented(); }
     void operator()(Sequence_type const& t)  { get_qualification_signature(t.type(), sig); }
-    void operator()(Class_type const&)       { }
-    void operator()(Union_type const&)       { }
-    void operator()(Enum_type const&)        { }
-    void operator()(Typename_type const&)    { }
   };
 
   // Determine the qualifier for the type component.

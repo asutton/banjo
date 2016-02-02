@@ -21,6 +21,7 @@ struct Type;
 struct Expr;
 struct Stmt;
 struct Decl;
+struct Cons;
 
 struct Scope;
 
@@ -52,6 +53,8 @@ struct List_iterator
   using difference_type   = std::ptrdiff_t;
   using iterator_category = std::forward_iterator_tag;
 
+  List_iterator() = default;
+
   List_iterator(Iter i)
     : iter(i)
   { }
@@ -78,6 +81,8 @@ struct List_iterator<T const>
   using pointer           = T const*;
   using difference_type   = std::ptrdiff_t;
   using iterator_category = std::forward_iterator_tag;
+
+  List_iterator() = default;
 
   List_iterator(Iter i)
     : iter(i)
@@ -164,6 +169,7 @@ using Type_list = List<Type>;
 using Expr_list = List<Expr>;
 using Stmt_list = List<Stmt>;
 using Decl_list = List<Decl>;
+using Cons_list = List<Cons>;
 
 
 // Iterators
@@ -171,6 +177,7 @@ using Term_iter = Term_list::iterator;
 using Type_iter = Type_list::iterator;
 using Expr_iter = Expr_list::iterator;
 using Decl_iter = Decl_list::iterator;
+using Cons_iter = Cons_list::iterator;
 
 
 // Pairs and tuples
@@ -191,6 +198,7 @@ struct Conversion_id;
 struct Literal_id;
 struct Destructor_id;
 struct Template_id;
+struct Concept_id;
 struct Qualified_id;
 
 
@@ -220,6 +228,7 @@ struct Name::Visitor
   virtual void visit(Literal_id const& n)     { }
   virtual void visit(Destructor_id const& n)  { }
   virtual void visit(Template_id const& n)    { }
+  virtual void visit(Concept_id const& n)     { }
   virtual void visit(Qualified_id const& n)   { }
 };
 
@@ -300,9 +309,14 @@ struct Destructor_id : Name
 };
 
 
+struct Template_decl;
+struct Concept_decl;
+
+
 // An identifier that refers a template specialization.
 //
-// FIXME: Make the declaration a template declaration.
+// FIXME: What happens if the declaration refers to an
+// overload set?
 struct Template_id : Name
 {
   Template_id(Decl& d, Term_list const& a)
@@ -311,8 +325,32 @@ struct Template_id : Name
 
   void accept(Visitor& v) const { v.visit(*this); };
 
-  Decl const& declaration() const { return *decl; }
-  Decl&       declaration()       { return *decl; }
+  Template_decl const& declaration() const;
+  Template_decl&       declaration();
+
+  Term_list const& arguments() const { return args; }
+  Term_list&       arguments()       { return args; }
+
+  Decl*      decl;
+  Term_list  args;
+};
+
+
+// An identifier that refers a concept check. The arguments
+// are not matched against the declaration.
+//
+// FIXME: What happens if the declaration refers to an
+// overload set?
+struct Concept_id : Name
+{
+  Concept_id(Decl& d, Term_list const& a)
+    : decl(&d), args(a)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); };
+
+  Concept_decl const& declaration() const;
+  Concept_decl&       declaration();
 
   Term_list const& arguments() const { return args; }
   Term_list&       arguments()       { return args; }
@@ -413,6 +451,7 @@ struct Class_type;
 struct Union_type;
 struct Enum_type;
 struct Typename_type;
+struct Synthetic_type;
 
 
 bool is_object_type(Type const&);
@@ -469,6 +508,10 @@ struct Type : Term
   // Returns the unqualified version of this type.
   virtual Type const& unqualified_type() const { return *this; }
   virtual Type&       unqualified_type()       { return *this; }
+
+  // Returns the non-reference version of this type.
+  virtual Type const& non_reference_type() const { return *this; }
+  virtual Type&       non_reference_type()       { return *this; }
 };
 
 
@@ -491,6 +534,7 @@ struct Type::Visitor
   virtual void visit(Union_type const&)     { }
   virtual void visit(Enum_type const&)      { }
   virtual void visit(Typename_type const&)  { }
+  virtual void visit(Synthetic_type const&) { }
 };
 
 
@@ -513,6 +557,7 @@ struct Type::Mutator
   virtual void visit(Union_type&)     { }
   virtual void visit(Enum_type&)      { }
   virtual void visit(Typename_type&)  { }
+  virtual void visit(Synthetic_type&) { }
 };
 
 
@@ -701,6 +746,10 @@ struct Reference_type : Type
   Type const& type() const { return *ty; }
   Type&       type()       { return *ty; }
 
+  // Returns the non-reference version of this type.
+  Type const& non_reference_type() const { return type(); }
+  Type&       non_reference_type()       { return type(); }
+
   Type* ty;
 };
 
@@ -756,6 +805,8 @@ struct Type_parm;
 // TODO: Factor a base class for all of these: user-defined type.
 struct Class_type : User_defined_type
 {
+  using User_defined_type::User_defined_type;
+
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
@@ -767,6 +818,8 @@ struct Class_type : User_defined_type
 
 struct Union_type : User_defined_type
 {
+  using User_defined_type::User_defined_type;
+
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
@@ -778,6 +831,8 @@ struct Union_type : User_defined_type
 
 struct Enum_type : User_defined_type
 {
+  using User_defined_type::User_defined_type;
+
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
@@ -800,6 +855,28 @@ struct Typename_type : User_defined_type
   // Returns the declaration of the typename type.
   Type_parm const& declaration() const;
   Type_parm&       declaration();
+};
+
+
+// Represents a unique, ininterpreted type. The synthetic type
+// refers to the declaration from which it was synthesized.
+//
+// TODO: Do we always need a declaration, or can we just synthesize
+// types from thin air?
+struct Synthetic_type : Type
+{
+  Synthetic_type(Decl& d)
+    : decl(&d)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the declaration from which this type was synthesized.
+  Decl const& declaration() const { return *decl; }
+  Decl&       declaration()       { return *decl; }
+
+  Decl* decl;
 };
 
 
@@ -828,6 +905,7 @@ struct Generic_type_visitor : Type::Visitor, Generic_visitor<F, T>
   void visit(Union_type const& t)     { this->invoke(t); }
   void visit(Enum_type const& t)      { this->invoke(t); }
   void visit(Typename_type const& t)  { this->invoke(t); }
+  void visit(Synthetic_type const& t) { this->invoke(t); }
 };
 
 
@@ -866,6 +944,7 @@ struct Generic_type_mutator : Type::Mutator, Generic_mutator<F, T>
   void visit(Union_type& t)     { this->invoke(t); }
   void visit(Enum_type& t)      { this->invoke(t); }
   void visit(Typename_type& t)  { this->invoke(t); }
+  void visit(Synthetic_type& t) { this->invoke(t); }
 };
 
 
@@ -889,6 +968,7 @@ struct Integer_expr;
 struct Real_expr;
 // Expressions
 struct Reference_expr;
+struct Check_expr;
 struct Add_expr;
 struct Sub_expr;
 struct Mul_expr;
@@ -907,6 +987,7 @@ struct Or_expr;
 struct Not_expr;
 struct Call_expr;
 struct Assign_expr;
+struct Synthetic_expr;
 // Conversions
 struct Value_conv;
 struct Qualification_conv;
@@ -954,6 +1035,7 @@ struct Expr::Visitor
   virtual void visit(Integer_expr const&) { }
   virtual void visit(Real_expr const&) { }
   virtual void visit(Reference_expr const&) { }
+  virtual void visit(Check_expr const&) { }
   virtual void visit(Add_expr const&) { }
   virtual void visit(Sub_expr const&) { }
   virtual void visit(Mul_expr const&) { }
@@ -972,6 +1054,7 @@ struct Expr::Visitor
   virtual void visit(Not_expr const&) { }
   virtual void visit(Call_expr const&) { }
   virtual void visit(Assign_expr const&) { }
+  virtual void visit(Synthetic_expr const&) { }
   virtual void visit(Value_conv const&) { }
   virtual void visit(Qualification_conv const&) { }
   virtual void visit(Boolean_conv const&) { }
@@ -992,6 +1075,7 @@ struct Expr::Mutator
   virtual void visit(Integer_expr&) { }
   virtual void visit(Real_expr&) { }
   virtual void visit(Reference_expr&) { }
+  virtual void visit(Check_expr&) { }
   virtual void visit(Add_expr&) { }
   virtual void visit(Sub_expr&) { }
   virtual void visit(Mul_expr&) { }
@@ -1010,6 +1094,7 @@ struct Expr::Mutator
   virtual void visit(Not_expr&) { }
   virtual void visit(Call_expr&) { }
   virtual void visit(Assign_expr&) { }
+  virtual void visit(Synthetic_expr&) { }
   virtual void visit(Value_conv&) { }
   virtual void visit(Qualification_conv&) { }
   virtual void visit(Boolean_conv&) { }
@@ -1113,7 +1198,7 @@ struct Real_expr : Literal_expr<lingo::Real>
 // respectively.
 struct Reference_expr : Expr
 {
-  Reference_expr(Type& t,Decl& d)
+  Reference_expr(Type& t, Decl& d)
     : Expr(t), decl(&d)
   { }
 
@@ -1125,6 +1210,29 @@ struct Reference_expr : Expr
   Decl&       declaration()       { return *decl; }
 
   Decl* decl;
+};
+
+
+// Represents the satisfaction of a concept by a sequence
+// of template arguments. Unlike a concept-id, this is
+// resolved to a single concept.
+struct Check_expr : Expr
+{
+  Check_expr(Type& t, Decl& d, Term_list const& a)
+    : Expr(t), con(&d), args(a)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  Decl const& declaration() const { return *con; }
+  Decl&       declaration()       { return *con; }
+
+  Term_list const& arguments() const { return args; }
+  Term_list&       arguments()       { return args; }
+
+  Decl*     con;
+  Term_list args;
 };
 
 
@@ -1331,6 +1439,29 @@ struct Assign_expr : Binary_expr
 };
 
 
+// A synthesized value of a specified value. This refers to the
+// declaration from which the expression was synthesized.
+//
+// TODO: Do we always need a declaration, or can we just synthesize
+// values from thin air?
+struct Synthetic_expr : Expr
+{
+  Synthetic_expr(Type& t, Decl& d)
+    : Expr(t), decl(&d)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the declaration from which this expression was
+  // synthesized.
+  Decl const& declaration() const { return *decl; }
+  Decl&       declaration()       { return *decl; }
+
+  Decl* decl;
+};
+
+
 // Represents the set of standard conversions. A conversion
 // has a source expression and target type. Each derived
 // conversion contains the logic needed to transform the
@@ -1445,6 +1576,8 @@ struct Ellipsis_conv : Conv
 
 // An initializer is an expressio that provides a value for an
 // object or reference.
+//
+// TODO: Should all initializers have type void?
 struct Init : Expr
 {
   using Expr::Expr;
@@ -1562,6 +1695,7 @@ struct Generic_expr_visitor : Expr::Visitor, Generic_visitor<F, T>
   void visit(Integer_expr const& e)       { this->invoke(e); }
   void visit(Real_expr const& e)          { this->invoke(e); }
   void visit(Reference_expr const& e)     { this->invoke(e); }
+  void visit(Check_expr const& e)         { this->invoke(e); }
   void visit(Add_expr const& e)           { this->invoke(e); }
   void visit(Sub_expr const& e)           { this->invoke(e); }
   void visit(Mul_expr const& e)           { this->invoke(e); }
@@ -1580,6 +1714,7 @@ struct Generic_expr_visitor : Expr::Visitor, Generic_visitor<F, T>
   void visit(Not_expr const& e)           { this->invoke(e); }
   void visit(Call_expr const& e)          { this->invoke(e); }
   void visit(Assign_expr const& e)        { this->invoke(e); }
+  void visit(Synthetic_expr const& e)     { this->invoke(e); }
   void visit(Value_conv const& e)         { this->invoke(e); }
   void visit(Qualification_conv const& e) { this->invoke(e); }
   void visit(Boolean_conv const& e)       { this->invoke(e); }
@@ -1617,6 +1752,7 @@ struct Generic_expr_mutator : Expr::Mutator, Generic_mutator<F, T>
   void visit(Integer_expr& e)       { this->invoke(e); }
   void visit(Real_expr& e)          { this->invoke(e); }
   void visit(Reference_expr& e)     { this->invoke(e); }
+  void visit(Check_expr& e)         { this->invoke(e); }
   void visit(Add_expr& e)           { this->invoke(e); }
   void visit(Sub_expr& e)           { this->invoke(e); }
   void visit(Mul_expr& e)           { this->invoke(e); }
@@ -1635,6 +1771,7 @@ struct Generic_expr_mutator : Expr::Mutator, Generic_mutator<F, T>
   void visit(Not_expr& e)           { this->invoke(e); }
   void visit(Call_expr& e)          { this->invoke(e); }
   void visit(Assign_expr& e)        { this->invoke(e); }
+  void visit(Synthetic_expr& e)     { this->invoke(e); }
   void visit(Value_conv& e)         { this->invoke(e); }
   void visit(Qualification_conv& e) { this->invoke(e); }
   void visit(Boolean_conv& e)       { this->invoke(e); }
@@ -1867,12 +2004,21 @@ struct Function_def : Def
 
 
 // A definition of a class.
+//
+// FIXME: Add base classes.
 struct Class_def : Def
 {
+  Class_def(Decl_list const& ds)
+    : decls(ds)
+  { }
+
   void accept(Visitor& v) const { return v.visit(*this); }
 
-  // List* first;  // bases
-  // List* second; // members
+  // Returns the list of member declarations.
+  Decl_list const& members() const { return decls; }
+  Decl_list      & members()       { return decls; }
+
+  Decl_list decls;
 };
 
 
@@ -1928,6 +2074,7 @@ struct Union_decl;
 struct Enum_decl;
 struct Namespace_decl;
 struct Template_decl;
+struct Concept_decl;
 struct Object_parm;
 struct Value_parm;
 struct Type_parm;
@@ -1980,6 +2127,11 @@ struct Decl : Term
   Name const& name() const { return *id; }
   Name&       name()       { return *id; }
 
+  // If the declaration is a template, this returns the templated
+  // declaration.
+  virtual Decl const& parameterized_declaration() const { return *this; }
+  virtual Decl&       parameterized_declaration()       { return *this; }
+
   // Returns the saved scope associated with the declaration, if any.
   // Not all declarations have an associated scope.
   virtual Scope const* scope() const { return nullptr; }
@@ -2001,6 +2153,7 @@ struct Decl::Visitor
   virtual void visit(Enum_decl const&)      { }
   virtual void visit(Namespace_decl const&) { }
   virtual void visit(Template_decl const&)  { }
+  virtual void visit(Concept_decl const&)  { }
   virtual void visit(Object_parm const&)    { }
   virtual void visit(Value_parm const&)     { }
   virtual void visit(Type_parm const&)      { }
@@ -2019,12 +2172,16 @@ struct Decl::Mutator
   virtual void visit(Enum_decl&)      { }
   virtual void visit(Namespace_decl&) { }
   virtual void visit(Template_decl&)  { }
+  virtual void visit(Concept_decl&)  { }
   virtual void visit(Object_parm&)    { }
   virtual void visit(Value_parm&)     { }
   virtual void visit(Type_parm&)      { }
   virtual void visit(Template_parm&)  { }
   virtual void visit(Variadic_parm&)  { }
 };
+
+
+Type& declared_type(Decl&);
 
 
 // Declares a variable, constant, or function parameter.
@@ -2170,6 +2327,7 @@ struct Function_decl : Decl
 };
 
 
+// Represents the declaration of a class.
 struct Class_decl : Type_decl
 {
   using Type_decl::Type_decl;
@@ -2177,8 +2335,13 @@ struct Class_decl : Type_decl
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
+  // Returns the definition for the class, if given. Behavior is
+  // defined iff is_definition() is true.
   Class_def const& definition() const { return *cast<Class_def>(def); }
   Class_def&       definition()       { return *cast<Class_def>(def); }
+
+  // Returns true if the declaration is also a definition.
+  bool is_definition() const { return def; }
 };
 
 
@@ -2258,10 +2421,14 @@ struct Namespace_decl : Decl
 // to a requires clause. Note that this is transformed into
 // a logical proposition for the purpose of constraint checking
 // and comparison.
+//
+// TODO: Consider making a template parameter list a special
+// term. We can linke template parameter lists and their
+// constraints. Of course, this may not be necessary.
 struct Template_decl : Decl
 {
   Template_decl(Decl_list const& p, Decl& d)
-    : Decl(d.name()), parms(p), constr(nullptr), decl(&d)
+    : Decl(d.name()), parms(p), cons(nullptr), decl(&d)
   {
     lingo_assert(!d.context());
     d.context(*this);
@@ -2276,20 +2443,56 @@ struct Template_decl : Decl
 
   // Returns the constraint associated with the template.
   // This is valid iff is_constrained() is true.
-  Expr const& constraint() const  { return *constr; }
-  Expr&       constraint()        { return *constr; }
-  void        constraint(Expr& e) { constr = &e; }
+  Expr const& constraint() const  { return *cons; }
+  Expr&       constraint()        { return *cons; }
 
-  bool is_constrained() const { return constr; }
+  // Set the template constraints.
+  //
+  // TODO: Is this used anywhere?
+  void        constrain(Expr& e)  { cons = &e; }
 
-  Decl const& pattern() const { return *decl; }
-  Decl&       pattern()       { return *decl; }
+  // Returns true if the template declaration has constraints.
+  bool is_constrained() const { return cons; }
+
+  // Returns the underlying pattern.
+  Decl const& parameterized_declaration() const { return *decl; }
+  Decl&       parameterized_declaration()       { return *decl; }
 
   Decl_list parms;
-  Expr*     constr;
+  Expr*     cons;
   Decl*     decl;
 };
 
+
+// Represents a concept definition.
+//
+// TODO: How do I want to handle syntactic requirements? Make a
+// Concept_def that is either an expression or a body.
+struct Concept_decl : Decl
+{
+  Concept_decl(Name& n, Decl_list const& ps)
+    : Decl(n), parms(ps), def(nullptr)
+  { }
+
+  Concept_decl(Name& n, Decl_list const& ps, Expr& e)
+    : Decl(n), parms(ps), def(&e)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the template parameters of the declaration.
+  Decl_list const& parameters() const { return parms; }
+  Decl_list&       parameters()       { return parms; }
+
+  // Returns the constraint associated with the template.
+  // This is valid iff is_constrained() is true.
+  Expr const& definition() const  { return *def; }
+  Expr&       definition()        { return *def; }
+
+  Decl_list parms;
+  Expr*     def;
+};
 
 // An object paramter of a function.
 //
@@ -2437,6 +2640,7 @@ struct Generic_decl_visitor : Decl::Visitor, Generic_visitor<F, T>
   void visit(Enum_decl const& d)      { this->invoke(d); }
   void visit(Namespace_decl const& d) { this->invoke(d); }
   void visit(Template_decl const& d)  { this->invoke(d); }
+  void visit(Concept_decl const& d)   { this->invoke(d); }
   void visit(Object_parm const& d)    { this->invoke(d); }
   void visit(Value_parm const& d)     { this->invoke(d); }
   void visit(Type_parm const& d)      { this->invoke(d); }
@@ -2471,6 +2675,7 @@ struct Generic_decl_mutator : Decl::Mutator, Generic_mutator<F, T>
   void visit(Enum_decl& d)      { this->invoke(d); }
   void visit(Namespace_decl& d) { this->invoke(d); }
   void visit(Template_decl& d)  { this->invoke(d); }
+  void visit(Concept_decl& d)   { this->invoke(d); }
   void visit(Object_parm& d)    { this->invoke(d); }
   void visit(Value_parm& d)     { this->invoke(d); }
   void visit(Type_parm& d)      { this->invoke(d); }
@@ -2490,6 +2695,244 @@ apply(Decl& d, F fn)
 
 
 // -------------------------------------------------------------------------- //
+// Constraints
+
+
+struct Cons;
+struct Concept_cons;
+struct Expression_cons;
+struct Type_cons;
+struct Predicate_cons;
+struct Conversion_cons;
+struct Deduction_cons;
+struct Conjunction_cons;
+struct Disjunction_cons;
+struct Parameterized_cons;
+
+
+// A name denotes an entity in a progam. Most forms of names are
+// ids, which denote use the of those entities in expressions,
+// or types.
+struct Cons : Term
+{
+  struct Visitor;
+  struct Mutator;
+
+  virtual void accept(Visitor&) const = 0;
+  virtual void accept(Mutator&) = 0;
+};
+
+
+struct Cons::Visitor
+{
+  virtual void visit(Concept_cons const&)       { }
+  virtual void visit(Expression_cons const&)    { }
+  virtual void visit(Type_cons const&)          { }
+  virtual void visit(Predicate_cons const&)     { }
+  virtual void visit(Conversion_cons const&)    { }
+  virtual void visit(Deduction_cons const&)     { }
+  virtual void visit(Conjunction_cons const&)   { }
+  virtual void visit(Disjunction_cons const&)   { }
+  virtual void visit(Parameterized_cons const&) { }
+};
+
+
+struct Cons::Mutator
+{
+  virtual void visit(Concept_cons&)       { }
+  virtual void visit(Expression_cons&)    { }
+  virtual void visit(Type_cons&)          { }
+  virtual void visit(Predicate_cons&)     { }
+  virtual void visit(Conversion_cons&)    { }
+  virtual void visit(Deduction_cons&)     { }
+  virtual void visit(Conjunction_cons&)   { }
+  virtual void visit(Disjunction_cons&)   { }
+  virtual void visit(Parameterized_cons&) { }
+};
+
+
+// Represents the checking of a nested concepts. These are kept
+// in the constraint language in order to facilitate optimization
+// in subsumption algorithms.
+struct Concept_cons : Cons
+{
+  Concept_cons(Decl& d, Term_list& ts)
+    : decl(&d), args(ts)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the resolved concept declaration.
+  //
+  // FIXME: Make this return a concept declaration.
+  Decl const& declaration() const { return *decl; }
+  Decl&       declaration()       { return *decl; }
+
+  // Returns the template arguments used to check the template.
+  Term_list const& arguments() const { return args; }
+  Term_list&       arguments()       { return args; }
+
+  Decl*     decl;
+  Term_list args;
+};
+
+
+// Represents the evaluation of a constant expression as a constraint.
+struct Predicate_cons : Cons
+{
+  Predicate_cons(Expr& e)
+    : expr(&e)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the expression to be evaluated.
+  Expr const& expression() const { return *expr; }
+  Expr&       expression()       { return *expr; }
+
+  Expr* expr;
+};
+
+
+// FIXME: Implement me.
+struct Expression_cons : Cons
+{
+  using Cons::Cons;
+};
+
+
+// FIXME: Implement me.
+struct Type_cons : Cons
+{
+  using Cons::Cons;
+};
+
+
+// FIXME: Implement me.
+struct Conversion_cons : Cons
+{
+  using Cons::Cons;
+};
+
+
+// FIXME: Implement me.
+struct Deduction_cons : Cons
+{
+  using Cons::Cons;
+};
+
+
+// FIXME: Implement me.
+struct Parameterized_cons : Cons
+{
+  using Cons::Cons;
+};
+
+
+// The base class of binary constraints.
+struct Binary_cons : Cons
+{
+  Binary_cons(Cons& c1, Cons& c2)
+    : c1(&c1), c2(&c2)
+  { }
+
+  // Returns the left operand.
+  Cons const& left() const { return *c1; }
+  Cons&       left()       { return *c1; }
+
+  // Returns the right operand.
+  Cons const& right() const { return *c2; }
+  Cons&       right()       { return *c2; }
+
+  Cons* c1;
+  Cons* c2;
+};
+
+
+// Represents the conjunction of constraints.
+struct Conjunction_cons : Binary_cons
+{
+  using Binary_cons::Binary_cons;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// Represents the disjunction of constraints.
+struct Disjunction_cons : Binary_cons
+{
+  using Binary_cons::Binary_cons;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// A generic visitor for constraints.
+template<typename F, typename T>
+struct Generic_cons_visitor : Cons::Visitor, Generic_visitor<F, T>
+{
+  Generic_cons_visitor(F f)
+    : Generic_visitor<F, T>(f)
+  { }
+
+  void visit(Concept_cons const& c)       { this->invoke(c); }
+  void visit(Expression_cons const& c)    { this->invoke(c); }
+  void visit(Type_cons const& c)          { this->invoke(c); }
+  void visit(Predicate_cons const& c)     { this->invoke(c); }
+  void visit(Conversion_cons const& c)    { this->invoke(c); }
+  void visit(Deduction_cons const& c)     { this->invoke(c); }
+  void visit(Conjunction_cons const& c)   { this->invoke(c); }
+  void visit(Disjunction_cons const& c)   { this->invoke(c); }
+  void visit(Parameterized_cons const& c) { this->invoke(c); }
+};
+
+
+// Apply a function to the given constraint.
+template<typename F, typename T = typename std::result_of<F(Concept_cons const&)>::type>
+inline T
+apply(Cons const& c, F fn)
+{
+  Generic_cons_visitor<F, T> vis(fn);
+  return accept(c, vis);
+}
+
+
+// A generic mutator for names.
+template<typename F, typename T>
+struct Generic_cons_mutator : Cons::Mutator, Generic_mutator<F, T>
+{
+  Generic_cons_mutator(F f)
+    : Generic_mutator<F, T>(f)
+  { }
+
+  void visit(Concept_cons& c)       { this->invoke(c); }
+  void visit(Expression_cons& c)    { this->invoke(c); }
+  void visit(Type_cons& c)          { this->invoke(c); }
+  void visit(Predicate_cons& c)     { this->invoke(c); }
+  void visit(Conversion_cons& c)    { this->invoke(c); }
+  void visit(Deduction_cons& c)     { this->invoke(c); }
+  void visit(Conjunction_cons& c)   { this->invoke(c); }
+  void visit(Disjunction_cons& c)   { this->invoke(c); }
+  void visit(Parameterized_cons& c) { this->invoke(c); }
+};
+
+
+// Apply a function to the given name.
+template<typename F, typename T = typename std::result_of<F(Concept_cons&)>::type>
+inline T
+apply(Cons& c, F fn)
+{
+  Generic_cons_mutator<F, T> vis(fn);
+  return accept(c, vis);
+}
+
+
+
+// -------------------------------------------------------------------------- //
 // Miscellaneous
 
 // TODO: I'm not currently using this, but it might be useful.
@@ -2501,6 +2944,38 @@ struct Translation_unit : Term
 
 // -------------------------------------------------------------------------- //
 // Implementation
+
+// Concept_id
+
+inline Concept_decl const&
+Concept_id::declaration() const
+{
+  return cast<Concept_decl>(*decl);
+}
+
+
+inline Concept_decl&
+Concept_id::declaration()
+{
+  return cast<Concept_decl>(*decl);
+}
+
+
+// Template_id
+
+inline Template_decl const&
+Template_id::declaration() const
+{
+  return cast<Template_decl>(*decl);
+}
+
+
+inline Template_decl&
+Template_id::declaration()
+{
+  return cast<Template_decl>(*decl);
+}
+
 
 // Class type
 

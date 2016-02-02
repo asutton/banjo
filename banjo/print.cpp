@@ -200,14 +200,9 @@ Printer::template_id(Template_id const& n)
   id(n.declaration().name());
 
   // FIXME: Don't insert spaces after the template name.
-  token("<");
-  Term_list const& args = n.arguments();
-  for (auto iter = args.begin(); iter != args.end(); ++iter) {
-    template_argument(*iter);
-    if (std::next(iter) != args.end())
-      token(comma_tok);
-  }
-  token(">");
+  token(lt_tok);
+  template_argument_list(n.arguments());
+  token(gt_tok);
 }
 
 
@@ -276,6 +271,7 @@ precedence(Type const& t)
     int operator()(Union_type const& t)     { return 0; }
     int operator()(Enum_type const& t)      { return 0; }
     int operator()(Typename_type const& t)  { return 0; }
+    int operator()(Synthetic_type const& t) { return 0; }
   };
   return apply(t, fn{});
 }
@@ -287,6 +283,7 @@ Printer::type(Type const& t)
   struct fn
   {
     Printer& p;
+    void operator()(Type const& t)           { lingo_unimplemented(); }
     void operator()(Void_type const& t)      { p.simple_type(t); }
     void operator()(Boolean_type const& t)   { p.simple_type(t); }
     void operator()(Integer_type const& t)   { p.simple_type(t); }
@@ -300,10 +297,11 @@ Printer::type(Type const& t)
     void operator()(Reference_type const& t) { p.reference_type(t); }
     void operator()(Array_type const& t)     { p.postfix_type(t); }
     void operator()(Sequence_type const& t)  { p.sequence_type(t); }
-    void operator()(Class_type const& t)     { lingo_unimplemented(); }
+    void operator()(Class_type const& t)     { p.simple_type(t); }
     void operator()(Union_type const& t)     { lingo_unimplemented(); }
     void operator()(Enum_type const& t)      { lingo_unimplemented(); }
     void operator()(Typename_type const& t)  { p.simple_type(t); }
+    void operator()(Synthetic_type const& t) { p.simple_type(t); }
   };
   apply(t, fn{*this});
 }
@@ -385,10 +383,27 @@ Printer::simple_type(Function_type const& t)
 }
 
 
+// FIXME: Print a qualification of the name that uniquely
+// identifiers the type, given the current context. Naturally,
+// this means we need to track scopes...
+void
+Printer::simple_type(Class_type const& t)
+{
+  id(t.declaration().name());
+}
+
+
 // FIXME: Print the qualified id? Print a qualification that
 // guarantees unique naming?
 void
 Printer::simple_type(Typename_type const& t)
+{
+  id(t.declaration().name());
+}
+
+
+void
+Printer::simple_type(Synthetic_type const& t)
 {
   id(t.declaration().name());
 }
@@ -468,10 +483,12 @@ precedence(Expr const& e)
 {
   struct fn
   {
+    int operator()(Expr const& e)           { lingo_unimplemented(); }
     int operator()(Boolean_expr const& e)   { return 0; }
     int operator()(Integer_expr const& e)   { return 0; }
     int operator()(Real_expr const& e)      { return 0; }
     int operator()(Reference_expr const& e) { return 0; }
+    int operator()(Check_expr const& e)     { return 0; }
     int operator()(Add_expr const& e)       { return 6; }
     int operator()(Sub_expr const& e)       { return 6; }
     int operator()(Mul_expr const& e)       { return 5; }
@@ -503,10 +520,12 @@ Printer::expression(Expr const& e)
   struct fn
   {
     Printer& p;
+    void operator()(Expr const& e)               { lingo_unimplemented(); }
     void operator()(Boolean_expr const& e)       { p.literal(e); }
     void operator()(Integer_expr const& e)       { p.literal(e); }
     void operator()(Real_expr const& e)          { p.literal(e); }
     void operator()(Reference_expr const& e)     { p.id_expression(e); }
+    void operator()(Check_expr const& e)         { p.id_expression(e); }
     void operator()(Add_expr const& e)           { p.binary_expression(e, plus_tok); }
     void operator()(Sub_expr const& e)           { p.binary_expression(e, minus_tok); }
     void operator()(Mul_expr const& e)           { p.binary_expression(e, star_tok); }
@@ -525,6 +544,7 @@ Printer::expression(Expr const& e)
     void operator()(Not_expr const& e)           { p.unary_expression(e, bang_tok); }
     void operator()(Call_expr const& e)          { p.postfix_expression(e); }
     void operator()(Assign_expr const& e)        { p.binary_expression(e, eq_tok); }
+    void operator()(Synthetic_expr const& e)     { p.id_expression(e); }
     void operator()(Value_conv const& e)         { p.postfix_expression(e); }
     void operator()(Qualification_conv const& e) { p.postfix_expression(e); }
     void operator()(Integer_conv const& e)       { p.postfix_expression(e); }
@@ -533,6 +553,12 @@ Printer::expression(Expr const& e)
     void operator()(Numeric_conv const& e)       { p.postfix_expression(e); }
     void operator()(Ellipsis_conv const& e)      { p.postfix_expression(e); }
     void operator()(Init const& e)               { lingo_unreachable(); }
+
+    // TODO: Certain forms of initialization are transparent.
+    // Do we need to support direct and aggregate initialization
+    // as expressions also? Presumably not.
+    void operator()(Copy_init const& e)          { p.expression(e.expression()); }
+    void operator()(Bind_init const& e)          { p.expression(e.expression()); }
 };
   apply(e, fn{*this});
 }
@@ -572,6 +598,23 @@ Printer::literal(Real_expr const& e)
 
 void
 Printer::id_expression(Reference_expr const& e)
+{
+  id(e.declaration().name());
+}
+
+
+void
+Printer::id_expression(Check_expr const& e)
+{
+  id(e.declaration().name());
+  token(lt_tok);
+  template_argument_list(e.arguments());
+  token(gt_tok);
+}
+
+
+void
+Printer::id_expression(Synthetic_expr const& e)
 {
   id(e.declaration().name());
 }
@@ -869,6 +912,60 @@ Printer::function_definition(Defaulted_def const&)
 }
 
 
+void
+Printer::class_definition(Def const& d)
+{
+  struct fn
+  {
+    Printer& p;
+    void operator()(Def const&) { lingo_unimplemented(); }
+    void operator()(Class_def const& d) { p.class_definition(d); }
+    void operator()(Deleted_def const& d) { p.class_definition(d); }
+  };
+  apply(d, fn{*this});
+}
+
+
+void
+Printer::class_definition(Class_def const& d)
+{
+  if (d.members().empty()) {
+    space();
+    token(lbrace_tok);
+    space();
+    token(rbrace_tok);
+  } else {
+    newline();
+    token(lbrace_tok);
+    newline_and_indent();
+    member_seq(d.members());
+    newline_and_undent();
+    token(rbrace_tok);
+  }
+}
+
+
+void
+Printer::member_seq(Decl_list const& ds)
+{
+  for (auto iter = ds.begin(); iter != ds.end(); ++iter) {
+    declaration(*iter);
+    if (std::next(iter) != ds.end())
+      newline();
+  }
+}
+
+
+void
+Printer::class_definition(Deleted_def const&)
+{
+  space();
+  token(eq_tok);
+  space();
+  token(delete_tok);
+}
+
+
 // -------------------------------------------------------------------------- //
 // Declarations
 
@@ -888,6 +985,7 @@ Printer::declaration(Decl const& d)
     void operator()(Enum_decl const& d)      { p.enum_declaration(d); }
     void operator()(Namespace_decl const& d) { p.namespace_declaration(d); }
     void operator()(Template_decl const& d)  { p.template_declaration(d); }
+    void operator()(Concept_decl const& d)   { p.concept_declaration(d); }
 
     // Support emitting these here so we can print parameters
     // without an appropriate context.
@@ -958,7 +1056,12 @@ Printer::function_declaration(Function_decl const& d)
 void
 Printer::class_declaration(Class_decl const& d)
 {
-  lingo_unreachable();
+  token(class_tok);
+  id(d.name());
+  if (d.is_definition())
+    class_definition(d.definition());
+  else
+    token(semicolon_tok);
 }
 
 
@@ -1010,7 +1113,23 @@ Printer::template_declaration(Template_decl const& d)
   } else {
     newline();
   }
-  declaration(d.pattern());
+  declaration(d.parameterized_declaration());
+}
+
+
+void
+Printer::concept_declaration(Concept_decl const& d)
+{
+  token(concept_tok);
+  id(d.name());
+  token(lt_tok);
+  template_parameter_list(d.parameters());
+  token(gt_tok);
+  space();
+  token(eq_tok);
+  space();
+  expression(d.definition());
+  token(semicolon_tok);
 }
 
 
@@ -1018,6 +1137,7 @@ void
 Printer::requires_clause(Expr const& e)
 {
   token(requires_tok);
+  space();
   expression(e);
 }
 
@@ -1052,6 +1172,7 @@ void
 Printer::parameter(Object_parm const& p)
 {
   type(p.type());
+  space();
   id(p.name());
 }
 
@@ -1134,6 +1255,99 @@ Printer::template_argument(Term const& a)
 }
 
 
+void
+Printer::template_argument_list(Term_list const& ts)
+{
+  for (auto iter = ts.begin(); iter != ts.end(); ++iter) {
+    template_argument(*iter);
+    if (std::next(iter) != ts.end())
+      token(comma_tok);
+  }
+}
+
+
+// -------------------------------------------------------------------------- //
+// Constraints
+
+void
+Printer::constraint(Cons const& c)
+{
+  struct fn
+  {
+    Printer& p;
+    void operator()(Cons const& c)             { lingo_unimplemented(); }
+    void operator()(Concept_cons const& c)     { p.constraint(c); }
+    void operator()(Predicate_cons const& c)   { p.constraint(c); }
+    void operator()(Conjunction_cons const& c) { p.constraint(c); }
+    void operator()(Disjunction_cons const& c) { p.constraint(c); }
+  };
+  apply(c, fn{*this});
+}
+
+
+void
+Printer::constraint(Concept_cons const& c)
+{
+  id(c.declaration().name());
+  token(lt_tok);
+  template_argument_list(c.arguments());
+  token(gt_tok);
+}
+
+
+// Write this as [e]
+void
+Printer::constraint(Predicate_cons const& c)
+{
+  token(lbracket_tok);
+  expression(c.expression());
+  token(rbracket_tok);
+}
+
+
+void
+Printer::constraint(Conjunction_cons const& c)
+{
+  grouped_constraint(c.left());
+  space();
+  token("/\\");
+  space();
+  grouped_constraint(c.right());
+}
+
+
+void
+Printer::constraint(Disjunction_cons const& c)
+{
+  grouped_constraint(c.left());
+  space();
+  token("\\/");
+  space();
+  grouped_constraint(c.right());
+}
+
+
+// Write parens for every non-atomic constraint. The language
+// doesn't have explicit precedence.
+void
+Printer::grouped_constraint(Cons const& c)
+{
+  struct fn
+  {
+    bool operator()(Cons const& c) const        { return false; }
+    bool operator()(Binary_cons const& c) const { return true; }
+  };
+
+  if (apply(c, fn{})) {
+    token(lparen_tok);
+    constraint(c);
+    token(rparen_tok);
+  } else {
+    constraint(c);
+  }
+}
+
+
 // -------------------------------------------------------------------------- //
 // Streaming
 
@@ -1194,6 +1408,15 @@ operator<<(std::ostream& os, Decl const& d)
 {
   Printer print(os);
   print(d);
+  return os;
+}
+
+
+std::ostream&
+operator<<(std::ostream& os, Cons const& c)
+{
+  Printer print(os);
+  print(c);
   return os;
 }
 

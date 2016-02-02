@@ -10,6 +10,8 @@
 #include "token.hpp"
 #include "ast.hpp"
 
+#include <lingo/token.hpp>
+
 
 namespace banjo
 {
@@ -35,12 +37,14 @@ struct Builder
   Simple_id&      get_id(std::string const&);
   Simple_id&      get_id(Symbol const&);
   Simple_id&      get_id(Symbol const*);
+  Simple_id&      get_id(Token tok);
   Placeholder_id& get_id();
   // Operator_id&    get_id();
   // Conversion_id&  get_id();
   // Literal_id&     get_id();
   Destructor_id&  get_destructor_id(Type const&);
   Template_id&    get_template_id(Template_decl&, Term_list const&);
+  Concept_id&     get_concept_id(Concept_decl&, Term_list const&);
   Qualified_id&   get_qualified_id(Decl&, Name&);
   Global_id&      get_global_id();
 
@@ -67,6 +71,7 @@ struct Builder
   Union_type&     get_union_type(Decl&);
   Enum_type&      get_enum_type(Decl&);
   Typename_type&  get_typename_type(Decl&);
+  Synthetic_type& synthesize_type(Decl&);
 
   // Expressions
   Boolean_expr&   get_bool(bool);
@@ -79,10 +84,19 @@ struct Builder
   Reference_expr& make_reference(Variable_decl& d);
   Reference_expr& make_reference(Constant_decl& d);
   Reference_expr& make_reference(Function_decl& d);
+  Check_expr&     make_check(Concept_decl& d, Term_list const&);
 
   And_expr&       make_and(Type&, Expr&, Expr&);
+  Or_expr&        make_or(Type&, Expr&, Expr&);
   Not_expr&       make_not(Type&, Expr&);
+  Eq_expr&        make_eq(Type&, Expr&, Expr&);
+  Ne_expr&        make_ne(Type&, Expr&, Expr&);
+  Lt_expr&        make_lt(Type&, Expr&, Expr&);
+  Gt_expr&        make_gt(Type&, Expr&, Expr&);
+  Le_expr&        make_le(Type&, Expr&, Expr&);
+  Ge_expr&        make_ge(Type&, Expr&, Expr&);
   Call_expr&      make_call(Type&, Function_decl&, Expr_list const&);
+  Synthetic_expr& synthesize_expression(Decl&);
 
   // Statements
   Compound_stmt&    make_compound_statement(Stmt_list const&);
@@ -98,20 +112,26 @@ struct Builder
   Aggregate_init& make_aggregate_init(Type&, Expr_list const&);
 
   // Definitions
-  Function_def&   make_function_def(Stmt&);
-  Deleted_def&    make_deleted_def();
-  Defaulted_def&  make_defaulted_def();
+  Function_def&   make_function_definition(Stmt&);
+  Class_def&      make_class_definition(Decl_list const&);
+  Deleted_def&    make_deleted_definition();
+  Defaulted_def&  make_defaulted_definition();
 
   Namespace_decl& make_namespace(Name&);
   Namespace_decl& make_namespace(char const*);
   Namespace_decl& get_global_namespace();
-  Variable_decl& make_variable(Name&, Type&);
-  Variable_decl& make_variable(char const*, Type&);
-  Variable_decl& make_variable(Name&, Type&, Expr&);
-  Variable_decl& make_variable(char const*, Type&, Expr&);
-  Function_decl& make_function(Name&, Decl_list const&, Type&);
-  Function_decl& make_function(char const*, Decl_list const&, Type&);
-  Template_decl& make_template(Decl_list const&, Decl&);
+  Variable_decl&  make_variable(Name&, Type&);
+  Variable_decl&  make_variable(char const*, Type&);
+  Variable_decl&  make_variable(Name&, Type&, Expr&);
+  Variable_decl&  make_variable(char const*, Type&, Expr&);
+  Function_decl&  make_function(Name&, Decl_list const&, Type&);
+  Function_decl&  make_function(char const*, Decl_list const&, Type&);
+  Class_decl&     make_class(Name&);
+  Class_decl&     make_class(char const*);
+  Template_decl&  make_template(Decl_list const&, Decl&);
+  Concept_decl&   make_concept(Name&, Decl_list const&);
+  Concept_decl&   make_concept(Name&, Decl_list const&, Expr&);
+  Concept_decl&   make_concept(char const*, Decl_list const&, Expr&);
 
   Object_parm& make_object_parm(Name&, Type&);
   Object_parm& make_object_parm(char const*, Type&);
@@ -121,6 +141,14 @@ struct Builder
   Type_parm&   make_type_parameter(char const*);
   Type_parm&   make_type_parameter(Name&, Type&);
   Type_parm&   make_type_parameter(char const*, Type&);
+
+  // Constraints
+  //
+  // FIXME: Canonicalize constraints?
+  Concept_cons& make_concept_constraint(Decl&, Term_list&);
+  Predicate_cons& make_predicate_constraint(Expr&);
+  Conjunction_cons& make_conjunction_constraint(Cons&, Cons&);
+  Disjunction_cons& make_disjunction_constraint(Cons&, Cons&);
 
   // Resources
   Symbol_table& symbols() { return cxt.symbols(); }
@@ -166,6 +194,7 @@ Builder::get_id(std::string const& s)
 inline Simple_id&
 Builder::get_id(Symbol const& sym)
 {
+  lingo_assert(is<Identifier_sym>(&sym));
   return make<Simple_id>(sym);
 }
 
@@ -174,7 +203,15 @@ Builder::get_id(Symbol const& sym)
 inline Simple_id&
 Builder::get_id(Symbol const* sym)
 {
-  return make<Simple_id>(*sym);
+  return get_id(*sym);
+}
+
+
+// Returns a simple id for the given token.
+inline Simple_id&
+Builder::get_id(Token tok)
+{
+  return get_id(tok.symbol());
 }
 
 
@@ -200,6 +237,13 @@ inline Template_id&
 Builder::get_template_id(Template_decl& d, Term_list const& t)
 {
   return make<Template_id>(d, t);
+}
+
+
+inline Concept_id&
+Builder::get_concept_id(Concept_decl& d, Term_list const& t)
+{
+  return make<Concept_id>(d, t);
 }
 
 
@@ -364,10 +408,11 @@ Builder::get_sequence_type(Type& t)
 }
 
 
+// FIXME: Canonicalize class types?
 inline Class_type&
 Builder::get_class_type(Decl& d)
 {
-  lingo_unimplemented();
+  return make<Class_type>(d);
 }
 
 
@@ -389,6 +434,13 @@ inline Typename_type&
 Builder::get_typename_type(Decl& d)
 {
   return make<Typename_type>(d);
+}
+
+
+inline Synthetic_type&
+Builder::synthesize_type(Decl& d)
+{
+  return make<Synthetic_type>(d);
 }
 
 
@@ -461,10 +513,25 @@ Builder::make_reference(Variable_decl& d)
 }
 
 
+// Make a concept check. The type is bool.
+inline Check_expr&
+Builder::make_check(Concept_decl& d, Term_list const& as)
+{
+  return make<Check_expr>(get_bool_type(), d, as);
+}
+
+
 inline And_expr&
 Builder::make_and(Type& t, Expr& e1, Expr& e2)
 {
   return make<And_expr>(t, e1, e2);
+}
+
+
+inline Or_expr&
+Builder::make_or(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Or_expr>(t, e1, e2);
 }
 
 
@@ -475,10 +542,59 @@ Builder::make_not(Type& t, Expr& e)
 }
 
 
+inline Eq_expr&
+Builder::make_eq(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Eq_expr>(t, e1, e2);
+}
+
+
+inline Ne_expr&
+Builder::make_ne(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Ne_expr>(t, e1, e2);
+}
+
+
+inline Lt_expr&
+Builder::make_lt(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Lt_expr>(t, e1, e2);
+}
+
+
+inline Gt_expr&
+Builder::make_gt(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Gt_expr>(t, e1, e2);
+}
+
+
+inline Le_expr&
+Builder::make_le(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Le_expr>(t, e1, e2);
+}
+
+
+inline Ge_expr&
+Builder::make_ge(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Ge_expr>(t, e1, e2);
+}
+
+
 inline Call_expr&
 Builder::make_call(Type& t, Function_decl& f, Expr_list const& a)
 {
   return make<Call_expr>(t, make_reference(f), a);
+}
+
+
+inline Synthetic_expr&
+Builder::synthesize_expression(Decl& d)
+{
+  return make<Synthetic_expr>(declared_type(d), d);
 }
 
 
@@ -555,21 +671,28 @@ Builder::make_aggregate_init(Type& t, Expr_list const& es)
 // Definitions
 
 inline Function_def&
-Builder::make_function_def(Stmt& s)
+Builder::make_function_definition(Stmt& s)
 {
   return make<Function_def>(s);
 }
 
 
+inline Class_def&
+Builder::make_class_definition(Decl_list const& ds)
+{
+  return make<Class_def>(ds);
+}
+
+
 inline Deleted_def&
-Builder::make_deleted_def()
+Builder::make_deleted_definition()
 {
   return make<Deleted_def>();
 }
 
 
 inline Defaulted_def&
-Builder::make_defaulted_def()
+Builder::make_defaulted_definition()
 {
   return make<Defaulted_def>();
 }
@@ -624,6 +747,20 @@ Builder::make_function(char const* s, Decl_list const& ps, Type& r)
 }
 
 
+inline Class_decl&
+Builder::make_class(Name& n)
+{
+  return make<Class_decl>(n);
+}
+
+
+inline Class_decl&
+Builder::make_class(char const* s)
+{
+  return make<Class_decl>(get_id(s));
+}
+
+
 inline Namespace_decl&
 Builder::make_namespace(Name& n)
 {
@@ -651,6 +788,27 @@ inline Template_decl&
 Builder::make_template(Decl_list const& p, Decl& d)
 {
   return make<Template_decl>(p, d);
+}
+
+
+inline Concept_decl&
+Builder::make_concept(Name& n, Decl_list const& ps)
+{
+  return make<Concept_decl>(n, ps);
+}
+
+
+inline Concept_decl&
+Builder::make_concept(Name& n, Decl_list const& ps, Expr& e)
+{
+  return make<Concept_decl>(n, ps, e);
+}
+
+
+inline Concept_decl&
+Builder::make_concept(char const* s, Decl_list const& ps, Expr& e)
+{
+  return make_concept(get_id(s), ps, e);
 }
 
 
@@ -711,6 +869,37 @@ inline Value_parm&
 Builder::make_value_parm(char const* s, Type& t)
 {
   return make_value_parm(get_id(s), t);
+}
+
+
+// -------------------------------------------------------------------------- //
+// Constraints
+
+inline Concept_cons&
+Builder::make_concept_constraint(Decl& d, Term_list& ts)
+{
+  return make<Concept_cons>(d, ts);
+}
+
+
+inline Predicate_cons&
+Builder::make_predicate_constraint(Expr& e)
+{
+  return make<Predicate_cons>(e);
+}
+
+
+inline Conjunction_cons&
+Builder::make_conjunction_constraint(Cons& c1, Cons& c2)
+{
+  return make<Conjunction_cons>(c1, c2);
+}
+
+
+inline Disjunction_cons&
+Builder::make_disjunction_constraint(Cons& c1, Cons& c2)
+{
+  return make<Disjunction_cons>(c1, c2);
 }
 
 

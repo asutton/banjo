@@ -17,12 +17,20 @@ namespace banjo
 // into a template. Clear the parameters so they aren't "re-used" for
 // a nested declaration.
 //
+// If we are not parsing a template, no changes are made to d.
 Decl&
 Parser::templatize_declaration(Decl& d)
 {
   if (state.template_parms) {
-    Decl& tmp = build.make_template(*state.template_parms, d);
+    // Build the template.
+    Template_decl& tmp = build.make_template(*state.template_parms, d);
     state.template_parms = nullptr;
+
+    // Apply constraints, if any.
+    if (state.template_cons) {
+      tmp.cons = state.template_cons;
+      state.template_cons = nullptr;
+    }
     return tmp;
   }
   return d;
@@ -48,6 +56,61 @@ declare(Overload_set& ovl, Decl& d)
 }
 
 
+// Returns true if we can declare a kind of decl in scope.
+//
+// FIXME: This, and the function below are somewhat gross.
+// The problem is that I've caused each declarative region
+// of a declaration to encapsulate the others. This means,
+// for example, that:
+//
+//    template<typename T> // Starts template scope
+//    struct S             // In template scope at point of declaration
+//    {                    // Begins class scope.
+//    }                    // Ends class and then template scope.
+//
+// Note that S cannot be declared in template scope, or it
+// would not be visible in its current declaration context.
+//
+// TODO: Be sure to keep this function up to date. Is there a
+// better way to define this? Maybe a virtual function on the
+// scope? In fact, this might be a very good idea.
+bool
+can_declare_in(Scope& scope, Decl& decl)
+{
+  if (is<Function_parameter_scope>(&scope)) {
+    if (is<Object_parm>(&decl))
+      return true;
+    return false;
+  }
+
+  if (is<Template_parameter_scope>(&scope)) {
+    if (is<Type_parm>(&decl))
+      return true;
+    if (is<Value_parm>(&decl))
+      return true;
+    if (is<Template_parm>(&decl))
+      return true;
+    return false;
+  }
+
+  return true;
+}
+
+
+// See the comments above.
+Scope&
+adjust_scope(Scope& scope, Decl& decl)
+{
+  Scope* s = &scope;
+  while (s) {
+    if (can_declare_in(*s, decl))
+      return *s;
+    s = s->enclosing_scope();
+  }
+  lingo_unreachable();
+}
+
+
 // Try to declare a name binding in the current scope.
 //
 // FIXME: The specific rules probably depend on a) the kind of scope,
@@ -59,13 +122,16 @@ declare(Overload_set& ovl, Decl& d)
 // FIXME: If `d`'s name is a qualified-id, then we need to adjust
 // the context to that specified by `d`s nested name specifier.
 Decl*
-Parser::declare(Scope& scope, Decl& d)
+Parser::declare(Scope& scope, Decl& decl)
 {
+  // Find an appropriate declartive region for the declaration.
+  Scope& s = adjust_scope(scope, decl);
+
   // Declare the ajusted declaration.
-  if (Overload_set* ovl = scope.lookup(d.declared_name())) {
-    return banjo::declare(*ovl, d);
+  if (Overload_set* ovl = s.lookup(decl.declared_name())) {
+    return banjo::declare(*ovl, decl);
   } else {
-    scope.bind(d);
+    s.bind(decl);
     return nullptr;
   }
 }
@@ -102,12 +168,44 @@ Parser::on_variable_declaration(Token, Name& n, Type& t)
 // Functions
 
 
-Function_decl&
+// FIXME: Move these into a new module, sema_def.cpp, Or put
+// them in sema_init?
+
+
+// A helper function that hides the ugliness of assinging the
+// function definition.
+static inline Def&
+define_function(Decl& decl, Def& def)
+{
+  Decl* d = &decl.parameterized_declaration();
+  if (Function_decl* f = as<Function_decl>(d))
+    return *(f->def = &def);
+  lingo_unreachable();
+}
+
+
+// Define a function, class, enum, or entity.
+static inline Def&
+define_entity(Decl& decl, Def& def)
+{
+  Decl* d = &decl.parameterized_declaration();
+  if (Function_decl* f = as<Function_decl>(d))
+    return *(f->def = &def);
+  if (Class_decl* c = as<Class_decl>(d))
+    return *(c->def = &def);
+  lingo_unreachable();
+}
+
+
+
+
+Decl&
 Parser::on_function_declaration(Token, Name& n, Decl_list& ps, Type& t)
 {
-  Function_decl& fn = build.make_function(n, ps, t);
-  declare(current_scope(), fn);
-  return fn;
+  Decl& d1 = build.make_function(n, ps, t);
+  Decl& d2 = templatize_declaration(d1);
+  declare(current_scope(), d2);
+  return d2;
 }
 
 
@@ -120,51 +218,51 @@ Parser::on_function_parameter(Name& n, Type& t)
 }
 
 
-// FIXME: Move these into a new module, sema_def.cpp,
-
-
-static inline void
-define_function(Function_decl& fn, Def& def)
-{
-  fn.def = &def;
-}
-
-
-// A helper function that hides the ugliness of assinging the
-// function definition.
-static inline void
-define_function(Decl& decl, Def& def)
-{
-  define_function(cast<Function_decl>(decl), def);
-}
-
-
-Function_def&
+Def&
 Parser::on_function_definition(Decl& d, Stmt& s)
 {
-  Function_def& def = build.make_function_def(s);
-  define_function(d, def);
-  return def;
+  Def& def = build.make_function_definition(s);
+  return define_function(d, def);
 }
 
 
-Deleted_def&
+Def&
 Parser::on_deleted_definition(Decl& d)
 {
-  // FIXME: This could apply to other kinds of declarations too.
-  Deleted_def& def = build.make_deleted_def();
-  define_function(d, def);
-  return def;
+  Def& def = build.make_deleted_definition();
+  return define_entity(d, def);
 }
 
 
-Defaulted_def&
+Def&
 Parser::on_defaulted_definition(Decl& d)
 {
-  // FIXME: This could apply to other kinds of declarations too.
-  Defaulted_def& def = build.make_defaulted_def();
-  define_function(d, def);
-  return def;
+  Def& def = build.make_defaulted_definition();
+  return define_function(d, def);
+}
+
+
+// -------------------------------------------------------------------------- //
+// Classes
+
+// FIXME: Differentiate between classes and structures.
+Decl&
+Parser::on_class_declaration(Token tok, Name& n)
+{
+  Decl& d1 = build.make_class(n);
+  Decl& d2 = templatize_declaration(d1);
+  declare(current_scope(), d2);
+  return d2;
+}
+
+
+// FIXME: Analyze the class body and nominate special
+// constructors, identify class properties, etc.
+Def&
+Parser::on_class_definition(Decl& d, Decl_list& ds)
+{
+  Def& def = build.make_class_definition(ds);
+  return define_entity(d, def);
 }
 
 
@@ -172,7 +270,7 @@ Parser::on_defaulted_definition(Decl& d)
 // Namespaces
 
 
-Namespace_decl&
+Decl&
 Parser::on_namespace_declaration(Token, Name&, Decl_list&)
 {
   lingo_unimplemented();
@@ -198,6 +296,36 @@ Parser::on_type_template_parameter(Name& n, Type& t)
   declare(current_scope(), parm);
   return parm;
 }
+
+
+// -------------------------------------------------------------------------- //
+// Concepts
+
+static inline void
+define_concept(Decl& decl, Expr& expr)
+{
+  Concept_decl& con = cast<Concept_decl>(decl);
+  con.def = &expr;
+}
+
+
+Decl&
+Parser::on_concept_declaration(Token, Name& n, Decl_list& ps)
+{
+  Decl& decl = build.make_concept(n, ps);
+  declare(current_scope(), decl);
+  return decl;
+}
+
+
+// FIXME: Make this return a concept definition.
+Decl&
+Parser::on_concept_definition(Decl& decl, Expr& e)
+{
+  define_concept(decl, e);
+  return decl;
+}
+
 
 
 // -------------------------------------------------------------------------- //

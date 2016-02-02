@@ -20,7 +20,6 @@ std::size_t hash_init(T const& t)
 // -------------------------------------------------------------------------- //
 // Names
 
-
 inline std::size_t
 hash_value(Simple_id const& n)
 {
@@ -80,6 +79,13 @@ hash_value(Template_id const&)
 
 
 inline std::size_t
+hash_value(Concept_id const&)
+{
+  lingo_unimplemented();
+}
+
+
+inline std::size_t
 hash_value(Qualified_id const&)
 {
   lingo_unimplemented();
@@ -99,6 +105,7 @@ hash_value(Name const& n)
     std::size_t operator()(Literal_id const& n)     { return hash_value(n); }
     std::size_t operator()(Destructor_id const& n)  { return hash_value(n); }
     std::size_t operator()(Template_id const& n)    { return hash_value(n); }
+    std::size_t operator()(Concept_id const& n)     { return hash_value(n); }
     std::size_t operator()(Qualified_id const& n)   { return hash_value(n); }
   };
   return apply(n, fn{});
@@ -194,8 +201,38 @@ hash_value(Type const& t)
     std::size_t operator()(Union_type const& t) const     { lingo_unimplemented(); }
     std::size_t operator()(Enum_type const& t) const      { lingo_unimplemented(); }
     std::size_t operator()(Typename_type const& t) const  { lingo_unimplemented(); }
+    std::size_t operator()(Synthetic_type const& t) const { lingo_unimplemented(); }
   };
   return apply(t, fn{});
+}
+
+
+// -------------------------------------------------------------------------- //
+// Expressions
+
+std::size_t
+hash_value(Expr const& e)
+{
+  struct fn
+  {
+    std::size_t operator()(Expr const& e) const { lingo_unimplemented(); }
+  };
+  return apply(e, fn{});
+}
+
+
+
+// -------------------------------------------------------------------------- //
+// Constraints
+
+std::size_t
+hash_value(Cons const& c)
+{
+  struct fn
+  {
+    std::size_t operator()(Cons const& c) const { lingo_unimplemented(); }
+  };
+  return apply(c, fn{});
 }
 
 

@@ -31,9 +31,10 @@ Parser::declaration()
       return namespace_declaration();
     case template_tok:
       return template_declaration();
+    case concept_tok:
+      return concept_declaration();
     default: break;
   }
-  std::cout << "HERE: " << peek() << '\n';
   throw Syntax_error("invalid declaration");
 }
 
@@ -169,14 +170,14 @@ Parser::function_declaration()
   Type& t = return_type();
 
   // Point of declaration.
-  Function_decl& fn = on_function_declaration(tok, n, ps, t);
+  Decl& fn = on_function_declaration(tok, n, ps, t);
 
   // Parse the definition, if any.
   if (lookahead() == semicolon_tok) {
     match(semicolon_tok);
   } else {
     // Enter function scope and parse the function definition.
-    Enter_scope fscope(*this, fn);
+    Enter_scope fscope(*this, make_function_scope(fn));
     function_definition(fn);
   }
 
@@ -273,6 +274,109 @@ Parser::function_definition(Decl& d)
 }
 
 
+// -------------------------------------------------------------------------- //
+// Classes
+
+// Parse a class declaration.
+//
+//    class-declaration:
+//      struct declarator ';'
+//      struct class-definition
+//      class declarator ';'
+//      class class-definition
+//
+// TODO: Add support for classes.
+Decl&
+Parser::class_declaration()
+{
+  lingo_assert(lookahead() == struct_tok || lookahead() == class_tok);
+  Token tok = accept();
+  Name& n = declarator();
+
+  // Point of declaration.
+  Decl& cls = on_class_declaration(tok, n);
+
+  if (!match_if(semicolon_tok)) {
+    // FIXME: Enter class scpoe.
+    class_definition(cls);
+  }
+
+  return cls;
+};
+
+
+// Parse a class definition (it's body).
+//
+//    class-definition:
+//      '=' 'delete' ';'
+//      [base-clause] class-body
+//
+//    class-body:
+//      '{' [member-seq] '}'
+//
+// TODO: Implment base class parsing.
+Def&
+Parser::class_definition(Decl& d)
+{
+  // Match deleted definitions.
+  if (match_if(eq_tok)) {
+    match(delete_tok);
+    match(semicolon_tok);
+    return on_deleted_definition(d);
+  }
+
+  // Match the class body.
+  Decl_list ds;
+  match(lbrace_tok);
+  if (lookahead() != rbrace_tok)
+    ds = member_seq();
+  match(rbrace_tok);
+  return on_class_definition(d, ds);
+}
+
+
+// Parse a sequence of class members.
+//
+//    member-seq:
+//      member-declaration:
+//      member-seq member-declaration
+Decl_list
+Parser::member_seq()
+{
+  Decl_list ds;
+  do {
+    Decl& d = member_declaration();
+    ds.push_back(d);
+  } while (lookahead() != rbrace_tok);
+  return ds;
+}
+
+
+// Parse a member-declaration.
+//
+//    member-declaration:
+//      variable-declaration
+//      function-declaration
+//
+// TODO: Support member types and templates.
+//
+// TODO: Have different declarations for members and non-members?
+Decl&
+Parser::member_declaration()
+{
+  switch (lookahead()) {
+    case var_tok:
+      return variable_declaration();
+    default:
+      break;
+  }
+  throw Syntax_error("expected member-declaration");
+}
+
+
+// -------------------------------------------------------------------------- //
+// Namespaces
+
 // Parse a namespace declaration.
 //
 //    namespace-declaration:
@@ -294,7 +398,7 @@ Parser::namespace_declaration()
 // Parse a template declaration.
 //
 //    tempate-declaration:
-//      'template' '<' template-parameter-list '>' declaration
+//      'template' '<' template-parameter-list '>' [requires-clause] declaration
 //
 // FIXME: Support explicit template instantations in one way or
 // another.
@@ -310,9 +414,21 @@ Parser::template_declaration()
   Decl_list ps = template_parameter_list();
   match(gt_tok);
 
-  // Parse the underlying declaration.
-  Parsing_template save(*this, ps);
-  return declaration();
+  // Parse the optional requires clause, followed by the
+  // definition.
+  //
+  // The definition is parsed in different branches in case I may,
+  // in the future, want to establish a new scope for constrained
+  // declarations (i.e., separate checking).
+  if (lookahead() == requires_tok) {
+    Expr& c = requires_clause();
+    Parsing_template save(*this, ps, c);
+    return declaration();
+  } else {
+    Parsing_template save(*this, ps);
+    return declaration();
+  }
+
 }
 
 
@@ -325,13 +441,10 @@ Decl_list
 Parser::template_parameter_list()
 {
   Decl_list ds;
-
-  // TOOD: Could terminate on >>.
-  while (lookahead() != gt_tok) {
+  do {
     Decl& d = template_parameter();
     ds.push_back(d);
-  }
-
+  } while (match_if(comma_tok));
   return ds;
 }
 
@@ -407,6 +520,42 @@ Decl&
 Parser::template_template_parameter()
 {
   lingo_unimplemented();
+}
+
+
+Expr&
+Parser::requires_clause()
+{
+  require(requires_tok);
+  return expression();
+}
+
+
+// -------------------------------------------------------------------------- //
+// Concept declarations
+
+
+Decl&
+Parser::concept_declaration()
+{
+  Token tok = require(concept_tok);
+  Name& n = declarator();
+
+  Enter_scope pscope(*this, make_template_parameter_scope());
+  match(lt_tok);
+  Decl_list ps = template_parameter_list();
+  match(gt_tok);
+
+  // Point of declaration.
+  Decl& con = on_concept_declaration(tok, n, ps);
+
+  // TODO: Isn't this just an equal-init? Probably not since
+  // we're not converting (we except bool everywhere).
+  match(eq_tok);
+  Expr& e = expression();
+  on_concept_definition(con, e);
+  match(semicolon_tok);
+  return con;
 }
 
 

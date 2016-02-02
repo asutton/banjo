@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "parser.hpp"
+#include "print.hpp"
 
 #include <iostream>
 
@@ -37,8 +38,9 @@ namespace banjo
 Name&
 Parser::id()
 {
-  if (Name* n = match_if(&Parser::qualified_id))
-    return *n;
+  // FIXME: Re-enable this when I add scoped stuff.
+  // if (Name* n = match_if(&Parser::qualified_id))
+  //   return *n;
   return unqualified_id();
 }
 
@@ -52,6 +54,7 @@ Parser::id()
 //      literal-id
 //      destructor-id
 //      template-id
+//      concept-id
 //
 // TODO: Support operator, conversion, and literal ids. Note that
 // all of those begin with 'operator', but can be syntactically
@@ -67,11 +70,16 @@ Parser::unqualified_id()
   if (lookahead() == tilde_tok)
     return destructor_id();
 
-  // Use a trial parser to determine if we're looking
-  // at a template-id instead of a plain identifier.
+  // Use a trial parser to determine if we're looking at a template-id
+  // or concept-id instead of a plain old identifier.
   //
-  // FIXME: This doesn't really need to be a trial parse.
+  // FIXME: This doesn't really need to be a trial parse. Just get
+  // the identifier, and depending on a) its resolution and b) whether
+  // we assume it should be interpreted as a template or concept via
+  // a prior keyword, handle the template argument.
   if (Name* n = match_if(&Parser::template_id))
+    return *n;
+  if (Name* n = match_if(&Parser::concept_id))
     return *n;
 
   Token tok = match(identifier_tok);
@@ -126,7 +134,7 @@ Parser::simple_template_id()
 {
   Token tok = match_if(template_tok);
 
-  // FIXME: This is kind of gross.
+  // FIXME: This is kind of gross. Can we make it prettier?
   Decl* temp;
   {
     Assume_template a(*this, (bool)tok);
@@ -145,6 +153,23 @@ Parser::simple_template_id()
 }
 
 
+// Parse a template id.
+//
+//    concept-id:
+//      cocncept-name '< [template-argument-list] '>'
+Name&
+Parser::concept_id()
+{
+  Decl& con = concept_name();
+  Term_list args;
+  match(lt_tok);
+  if (lookahead() != gt_tok)
+    args = template_argument_list();
+  match(gt_tok);
+  return on_concept_id(con, args);
+}
+
+
 // Parse a template argument list.
 //
 //    template-argument-list:
@@ -155,7 +180,35 @@ Parser::simple_template_id()
 Term_list
 Parser::template_argument_list()
 {
-  return {};
+  Term_list args;
+  do {
+    Term& arg = template_argument();
+    args.push_back(arg);
+  } while(lookahead() == comma_tok);
+  return args;
+}
+
+
+// Parse a template argument.
+//
+//    template-argument:
+//      type
+//      expression
+//      template-name
+//
+// FIXME: The expression must be a constant expression.
+//
+// FIXME: In the last instance, the template name can be qualified.
+Term&
+Parser::template_argument()
+{
+  if (Type* t = match_if(&Parser::type))
+    return *t;
+  if (Expr* e = match_if(&Parser::expression))
+    return *e;
+  if (Decl* d = match_if(&Parser::template_name))
+    return *d;
+  throw Syntax_error("expected template-argument");
 }
 
 
@@ -285,6 +338,8 @@ Parser::union_name()
 //    enum-name:
 //      identifier
 //      simple-template-id
+//
+// C++ does not allow for enum templates.
 Type&
 Parser::enum_name()
 {
@@ -292,32 +347,6 @@ Parser::enum_name()
     return on_enum_name(*n);
   Token id = match(identifier_tok);
   return on_enum_name(id);
-}
-
-
-// Parse a type name.
-//
-//    type-name:
-//      class-name
-//      union-name
-//      enum-name
-//      type-alias
-//
-// TODO: Optimize this by factoring the template-id from
-// each of the alternatives and performing semantic analysis
-// separately.
-Type&
-Parser::type_name()
-{
-  if (Type* id = match_if(&Parser::class_name))
-    return *id;
-  if (Type* id = match_if(&Parser::union_name))
-    return *id;
-  if (Type* id = match_if(&Parser::enum_name))
-    return *id;
-  if (Type* id = match_if(&Parser::type_alias))
-    return *id;
-  throw Syntax_error("expected type-name");
 }
 
 
@@ -333,6 +362,27 @@ Parser::type_alias()
     return on_type_alias(*n);
   Token id = match(identifier_tok);
   return on_type_alias(id);
+}
+
+
+// Parse a type name.
+//
+//    type-name:
+//      class-name
+//      union-name
+//      enum-name
+//      type-alias
+//
+// Note that all of these names are either identifiers or
+// simple-template-ids. Match syntactically and differentiate
+// semantically.
+Type&
+Parser::type_name()
+{
+  if (Name* n = match_if(&Parser::simple_template_id))
+    return on_type_name(*n);
+  Token id = match(identifier_tok);
+  return on_type_name(id);
 }
 
 
@@ -377,6 +427,19 @@ Parser::template_name()
 {
   Token id = match(identifier_tok);
   return on_template_name(id);
+}
+
+
+// Parse a concept-name. A concept-name is an identifier
+// that refers to a template declaration.
+//
+//    concept-name:
+//      identifier
+Decl&
+Parser::concept_name()
+{
+  Token id = match(identifier_tok);
+  return on_concept_name(id);
 }
 
 

@@ -56,6 +56,7 @@ struct Printer
   void operator()(Expr const& e) { expression(e); }
   void operator()(Stmt const& s) { statement(s); }
   void operator()(Decl const& d) { declaration(d); }
+  void operator()(Cons const& c) { constraint(c); }
 
   // Lexical terms.
   void space(Token_info);
@@ -92,7 +93,9 @@ struct Printer
   void simple_type(Decltype_type const&);
   void simple_type(Declauto_type const&);
   void simple_type(Function_type const&);
+  void simple_type(Class_type const&);
   void simple_type(Typename_type const&);
+  void simple_type(Synthetic_type const&);
   void grouped_type(Type const&, Type const&);
   void postfix_type(Pointer_type const&);
   void postfix_type(Qualified_type const&);
@@ -107,6 +110,8 @@ struct Printer
   void literal(Integer_expr const&);
   void literal(Real_expr const&);
   void id_expression(Reference_expr const&);
+  void id_expression(Check_expr const&);
+  void id_expression(Synthetic_expr const&);
   void grouped_expression(Expr const&, Expr const&);
   void postfix_expression(Call_expr const&);
   void postfix_expression(Value_conv const&);
@@ -134,23 +139,31 @@ struct Printer
   void paren_initializer(Direct_init const&);
   void brace_initializer(Aggregate_init const&);
 
-  // Definitions
-  void function_definition(Def const&);
-  void function_definition(Function_def const&);
-  void function_definition(Deleted_def const&);
-  void function_definition(Defaulted_def const&);
 
   // Declarations
   void declaration(Decl const&);
   void declaration_seq(Decl_list const&);
   void variable_declaration(Variable_decl const&);
   void constant_declaration(Constant_decl const&);
-  void function_declaration(Function_decl const&);
-  void class_declaration(Class_decl const&);
   void union_declaration(Union_decl const&);
   void enum_declaration(Enum_decl const&);
   void namespace_declaration(Namespace_decl const&);
   void template_declaration(Template_decl const&);
+  void concept_declaration(Concept_decl const&);
+
+  // Functions
+  void function_declaration(Function_decl const&);
+  void function_definition(Def const&);
+  void function_definition(Function_def const&);
+  void function_definition(Deleted_def const&);
+  void function_definition(Defaulted_def const&);
+
+  // Classes
+  void class_declaration(Class_decl const&);
+  void class_definition(Def const&);
+  void class_definition(Class_def const&);
+  void class_definition(Deleted_def const&);
+  void member_seq(Decl_list const&);
 
   void parameter(Decl const&);
   void parameter(Object_parm const&);
@@ -163,8 +176,19 @@ struct Printer
   void template_parameter(Decl const&);
   void template_parameter_list(Decl_list const&);
   void template_argument(Term const&);
+  void template_argument_list(Term_list const&);
 
   void requires_clause(Expr const&);
+
+  // Constraints
+  // These don't really have an external syntax, but it's
+  // helpful for debugging.
+  void constraint(Cons const&);
+  void constraint(Concept_cons const&);
+  void constraint(Predicate_cons const&);
+  void constraint(Conjunction_cons const&);
+  void constraint(Disjunction_cons const&);
+  void grouped_constraint(Cons const&);
 
   std::ostream& os;
   int           indent; // The current indentation
@@ -179,6 +203,7 @@ std::ostream& operator<<(std::ostream&, Type const&);
 std::ostream& operator<<(std::ostream&, Expr const&);
 std::ostream& operator<<(std::ostream&, Stmt const&);
 std::ostream& operator<<(std::ostream&, Decl const&);
+std::ostream& operator<<(std::ostream&, Cons const&);
 
 
 } // namespace banjo

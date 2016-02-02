@@ -83,8 +83,11 @@ default_initialize(Context& cxt, Type& t)
     lingo_unimplemented();
 
   // Select a (possibly synthesized) default constructor for u.
+  //
+  // FIXME: This is totally incorrect. Select the default
+  // construtor from t.
   if (is_maybe_qualified_class_type(t))
-    lingo_unimplemented();
+    return build.make_trivial_init(t);
 
   // Select a (possibly synthesized) default constructor for u.
   if (is_maybe_qualified_union_type(t))

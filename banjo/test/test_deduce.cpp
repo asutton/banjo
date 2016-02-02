@@ -12,7 +12,7 @@ void
 test_deduction(Type& p, Type& a)
 {
   Substitution sub;
-  deduce(p, a, sub);
+  deduce_from_type(p, a, sub);
 
   std::cout << p << " vs " << a << " => ";
   std::cout << '{';

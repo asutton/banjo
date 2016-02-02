@@ -34,11 +34,13 @@ struct Parser
   Name& conversion_id();
   Name& literal_id();
   Name& template_id();
+  Name& concept_id();
   Name& qualified_id();
 
   // Name helpers
   Name& simple_template_id();
   Term_list template_argument_list();
+  Term& template_argument();
 
   // Nested name specifiers
   Decl& leading_name_specifier();
@@ -54,6 +56,7 @@ struct Parser
   Decl& namespace_name();
   Decl& namespace_alias();
   Decl& template_name();
+  Decl& concept_name();
 
   // Types
   Type& type();
@@ -70,16 +73,22 @@ struct Parser
   Type_list type_list();
 
   // Expressions
+  Expr& expression();
+  Expr_list expression_list();
+  Expr& logical_or_expression();
+  Expr& logical_and_expression();
+  Expr& equality_expression();
+  Expr& relational_expression();
+  Expr& multiplicative_expression();
+  Expr& additive_expression();
+  Expr& unary_expression();
+  Expr& postfix_expression();
+  Expr& call_expression(Expr&);
+  Expr& subscript_expression(Expr&);
+  Expr& primary_expression();
   Expr& id_expression();
   Expr& grouped_expression();
   Expr& lambda_expression();
-  Expr& primary_expression();
-  Expr& postfix_expression();
-  Expr& unary_expression();
-  Expr& multiplicative_expression();
-  Expr& additive_expression();
-  Expr& binary_expression();
-  Expr& expression();
 
   // Statements
   Stmt& statement();
@@ -99,6 +108,7 @@ struct Parser
   Decl& enum_declaration();
   Decl& namespace_declaration();
   Decl& template_declaration();
+  Decl& concept_declaration();
   Decl_list declaration_seq();
   // Function parameters
   Decl& parameter_declaration();
@@ -116,6 +126,12 @@ struct Parser
   Expr& brace_initializer(Decl&);
   // Definitions
   Def& function_definition(Decl&);
+  Def& class_definition(Decl&);
+  // Constraints
+  Expr& requires_clause();
+  // Classes
+  Decl_list member_seq();
+  Decl& member_declaration();
 
   Term& translation_unit();
 
@@ -128,6 +144,7 @@ struct Parser
   Name& on_conversion_id();
   Name& on_literal_id();
   Name& on_template_id(Token, Decl&, Term_list const&);
+  Name& on_concept_id(Decl&, Term_list const&);
   Name& on_qualified_id(Decl&, Name&);
 
   Decl& on_nested_name_specifier();
@@ -145,11 +162,14 @@ struct Parser
   Type& on_enum_name(Name&);
   Type& on_type_alias(Token);
   Type& on_type_alias(Name&);
+  Type& on_type_name(Token);
+  Type& on_type_name(Name&);
   Decl& on_namespace_name(Token);
   Decl& on_namespace_name(Name&);
   Decl& on_namespace_alias(Token);
   Decl& on_namespace_alias(Name&);
   Decl& on_template_name(Token);
+  Decl& on_concept_name(Token);
 
   // Types
   Type& on_void_type(Token);
@@ -165,6 +185,16 @@ struct Parser
   Type& on_reference_type(Token, Type&);
 
   // Expressions
+  Expr& on_logical_and_expression(Token, Expr&, Expr&);
+  Expr& on_logical_or_expression(Token, Expr&, Expr&);
+  Expr& on_logical_not_expression(Token, Expr&);
+  Expr& on_eq_expression(Token, Expr&, Expr&);
+  Expr& on_ne_expression(Token, Expr&, Expr&);
+  Expr& on_lt_expression(Token, Expr&, Expr&);
+  Expr& on_gt_expression(Token, Expr&, Expr&);
+  Expr& on_le_expression(Token, Expr&, Expr&);
+  Expr& on_ge_expression(Token, Expr&, Expr&);
+  Expr& on_call_expression(Expr&, Expr_list&);
   Expr& on_id_expression(Name&);
   Expr& on_boolean_literal(Token, bool);
   Expr& on_integer_literal(Token);
@@ -177,28 +207,35 @@ struct Parser
 
   // Declarations
   Decl& on_variable_declaration(Token, Name&, Type&);
-  Function_decl& on_function_declaration(Token, Name&, Decl_list&, Type&);
-  Namespace_decl& on_namespace_declaration(Token, Name&, Decl_list&);
+  Decl& on_function_declaration(Token, Name&, Decl_list&, Type&);
+  Decl& on_class_declaration(Token, Name&);
+  Decl& on_namespace_declaration(Token, Name&, Decl_list&);
+  Decl& on_concept_declaration(Token, Name&, Decl_list&);
   // Function parameters
   Object_parm& on_function_parameter(Name&, Type&);
+  // Template parameters
   Type_parm& on_type_template_parameter(Name&, Type&);
   Type_parm& on_type_template_parameter(Name&);
-  // Template parameters
   // Initializers
-
   Expr& on_default_initialization(Decl&);
   Expr& on_equal_initialization(Decl&, Expr&);
   Expr& on_paren_initialization(Decl&, Expr_list&);
   Expr& on_brace_initialization(Decl&, Expr_list&);
   // Definitions
-  Function_def& on_function_definition(Decl&, Stmt&);
-  Deleted_def& on_deleted_definition(Decl&);
-  Defaulted_def& on_defaulted_definition(Decl&);
+  Def& on_function_definition(Decl&, Stmt&);
+  Def& on_class_definition(Decl&, Decl_list&);
+  Decl& on_concept_definition(Decl&, Expr&);
+  Def& on_deleted_definition(Decl&);
+  Def& on_defaulted_definition(Decl&);
+  // Members
 
   Name& on_declarator(Name&);
 
   // Miscellaneous
   Namespace_decl& on_translation_unit(Decl_list&);
+
+  // Symbol table.
+  Symbol_table& symbols();
 
   // Token matching.
   Token      peek() const;
@@ -225,11 +262,14 @@ struct Parser
   Decl* declare(Scope&, Decl&);
   Decl& templatize_declaration(Decl&);
 
-  // Maintains the current parse state.
+  // Maintains the current parse state. This is used to provide
+  // context for various parsing routines, and is used by the
+  // trial parser for caching parse state.
   struct State
   {
     Scope*     scope;                    // The current scope.
     Decl_list* template_parms = nullptr; // The current (innermost) template parameters
+    Expr*      template_cons = nullptr;  // The current (innermost) template constraints
 
     // Parsing flags.
     bool parsing_declarator = false; // True if parsing a declarator.
@@ -331,20 +371,45 @@ struct Parser::Assume_template
 // of a declaration nested within a template.
 struct Parser::Parsing_template
 {
-  Parsing_template(Parser& p, Decl_list& ps)
-    : parser(p), saved(p.state.template_parms)
-  {
-    parser.state.template_parms = &ps;
-  }
-
-  ~Parsing_template()
-  {
-    parser.state.template_parms = saved;
-  }
+  Parsing_template(Parser&, Decl_list&s);
+  Parsing_template(Parser&, Decl_list&s, Expr&);
+  ~Parsing_template();
 
   Parser&    parser;
-  Decl_list* saved;
+  Decl_list* saved_parms;
+  Expr*      saved_cons;
 };
+
+
+inline
+Parser::Parsing_template::Parsing_template(Parser& p, Decl_list& ps)
+  : parser(p)
+  , saved_parms(p.state.template_parms)
+  , saved_cons(p.state.template_cons)
+{
+  parser.state.template_parms = &ps;
+  parser.state.template_cons = nullptr;
+}
+
+
+inline
+Parser::Parsing_template::Parsing_template(Parser& p, Decl_list& ps, Expr& c)
+  : parser(p)
+  , saved_parms(p.state.template_parms)
+  , saved_cons(p.state.template_cons)
+{
+  parser.state.template_parms = &ps;
+  parser.state.template_cons = &c;
+}
+
+
+inline
+Parser::Parsing_template::~Parsing_template()
+{
+  parser.state.template_parms = saved_parms;
+  parser.state.template_cons = saved_cons;
+}
+
 
 
 // The trial parser provides recovery information for the parser
