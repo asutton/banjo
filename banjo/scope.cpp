@@ -19,16 +19,7 @@ Scope::Scope(Decl& cxt, Decl& d)
 { }
 
 
-// FIXME: I don't like this.
-Binding&
-Scope::bind(Name const& n, Decl& d)
-{
-  lingo_assert(!count(n));
-  return Base::bind(&n, {&d});
-}
-
-
-// Create a binding for the declaration `d`.
+// Register a name binding for the declaration `d`.
 Binding&
 Scope::bind(Decl& d)
 {
@@ -50,20 +41,6 @@ Namespace_scope::declaration()
 }
 
 
-Function_decl const&
-Function_scope::declaration() const
-{
-  return *cast<Function_decl>(context());
-}
-
-
-Function_decl&
-Function_scope::declaration()
-{
-  return *cast<Function_decl>(context());
-}
-
-
 Class_decl const&
 Class_scope::declaration() const
 {
@@ -77,23 +54,5 @@ Class_scope::declaration()
   return *cast<Class_decl>(context());
 }
 
-
-Initializer_scope::Initializer_scope(Scope& s, Object_decl& d)
-  : Scope(s, d)
-{ }
-
-
-Object_decl const&
-Initializer_scope::declaration() const
-{
-  return *cast<Object_decl>(context());
-}
-
-
-Object_decl&
-Initializer_scope::declaration()
-{
-  return *cast<Object_decl>(context());
-}
 
 } // namespace banjo

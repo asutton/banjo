@@ -5,10 +5,10 @@
 #define BANJO_SCOPE_HPP
 
 #include "prelude.hpp"
+#include "hash.hpp"
+#include "equivalence.hpp"
 #include "overload.hpp"
 #include "context.hpp"
-
-#include <lingo/environment.hpp>
 
 
 namespace banjo
@@ -23,16 +23,18 @@ struct Object_decl;
 
 // -------------------------------------------------------------------------- //
 // Scope definitions
-//
-// TODO: Do I need derived kinds of scopes?
+
+
+// Maps names to overload sets.
+using Name_map = std::unordered_map<Name const*, Overload_set, Name_hash, Name_eq>;
 
 
 // A scope defines a maximal lexical region of text where an
 // entity  may be referred to without qualification. A scope can
 // be (but is not always) associated with a declaration.
-struct Scope : Environment<Name const*, Overload_set>
+struct Scope : Name_map
 {
-  using Base = Environment<banjo::Name const*, Overload_set>;
+  using Binding = Name_map::value_type;
 
   // Construct a new scope with the given parent. This is
   // used to create scopes that are not affiliated with a
@@ -58,6 +60,8 @@ struct Scope : Environment<Name const*, Overload_set>
 
   virtual ~Scope() { }
 
+  using Name_map::size;
+
   // Returns the enclosing scope, if any. Only the global
   // namespace does not have an enclosing scope.
   Scope const* enclosing_scope() const { return parent; }
@@ -76,16 +80,54 @@ struct Scope : Environment<Name const*, Overload_set>
   Binding& bind(Decl& d);
   Binding& bind(Name const&, Decl&);
 
-  int count(Name const& n) const { return Base::count(&n); }
-
   // Return the binding for the given symbol, or nullptr
   // if no such binding exists.
-  Binding const* lookup(Name const& n) const { return Base::lookup(&n); }
-  Binding*       lookup(Name const& n)       { return Base::lookup(&n); }
+  Overload_set const* lookup(Name const& n) const;
+  Overload_set*       lookup(Name const& n);
+
+  // Returns 1 if the name is bound and 0 otherwise.
+  std::size_t count(Name const& n) const { return Name_map::count(&n); }
 
   Scope* parent;
   Decl*  decl;
 };
+
+
+// Bind n to `d` in this scope.
+//
+// Note that the addition of declarations to an overload set
+// must be handled by semantic rules.
+inline Scope::Binding&
+Scope::bind(Name const& n, Decl& d)
+{
+  lingo_assert(count(n) == 0);
+  auto ins = insert({&n, {&d}});
+  return *ins.first;
+}
+
+
+// Returns the binding for n, if any.
+inline Overload_set const*
+Scope::lookup(Name const& n) const
+{
+  auto iter = find(&n);
+  if (iter != end())
+    return &iter->second;
+  else
+    return nullptr;
+}
+
+
+inline Overload_set*
+Scope::lookup(Name const& n)
+{
+  auto iter = find(&n);
+  if (iter != end())
+    return &iter->second;
+  else
+    return nullptr;
+}
+
 
 
 // Represents a namespace scope.
@@ -99,13 +141,39 @@ struct Namespace_scope : Scope
 };
 
 
-
-// Represents function scope.
+// Represents function scope. Only labels have function scope.
+//
+// Note that the corresponding declaration may be a template.
 struct Function_scope : Scope
 {
+  using Scope::Scope;
+
   // Returns the function declaration associated with the scope.
-  Function_decl const& declaration() const;
-  Function_decl&       declaration();
+  Decl const& declaration() const;
+  Decl&       declaration();
+};
+
+
+// Represents the scope of function parameter names.
+//
+// In C++ this is called function prototype scope, and it applies
+// only to the names of parameters in function declarations (not
+// definitions). For simplicity, we say that function parameter
+// scope applies to all function parameter names.
+struct Function_parameter_scope : Scope
+{
+  Function_parameter_scope(Scope& s)
+    : Scope(s)
+  { }
+};
+
+
+// Represents the scope of template parameter names.
+struct Template_parameter_scope : Scope
+{
+  Template_parameter_scope(Scope& s)
+    : Scope(s)
+  { }
 };
 
 
@@ -122,13 +190,17 @@ struct Class_scope : Scope
 // used to support lookup of identifiers when the variable is declared
 // with a qualified-id (i.e., a static member of a class or a namespace
 // variable defined outside of the namespace.
+//
+// The corresponding declaration is a variable or variable template.
 struct Initializer_scope : Scope
 {
-  Initializer_scope(Scope&, Object_decl&);
+  Initializer_scope(Scope& s, Decl& d)
+    : Scope(s, d)
+  { }
 
   // Returns the function declaration associated with the scope.
-  Object_decl const& declaration() const;
-  Object_decl&       declaration();
+  Decl const& declaration() const { return *context(); }
+  Decl&       declaration()       { return *context(); }
 };
 
 

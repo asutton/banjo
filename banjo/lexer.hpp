@@ -42,6 +42,7 @@ struct Lexer
   // Consumers
   void error();
   void space();
+  void comment();
   void letter();
   void digit();
 

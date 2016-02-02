@@ -81,33 +81,41 @@ struct Parser
   Expr& binary_expression();
   Expr& expression();
 
+  // Statements
+  Stmt& statement();
+  Stmt& compound_statement();
+  Stmt& return_statement();
+  Stmt& declaration_statement();
+  Stmt& expression_statement();
+  Stmt_list statement_seq();;
+
   // Declarations
   Name& declarator();
   Decl& declaration();
   Decl& empty_declaration();
   Decl& variable_declaration();
   Decl& function_declaration();
-  Decl& parameter_declaration();
   Decl& class_declaration();
   Decl& enum_declaration();
   Decl& namespace_declaration();
   Decl& template_declaration();
-
+  Decl_list declaration_seq();
+  // Function parameters
+  Decl& parameter_declaration();
   Decl_list parameter_list();
-  Def& function_definition();
-
+  // Template parameters
+  Decl& template_parameter();
   Decl& type_template_parameter();
   Decl& value_template_parameter();
   Decl& template_template_parameter();
-  Decl& template_parameter();
   Decl_list template_parameter_list();
-  Decl_list declaration_seq();
-
   // Initializers
   Expr& initializer(Decl&);
   Expr& equal_initializer(Decl&);
   Expr& paren_initializer(Decl&);
   Expr& brace_initializer(Decl&);
+  // Definitions
+  Def& function_definition(Decl&);
 
   Term& translation_unit();
 
@@ -161,20 +169,36 @@ struct Parser
   Expr& on_boolean_literal(Token, bool);
   Expr& on_integer_literal(Token);
 
+  // Statements
+  Compound_stmt& on_compound_statement(Stmt_list const&);
+  Return_stmt& on_return_statement(Token, Expr&);
+  Declaration_stmt& on_declaration_statement(Decl&);
+  Expression_stmt& on_expression_statement(Expr&);
+
   // Declarations
-  Variable_decl& on_variable_declaration(Token, Name&, Type&);
+  Decl& on_variable_declaration(Token, Name&, Type&);
   Function_decl& on_function_declaration(Token, Name&, Decl_list&, Type&);
   Namespace_decl& on_namespace_declaration(Token, Name&, Decl_list&);
-
+  // Function parameters
   Object_parm& on_function_parameter(Name&, Type&);
+  Type_parm& on_type_template_parameter(Name&, Type&);
+  Type_parm& on_type_template_parameter(Name&);
+  // Template parameters
+  // Initializers
 
-  Decl_list on_declaration_seq();
-
-  Name& on_declarator(Name&);
   Expr& on_default_initialization(Decl&);
   Expr& on_equal_initialization(Decl&, Expr&);
   Expr& on_paren_initialization(Decl&, Expr_list&);
   Expr& on_brace_initialization(Decl&, Expr_list&);
+  // Definitions
+  Function_def& on_function_definition(Decl&, Stmt&);
+  Deleted_def& on_deleted_definition(Decl&);
+  Defaulted_def& on_defaulted_definition(Decl&);
+
+  Name& on_declarator(Name&);
+
+  // Miscellaneous
+  Namespace_decl& on_translation_unit(Decl_list&);
 
   // Token matching.
   Token      peek() const;
@@ -189,28 +213,33 @@ struct Parser
   template<typename T> T* match_if(T& (Parser::* p)());
 
   // Scope management
-  void   enter_scope(Scope&);
+  void   set_scope(Scope&);
+  Scope& make_initializer_scope(Decl&);
+  Scope& make_function_scope(Decl&);
+  Scope& make_function_parameter_scope();
+  Scope& make_template_parameter_scope();
   Scope& current_scope();
   Decl&  current_context();
+
+  // Declarations
+  Decl* declare(Scope&, Decl&);
+  Decl& templatize_declaration(Decl&);
 
   // Maintains the current parse state.
   struct State
   {
-    // True if parsing a declarator.
-    bool parsing_declarator = false;
+    Scope*     scope;                    // The current scope.
+    Decl_list* template_parms = nullptr; // The current (innermost) template parameters
 
-    // True if the following term is a type.
-    bool assume_typename = false;
-
-    // True if the next identifier is a template.
-    bool assume_template = false;
-
-    // The current scope.
-    Scope* scope;
+    // Parsing flags.
+    bool parsing_declarator = false; // True if parsing a declarator.
+    bool assume_typename = false;    // True if the following term is a type.
+    bool assume_template = false;    // True if the next identifier is a template.
   };
 
   struct Enter_scope;
   struct Assume_template;
+  struct Parsing_template;
 
   Context&      cxt;
   Builder       build;
@@ -224,28 +253,57 @@ struct Parser
 // TODO: Handle scopes for more declarations.
 struct Parser::Enter_scope
 {
-  Enter_scope(Parser& p, Namespace_decl& ns)
-    : parser(p), prev(p.state.scope), alloc(nullptr)
-  {
-    parser.enter_scope(*ns.scope());
-  }
-
-  Enter_scope(Parser& p, Variable_decl& var)
-    : parser(p), prev(p.state.scope), alloc(new Initializer_scope(*prev, var))
-  {
-    parser.enter_scope(*alloc);
-  }
-
-  ~Enter_scope()
-  {
-    parser.enter_scope(*prev);
-    delete alloc;
-  }
+  Enter_scope(Parser&, Namespace_decl&);
+  Enter_scope(Parser&, Variable_decl&);
+  Enter_scope(Parser&, Function_decl&);
+  Enter_scope(Parser&, Scope&);
+  ~Enter_scope();
 
   Parser& parser;
   Scope* prev;  // The previous socpe.
   Scope* alloc; // Only set when locally allocated.
 };
+
+
+// Enter the scope associated with a namespace definition.
+inline
+Parser::Enter_scope::Enter_scope(Parser& p, Namespace_decl& ns)
+  : parser(p), prev(p.state.scope), alloc(nullptr)
+{
+  parser.set_scope(*ns.scope());
+}
+
+
+// Enter the scope associated with the initializer of a variable.
+inline
+Parser::Enter_scope::Enter_scope(Parser& p, Variable_decl& var)
+  : Enter_scope(p, p.make_initializer_scope(var))
+{ }
+
+
+// Enter the scope associated with the body of a function definition.
+inline
+Parser::Enter_scope::Enter_scope(Parser& p, Function_decl& fn)
+  : Enter_scope(p, p.make_function_scope(fn))
+{ }
+
+
+// Enter the given scope. This is auotmatically destroyed when this
+// object is destroyed.
+inline
+Parser::Enter_scope::Enter_scope(Parser& p, Scope& s)
+  : parser(p), prev(&p.current_scope()), alloc(&s)
+{
+  parser.set_scope(*alloc);
+}
+
+
+inline
+Parser::Enter_scope::~Enter_scope()
+{
+  parser.set_scope(*prev);
+  delete alloc;
+}
 
 
 // An RAII helper that sets or clears the flag controlling
@@ -266,6 +324,26 @@ struct Parser::Assume_template
 
   Parser& parser;
   bool    saved;
+};
+
+
+// An RAII helper that manages parsing state related to the parsing
+// of a declaration nested within a template.
+struct Parser::Parsing_template
+{
+  Parsing_template(Parser& p, Decl_list& ps)
+    : parser(p), saved(p.state.template_parms)
+  {
+    parser.state.template_parms = &ps;
+  }
+
+  ~Parsing_template()
+  {
+    parser.state.template_parms = saved;
+  }
+
+  Parser&    parser;
+  Decl_list* saved;
 };
 
 

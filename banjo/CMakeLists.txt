@@ -16,13 +16,14 @@ add_library(banjo
   parse_id.cpp
   parse_type.cpp
   parse_expr.cpp
+  parse_stmt.cpp
   parse_decl.cpp
   sema_id.cpp
   sema_type.cpp
   sema_expr.cpp
   sema_init.cpp
-  sema_decl.cpp
   sema_stmt.cpp
+  sema_decl.cpp
   # Utilities
   hash.cpp
   equivalence.cpp

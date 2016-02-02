@@ -698,6 +698,66 @@ Printer::binary_expression(Binary_expr const& e, Token_kind k)
 
 
 // -------------------------------------------------------------------------- //
+// Definitions
+
+
+void
+Printer::statement(Stmt const& s)
+{
+  struct fn
+  {
+    Printer& p;
+    void operator()(Stmt const&)               { lingo_unimplemented(); }
+    void operator()(Compound_stmt const& s)    { p.compound_statement(s); }
+    void operator()(Return_stmt const& s)      { p.return_statement(s); }
+    void operator()(Expression_stmt const& s)  { p.expression_statement(s); }
+    void operator()(Declaration_stmt const& s) { p.declaration_statement(s); }
+  };
+  apply(s, fn{*this});
+}
+
+
+void
+Printer::compound_statement(Compound_stmt const& s)
+{
+  token(lbrace_tok);
+  newline_and_indent();
+  Stmt_list const& ss = s.statements();
+  for (auto iter = ss.begin(); iter != ss.end(); ++iter) {
+    statement(*iter);
+    if (std::next(iter) != ss.end())
+      newline();
+  }
+  newline_and_undent();
+  token(rbrace_tok);
+}
+
+
+void
+Printer::return_statement(Return_stmt const& s)
+{
+  token(return_tok);
+  expression(s.expression());
+  token(semicolon_tok);
+}
+
+
+void
+Printer::expression_statement(Expression_stmt const& s)
+{
+  expression(s.expression());
+  token(semicolon_tok);
+}
+
+
+void
+Printer::declaration_statement(Declaration_stmt const& s)
+{
+  declaration(s.declaration());
+}
+
+
+// -------------------------------------------------------------------------- //
 // Initializers
 //
 // Select a canonical form of initialization based on the semantics
@@ -765,6 +825,51 @@ Printer::brace_initializer(Aggregate_init const&)
 
 
 // -------------------------------------------------------------------------- //
+// Definitions
+
+void
+Printer::function_definition(Def const& d)
+{
+  struct fn
+  {
+    Printer& p;
+    void operator()(Def const&) { lingo_unimplemented(); }
+    void operator()(Function_def const& d) { p.function_definition(d); }
+    void operator()(Deleted_def const& d) { p.function_definition(d); }
+    void operator()(Defaulted_def const& d) { p.function_definition(d); }
+  };
+  apply(d, fn{*this});
+}
+
+void
+Printer::function_definition(Function_def const& d)
+{
+  newline();
+  statement(d.statement());
+}
+
+
+void
+Printer::function_definition(Deleted_def const&)
+{
+  space();
+  token(eq_tok);
+  space();
+  token(delete_tok);
+}
+
+
+void
+Printer::function_definition(Defaulted_def const&)
+{
+  space();
+  token(eq_tok);
+  space();
+  token(default_tok);
+}
+
+
+// -------------------------------------------------------------------------- //
 // Declarations
 
 void
@@ -814,6 +919,7 @@ Printer::variable_declaration(Variable_decl const& d)
   space();
   id(d.name());
   if (d.has_initializer()) {
+    // FIXME: This is printing a space for trivial initializers.
     space();
     initializer(d.initializer());
   }
@@ -842,9 +948,10 @@ Printer::function_declaration(Function_decl const& d)
   parameter_list(d.parameters());
   token(rparen_tok);
   return_type(d.return_type());
-
-  // FIXME: Print a definition.
-  token(semicolon_tok);
+  if (d.is_definition())
+    function_definition(d.definition());
+  else
+    token(semicolon_tok);
 }
 
 
@@ -1074,20 +1181,19 @@ operator<<(std::ostream& os, Expr const& e)
 
 
 std::ostream&
-operator<<(std::ostream& os, Decl const& d)
+operator<<(std::ostream& os, Stmt const& s)
 {
   Printer print(os);
-  print(d);
+  print(s);
   return os;
 }
 
 
-// TODO: Implement me.
 std::ostream&
-operator<<(std::ostream& os, Init const& i)
+operator<<(std::ostream& os, Decl const& d)
 {
   Printer print(os);
-  print(i);
+  print(d);
   return os;
 }
 

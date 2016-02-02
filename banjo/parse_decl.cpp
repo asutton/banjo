@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "parser.hpp"
+#include "print.hpp"
 
 #include <iostream>
 
@@ -21,18 +22,18 @@ Parser::declaration()
       return variable_declaration();
     case def_tok:
       return function_declaration();
-    // case struct_tok:
-    // case class_tok:
-    //   return class_declaration();
-    // case enum_tok:
-    //   return enum_declaration();
+    case struct_tok:
+    case class_tok:
+      lingo_unimplemented();
+    case enum_tok:
+      lingo_unimplemented();
     case namespace_tok:
       return namespace_declaration();
-    // case template_tok:
-    //   return template_declaration();
-    default:
-      break;
+    case template_tok:
+      return template_declaration();
+    default: break;
   }
+  std::cout << "HERE: " << peek() << '\n';
   throw Syntax_error("invalid declaration");
 }
 
@@ -52,8 +53,8 @@ Parser::variable_declaration()
   Name& n = declarator();
 
   // Point of declaration.
-  Variable_decl& d = on_variable_declaration(tok, n, t);
-  Enter_scope s(*this, d);
+  Decl& d = on_variable_declaration(tok, n, t);
+  Enter_scope s(*this, make_initializer_scope(d));
 
   // Initialization
   if (lookahead() == semicolon_tok) {
@@ -158,23 +159,26 @@ Parser::function_declaration()
   Token tok = require(def_tok);
   Name& n = declarator();
 
-  // FIXME: Create a scope for parameters so that they can
-  // be resolved during the parsing of the return type.
-  Decl_list p;
+  // Enter function parameter scope and parse function parameters.
+  Enter_scope pscope(*this, make_function_parameter_scope());
+  Decl_list ps;
   match(lparen_tok);
   if (lookahead() != rparen_tok)
-    p = parameter_list();
+    ps = parameter_list();
   match(rparen_tok);
   Type& t = return_type();
 
-  // Point of declaration. Enter function scope.
-  Function_decl& fn = on_function_declaration(tok, n, p, t);
+  // Point of declaration.
+  Function_decl& fn = on_function_declaration(tok, n, ps, t);
 
   // Parse the definition, if any.
-  if (lookahead() == semicolon_tok)
+  if (lookahead() == semicolon_tok) {
     match(semicolon_tok);
-  else
-    function_definition();
+  } else {
+    // Enter function scope and parse the function definition.
+    Enter_scope fscope(*this, fn);
+    function_definition(fn);
+  }
 
   return fn;
 }
@@ -247,9 +251,18 @@ Parser::parameter_declaration()
 //
 // TODO: Allow '= expression' as a viable definition.
 Def&
-Parser::function_definition()
+Parser::function_definition(Decl& d)
 {
-  lingo_unimplemented();
+  if (lookahead() == lbrace_tok) {
+    Stmt& s = compound_statement();
+    return on_function_definition(d, s);
+  } else if (match_if(eq_tok)) {
+    if (match_if(delete_tok))
+      return on_deleted_definition(d);
+    if (match_if(default_tok))
+      return on_defaulted_definition(d);
+  }
+  throw Syntax_error("expected function-definition");
 }
 
 
@@ -269,55 +282,124 @@ Parser::namespace_declaration()
 
 
 // -------------------------------------------------------------------------- //
-// Template parameters
-
-// Parse a template parameter list.
-//
-//    template-parameter-list:
-//      template-parameter
-//      template-parameter-list template parameter
-Decl_list
-Parser::template_parameter_list()
-{
-  lingo_unimplemented();
-}
-
-
-// Parse a template parameter declaration:
-//
-//    template-parameter:
-//      type-template-parameter
-//      value-template-parameter
-//      template-template-declaration
-Decl&
-Parser::template_parameter()
-{
-  lingo_unimplemented();
-}
-
-
-// Parse a typename declaration.
-//
-//    typename-declaration:
-//      'typename' identifier ['=' type]
-Decl&
-Parser::type_template_parameter()
-{
-  lingo_unimplemented();
-}
-
-
-// -------------------------------------------------------------------------- //
 // Template declarations
 
 // Parse a template declaration.
 //
 //    tempate-declaration:
 //      'template' '<' template-parameter-list '>' declaration
+//
+// FIXME: Support explicit template instantations in one way or
+// another.
 Decl&
 Parser::template_declaration()
 {
-    lingo_unimplemented();
+  require(template_tok);
+
+  // TODO: Allow >> to close the template parameter list in the
+  // case of default template arguments.
+  Enter_scope scope(*this, make_template_parameter_scope());
+  match(lt_tok);
+  Decl_list ps = template_parameter_list();
+  match(gt_tok);
+
+  // Parse the underlying declaration.
+  Parsing_template save(*this, ps);
+  return declaration();
+}
+
+
+// Parse a template parameter list.
+//
+//    template-parameter-list:
+//      template-parameter
+//      template-parameter-list ',' template-parameter
+Decl_list
+Parser::template_parameter_list()
+{
+  Decl_list ds;
+
+  // TOOD: Could terminate on >>.
+  while (lookahead() != gt_tok) {
+    Decl& d = template_parameter();
+    ds.push_back(d);
+  }
+
+  return ds;
+}
+
+
+// Parse a template parameter.
+//
+//    template-parameter:
+//      type-template-parameter
+//      value-template-parameter
+//      template-template-parameter
+Decl&
+Parser::template_parameter()
+{
+  switch (lookahead()) {
+    case typename_tok: return type_template_parameter();
+    case const_tok: return value_template_parameter();
+    case template_tok: return template_template_parameter();
+
+    default:
+      // FIXME: Concepts!
+      lingo_unimplemented();
+  }
+}
+
+
+// Parse a type template parameter.
+//
+//    type-template-parameter:
+//        typename [identifier] ['='' type]
+//
+// Note that the point of declaration for a template parameter is
+// past the full definition (after the default argument, if present).
+Decl&
+Parser::type_template_parameter()
+{
+  match(typename_tok);
+
+  // Get the optional identifier. Create a placeholder
+  // if no name is given.
+  Name* n;
+  if (Token id = match_if(identifier_tok))
+    n = &on_simple_id(id);
+  else
+    n = &build.get_id();
+
+  // Parse the default argument.
+  Type* t = nullptr;
+  if (lookahead() == eq_tok)
+    t = &type();
+
+  // Point of declaration.
+  Decl* d;
+  if (t)
+    d = &on_type_template_parameter(*n, *t);
+  else
+    d = &on_type_template_parameter(*n);
+  return *d;
+}
+
+
+// Parse a value template parameter.
+//
+//    value-template-parameter:
+//      'const' type [identifier] [equal-initializer]
+Decl&
+Parser::value_template_parameter()
+{
+  lingo_unimplemented();
+}
+
+
+Decl&
+Parser::template_template_parameter()
+{
+  lingo_unimplemented();
 }
 
 
@@ -348,44 +430,25 @@ Parser::declarator()
 // Miscellaneous
 
 
-
-// Returns true if the current token kind indicates
-// the start of a declaration.
-//
-// TODO: There shoud be a simpler formulation.
-inline bool
-starts_declaration(Parser& p)
-{
-  switch (p.lookahead()) {
-    case var_tok:
-    case def_tok:
-    case struct_tok:
-    case class_tok:
-    case union_tok:
-    case enum_tok:
-    case namespace_tok:
-    case template_tok:
-      return true;
-    default:
-      return false;
-  }
-}
-
 // Parse a declaration sequence.
 //
 //    declaration-seq:
 //      declaration
 //      declaration-seq declaration
 //
+// Note that declaration-seqs is only referenced from translation-unit
+// and namespace-definition. Therefore, it must terminate on EOF or
+// a '}'.
 Decl_list
 Parser::declaration_seq()
 {
+  Decl_list ds;
   // FIXME: Catch declaration errors and continue parsing.
-  declaration();
-  while (starts_declaration(*this))
-    declaration();
-
-  return {};
+  do {
+    Decl& d = declaration();
+    ds.push_back(d);
+  } while (peek() && lookahead() != rbrace_tok);
+  return ds;
 }
 
 
