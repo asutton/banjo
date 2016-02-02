@@ -24,7 +24,7 @@ Parser::declaration()
       return function_declaration();
     case struct_tok:
     case class_tok:
-      lingo_unimplemented();
+      return class_declaration();
     case enum_tok:
       lingo_unimplemented();
     case namespace_tok:
@@ -182,6 +182,13 @@ Parser::function_declaration()
 
   return fn;
 }
+
+  Decl&
+  Parser::class_declaration(){
+    Class_decl *cd;
+    lingo_unimplemented();
+  }
+
 
 
 // Parse a parameter list.
@@ -450,6 +457,7 @@ Parser::declaration_seq()
   } while (peek() && lookahead() != rbrace_tok);
   return ds;
 }
+
 
 
 } // namespace banjo

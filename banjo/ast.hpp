@@ -1857,7 +1857,7 @@ struct Function_def : Def
 
   void accept(Visitor& v) const { return v.visit(*this); }
 
-  // Returnse the statement associated with the function
+  // Returns the statement associated with the function
   // definition.
   Stmt const& statement() const { return *stmt; }
   Stmt&       statement()       { return *stmt; }
