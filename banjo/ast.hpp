@@ -53,6 +53,8 @@ struct List_iterator
   using difference_type   = std::ptrdiff_t;
   using iterator_category = std::forward_iterator_tag;
 
+  List_iterator() = default;
+
   List_iterator(Iter i)
     : iter(i)
   { }
@@ -79,6 +81,8 @@ struct List_iterator<T const>
   using pointer           = T const*;
   using difference_type   = std::ptrdiff_t;
   using iterator_category = std::forward_iterator_tag;
+
+  List_iterator() = default;
 
   List_iterator(Iter i)
     : iter(i)
@@ -165,6 +169,7 @@ using Type_list = List<Type>;
 using Expr_list = List<Expr>;
 using Stmt_list = List<Stmt>;
 using Decl_list = List<Decl>;
+using Cons_list = List<Cons>;
 
 
 // Iterators
@@ -172,6 +177,7 @@ using Term_iter = Term_list::iterator;
 using Type_iter = Type_list::iterator;
 using Expr_iter = Expr_list::iterator;
 using Decl_iter = Decl_list::iterator;
+using Cons_iter = Cons_list::iterator;
 
 
 // Pairs and tuples
