@@ -1226,8 +1226,8 @@ struct Check_expr : Expr
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
-  Decl const& declaration() const { return *con; }
-  Decl&       declaration()       { return *con; }
+  Concept_decl const& declaration() const;
+  Concept_decl&       declaration();
 
   Term_list const& arguments() const { return args; }
   Term_list&       arguments()       { return args; }
@@ -2495,10 +2495,29 @@ struct Concept_decl : Decl
   Expr*     def;
 };
 
+
+// A parameter index records the depth and offset of the
+// parameter.
+struct Index : std::pair<int, int>
+{
+  // Returns the underlying pair.
+  std::pair<int, int> const& pair() const { return *this; }
+  std::pair<int, int>&       pair()       { return *this; }
+
+  int depth() const  { return first; }
+  int offset() const { return second; }
+
+  bool operator==(Index x) const { return pair() == x.pair(); }
+  bool operator!=(Index x) const { return pair() != x.pair(); }
+};
+
+
 // An object paramter of a function.
 //
 // TODO: Name this variable_parm to be consistent with variable
 // declarations?
+//
+// TODO: Do we want to index function parameters?
 struct Object_parm : Object_decl
 {
   Object_parm(Name& n, Type& t)
@@ -2544,6 +2563,12 @@ struct Value_parm : Object_decl
   Expr&       default_argument()       { return *init; }
 
   bool has_default_arguement() const { return init; }
+
+  // Returns the index of the template parameter.
+  Index  index() const { return ix; }
+  Index& index()       { return ix; }
+
+  Index ix;
 };
 
 
@@ -2586,7 +2611,12 @@ struct Type_parm : Decl
 
   bool has_default_arguement() const { return def; }
 
+  // Returns the index of the template parameter.
+  Index  index() const { return ix; }
+  Index& index()       { return ix; }
+
   Type* def;
+  Index ix;
 };
 
 
@@ -2620,8 +2650,13 @@ struct Template_parm : Decl
 
   bool has_default_arguement() const { return def; }
 
+  // Returns the index of the template parameter.
+  Index  index() const { return ix; }
+  Index& index()       { return ix; }
+
   Decl*     temp;
   Init*     def;
+  Index     ix;
 };
 
 
@@ -2986,6 +3021,21 @@ inline Template_decl&
 Template_id::declaration()
 {
   return cast<Template_decl>(*decl);
+}
+
+// Check_expr
+
+inline Concept_decl const&
+Check_expr::declaration() const
+{
+  return cast<Concept_decl>(*con);
+}
+
+
+inline Concept_decl&
+Check_expr::declaration()
+{
+  return cast<Concept_decl>(*con);
 }
 
 

@@ -389,6 +389,7 @@ find_support(Context& cxt, Cons const& a, Cons const& c)
 Validation
 find_support(Context& cxt, Prop_list& ants, Cons const& c)
 {
+  std::cout << "SUPPORT: " << c << '\n';
   Validation r = invalid_proof;
   for (Cons const* a : ants) {
     Validation v = find_support(cxt, *a, c);
@@ -478,6 +479,11 @@ derive(Context& cxt, Prop_list& ants, Cons const& c)
 // The proof is valid if any Ai proves C. The proof is invalid when
 // no Ai proves C. The proof is incomplete when it is invalid by
 // some Ai is non-atomic.
+//
+// TODO: I wonder if there's an opportunity to quickly reject a
+// proof with non-reduced antecedents. That would avoid multiple
+// (potentially) exponential invocations of derive(), but it would
+// also likely lead to more aggressive creation of goals.
 Validation
 validate(Context& cxt, Prop_list& ants, Cons const& c)
 {
@@ -893,6 +899,7 @@ subsumes(Context& cxt, Cons const& a, Cons const& c)
   do {
     // Opportunistically flatten sequents in each goal.
     flatten(p);
+    std::cout << "------------\n";
     std::cout << "STEP " << n << ": " << p.sequent() << '\n';
 
     // Having done that, determine if the proof is valid (or not).

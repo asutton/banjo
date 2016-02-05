@@ -23,6 +23,33 @@ is_equivalent(List<T> const& a, List<T> const& b)
 
 
 // -------------------------------------------------------------------------- //
+// Terms
+
+bool
+is_equivalent(Term const& x1, Term const& x2)
+{
+  // The same objects represent the same types.
+  if (&x1 == &x2)
+    return true;
+
+  // Types of different kinds are not the same.
+  std::type_index ti1 = typeid(x1);
+  std::type_index ti2 = typeid(x2);
+  if (ti1 != ti2)
+    return false;
+
+  if (Type const* t1 = as<Type>(&x1))
+    return is_equivalent(*t1, cast<Type>(x2));
+  if (Expr const* t1 = as<Expr>(&x1))
+    return is_equivalent(*t1, cast<Expr>(x2));
+  if (Decl const* t1 = as<Decl>(&x1))
+    return is_equivalent(*t1, cast<Decl>(x2));
+  lingo_unreachable();
+}
+
+
+
+// -------------------------------------------------------------------------- //
 // Names
 
 // Two simple-ids are equal iff they have the same spelling. This is the
@@ -227,11 +254,10 @@ is_equivalent(Sequence_type const& t1, Sequence_type const& t2)
 }
 
 
-// TODO: This isn't quite right. It depends on declaration chains.
 bool
 is_equivalent(User_defined_type const& t1, User_defined_type const& t2)
 {
-  return &t1.declaration() == &t2.declaration();
+  return is_equivalent(t1.declaration(), t2.declaration());
 }
 
 
@@ -267,7 +293,6 @@ is_equivalent(Type const& t1, Type const& t2)
     bool operator()(Array_type const& t1) const        { return is_equivalent(t1, cast<Array_type>(t2)); }
     bool operator()(Sequence_type const& t1) const     { return is_equivalent(t1, cast<Sequence_type>(t2)); }
     bool operator()(User_defined_type const& t1) const { return is_equivalent(t1, cast<User_defined_type>(t2)); }
-    bool operator()(Typename_type const& t1) const     { lingo_unimplemented(); }
     bool operator()(Synthetic_type const& t1) const    { return is_equivalent(t1, cast<Synthetic_type>(t2)); }
   };
 
@@ -289,8 +314,9 @@ is_equivalent(Type const& t1, Type const& t2)
 // -------------------------------------------------------------------------- //
 // Expressions
 
+template<typename T>
 bool
-is_equivalent(Boolean_expr const& e1, Boolean_expr const& e2)
+is_equivalent(Literal_expr<T> const& e1, Literal_expr<T> const& e2)
 {
   return e1.value() == e2.value();
 }
@@ -319,6 +345,7 @@ is_equivalent(Expr const& e1, Expr const& e2)
     Expr const& e2;
     bool operator()(Expr const&) const            { lingo_unimplemented(); }
     bool operator()(Boolean_expr const& e1) const { return is_equivalent(e1, cast<Boolean_expr>(e2)); }
+    bool operator()(Integer_expr const& e1) const { return is_equivalent(e1, cast<Integer_expr>(e2)); }
     bool operator()(Unary_expr const& e1) const   { return is_equivalent(e1, cast<Unary_expr>(e2)); }
     bool operator()(Binary_expr const& e1) const  { return is_equivalent(e1, cast<Binary_expr>(e2)); }
   };
@@ -339,7 +366,59 @@ is_equivalent(Expr const& e1, Expr const& e2)
 
 
 // -------------------------------------------------------------------------- //
+// Declarations
+//
+// Two declarations are equivalent when they declare the same
+// entity.
+//
+// TODO: When we allow redeclaration, then this comparison must be
+// use the entity, not object identity.
+
+
+// Two template parameters are equivalent when they have equal
+// indexes (depth, offset). For example:
+//
+//    template<typename T> void f(T);
+//    template<typename U> void f(U*);
+//
+// Here, T and U are equivalent.
+inline bool
+is_equivalent(Type_parm const& d1, Type_parm const& d2)
+{
+  return d1.index() == d2.index();
+}
+
+
+// FIXME: This is wrong.
+bool
+is_equivalent(Decl const& a, Decl const& b)
+{
+  struct fn
+  {
+    Decl const& d2;
+
+    // FIXME: This is only valid for declarations that cannot be
+    // redeclared.
+    bool operator()(Decl const& d1) const { return &d1 == &d2; }
+
+    bool opeator(Type_parm const& d1) const { return is_equivalent(d1, cast<Type_parm>(d2)); }
+  };
+  return &a == &b;
+}
+
+
+// -------------------------------------------------------------------------- //
 // Constraints
+
+// Two unexpanded constraints are equivalent when they refer to
+// the same declaration and have the same template arguments.
+bool
+is_equivalent(Concept_cons const& c1, Concept_cons const& c2)
+{
+  return is_equivalent(c1.declaration(), c2.declaration())
+      && is_equivalent(c1.arguments(), c2.arguments());
+}
+
 
 bool
 is_equivalent(Predicate_cons const& c1, Predicate_cons const& c2)
@@ -364,6 +443,7 @@ is_equivalent(Cons const& c1, Cons const& c2)
   {
     Cons const& c2;
     bool operator()(Cons const& c1) const           { lingo_unimplemented(); }
+    bool operator()(Concept_cons const& c1) const   { return is_equivalent(c1, cast<Concept_cons>(c2)); }
     bool operator()(Predicate_cons const& c1) const { return is_equivalent(c1, cast<Predicate_cons>(c2)); }
     bool operator()(Binary_cons const& c1) const    { return is_equivalent(c1, cast<Binary_cons>(c2)); }
   };

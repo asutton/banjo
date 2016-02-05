@@ -49,6 +49,23 @@ substitute(Context& cxt, List<T>& list, Substitution& sub)
 
 
 // -------------------------------------------------------------------------- //
+// Substitution into terms
+
+Term&
+substitute(Context& cxt, Term& x, Substitution& sub)
+{
+  if (Type* t = as<Type>(&x))
+    return substitute(cxt, *t, sub);
+  if (Expr* e = as<Expr>(&x))
+    return substitute(cxt, *e, sub);
+  if (Decl* d = as<Decl>(&x))
+    return substitute(cxt, *d, sub);
+  lingo_unreachable();
+}
+
+
+
+// -------------------------------------------------------------------------- //
 // Substitution into types
 
 Type& substitute_type(Context&, Function_type&, Substitution&);
@@ -162,6 +179,15 @@ substitute_type(Context& cxt, Typename_type& t, Substitution& sub)
 // result of substitution.
 
 Expr&
+subst_expr(Context& cxt, Check_expr& e, Substitution& sub)
+{
+  Builder build(cxt);
+  Term_list args = substitute(cxt, e.arguments(), sub);
+  return build.make_check(e.declaration(), args);
+}
+
+
+Expr&
 subst_expr(Context& cxt, And_expr& e, Substitution& sub)
 {
   Builder build(cxt);
@@ -201,6 +227,7 @@ substitute(Context& cxt, Expr& e, Substitution& sub)
     Expr& operator()(Expr& e) { lingo_unimplemented(); }
     Expr& operator()(Boolean_expr& e) { return e; }
     Expr& operator()(Integer_expr& e) { return e; }
+    Expr& operator()(Check_expr& e)   { return subst_expr(cxt, e, sub); }
 
     Expr& operator()(And_expr& e) { return subst_expr(cxt, e, sub); }
     Expr& operator()(Or_expr& e)  { return subst_expr(cxt, e, sub); }
