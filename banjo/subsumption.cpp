@@ -98,7 +98,6 @@ struct Prop_list
     return {pos, false};
   }
 
-
   // Replace the term in the list with c1 folowed by c2. Note that
   // no replacements may be made if c1 and c2 are already in the list.
   //
@@ -275,6 +274,59 @@ operator<<(std::ostream& os, Proof const& p)
 
 
 // -------------------------------------------------------------------------- //
+// Atomicity
+
+// Returns true if c is an atomic constraint.
+inline bool
+is_atomic(Cons const& c)
+{
+  struct fn
+  {
+    bool operator()(Cons const& c) const               { return true; }
+    bool operator()(Concept_cons const& c) const       { return false; }
+    bool operator()(Parameterized_cons const& c) const { return false; }
+    bool operator()(Conjunction_cons const& c) const   { return false; }
+    bool operator()(Disjunction_cons const& c) const   { return false; }
+  };
+  return apply(c, fn{});
+}
+
+
+// Returns true whe c is non-atomic.
+inline bool
+is_non_atomic(Cons const& c)
+{
+  return !is_atomic(c);
+}
+
+
+// Returns true when the proposition list is fully reduced.
+// That is, there are no non-atomic constraints in the list.
+//
+// FIXME: This is property can be derived during flatttening
+// and cached with each list. Do that.
+inline bool
+is_reduced(Prop_list const& ps)
+{
+  for (Cons const* c : ps)
+    if (is_non_atomic(*c))
+      return false;
+  return true;
+}
+
+
+// -------------------------------------------------------------------------- //
+// Subsumption memoization
+
+// TODO: Memoize the subsumption relation.
+bool
+is_memoized(Context& cxt, Cons const& a, Cons const& b)
+{
+  return false;
+}
+
+
+// -------------------------------------------------------------------------- //
 // Proof validation
 //
 // Iterate over the goals in the proof. All goals must be satsified in
@@ -295,60 +347,51 @@ enum Validation
 };
 
 
-// Returns true if c is an atomic constraint.
-inline bool
-is_atomic(Cons const& c)
+std::ostream&
+operator<<(std::ostream& os, Validation v)
 {
-  struct fn
-  {
-    bool operator()(Cons const& c) const               { return true; }
-    bool operator()(Concept_cons const& c) const       { return false; }
-    bool operator()(Parameterized_cons const& c) const { return false; }
-    bool operator()(Conjunction_cons const& c) const   { return false; }
-    bool operator()(Disjunction_cons const& c) const   { return false; }
-  };
-  return apply(c, fn{});
+  switch (v) {
+  case valid_proof: return os << "valid";
+  case invalid_proof: return os << "invalid";
+  case incomplete_proof: return os << "incomplete";
+  default: lingo_unreachable();
+  }
 }
 
 
-Validation validate_implication(Context&, Cons const&, Cons const&);
-Validation validate_implication(Context&, Prop_list&, Cons const&);
-
+Validation  validate(Context&, Cons const&, Cons const&);
+Validation  validate(Context&, Prop_list&, Cons const&);
+Validation  match(Context&, Prop_list&, Cons const&);
 Cons const& expand(Context&, Concept_cons const&);
 
 
-// Validate a sequent of the form A |- C when A and C when
-// A and C differ syntactically (e.g., A => C by semantic rules).
+// Given a sequent of the form A |- C, where A and C differ
+// syntactically, try to find support for a proof of C by A.
+// This essentially means that we're going to consult a list of
+// other rules that could make such a proof valid.
 //
-// Note that if both a and b are atomic and there are no semantic
-// rules that validate the proof, then the proof cannot be validated.
-//
-// TODO: Define and check semantic rules.
+// TODO: Add extra rules here.
 Validation
-validate_non_matching(Context& cxt, Cons const& a, Cons const& c)
+find_support(Context& cxt, Cons const& a, Cons const& c)
 {
-  if (is_atomic(a) && is_atomic(c))
-    return invalid_proof;
-  return incomplete_proof;
+  return invalid_proof;
 }
 
 
-// Validate a sequent of the form A1, A2, ..., An |- C when each Ai
-// differs from C syntactically (e.g. if some Ai => C by semantic
-// rules).
+// Try to derive a proof for the sequent of this form:
 //
-// TODO: Re-enable this loop.
+//    A1, A2, ..., An |- C
 //
-// FIXME: !!!! This is broken. We probably need to recursively
-// evalute c against the entirety of constraints in ants. This
-// needs to be a recursive function, and it's going to have
-// exponential branching.
+// where C is an atomic constraint. As below, we know that C does
+// not occur syntactically in the list of propositions (that's checked
+// by validate(cxt, ants, c)). Therefore, we must delegate to case
+// analysis to determine if there are other rules that prove C.
 Validation
-validate_non_matching(Context& cxt, Prop_list& ants, Cons const& c)
+find_support(Context& cxt, Prop_list& ants, Cons const& c)
 {
   Validation r = invalid_proof;
   for (Cons const* a : ants) {
-    Validation v = validate_non_matching(cxt, *a, c);
+    Validation v = find_support(cxt, *a, c);
     if (v == valid_proof)
       return v;
     if (v == incomplete_proof)
@@ -358,43 +401,126 @@ validate_non_matching(Context& cxt, Prop_list& ants, Cons const& c)
 }
 
 
-// Validate a sequent of the form A |- C when it is unknown whether
-// A and C are equivalent constraints. If A and C are equivalent,
-// the the proof is valid. Otherwise, check semantic implications.
+// Validate against the expansion of C.
 Validation
-validate_implication(Context& cxt, Cons const& a, Cons const& c)
+derive(Context& cxt, Prop_list& ants, Concept_cons const& c)
 {
-  if (is_equivalent(a, c))
-    return valid_proof;
-  else
-    return validate_non_matching(cxt, a, c);
+  return validate(cxt, ants, expand(cxt, c));
 }
 
 
-// Given a list of antecedents and a conclusion, determine if
-// A1, A2, ..., An |- C. If C is equivalent to any Ai, then the
-// proof is valid. Otherwise, we must check semantic implications.
+// Validate against the constraint of C.
 Validation
-validate_implication(Context& cxt, Prop_list& as, Cons const& c)
+derive(Context& cxt, Prop_list& ants, Parameterized_cons const& c)
 {
-  if (as.contains(c))
-    return valid_proof;
-  else
-    return validate_non_matching(cxt, as, c);
+  return validate(cxt, ants, c.constraint());
 }
 
 
-// Given a sequent of the form A1, A2, ..., An |- C1, C2, ... Cm,
-// returns true if any Ci is proven by all Ai.
+// A conjunction is valid iff both operands are valid.
+//
+// TODO: Validate the easier branch first. But what is an "easier"
+// branch?
 Validation
-validate_obligation(Context& cxt, Sequent& s)
+derive(Context& cxt, Prop_list& ants, Conjunction_cons const& c)
+{
+  Validation v = validate(cxt, ants, c.left());
+  if (v == invalid_proof || v == incomplete_proof)
+    return v;
+  return validate(cxt, ants, c.right());
+}
+
+
+// A conjunction is valid iff either oerand is valid.
+//
+// TODO: Validate the easier branch first. But what is an "easier"
+// branch?
+Validation
+derive(Context& cxt, Prop_list& ants, Disjunction_cons const& c)
+{
+  Validation v = validate(cxt, ants, c.left());
+  if (v == valid_proof || v == incomplete_proof)
+    return v;
+  return validate(cxt, ants, c.right());
+}
+
+
+// Try to derive a proof for the sequent of this form:
+//
+//    A1, A2, ..., An |- C
+//
+// Note that C does not occur (syntactically) in the list of
+// antecedents, so we must decopose C to search for a proof.
+Validation
+derive(Context& cxt, Prop_list& ants, Cons const& c)
+{
+  struct fn
+  {
+    Context&   cxt;
+    Prop_list& ants;
+    Validation operator()(Cons const& c) const               { return find_support(cxt, ants, c); }
+    Validation operator()(Concept_cons const& c) const       { return derive(cxt, ants, c); }
+    Validation operator()(Parameterized_cons const& c) const { return derive(cxt, ants, c); }
+    Validation operator()(Conjunction_cons const& c) const   { return derive(cxt, ants, c); }
+    Validation operator()(Disjunction_cons const& c) const   { return derive(cxt, ants, c); }
+  };
+  std::cout << "DERIVE: " << c << '\n';
+  return apply(c, fn{cxt, ants});
+}
+
+
+// Determine if a sequent of this form:
+//
+//    A1, A2, ..., An |- C
+//
+// denotes a valid proof.
+//
+// The proof is valid if any Ai proves C. The proof is invalid when
+// no Ai proves C. The proof is incomplete when it is invalid by
+// some Ai is non-atomic.
+Validation
+validate(Context& cxt, Prop_list& ants, Cons const& c)
+{
+  // If antecedent set (syntacically) contains C, then the
+  // proof is valid.
+  if (ants.contains(c))
+    return valid_proof;
+
+  // If we had previously memoized the proof, then use that
+  // result.
+  for (Cons const* a : ants) {
+    if (is_memoized(cxt, *a, c))
+      return valid_proof;
+  }
+
+  // Actually derive a proof of C from AS. If the result
+  // is invalid, by the thre are incomplete terms, then
+  // the result is incomplete.
+  Validation v = derive(cxt, ants, c);
+  if (v == invalid_proof) {
+    if (!is_reduced(ants))
+      return incomplete_proof;
+  }
+  return v;
+}
+
+
+// Determine if the squent (or goal) of the form:
+//
+//    A1, A2, ..., An |- C1, C2, ... Cm,
+//
+// The sequent is a valid proof if any Ai prove any Ci. The sequent
+// is invalid only when all Ai provie no Ci. The proof is incomplete
+// when it is invalid, but some Ai is a non-atomic proposition.
+Validation
+validate(Context& cxt, Sequent& s)
 {
   Prop_list& as = s.antecedents();
   Prop_list& cs = s.consequents();
 
   Validation r = invalid_proof;
   for (Cons const* c : cs) {
-    Validation v = validate_implication(cxt, as, *c);
+    Validation v = validate(cxt, as, *c);
     if (v == valid_proof)
       return v;
     if (v == incomplete_proof)
@@ -404,21 +530,22 @@ validate_obligation(Context& cxt, Sequent& s)
 }
 
 
-// Verify that all proof goals are satisfied. Whenever a goal
-// is known to be satisfied, it is discharged (removed from
-// the goal list).
+// Determine if p is a valid proof. A proof is valid only when all
+// goals have been dischared. An invalid proof is one where any
+// goal is determined to be invalid. A proof is incomplete if any
+// subgoaol is incomplete.
 Validation
-validate_proof(Proof& p)
+validate(Proof& p)
 {
   Context& cxt = p.cxt;
   Goal_list& goals = p.goals();
 
   auto iter = goals.begin();
   while (iter != goals.end()) {
-    Validation v = validate_obligation(cxt, *iter);
+    Validation v = validate(cxt, *iter);
     if (v == valid_proof)
       iter = goals.discharge(iter);
-    else if (v == invalid_proof)
+    else if (v == invalid_proof || v == incomplete_proof)
       return v;
     ++iter;
   }
@@ -748,33 +875,30 @@ expand(Proof p)
 bool
 subsumes(Context& cxt, Cons const& a, Cons const& c)
 {
-  // Try validating the proof by comparing constraitns.
-  // This lets us avoid initial setup costs for the proof
-  // state.
-  Validation v = validate_implication(cxt, a, c);
-  if (v == valid_proof)
+  // Check the easy cases before setting up a proof.
+  if (is_equivalent(a, c))
     return true;
-  if (v == invalid_proof)
-    return false;
+  if (is_memoized(cxt, a, c))
+    return true;
 
   // Alas... no quick check. We have to prove the implication.
   Goal_list goals(Sequent(a, c));
   Proof p(cxt, goals);
-
   std::cout << "INIT: " << p.sequent() << '\n';
 
   // Continue manipulating the proof state until we know that
   // the implication is valid or not.
   int n = 1;
-  while (v == incomplete_proof) {
+  Validation v;
+  do {
     // Opportunistically flatten sequents in each goal.
     flatten(p);
     std::cout << "STEP " << n << ": " << p.sequent() << '\n';
 
     // Having done that, determine if the proof is valid (or not).
     // In either case, we can stop.
-    Validation v = validate_proof(p);
-    std::cout << "RESULT: " << (int)v << '\n';
+    v = validate(p);
+    std::cout << "VALID? " << v << '\n';
     if (v == valid_proof)
       return true;
     if (v == invalid_proof)
@@ -784,10 +908,15 @@ subsumes(Context& cxt, Cons const& a, Cons const& c)
     expand(p);
     ++n;
 
-    // FIXME: Implementation limit.
+    // TODO: Actually diagnose implementation limits. Note that the
+    // real limiting factor is going to be the goal size, not
+    // the step count.
+    if (goals.size() > 32)
+      lingo_unimplemented();
     if (n > 20)
       lingo_unimplemented();
-  }
+  } while (v == incomplete_proof);
+
   return false;
 }
 
