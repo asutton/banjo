@@ -16,6 +16,7 @@ namespace banjo
 struct Name;
 struct Type;
 struct Expr;
+struct Decl;
 struct Cons;
 
 

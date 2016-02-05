@@ -157,11 +157,57 @@ substitute_type(Context& cxt, Typename_type& t, Substitution& sub)
 
 // -------------------------------------------------------------------------- //
 // Substitution into expressions
+//
+// FIXME: None of this is correct. We actually need to elaborate the
+// result of substitution.
+
+Expr&
+subst_expr(Context& cxt, And_expr& e, Substitution& sub)
+{
+  Builder build(cxt);
+  Expr& e1 = substitute(cxt, e.left(), sub);
+  Expr& e2 = substitute(cxt, e.right(), sub);
+  return build.make_and(e.type(), e1, e2);
+}
+
+
+Expr&
+subst_expr(Context& cxt, Or_expr& e, Substitution& sub)
+{
+  Builder build(cxt);
+  Expr& e1 = substitute(cxt, e.left(), sub);
+  Expr& e2 = substitute(cxt, e.right(), sub);
+  return build.make_or(e.type(), e1, e2);
+}
+
+
+Expr&
+subst_expr(Context& cxt, Not_expr& e, Substitution& sub)
+{
+  Builder build(cxt);
+  Expr& e1 = substitute(cxt, e.operand(), sub);
+  return build.make_not(e.type(), e1);
+}
+
 
 Expr&
 substitute(Context& cxt, Expr& e, Substitution& sub)
 {
-  lingo_unimplemented();
+  struct fn
+  {
+    Context&      cxt;
+    Substitution& sub;
+
+    Expr& operator()(Expr& e) { lingo_unimplemented(); }
+    Expr& operator()(Boolean_expr& e) { return e; }
+    Expr& operator()(Integer_expr& e) { return e; }
+
+    Expr& operator()(And_expr& e) { return subst_expr(cxt, e, sub); }
+    Expr& operator()(Or_expr& e)  { return subst_expr(cxt, e, sub); }
+    Expr& operator()(Not_expr& e) { return subst_expr(cxt, e, sub); }
+
+  };
+  return apply(e, fn{cxt, sub});
 }
 
 

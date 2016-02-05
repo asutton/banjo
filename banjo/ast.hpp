@@ -162,7 +162,6 @@ List<T>::append(I first, I last)
 }
 
 
-
 // Lists
 using Term_list = List<Term>;
 using Type_list = List<Type>;
@@ -1136,7 +1135,9 @@ struct Unary_expr : Expr
     : Expr(t), first(&e)
   { }
 
+  // Returns the operand of the unary expression.
   Expr const& operand() const { return *first; }
+  Expr&       operand()       { return *first; }
 
   Expr* first;
 };
@@ -2764,10 +2765,8 @@ struct Concept_cons : Cons
   void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the resolved concept declaration.
-  //
-  // FIXME: Make this return a concept declaration.
-  Decl const& declaration() const { return *decl; }
-  Decl&       declaration()       { return *decl; }
+  Concept_decl const& declaration() const { return cast<Concept_decl>(*decl); }
+  Concept_decl&       declaration()       { return cast<Concept_decl>(*decl); }
 
   // Returns the template arguments used to check the template.
   Term_list const& arguments() const { return args; }
@@ -2824,10 +2823,23 @@ struct Deduction_cons : Cons
 };
 
 
-// FIXME: Implement me.
+// Represents the parameterization of a constraint by constraint
+// variables. These are names indicating values of specific types.
+// Once resolved by lookup, they are essentially meaningless.
 struct Parameterized_cons : Cons
 {
-  using Cons::Cons;
+  Parameterized_cons(Decl_list const& ps, Cons* c)
+    : vars(ps), cons(c)
+  { }
+
+  Decl_list const& variables() const { return vars; }
+  Decl_list&       variables()       { return vars; }
+
+  Cons const& constraint() const { return *cons; }
+  Cons&       constraint()       { return *cons; }
+
+  Decl_list vars;
+  Cons*     cons;
 };
 
 

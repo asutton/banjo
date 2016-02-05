@@ -4,6 +4,7 @@
 #include "test.hpp"
 
 #include <banjo/normalization.hpp>
+#include <banjo/subsumption.hpp>
 
 #include <iostream>
 
@@ -16,6 +17,31 @@ make_concept_1(Context& cxt)
   Expr& e = build.get_true();
   Concept_decl& c = build.make_concept("C1", {&p}, e);
   return c;
+}
+
+void
+test_canonical(Context& cxt)
+{
+  Builder build(cxt);
+
+  auto norm = [&cxt](Expr& e) ->Cons& { return normalize(cxt, e); };
+
+  Type& b = build.get_bool_type();
+
+  Expr& t = build.get_true();
+  lingo_assert(&norm(t) == &norm(t));
+
+  Expr& f = build.get_false();
+  lingo_assert(&norm(f) == &norm(f));
+
+  Expr& e1 = build.make_not(b, f);
+  lingo_assert(&norm(e1) == &norm(e1));
+
+  // TODO: Check canonicalization of more constraints.
+
+  // Expr& e2 = build.make_and(b, t, e1);
+  // Expr& e3 = build.make_and(b, e2, c1);
+
 }
 
 
@@ -37,11 +63,20 @@ test_normalize(Context& cxt)
   Expr& e1 = build.make_not(b, f);
   Expr& e2 = build.make_and(b, t, e1);
   Expr& e3 = build.make_and(b, e2, c1);
-  std::cout << e3 << '\n';
+  Expr& e4 = build.make_or(b, f, t);
 
-  // Normalize it.
-  Cons& nc1 = normalize(cxt, e3);
-  std::cout << nc1 << '\n';
+  // Build some constraints.
+  Cons& cons1 = normalize(cxt, e3);
+  std::cout << cons1 << '\n';
+
+  Cons& cons2 = normalize(cxt, f);
+  std::cout << cons2 << '\n';
+
+  bool b1 = subsumes(cxt, cons1, cons2);
+  std::cout << cons1 << " ~< " << cons2 << " == " << b1 << '\n';
+
+  bool b2 = subsumes(cxt, cons2, cons1);
+  std::cout << cons2 << " ~< " << cons1 << " == " << b2 << '\n';
 }
 
 
@@ -50,5 +85,6 @@ int
 main(int argc, char* argv[])
 {
   Context cxt;
+  test_canonical(cxt);
   test_normalize(cxt);
 }

@@ -24,6 +24,10 @@ struct Context
 {
   Context();
 
+  // Non-copyable
+  Context(Context const&) = delete;
+  Context& operator=(Context const&) = delete;
+
   // Returns the symbol table.
   Symbol_table const& symbols() const { return syms; }
   Symbol_table&       symbols()       { return syms; }
