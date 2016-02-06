@@ -1966,6 +1966,11 @@ struct Def::Visitor
 //
 // C++ allows only defaulted special functions, but this can
 // be made far more general.
+//
+// TODO: When we see this, we're actually going to select a
+// specific kind of behavior, depending on the function defaulted.
+// We should have derived classes for each kind of defaulted
+// behavior (I think).
 struct Defaulted_def : Def
 {
   void accept(Visitor& v) const { return v.visit(*this); }
@@ -2304,7 +2309,6 @@ struct Function_decl : Decl
   Expr const& constraint() const     { return *constr; }
   Expr&       constraint()           { return *constr; }
 
-
   // TODO: Implelemnt pre- and post-conditions.
   // Expr const& precondition() const  { return *constr; }
   // Expr const& postcondition() const { return *constr; }
@@ -2314,7 +2318,6 @@ struct Function_decl : Decl
 
   // Returns true if this declaration has function constraints.
   bool is_constrained() const { return constr; }
-
 
   // Returns true iff this declaration is also a definition.
   bool is_definition() const { return def; }
@@ -3218,6 +3221,14 @@ is_scalar_type(Type const& t)
 
 // -------------------------------------------------------------------------- //
 // Queries on expressions
+
+
+// Returns true if `e` has type `bool`.
+inline bool
+has_bool_type(Expr const& e)
+{
+  return is_boolean_type(e.type());
+}
 
 
 // Returns true if the expression `e` has integer type.

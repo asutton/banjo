@@ -112,9 +112,8 @@ zero_initialize(Aggregate_value& v)
 }
 
 
-// Zero initialize the value. Note that zero initialization of
-// a reference or function (which would be a reference) does
-// nothing.
+// Zero initialize the value. Note that zero initialization of a
+// reference or function (which would be a reference) does nothing.
 void
 zero_initialize(Value& v)
 {

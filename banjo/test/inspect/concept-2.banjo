@@ -35,3 +35,4 @@ concept R2<typename T> = true;
 // order.concept R2 R1;
 
 satisfy R2<int>;
+satisfy false;

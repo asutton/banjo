@@ -135,17 +135,17 @@ satisfy_directive(Parser& p)
   Expr& e = p.primary_expression();
   p.match(semicolon_tok);
 
-  if (!is<Check_expr>(&e)) {
-    // TODO: Use parser diagnostics.
-    std::cerr << format("'{}' does not evaluate a concept\n", e);
+  if (!has_bool_type(e)) {
+    error("'{}' does not have type bool");
     return;
   }
 
-  // TODO: Validate that the operands are non-dependent.
-  Check_expr& check = cast<Check_expr>(e);
+  // TODO: Can I realistically make any assumptions about
+  // what e can and cannot be? It must be a logical
+  // proposition.
 
   // Test for satisfaction.
-  bool result = is_satisfied(p.cxt, check);
+  bool result = is_satisfied(p.cxt, e);
   std::cout << std::boolalpha << result << '\n';
 }
 

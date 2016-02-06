@@ -4,6 +4,7 @@
 #include "satisfaction.hpp"
 #include "constraint.hpp"
 #include "normalization.hpp"
+#include "evaluation.hpp"
 #include "builder.hpp"
 #include "print.hpp"
 
@@ -27,7 +28,8 @@ satisfy_concept(Context& cxt, Concept_cons& c)
 inline bool
 satisfy_predicate(Context& cxt, Predicate_cons& p)
 {
-  lingo_unimplemented();
+  Value v = evaluate(p.expression());
+  return v.get_boolean();
 }
 
 
@@ -65,7 +67,6 @@ is_satisfied(Context& cxt, Cons& c)
     bool operator()(Conjunction_cons& c) { return satisfy_conjunction(cxt, c); }
     bool operator()(Disjunction_cons& c) { return satisfy_disjunction(cxt, c); }
   };
-  std::cout << "SAT: " << c << '\n';
   return apply(c, fn{cxt});
 }
 

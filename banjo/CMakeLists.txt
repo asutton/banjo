@@ -11,6 +11,7 @@ add_library(banjo
   lexer.cpp
   # Syntactic components
   ast.cpp
+  value.cpp
   builder.cpp
   parser.cpp
   parse_id.cpp
@@ -42,6 +43,7 @@ add_library(banjo
   normalization.cpp
   satisfaction.cpp
   subsumption.cpp
+  evaluation.cpp
   print.cpp
 )
 target_compile_definitions(banjo PUBLIC ${LLVM_DEFINITIONS})

@@ -154,13 +154,14 @@ struct Value
   bool is_array() const;
   bool is_tuple() const;
 
-  Error_value get_error() const;
-  Integer_value get_integer() const;
-  Float_value get_float() const;
-  Function_value get_function() const;
+  Error_value     get_error() const;
+  Integer_value   get_integer() const;
+  Float_value     get_float() const;
+  Function_value  get_function() const;
   Reference_value get_reference() const;
-  Array_value get_array() const;
-  Tuple_value get_tuple() const;
+  Array_value     get_array() const;
+  Tuple_value     get_tuple() const;
+  bool            get_boolean() const;
 
   Value_kind k;
   Value_rep r;
@@ -318,6 +319,14 @@ Value::get_tuple() const
 {
   assert(is_tuple());
   return r.tup_;
+}
+
+
+// Returns an boolean interpretaion of an integer value.
+inline bool
+Value::get_boolean() const
+{
+  return (bool)get_integer();
 }
 
 
