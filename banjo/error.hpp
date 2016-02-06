@@ -79,6 +79,14 @@ struct Type_error : Translation_error
 };
 
 
+// Represents an error resulting from the evaluation of a constant
+// expression.
+struct Evaluation_error : Translation_error
+{
+  using Translation_error::Translation_error;
+};
+
+
 // Represents an error caused by exceeding an implementation limit.
 struct Limitation_error : Translation_error
 {

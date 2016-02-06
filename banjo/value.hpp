@@ -381,7 +381,7 @@ struct Generic_value_visitor : Value::Visitor, lingo::Generic_visitor<F, T>
 
 
 template<typename F, typename T = typename std::result_of<F(Error_value const&)>::type>
-inline T
+inline decltype(auto)
 apply(Value const& v, F fn)
 {
   Generic_value_visitor<F, T> vis(fn);
@@ -396,18 +396,18 @@ struct Generic_value_mutator : Value::Mutator, lingo::Generic_mutator<F, T>
     : lingo::Generic_mutator<F, T>(fn)
   { }
 
-  void visit(Error_value& v) { this->invoke(v); };
-  void visit(Integer_value& v) { this->invoke(v); };
-  void visit(Float_value& v) { this->invoke(v); };
-  void visit(Function_value& v) { this->invoke(v); };
+  void visit(Error_value& v)     { this->invoke(v); };
+  void visit(Integer_value& v)   { this->invoke(v); };
+  void visit(Float_value& v)     { this->invoke(v); };
+  void visit(Function_value& v)  { this->invoke(v); };
   void visit(Reference_value& v) { this->invoke(v); };
-  void visit(Array_value& v) { this->invoke(v); };
-  void visit(Tuple_value& v) { this->invoke(v); };
+  void visit(Array_value& v)     { this->invoke(v); };
+  void visit(Tuple_value& v)     { this->invoke(v); };
 };
 
 
 template<typename F, typename T = typename std::result_of<F(Error_value&)>::type>
-inline T
+inline decltype(auto)
 apply(Value& v, F fn)
 {
   Generic_value_mutator<F, T> vis(fn);

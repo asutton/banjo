@@ -36,3 +36,4 @@ concept R2<typename T> = true;
 
 satisfy R2<int>;
 satisfy false;
+evaluate true && false;

@@ -3,6 +3,7 @@
 
 #include "evaluation.hpp"
 #include "ast.hpp"
+#include "builder.hpp"
 #include "print.hpp"
 
 #include <iostream>
@@ -10,6 +11,81 @@
 
 namespace banjo
 {
+
+// Returns a reference to the object or function corresponding
+// do the declaration `d`.
+//
+// FIXME: If d refers to a global variable, then we may not
+// have a binding for for it. We most definitely should.
+Value
+Evaluator::alias(Decl const& d)
+{
+  // If the expression refers to an object, then produce
+  // a reference to its stored value.
+  if (Object_decl const* var = as<Object_decl>(&d))
+    return &stack.lookup(var)->second;
+
+  // If the expression refers to a function, then produce
+  // a reference to that function.
+  if (Function_decl const* fn = as<Function_decl>(&d))
+    return fn;
+
+  // Is there anything else?
+  banjo_unhandled_case(d);
+}
+
+
+// Load the value of an object corresponding to the
+// given declaration.
+Value
+Evaluator::load(Decl const& d)
+{
+  // If the expression refers to an object, then produce
+  // a reference to its stored value.
+  if (Object_decl const* var = as<Object_decl>(&d))
+    return stack.lookup(var)->second;
+
+  // What else?
+  banjo_unhandled_case(d);
+}
+
+
+// Stores a value in the object corresponding to the given
+// declaration. This copies the value into the object, and
+// returns a reference to that value.
+//
+// FIXME: We should not be able to store values in objects that
+// have not been allocated.
+Value&
+Evaluator::store(Decl const& d, Value const& v)
+{
+  return stack.top().rebind(&d, v).second;
+}
+
+
+// Allocate space for an object of type `t`. No value initialization
+// procedure is invoked.
+//
+// This currently works by prototyping an object of the approppriate
+// shape and storing that for the declaration.
+//
+// TODO: It would be better if we could just emplace the approiately
+// shaped object directly into the store.
+Value&
+Evaluator::alloca(Decl const& d)
+{
+  struct fn
+  {
+    Value operator()(Type const& t) { banjo_unhandled_case(t); }
+    Value operator()(Boolean_type const&) { return 0; }
+    Value operator()(Integer_type const&) { return 0; }
+    Value operator()(Float_type const&)   { return 0.0; }
+    Value operator()(Function_type const&) { return Function_value(nullptr); }
+    Value operator()(Reference_type const&) { return Reference_value(nullptr); }
+  };
+  return store(d, apply(declared_type(d), fn{}));
+}
+
 
 // -------------------------------------------------------------------------- //
 // Evaluation of expressions
@@ -54,20 +130,7 @@ Evaluator::evaluate_integer(Integer_expr const& e)
 Value
 Evaluator::evaluate_reference(Reference_expr const& e)
 {
-  Decl const& d = e.declaration();
-
-  // If the expression refers to an object, then produce
-  // a reference to its stored value.
-  if (Object_decl const* var = as<Object_decl>(&d))
-    return &stack.lookup(var)->second;
-
-  // If the expression refers to a function, then produce
-  // a reference to that function.
-  if (Function_decl const* fn = as<Function_decl>(&d))
-    return fn;
-
-  // Is there anything else?
-  banjo_unhandled_case(e);
+  return alias(e.declaration());
 }
 
 
@@ -93,23 +156,22 @@ Evaluator::evaluate_call(Call_expr const& e)
   if (!def)
     lingo_unimplemented();
 
-  // Evaluate each argument in turn.
-  //
-  // FIXME: See the comments below.
-  Value_list args;
-  args.reserve(e.arguments().size());
-  for (Expr const& a : e.arguments())
-    args.push_back(evaluate(a));
-
   // Each parameter is declared as a local variable within the
   // function.
-  //
-  // FIXME: Parameters are copy-initialized. We should be sure
-  // that we're actually doing the right thing here. Also,
-  // why isn't this merged with the one above?
   Enter_frame frame(*this);
-  for (std::size_t i = 0; i < args.size(); ++i)
-    stack.top().bind(f.parameters()[i], args[i]);
+  Expr_list const& args = e.arguments();
+  Decl_list const& parms = f.parameters();
+  auto ai = args.begin();
+  auto pi = parms.begin();
+  while (ai != args.end() && pi != parms.end()) {
+    Expr const& arg = *ai;
+    Decl const& parm = *pi;
+
+    // TODO: Parameters are copy-initialized. Reuse initialization
+    // here, insted of this kind of direct storage. Use alloca
+    // and then dispatch to the initializer.
+    store(parm, evaluate(arg));
+  }
 
   // Evaluate the function definition.
   //
@@ -120,7 +182,7 @@ Evaluator::evaluate_call(Call_expr const& e)
   Value result;
   Control ctl = evaluate(def->statement(), result);
   if (ctl != return_ctl)
-    throw Internal_error("function evaluation failed");
+    throw Evaluation_error("function evaluation failed");
   return result;
 }
 
@@ -225,35 +287,6 @@ Evaluator::evaluate_return(Return_stmt const& s, Value& r)
 // -------------------------------------------------------------------------- //
 // Evaluation of declarations
 
-namespace
-{
-
-// Allocate a value whose shape is determined by the type. No
-// guarantees are made about the contents of the resulting value.
-Value
-make_object(Type const& t)
-{
-  struct Fn
-  {
-    Value operator()(Type const& t) { banjo_unhandled_case(t); }
-
-    // Return a scalar object.
-    Value operator()(Boolean_type const&) { return 0; }
-    Value operator()(Integer_type const&) { return 0; }
-    Value operator()(Float_type const&)   { return 0.0; }
-
-    // Return a function object.
-    Value operator()(Function_type const&) { return Function_value(nullptr); }
-
-    // Return a reference object.
-    Value operator()(Reference_type const&) { return Reference_value(nullptr); }
-  };
-  return apply(t, Fn{});
-}
-
-} // namespace
-
-
 void
 Evaluator::elaborate(Decl const& d)
 {
@@ -270,16 +303,51 @@ Evaluator::elaborate(Decl const& d)
 void
 Evaluator::elaborate_object(Object_decl const& d)
 {
-  // Create an uninitialized object and bind it
-  // to the symbol. Keep a reference so we can
-  // initialize it directly.
-  Value v0 = make_object(d.type());
-  Value& v1 = stack.top().bind(&d, v0).second;
+  // FIXME: Implement initialization!
+  Value& v = alloca(d);
+  (void)v;
+  lingo_unimplemented();
+}
 
-  // FIXME: Actually initialize the object. Note that an initializer
-  // is conceptually a call to a constructor.
-  (void)v1;
-  // eval_init(d->init(), v1);
+
+// -------------------------------------------------------------------------- //
+// Reduction
+
+
+Expr&
+reduce(Context& cxt, Expr& e)
+{
+  struct fn
+  {
+    fn(Context& c, Type& t)
+      : cxt(c), type(t), build(c)
+    { }
+
+    Context& cxt;
+    Type&    type;
+    Builder  build;
+
+    Expr& operator()(Error_value const& v)     { throw Evaluation_error("did not evaluate"); };
+
+    // FIXME: If e.type() is boolean, this this is giving the
+    // wrong kind of expression.
+    Expr& operator()(Integer_value const& v)   { return build.get_integer(type, v); };
+
+    Expr& operator()(Float_value const& v)     { lingo_unimplemented(); }
+    Expr& operator()(Function_value const& v)  { lingo_unimplemented(); }
+    Expr& operator()(Reference_value const& v) { lingo_unimplemented(); }
+    Expr& operator()(Array_value const& v)     { lingo_unimplemented(); }
+    Expr& operator()(Tuple_value const& v)     { lingo_unimplemented(); }
+
+  };
+  return apply(evaluate(e), fn{cxt, e.type()});
+}
+
+
+Expr const&
+reduce(Context& cxt, Expr const& e)
+{
+  return reduce(cxt, const_cast<Expr&>(e));
 }
 
 

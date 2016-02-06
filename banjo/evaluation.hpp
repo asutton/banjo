@@ -6,6 +6,7 @@
 
 #include "prelude.hpp"
 #include "ast.hpp"
+#include "context.hpp"
 #include "value.hpp"
 
 #include <lingo/environment.hpp>
@@ -67,6 +68,12 @@ public:
   void elaborate(Decl const&);
   void elaborate_object(Object_decl const&);
 
+  // Memory management
+  Value  alias(Decl const&);
+  Value  load(Decl const&);
+  Value& store(Decl const&, Value const&);
+  Value& alloca(Decl const&);
+
   struct Enter_frame;
 
   Call_stack stack;
@@ -103,7 +110,8 @@ evaluate(Expr const& e)
 }
 
 
-Expr* reduce(Expr const* e);
+Expr const& reduce(Context&, Expr const&);
+Expr&       reduce(Context&, Expr&);
 
 
 } // namespace banjo

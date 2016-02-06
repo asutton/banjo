@@ -2187,7 +2187,8 @@ struct Decl::Mutator
 };
 
 
-Type& declared_type(Decl&);
+Type const& declared_type(Decl const&);
+Type&       declared_type(Decl&);
 
 
 // Declares a variable, constant, or function parameter.

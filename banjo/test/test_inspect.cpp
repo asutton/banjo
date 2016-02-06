@@ -7,7 +7,7 @@
 #include <banjo/lexer.hpp>
 #include <banjo/parser.hpp>
 #include <banjo/template.hpp>
-#include <banjo/normalization.hpp>
+#include <banjo/evaluation.hpp>
 #include <banjo/satisfaction.hpp>
 #include <banjo/subsumption.hpp>
 
@@ -21,6 +21,7 @@
 
 void directive_seq(Parser&);
 void type_directive(Parser&);
+void evaluate_directive(Parser&);
 void resolve_directive(Parser&);
 void instantiate_directive(Parser&);
 void satisfy_directive(Parser&);
@@ -71,12 +72,13 @@ main(int argc, char* argv[])
 // Parse a directive sequence.
 //
 //    directive-seq
-//      'type' expression
-//      'resolve' postscript-expression
-//      'instantiate' template-id
-//      'satisfy' check-expr
-//      'order' '.' 'template' template-id template-id
-//      'order' '.' 'concept' concept-id concept-id
+//      'type' expression ';'
+//      'evaluate' expression ';'
+//      'resolve' postscript-expression ';'
+//      'instantiate' template-id ';'
+//      'satisfy' check-expr ';'
+//      'order' '.' 'template' template-id template-id ';'
+//      'order' '.' 'concept' concept-id concept-id ';'
 void
 directive_seq(Parser& p)
 {
@@ -85,6 +87,8 @@ directive_seq(Parser& p)
   while (p.peek()) {
     if (p.next_token_is("type"))
       type_directive(p);
+    if (p.next_token_is("evaluate"))
+      evaluate_directive(p);
     if (p.next_token_is("resolve"))
       resolve_directive(p);
     if (p.next_token_is("instantiate"))
@@ -104,6 +108,16 @@ type_directive(Parser& p)
   Expr& e = p.expression();
   p.match(semicolon_tok);
   std::cout << e.type() << '\n';
+}
+
+
+void
+evaluate_directive(Parser& p)
+{
+  p.require("evaluate");
+  Expr& e = p.expression();
+  p.match(semicolon_tok);
+  std::cout << reduce(p.cxt, e) << '\n';
 }
 
 
@@ -146,7 +160,10 @@ satisfy_directive(Parser& p)
 
   // Test for satisfaction.
   bool result = is_satisfied(p.cxt, e);
-  std::cout << std::boolalpha << result << '\n';
+  if (result)
+    std::cout << "yes\n";
+  else
+    std::cout << "no\n";
 }
 
 
