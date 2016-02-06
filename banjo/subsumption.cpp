@@ -5,7 +5,7 @@
 #include "ast.hpp"
 #include "builder.hpp"
 #include "substitution.hpp"
-#include "normalization.hpp"
+#include "constraint.hpp"
 #include "hash.hpp"
 #include "equivalence.hpp"
 #include "print.hpp"
@@ -362,7 +362,6 @@ operator<<(std::ostream& os, Validation v)
 Validation  validate(Context&, Cons const&, Cons const&);
 Validation  validate(Context&, Prop_list&, Cons const&);
 Validation  match(Context&, Prop_list&, Cons const&);
-Cons const& expand(Context&, Concept_cons const&);
 
 
 // Given a sequent of the form A |- C, where A and C differ
@@ -780,34 +779,6 @@ is_better_expansion(Cons const* a, Cons const* b)
     return is_atomic(*b);
 
   return false;
-}
-
-
-// Expand the concept by substituting the template arguments
-// throughthe concept's definition and normalizing the result.
-//
-// FIXME: WE should cache the expansion so we don't keep re-running
-// the substitution.
-Cons const&
-expand(Context& cxt, Concept_cons const& c)
-{
-  // Oops. We need a mutable object for subsitution. *sigh*.
-  Concept_cons& x = const_cast<Concept_cons&>(c); // Yuck.
-
-  Concept_decl& decl = x.declaration();
-  Decl_list& tparms = decl.parameters();
-  Term_list& targs = x.arguments();
-  Expr& def = decl.definition();
-
-  // NOTE: Template arguments must have been checked (in kind?)
-  // prior to the formation of the constraint. It's should be
-  // a semantic requirement of the original check expression.
-  Substitution sub(tparms, targs);
-
-  Expr& e = substitute(cxt, def, sub);
-  Cons& r = normalize(cxt, e);
-  // std::cout << "EXPAND: " << c << " ~> " << r << '\n';
-  return r;
 }
 
 

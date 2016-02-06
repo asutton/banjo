@@ -321,4 +321,20 @@ substitute(Context& cxt, Decl& d, Substitution& sub)
 }
 
 
+// -------------------------------------------------------------------------- //
+// Substitution into constraints
+
+
+Cons&
+substitute(Context& cxt, Cons& c, Substitution& sub)
+{
+  struct fn
+  {
+    Context&      cxt;
+    Substitution& sub;
+    Cons& operator()(Cons& c)           { banjo_unhandled_case(c); }
+  };
+  return apply(c, fn{cxt, sub});
+}
+
 } // namespace banjo

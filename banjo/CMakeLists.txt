@@ -35,10 +35,12 @@ add_library(banjo
   initialization.cpp
   call.cpp
   inheritance.cpp
+  template.cpp
   substitution.cpp
   deduction.cpp
-  template.cpp
+  constraint.cpp
   normalization.cpp
+  satisfaction.cpp
   subsumption.cpp
   print.cpp
 )

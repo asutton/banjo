@@ -8,6 +8,7 @@
 #include <banjo/parser.hpp>
 #include <banjo/template.hpp>
 #include <banjo/normalization.hpp>
+#include <banjo/satisfaction.hpp>
 #include <banjo/subsumption.hpp>
 
 #include <lingo/file.hpp>
@@ -22,6 +23,7 @@ void directive_seq(Parser&);
 void type_directive(Parser&);
 void resolve_directive(Parser&);
 void instantiate_directive(Parser&);
+void satisfy_directive(Parser&);
 void order_directive(Parser&);
 void order_concept_directive(Parser&);
 void order_template_directive(Parser&);
@@ -69,12 +71,12 @@ main(int argc, char* argv[])
 // Parse a directive sequence.
 //
 //    directive-seq
-//      'instantiate' template-id
-//      'resolve' postscript-expression
 //      'type' expression
+//      'resolve' postscript-expression
+//      'instantiate' template-id
+//      'satisfy' check-expr
 //      'order' '.' 'template' template-id template-id
 //      'order' '.' 'concept' concept-id concept-id
-//      'satisfy' concept-id
 void
 directive_seq(Parser& p)
 {
@@ -87,6 +89,8 @@ directive_seq(Parser& p)
       resolve_directive(p);
     if (p.next_token_is("instantiate"))
       instantiate_directive(p);
+    if (p.next_token_is("satisfy"))
+      satisfy_directive(p);
     if (p.next_token_is("order"))
       order_directive(p);
   }
@@ -121,6 +125,28 @@ instantiate_directive(Parser& p)
   // Name& n = p.template_id();
   // Actually show the instantated definition.
   lingo_unimplemented();
+}
+
+
+void
+satisfy_directive(Parser& p)
+{
+  p.require("satisfy");
+  Expr& e = p.primary_expression();
+  p.match(semicolon_tok);
+
+  if (!is<Check_expr>(&e)) {
+    // TODO: Use parser diagnostics.
+    std::cerr << format("'{}' does not evaluate a concept\n", e);
+    return;
+  }
+
+  // TODO: Validate that the operands are non-dependent.
+  Check_expr& check = cast<Check_expr>(e);
+
+  // Test for satisfaction.
+  bool result = is_satisfied(p.cxt, check);
+  std::cout << std::boolalpha << result << '\n';
 }
 
 
