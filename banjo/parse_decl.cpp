@@ -588,6 +588,10 @@ Parser::declarator()
 // Note that declaration-seqs is only referenced from translation-unit
 // and namespace-definition. Therefore, it must terminate on EOF or
 // a '}'.
+//
+// NOTE: We also terminate on the first identifier in order to support
+// the inspection tool. I wonder if there is a more graceful way of doing
+// this.
 Decl_list
 Parser::declaration_seq()
 {
@@ -596,7 +600,7 @@ Parser::declaration_seq()
   do {
     Decl& d = declaration();
     ds.push_back(d);
-  } while (peek() && lookahead() != rbrace_tok);
+  } while (peek() && lookahead() != rbrace_tok && lookahead() != identifier_tok);
   return ds;
 }
 

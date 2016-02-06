@@ -178,12 +178,32 @@ substitute_type(Context& cxt, Typename_type& t, Substitution& sub)
 // FIXME: None of this is correct. We actually need to elaborate the
 // result of substitution.
 
+
+// FIXME: This isn't right... we probably need to re-bind references,
+// especially when they refer to parameters or local variables.
 Expr&
-subst_expr(Context& cxt, Check_expr& e, Substitution& sub)
+subst_ref(Context& cxt, Reference_expr& e, Substitution& sub)
+{
+  return e;
+}
+
+
+Expr&
+subst_check(Context& cxt, Check_expr& e, Substitution& sub)
 {
   Builder build(cxt);
   Term_list args = substitute(cxt, e.arguments(), sub);
   return build.make_check(e.declaration(), args);
+}
+
+
+Expr&
+subst_call(Context& cxt, Call_expr& e, Substitution& sub)
+{
+  Builder build(cxt);
+  Expr& fn = substitute(cxt, e.function(), sub);
+  Expr_list args = substitute(cxt, e.arguments(), sub);
+  return build.make_call(build.get_void_type(), fn, args);
 }
 
 
@@ -224,10 +244,17 @@ substitute(Context& cxt, Expr& e, Substitution& sub)
     Context&      cxt;
     Substitution& sub;
 
-    Expr& operator()(Expr& e) { lingo_unimplemented(); }
-    Expr& operator()(Boolean_expr& e) { return e; }
-    Expr& operator()(Integer_expr& e) { return e; }
-    Expr& operator()(Check_expr& e)   { return subst_expr(cxt, e, sub); }
+    Expr& operator()(Expr& e)
+    {
+      std::cout << type_str(e) << '\n';
+      lingo_unimplemented();
+    }
+
+    Expr& operator()(Boolean_expr& e)   { return e; }
+    Expr& operator()(Integer_expr& e)   { return e; }
+    Expr& operator()(Reference_expr& e) { return subst_ref(cxt, e, sub); }
+    Expr& operator()(Check_expr& e)     { return subst_check(cxt, e, sub); }
+    Expr& operator()(Call_expr& e)      { return subst_call(cxt, e, sub); }
 
     Expr& operator()(And_expr& e) { return subst_expr(cxt, e, sub); }
     Expr& operator()(Or_expr& e)  { return subst_expr(cxt, e, sub); }

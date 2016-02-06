@@ -62,26 +62,33 @@ add_executable(banjo-compile main.cpp)
 target_link_libraries(banjo-compile banjo)
 
 
-macro(add_run_test target)
+# Add an executable test program.
+macro(add_test_program target)
   add_executable(${target} ${ARGN})
   target_link_libraries(${target} banjo)
+endmacro()
+
+
+# Add a test program and register it with the test suite.
+macro(add_unit_test target)
+  add_test_program(${target} ${ARGN})
   add_test(${target} ${target})
 endmacro()
 
 
 # Unit tests
-add_run_test(test_print       test/test_print.cpp)
-add_run_test(test_equivalence test/test_equivalence.cpp)
-add_run_test(test_hash        test/test_hash.cpp)
-add_run_test(test_variable    test/test_variable.cpp)
-add_run_test(test_function    test/test_function.cpp)
-add_run_test(test_template    test/test_template.cpp)
-add_run_test(test_convert     test/test_convert.cpp)
-add_run_test(test_initialize  test/test_initialize.cpp)
-add_run_test(test_substitute  test/test_substitute.cpp)
-add_run_test(test_deduce      test/test_deduce.cpp)
-add_run_test(test_constraint  test/test_constraint.cpp)
+add_unit_test(test_print       test/test_print.cpp)
+add_unit_test(test_equivalence test/test_equivalence.cpp)
+add_unit_test(test_hash        test/test_hash.cpp)
+add_unit_test(test_variable    test/test_variable.cpp)
+add_unit_test(test_function    test/test_function.cpp)
+add_unit_test(test_template    test/test_template.cpp)
+add_unit_test(test_convert     test/test_convert.cpp)
+add_unit_test(test_initialize  test/test_initialize.cpp)
+add_unit_test(test_substitute  test/test_substitute.cpp)
+add_unit_test(test_deduce      test/test_deduce.cpp)
+add_unit_test(test_constraint  test/test_constraint.cpp)
 
 # Testing tools
-add_executable(test_parse test/test_parse.cpp)
-target_link_libraries(test_parse banjo)
+add_test_program(test_parse   test/test_parse.cpp)
+add_test_program(test_inspect test/test_inspect.cpp)

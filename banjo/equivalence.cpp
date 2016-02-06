@@ -323,6 +323,13 @@ is_equivalent(Literal_expr<T> const& e1, Literal_expr<T> const& e2)
 
 
 bool
+is_equivalent(Reference_expr const& e1, Reference_expr const& e2)
+{
+  return is_equivalent(e1.declaration(), e2.declaration());
+}
+
+
+bool
 is_equivalent(Unary_expr const& e1, Unary_expr const& e2)
 {
   return is_equivalent(e1.operand(), e2.operand());
@@ -338,16 +345,26 @@ is_equivalent(Binary_expr const& e1, Binary_expr const& e2)
 
 
 bool
+is_equivalent(Call_expr const& e1, Call_expr const& e2)
+{
+  return is_equivalent(e1.function(), e2.function())
+      && is_equivalent(e1.arguments(), e2.arguments());
+}
+
+
+bool
 is_equivalent(Expr const& e1, Expr const& e2)
 {
   struct fn
   {
     Expr const& e2;
-    bool operator()(Expr const&) const            { lingo_unimplemented(); }
-    bool operator()(Boolean_expr const& e1) const { return is_equivalent(e1, cast<Boolean_expr>(e2)); }
-    bool operator()(Integer_expr const& e1) const { return is_equivalent(e1, cast<Integer_expr>(e2)); }
-    bool operator()(Unary_expr const& e1) const   { return is_equivalent(e1, cast<Unary_expr>(e2)); }
-    bool operator()(Binary_expr const& e1) const  { return is_equivalent(e1, cast<Binary_expr>(e2)); }
+    bool operator()(Expr const&) const              { lingo_unimplemented(); }
+    bool operator()(Boolean_expr const& e1) const   { return is_equivalent(e1, cast<Boolean_expr>(e2)); }
+    bool operator()(Integer_expr const& e1) const   { return is_equivalent(e1, cast<Integer_expr>(e2)); }
+    bool operator()(Reference_expr const& e1) const { return is_equivalent(e1, cast<Reference_expr>(e2)); }
+    bool operator()(Unary_expr const& e1) const     { return is_equivalent(e1, cast<Unary_expr>(e2)); }
+    bool operator()(Binary_expr const& e1) const    { return is_equivalent(e1, cast<Binary_expr>(e2)); }
+    bool operator()(Call_expr const& e1) const      { return is_equivalent(e1, cast<Call_expr>(e2)); }
   };
 
   // The same objects represent the same types.

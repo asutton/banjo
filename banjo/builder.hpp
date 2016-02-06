@@ -95,6 +95,7 @@ struct Builder
   Gt_expr&        make_gt(Type&, Expr&, Expr&);
   Le_expr&        make_le(Type&, Expr&, Expr&);
   Ge_expr&        make_ge(Type&, Expr&, Expr&);
+  Call_expr&      make_call(Type&, Expr&, Expr_list const&);
   Call_expr&      make_call(Type&, Function_decl&, Expr_list const&);
   Synthetic_expr& synthesize_expression(Decl&);
 
@@ -513,6 +514,13 @@ Builder::make_reference(Variable_decl& d)
 }
 
 
+inline Reference_expr&
+Builder::make_reference(Function_decl& d)
+{
+  return make<Reference_expr>(get_reference_type(d.type()), d);
+}
+
+
 // Make a concept check. The type is bool.
 inline Check_expr&
 Builder::make_check(Concept_decl& d, Term_list const& as)
@@ -585,9 +593,16 @@ Builder::make_ge(Type& t, Expr& e1, Expr& e2)
 
 
 inline Call_expr&
+Builder::make_call(Type& t, Expr& f, Expr_list const& a)
+{
+  return make<Call_expr>(t, f, a);
+}
+
+
+inline Call_expr&
 Builder::make_call(Type& t, Function_decl& f, Expr_list const& a)
 {
-  return make<Call_expr>(t, make_reference(f), a);
+  return make_call(t, make_reference(f), a);
 }
 
 

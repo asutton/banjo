@@ -221,6 +221,15 @@ hash_value(Literal_expr<T> const& e)
 
 
 std::size_t
+hash_value(Reference_expr const& e)
+{
+  std::size_t h = hash_type(e);
+  boost::hash_combine(h, e.declaration());
+  return h;
+}
+
+
+std::size_t
 hash_value(Unary_expr const& e)
 {
   std::size_t h = hash_type(e);
@@ -240,15 +249,27 @@ hash_value(Binary_expr const& e)
 
 
 std::size_t
+hash_value(Call_expr const& e)
+{
+  std::size_t h = hash_type(e);
+  boost::hash_combine(h, e.function());
+  boost::hash_combine(h, e.arguments());
+  return h;
+}
+
+
+std::size_t
 hash_value(Expr const& e)
 {
   struct fn
   {
-    std::size_t operator()(Expr const& e) const         { lingo_unimplemented(); }
-    std::size_t operator()(Boolean_expr const& e) const { return hash_value(e); }
-    std::size_t operator()(Integer_expr const& e) const { return hash_value(e); }
-    std::size_t operator()(Unary_expr const& e) const   { return hash_value(e); }
-    std::size_t operator()(Binary_expr const& e) const  { return hash_value(e); }
+    std::size_t operator()(Expr const& e) const           { lingo_unimplemented(); }
+    std::size_t operator()(Boolean_expr const& e) const   { return hash_value(e); }
+    std::size_t operator()(Integer_expr const& e) const   { return hash_value(e); }
+    std::size_t operator()(Reference_expr const& e) const { return hash_value(e); }
+    std::size_t operator()(Unary_expr const& e) const     { return hash_value(e); }
+    std::size_t operator()(Binary_expr const& e) const    { return hash_value(e); }
+    std::size_t operator()(Call_expr const& e) const      { return hash_value(e); }
   };
   return apply(e, fn{});
 }

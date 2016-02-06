@@ -241,9 +241,12 @@ struct Parser
   Token      peek() const;
   Token_kind lookahead() const;
   Token_kind lookahead(int) const;
+  bool       next_token_is(Token_kind);
+  bool       next_token_is(char const*);
   Token      match(Token_kind);
   Token      match_if(Token_kind);
   Token      require(Token_kind);
+  Token      require(char const*);
   Token      accept();
 
   // Tree matching.

@@ -1,0 +1,36 @@
+
+concept C1<typename T> = 1;
+
+template<typename T>
+def f1() -> bool
+{
+  return C1<T>;
+}
+
+template<typename T>
+def f2() -> bool
+{
+  return f1<T>()
+      || f1<T>()
+      || f1<T>()
+      || f1<T>()
+      || f1<T>();
+}
+
+
+concept C2<typename T> = f1<T>() || f1<T>() || f1<T>() || f1<T>() || f1<T>();
+
+concept C3<typename T> = C2<T> && (C1<T> || C1<T> || C1<T>);
+
+// concept<typename T> C4 = C3<typename T::type1> && C3<typename T::type2>
+concept C4<typename T> = C3<T*> && C3<T&>;
+
+concept C5<typename T> = C4<T>;
+
+concept C6<typename T> = C5<T> && true;
+
+concept R1<typename T> = C4<T> && C5<T> && C6<T>;
+concept R2<typename T> = true;
+
+order.concept R1 R2;
+order.concept R2 R1;

@@ -15,10 +15,10 @@ namespace banjo
 using Binding = Scope::Binding;
 
 
-// Returns the set of declarations for give (unqualified) id.
+// Returns the non-empty set of declarations for give (unqualified) id.
+// Throws an exception if no matching declarations are found.
 //
-// Lookup ends as soon as a declaration is found
-// for the given name.
+// Lookup ends as soon as a declaration is found for the given name.
 //
 // TODO: How should we handle non-simple id's like operator-ids
 // and conversion function ids.
@@ -63,7 +63,8 @@ unqualified_lookup(Scope& scope, Simple_id const& id)
 
     p = p->enclosing_scope();
   }
-  return {};
+
+  throw Lookup_error("no matching declaration for '{}'", id);
 }
 
 

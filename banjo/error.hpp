@@ -44,6 +44,21 @@ struct Lookup_error : Translation_error
 };
 
 
+// Represets a type error. Type errors occur when one type (or kind
+// of type) is expected, but another type is given.
+struct Type_error : Translation_error
+{
+  using Translation_error::Translation_error;
+};
+
+
+// Represents an error caused by exceeding an implementation limit.
+struct Limitation_error : Translation_error
+{
+  using Translation_error::Translation_error;
+};
+
+
 } // namespace banjo
 
 

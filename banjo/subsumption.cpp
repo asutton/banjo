@@ -389,7 +389,7 @@ find_support(Context& cxt, Cons const& a, Cons const& c)
 Validation
 find_support(Context& cxt, Prop_list& ants, Cons const& c)
 {
-  std::cout << "SUPPORT: " << c << '\n';
+  // std::cout << "SUPPORT: " << c << '\n';
   Validation r = invalid_proof;
   for (Cons const* a : ants) {
     Validation v = find_support(cxt, *a, c);
@@ -465,7 +465,7 @@ derive(Context& cxt, Prop_list& ants, Cons const& c)
     Validation operator()(Conjunction_cons const& c) const   { return derive(cxt, ants, c); }
     Validation operator()(Disjunction_cons const& c) const   { return derive(cxt, ants, c); }
   };
-  std::cout << "DERIVE: " << c << '\n';
+  // std::cout << "DERIVE: " << c << '\n';
   return apply(c, fn{cxt, ants});
 }
 
@@ -806,7 +806,7 @@ expand(Context& cxt, Concept_cons const& c)
 
   Expr& e = substitute(cxt, def, sub);
   Cons& r = normalize(cxt, e);
-  std::cout << "EXPAND: " << c << " ~> " << r << '\n';
+  // std::cout << "EXPAND: " << c << " ~> " << r << '\n';
   return r;
 }
 
@@ -835,7 +835,7 @@ expand_left(Proof& p, Sequent& s)
 }
 
 
-// Find a concept, and expand it.
+// Find a concept on the right hand side, and expand it.
 //
 // FIXME: This only really works if a concept appears in the
 // consequents of the goal. Any degree of conunjunctive nesting
@@ -849,12 +849,11 @@ expand_right(Proof& p, Sequent& s)
   auto cmp = [](Cons const* c) { return is<Concept_cons>(c); };
   auto iter = std::find_if(ps.begin(), ps.end(), cmp);
   if (iter != ps.end()) {
-    std::cout << "RIGHT: " << **iter << '\n';
+    // std::cout << "RIGHT: " << **iter << '\n';
     Concept_cons const& c = cast<Concept_cons>(**iter);
     ps.replace(iter, expand(p.context(), c));
   }
 }
-
 
 
 // Select, in each goal, a term to expand (and expand it).
@@ -890,7 +889,7 @@ subsumes(Context& cxt, Cons const& a, Cons const& c)
   // Alas... no quick check. We have to prove the implication.
   Goal_list goals(Sequent(a, c));
   Proof p(cxt, goals);
-  std::cout << "INIT: " << p.sequent() << '\n';
+  // std::cout << "INIT: " << p.sequent() << '\n';
 
   // Continue manipulating the proof state until we know that
   // the implication is valid or not.
@@ -899,13 +898,13 @@ subsumes(Context& cxt, Cons const& a, Cons const& c)
   do {
     // Opportunistically flatten sequents in each goal.
     flatten(p);
-    std::cout << "------------\n";
-    std::cout << "STEP " << n << ": " << p.sequent() << '\n';
+    // std::cout << "------------\n";
+    // std::cout << "STEP " << n << ": " << p.sequent() << '\n';
 
     // Having done that, determine if the proof is valid (or not).
     // In either case, we can stop.
     v = validate(p);
-    std::cout << "VALID? " << v << '\n';
+    // std::cout << "VALID? " << v << '\n';
     if (v == valid_proof)
       return true;
     if (v == invalid_proof)
@@ -919,9 +918,9 @@ subsumes(Context& cxt, Cons const& a, Cons const& c)
     // real limiting factor is going to be the goal size, not
     // the step count.
     if (goals.size() > 32)
-      lingo_unimplemented();
-    if (n > 20)
-      lingo_unimplemented();
+      throw Limitation_error("exceeded proof subgoal limit");
+    if (n > 1024)
+      throw Limitation_error("exceeded proof step limit");
   } while (v == incomplete_proof);
 
   return false;

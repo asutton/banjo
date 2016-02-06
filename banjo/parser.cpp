@@ -61,11 +61,30 @@ Parser::lookahead(int n) const
 }
 
 
+// Returns true if the next token has the given kind.
+bool
+Parser::next_token_is(Token_kind k)
+{
+  return lookahead() == k;
+}
+
+
+// Returns true if the next token is an identifier with
+// the given spelling.
+bool
+Parser::next_token_is(char const* s)
+{
+  return next_token_is(identifier_tok) && peek().spelling() == s;
+}
+
+
+// Require that the next token matches in kind. Emit a diagnostic
+// message if it does not.
 Token
 Parser::match(Token_kind k)
 {
   if (lookahead() == k)
-    return tokens.get();
+    return accept();
   String msg = format("expected '{}' but got '{}'",
                       get_spelling(k),
                       token_spelling(tokens));
@@ -83,7 +102,7 @@ Token
 Parser::match_if(Token_kind k)
 {
   if (lookahead() == k)
-    return tokens.get();
+    return accept();
   else
     return Token();
 }
@@ -94,18 +113,32 @@ Parser::match_if(Token_kind k)
 Token
 Parser::require(Token_kind k)
 {
-  assert(lookahead() == k);
-  return tokens.get();
+  lingo_assert(lookahead() == k);
+  return accept();
 }
 
 
-// Returns the current token and advances the
-// underlying token stream.
+Token
+Parser::require(char const* s)
+{
+  lingo_assert(next_token_is(s));
+  return accept();
+}
+
+
+// Returns the current token and advances the underlying
+// token stream.
+//
+// TODO: Record information about matching braces here.
 Token
 Parser::accept()
 {
   return tokens.get();
 }
+
+
+// -------------------------------------------------------------------------- //
+// Scope management
 
 
 // Enter the given scope. Unless `s` is the scope of the global
