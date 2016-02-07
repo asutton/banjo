@@ -10,7 +10,11 @@
 namespace banjo
 {
 
+struct Decl;
+struct Variable_decl;
+struct Function_decl;
 struct Namespace_decl;
+struct Scope;
 
 
 // A repository of information to support translation.
@@ -33,12 +37,34 @@ struct Context
   Symbol_table&       symbols()       { return syms; }
 
   // Returns the global namespace.
-  Namespace_decl const& global_namespace() const { return *top; }
-  Namespace_decl&       global_namespace()       { return *top; }
+  Namespace_decl const& global_namespace() const { return *global; }
+  Namespace_decl&       global_namespace()       { return *global; }
+
+  // Scope management
+  void   set_scope(Scope&);
+  Scope& make_initializer_scope(Decl&);
+  Scope& make_function_scope(Decl&);
+  Scope& make_function_parameter_scope();
+  Scope& make_template_parameter_scope();
+  Scope& current_scope();
+  Decl&  current_context();
 
   Symbol_table    syms;
-  Namespace_decl* top;  // The global namespace
+  Namespace_decl* global; // The global namespace
+  Scope*          scope;  // The current scope.
+};
 
+
+// An RAII helper that manages the entry and exit of scopes.
+struct Enter_scope
+{
+  Enter_scope(Context&, Namespace_decl&);
+  Enter_scope(Context&, Scope&);
+  ~Enter_scope();
+
+  Context& cxt;
+  Scope*   prev;  // The previous socpe.
+  Scope*   alloc; // Only set when locally allocated.
 };
 
 

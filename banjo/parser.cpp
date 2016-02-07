@@ -141,56 +141,11 @@ Parser::accept()
 // Scope management
 
 
-// Enter the given scope. Unless `s` is the scope of the global
-// namespace, `s` must be linked through its enclosing scopes
-// to the global namespace.
-//
-// Do not call this function directly. Use Parser::Scope_sentinel
-// to enter a new scope, and guarantee cleanup and scope exit.
-void
-Parser::set_scope(Scope& s)
-{
-  state.scope = &s;
-}
-
-
-// Create a new initializer scope.
-Scope&
-Parser::make_initializer_scope(Decl& d)
-{
-  return *new Initializer_scope(current_scope(), d);
-}
-
-
-// Create a new function scope.
-Scope&
-Parser::make_function_scope(Decl& d)
-{
-  return *new Function_scope(current_scope(), d);
-}
-
-
-// Create a new function parameter scope.
-Scope&
-Parser::make_function_parameter_scope()
-{
-  return *new Function_parameter_scope(current_scope());
-}
-
-
-// Create a new template parameter scope.
-Scope&
-Parser::make_template_parameter_scope()
-{
-  return *new Template_parameter_scope(current_scope());
-}
-
-
 // Returns the current scope.
 Scope&
 Parser::current_scope()
 {
-  return *state.scope;
+  return cxt.current_scope();
 }
 
 
@@ -199,10 +154,7 @@ Parser::current_scope()
 Decl&
 Parser::current_context()
 {
-  Scope* p = &current_scope();
-  while (!p->context())
-    p = p->enclosing_scope();
-  return *p->context();
+  return cxt.current_context();
 }
 
 
@@ -219,7 +171,7 @@ Parser::current_context()
 Term&
 Parser::translation_unit()
 {
-  Enter_scope scope(*this, cxt.global_namespace());
+  Enter_scope scope(cxt, cxt.global_namespace());
   Decl_list ds;
   if (peek())
     ds = declaration_seq();

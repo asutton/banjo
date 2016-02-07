@@ -83,7 +83,7 @@ void
 directive_seq(Parser& p)
 {
   // Parse the directive sequence as if in the global namespace.
-  Parser::Enter_scope scope(p, p.cxt.global_namespace());
+  Enter_scope scope(p.cxt, p.cxt.global_namespace());
   while (p.peek()) {
     if (p.next_token_is("type"))
       type_directive(p);
