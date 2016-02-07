@@ -47,6 +47,7 @@ add_library(banjo
   subsumption.cpp
   evaluation.cpp
   print.cpp
+  inspection.cpp
 )
 target_compile_definitions(banjo PUBLIC ${LLVM_DEFINITIONS})
 target_include_directories(banjo

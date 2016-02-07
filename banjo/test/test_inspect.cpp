@@ -6,6 +6,7 @@
 #include <banjo/context.hpp>
 #include <banjo/lexer.hpp>
 #include <banjo/parser.hpp>
+#include <banjo/inspection.hpp>
 #include <banjo/template.hpp>
 #include <banjo/evaluation.hpp>
 #include <banjo/satisfaction.hpp>
@@ -28,6 +29,8 @@ void satisfy_directive(Parser&);
 void order_directive(Parser&);
 void order_concept_directive(Parser&);
 void order_template_directive(Parser&);
+void inspect_directive(Parser&);
+void inspect_expression_directive(Parser&);
 
 
 // This tool parses a sequence of declarations followed by a
@@ -79,24 +82,31 @@ main(int argc, char* argv[])
 //      'satisfy' check-expr ';'
 //      'order' '.' 'template' template-id template-id ';'
 //      'order' '.' 'concept' concept-id concept-id ';'
+//      'inspect.expr' expression ';'
 void
 directive_seq(Parser& p)
 {
   // Parse the directive sequence as if in the global namespace.
   Enter_scope scope(p.cxt, p.cxt.global_namespace());
   while (p.peek()) {
+    // TODO: We know that the next token is an identifier.
+    // There is a more efficient way of doing this.
     if (p.next_token_is("type"))
       type_directive(p);
-    if (p.next_token_is("evaluate"))
+    else if (p.next_token_is("evaluate"))
       evaluate_directive(p);
-    if (p.next_token_is("resolve"))
+    else if (p.next_token_is("resolve"))
       resolve_directive(p);
-    if (p.next_token_is("instantiate"))
+    else if (p.next_token_is("instantiate"))
       instantiate_directive(p);
-    if (p.next_token_is("satisfy"))
+    else if (p.next_token_is("satisfy"))
       satisfy_directive(p);
-    if (p.next_token_is("order"))
+    else if (p.next_token_is("order"))
       order_directive(p);
+    else if (p.next_token_is("inspect"))
+      inspect_directive(p);
+    else
+      lingo_unreachable(); // FIXME: Actually diagnose an error.
   }
 }
 
@@ -218,4 +228,27 @@ order_template_directive(Parser& p)
   // TODO: Resolve the function templates referred to by these
   // ids and determine which is more specialized.
   lingo_unimplemented();
+}
+
+
+void
+inspect_directive(Parser& p)
+{
+  p.require("inspect");
+  p.match(dot_tok);
+  if (p.next_token_is("expression"))
+    return inspect_expression_directive(p);
+
+  // FIXME: Be a little more polite.
+  lingo_unreachable();
+}
+
+
+void
+inspect_expression_directive(Parser& p)
+{
+  p.require("expression");
+  Expr& e = p.expression();
+  p.match(semicolon_tok);
+  std::cout << debug(e) << '\n';
 }
