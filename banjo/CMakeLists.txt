@@ -31,6 +31,7 @@ add_library(banjo
   # Semantics
   scope.cpp
   lookup.cpp
+  declaration.cpp
   overload.cpp
   conversion.cpp
   initialization.cpp

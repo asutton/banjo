@@ -258,7 +258,6 @@ struct Parser
   Decl&  current_context();
 
   // Declarations
-  Decl* declare(Scope&, Decl&);
   Decl& templatize_declaration(Decl&);
 
   // Maintains the current parse state. This is used to provide
