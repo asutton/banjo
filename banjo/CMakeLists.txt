@@ -33,6 +33,7 @@ add_library(banjo
   lookup.cpp
   declaration.cpp
   overload.cpp
+  expression.cpp
   conversion.cpp
   initialization.cpp
   call.cpp

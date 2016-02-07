@@ -3,6 +3,7 @@
 
 #include "parser.hpp"
 #include "lookup.hpp"
+#include "expression.hpp"
 #include "template.hpp"
 #include "print.hpp"
 
@@ -17,24 +18,21 @@ namespace banjo
 Expr&
 Parser::on_logical_and_expression(Token tok, Expr& e1, Expr& e2)
 {
-  Type& t = build.get_bool_type();
-  return build.make_and(t, e1, e2);
+  return make_logical_and(cxt, e1, e2);
 }
 
 
 Expr&
 Parser::on_logical_or_expression(Token tok, Expr& e1, Expr& e2)
 {
-  Type& t = build.get_bool_type();
-  return build.make_or(t, e1, e2);
+  return make_logical_or(cxt, e1, e2);
 }
 
 
 Expr&
 Parser::on_logical_not_expression(Token tok, Expr& e)
 {
-  Type& t = build.get_bool_type();
-  return build.make_not(t, e);
+  return make_logical_not(cxt, e);
 }
 
 

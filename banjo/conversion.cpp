@@ -3,7 +3,9 @@
 
 #include "conversion.hpp"
 #include "ast.hpp"
+#include "builder.hpp"
 #include "equivalence.hpp"
+#include "initialization.hpp"
 #include "print.hpp"
 
 #include <typeindex>
@@ -617,6 +619,18 @@ compare(Conversion_seq const& a, Conversion_seq const& b)
   // We cannot distinguis the conversion sequences.
   return indistinct_conv;
 }
+
+
+// -------------------------------------------------------------------------- //
+// Contextual conversions
+
+Expr&
+contextual_conversion_to_bool(Context& cxt, Expr& e)
+{
+  Builder b(cxt);
+  return direct_initialize(cxt, b.get_bool_type(), e);
+}
+
 
 
 } // namespace banjo

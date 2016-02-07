@@ -173,7 +173,11 @@ Parser::translation_unit()
 {
   Enter_scope scope(cxt, cxt.global_namespace());
   Decl_list ds;
-  if (peek())
+
+  // NOTE: We match against identifier so that we don't try to
+  // parse inspect scripts as real programs. Perhaps we should
+  // have a very explicit end-of-program token (e.g., --?).
+  if (peek() && lookahead() != identifier_tok)
     ds = declaration_seq();
   return on_translation_unit(ds);
 }
