@@ -528,6 +528,14 @@ Parser::requires_clause()
 // Concept declarations
 
 
+// Parse a concept definition.
+//
+//    concept-definition:
+//      'concept' identifier '<' template-parameter-list '>' concept-initializer
+//
+//    concept-initializer:
+//      '=' logical-or-expression
+//      concept-body
 Decl&
 Parser::concept_declaration()
 {
@@ -542,13 +550,15 @@ Parser::concept_declaration()
   // Point of declaration.
   Decl& con = on_concept_declaration(tok, n, ps);
 
-  // TODO: Isn't this just an equal-init? Probably not since
-  // we're not converting (we except bool everywhere).
-  match(eq_tok);
-  Expr& e = expression();
-  on_concept_definition(con, e);
-  match(semicolon_tok);
-  return con;
+  // Match the '=' form.
+  if (match_if(eq_tok)) {
+    Expr& e = expression();
+    on_concept_definition(con, e);
+    match(semicolon_tok);
+    return con;
+  } else {
+    lingo_unimplemented();
+  }
 }
 
 

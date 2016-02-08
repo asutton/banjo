@@ -202,10 +202,10 @@ Parser::on_type_template_parameter(Name& n, Type& t)
 // Concepts
 
 static inline void
-define_concept(Decl& decl, Expr& expr)
+define_concept(Decl& decl, Def& def)
 {
   Concept_decl& con = cast<Concept_decl>(decl);
-  con.def = &expr;
+  con.def = &def;
 }
 
 
@@ -222,7 +222,8 @@ Parser::on_concept_declaration(Token, Name& n, Decl_list& ps)
 Decl&
 Parser::on_concept_definition(Decl& decl, Expr& e)
 {
-  define_concept(decl, e);
+  Def& def = build.make_expression_definition(e);
+  define_concept(decl, def);
   return decl;
 }
 

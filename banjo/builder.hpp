@@ -113,10 +113,12 @@ struct Builder
   Aggregate_init& make_aggregate_init(Type&, Expr_list const&);
 
   // Definitions
-  Function_def&   make_function_definition(Stmt&);
-  Class_def&      make_class_definition(Decl_list const&);
   Deleted_def&    make_deleted_definition();
   Defaulted_def&  make_defaulted_definition();
+  Expression_def& make_expression_definition(Expr&);
+  Function_def&   make_function_definition(Stmt&);
+  Class_def&      make_class_definition(Decl_list const&);
+  Concept_def&    make_concept_definition(Decl_list const&);
 
   Namespace_decl& make_namespace(Name&);
   Namespace_decl& make_namespace(char const*);
@@ -131,7 +133,9 @@ struct Builder
   Class_decl&     make_class(char const*);
   Template_decl&  make_template(Decl_list const&, Decl&);
   Concept_decl&   make_concept(Name&, Decl_list const&);
+  Concept_decl&   make_concept(Name&, Decl_list const&, Def&);
   Concept_decl&   make_concept(Name&, Decl_list const&, Expr&);
+  Concept_decl&   make_concept(char const*, Decl_list const&, Def&);
   Concept_decl&   make_concept(char const*, Decl_list const&, Expr&);
 
   Object_parm& make_object_parm(Name&, Type&);
@@ -685,6 +689,29 @@ Builder::make_aggregate_init(Type& t, Expr_list const& es)
 // -------------------------------------------------------------------------- //
 // Definitions
 
+
+
+inline Deleted_def&
+Builder::make_deleted_definition()
+{
+  return make<Deleted_def>();
+}
+
+
+inline Defaulted_def&
+Builder::make_defaulted_definition()
+{
+  return make<Defaulted_def>();
+}
+
+
+inline Expression_def&
+Builder::make_expression_definition(Expr& e)
+{
+  return make<Expression_def>(e);
+}
+
+
 inline Function_def&
 Builder::make_function_definition(Stmt& s)
 {
@@ -699,17 +726,10 @@ Builder::make_class_definition(Decl_list const& ds)
 }
 
 
-inline Deleted_def&
-Builder::make_deleted_definition()
+inline Concept_def&
+Builder::make_concept_definition(Decl_list const& ds)
 {
-  return make<Deleted_def>();
-}
-
-
-inline Defaulted_def&
-Builder::make_defaulted_definition()
-{
-  return make<Defaulted_def>();
+  return make<Concept_def>(ds);
 }
 
 
@@ -814,16 +834,30 @@ Builder::make_concept(Name& n, Decl_list const& ps)
 
 
 inline Concept_decl&
+Builder::make_concept(Name& n, Decl_list const& ps, Def& d)
+{
+  return make<Concept_decl>(n, ps, d);
+}
+
+
+inline Concept_decl&
 Builder::make_concept(Name& n, Decl_list const& ps, Expr& e)
 {
-  return make<Concept_decl>(n, ps, e);
+  return make<Concept_decl>(n, ps, make_expression_definition(e));
+}
+
+
+inline Concept_decl&
+Builder::make_concept(char const* s, Decl_list const& ps, Def& d)
+{
+  return make_concept(get_id(s), ps, d);
 }
 
 
 inline Concept_decl&
 Builder::make_concept(char const* s, Decl_list const& ps, Expr& e)
 {
-  return make_concept(get_id(s), ps, e);
+  return make_concept(get_id(s), ps, make_expression_definition(e));
 }
 
 

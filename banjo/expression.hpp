@@ -11,6 +11,7 @@ namespace banjo
 {
 
 struct Context;
+struct Name;
 struct Type;
 struct Expr;
 struct Decl;
@@ -19,6 +20,8 @@ struct Decl;
 Expr& make_logical_and(Context&, Expr&, Expr&);
 Expr& make_logical_or(Context&, Expr&, Expr&);
 Expr& make_logical_not(Context&, Expr&);
+
+Expr& make_reference(Context& cxt, Name&);
 
 
 } // namespace banjo

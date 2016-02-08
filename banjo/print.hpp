@@ -149,7 +149,6 @@ struct Printer
   void enum_declaration(Enum_decl const&);
   void namespace_declaration(Namespace_decl const&);
   void template_declaration(Template_decl const&);
-  void concept_declaration(Concept_decl const&);
 
   // Functions
   void function_declaration(Function_decl const&);
@@ -164,6 +163,12 @@ struct Printer
   void class_definition(Class_def const&);
   void class_definition(Deleted_def const&);
   void member_seq(Decl_list const&);
+
+  // Concepts
+  void concept_declaration(Concept_decl const&);
+  void concept_definition(Def const&);
+  void concept_definition(Expression_def const&);
+  void concept_definition(Concept_def const&);
 
   void parameter(Decl const&);
   void parameter(Object_parm const&);

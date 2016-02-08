@@ -207,8 +207,10 @@ struct Qualified_id;
 struct Name : Term
 {
   struct Visitor;
+  struct Mutator;
 
   virtual void accept(Visitor&) const = 0;
+  virtual void accept(Mutator&) = 0;
 
   // Returns an unqualified representation of the name.
   virtual Name const& unqualified_name() const { return *this; }
@@ -216,7 +218,6 @@ struct Name : Term
 };
 
 
-// Non-modifying visitor.
 struct Name::Visitor
 {
   virtual void visit(Simple_id const& n)      { }
@@ -232,6 +233,21 @@ struct Name::Visitor
 };
 
 
+struct Name::Mutator
+{
+  virtual void visit(Simple_id& n)      { }
+  virtual void visit(Global_id& n)      { }
+  virtual void visit(Placeholder_id& n) { }
+  virtual void visit(Operator_id& n)    { }
+  virtual void visit(Conversion_id& n)  { }
+  virtual void visit(Literal_id& n)     { }
+  virtual void visit(Destructor_id& n)  { }
+  virtual void visit(Template_id& n)    { }
+  virtual void visit(Concept_id& n)     { }
+  virtual void visit(Qualified_id& n)   { }
+};
+
+
 // A simple identifier.
 struct Simple_id : Name
 {
@@ -240,6 +256,7 @@ struct Simple_id : Name
   { }
 
   void accept(Visitor& v) const { v.visit(*this); };
+  void accept(Mutator& v)       { v.visit(*this); };
 
   Symbol const& symbol() const { return *first; }
 
@@ -256,15 +273,17 @@ struct Global_id : Name
   { }
 
   void accept(Visitor& v) const { v.visit(*this); };
+  void accept(Mutator& v)       { v.visit(*this); };
 };
 
 
 // An placeholder for a name.
 //
-// FIXME: Call this something else?
+// FIXME: This is not a good name for this class.
 struct Placeholder_id : Name
 {
   void accept(Visitor& v) const { v.visit(*this); };
+  void accept(Mutator& v)       { v.visit(*this); };
 };
 
 
@@ -274,6 +293,7 @@ struct Placeholder_id : Name
 struct Operator_id : Name
 {
   void accept(Visitor& v) const { v.visit(*this); };
+  void accept(Mutator& v)       { v.visit(*this); };
 };
 
 
@@ -283,6 +303,7 @@ struct Operator_id : Name
 struct Conversion_id : Name
 {
   void accept(Visitor& v) const { v.visit(*this); };
+  void accept(Mutator& v)       { v.visit(*this); };
 };
 
 
@@ -292,17 +313,19 @@ struct Conversion_id : Name
 struct Literal_id : Name
 {
   void accept(Visitor& v) const { v.visit(*this); };
+  void accept(Mutator& v)       { v.visit(*this); };
 };
 
 
 // An identifier for a destructor.
-//
-// TODO: Implement me.
 struct Destructor_id : Name
 {
+  void accept(Mutator& v)       { v.visit(*this); };
   void accept(Visitor& v) const { v.visit(*this); };
 
-  Type const& type() { return *first; }
+  // Returns the type named by the destructor id.
+  Type const& type() const { return *first; }
+  Type&       type()       { return *first; }
 
   Type* first;
 };
@@ -323,6 +346,7 @@ struct Template_id : Name
   { }
 
   void accept(Visitor& v) const { v.visit(*this); };
+  void accept(Mutator& v)       { v.visit(*this); };
 
   Template_decl const& declaration() const;
   Template_decl&       declaration();
@@ -347,6 +371,7 @@ struct Concept_id : Name
   { }
 
   void accept(Visitor& v) const { v.visit(*this); };
+  void accept(Mutator& v)       { v.visit(*this); };
 
   Concept_decl const& declaration() const;
   Concept_decl&       declaration();
@@ -376,6 +401,7 @@ struct Qualified_id : Name
   { }
 
   void accept(Visitor& v) const { v.visit(*this); };
+  void accept(Mutator& v)       { v.visit(*this); };
 
   // Returns the qualifying scope (the enclosing declaration)
   // for the unqualified id.
@@ -417,10 +443,40 @@ struct Generic_name_visitor : Name::Visitor, Generic_visitor<F, T>
 
 // Apply a function to the given name.
 template<typename F, typename T = typename std::result_of<F(Simple_id const&)>::type>
-inline T
+inline decltype(auto)
 apply(Name const& n, F fn)
 {
   Generic_name_visitor<F, T> vis(fn);
+  return accept(n, vis);
+}
+
+
+// A generic mutator for names.
+template<typename F, typename T>
+struct Generic_name_mutator : Name::Mutator, Generic_mutator<F, T>
+{
+  Generic_name_mutator(F f)
+    : Generic_mutator<F, T>(f)
+  { }
+
+  void visit(Simple_id& n)      { this->invoke(n); }
+  void visit(Global_id& n)      { this->invoke(n); }
+  void visit(Placeholder_id& n) { this->invoke(n); }
+  void visit(Operator_id& n)    { this->invoke(n); }
+  void visit(Conversion_id& n)  { this->invoke(n); }
+  void visit(Literal_id& n)     { this->invoke(n); }
+  void visit(Destructor_id& n)  { this->invoke(n); }
+  void visit(Template_id& n)    { this->invoke(n); }
+  void visit(Qualified_id& n)   { this->invoke(n); }
+};
+
+
+// Apply a function to the given name.
+template<typename F, typename T = typename std::result_of<F(Simple_id&)>::type>
+inline decltype(auto)
+apply(Name& n, F fn)
+{
+  Generic_name_mutator<F, T> vis(fn);
   return accept(n, vis);
 }
 
@@ -788,6 +844,11 @@ struct User_defined_type : Type
     : decl(&d)
   { }
 
+  // Returns the name of the user-defined type.
+  Name const& name() const;
+  Name&       name();
+
+  // Returns the declaration of the user-defined type.
   Decl const& declaration() const { return *decl; }
   Decl&       declaration()       { return *decl; }
 
@@ -1929,10 +1990,12 @@ apply(Stmt const& s, F fn)
 struct Def;
 struct Defaulted_def;
 struct Deleted_def;
+struct Expression_def;
 struct Function_def;
 struct Class_def;
 struct Union_def;
 struct Enum_def;
+struct Concept_def;
 
 
 // Denotes the set of definitions for functions and types.
@@ -1944,20 +2007,36 @@ struct Enum_def;
 struct Def : Term
 {
   struct Visitor;
+  struct Mutator;
 
   virtual void accept(Visitor&) const = 0;
+  virtual void accept(Mutator&) = 0;
 };
 
 
-// Visitor for definitions.
 struct Def::Visitor
 {
-  virtual void visit(Defaulted_def const&) { }
-  virtual void visit(Deleted_def const&)   { }
-  virtual void visit(Function_def const&)  { }
-  virtual void visit(Class_def const&)     { }
-  virtual void visit(Union_def const&)     { }
-  virtual void visit(Enum_def const&)      { }
+  virtual void visit(Defaulted_def const&)  { }
+  virtual void visit(Deleted_def const&)    { }
+  virtual void visit(Expression_def const&) { }
+  virtual void visit(Function_def const&)   { }
+  virtual void visit(Class_def const&)      { }
+  virtual void visit(Union_def const&)      { }
+  virtual void visit(Enum_def const&)       { }
+  virtual void visit(Concept_def const&)    { }
+};
+
+
+struct Def::Mutator
+{
+  virtual void visit(Defaulted_def&)  { }
+  virtual void visit(Deleted_def&)    { }
+  virtual void visit(Expression_def&) { }
+  virtual void visit(Function_def&)   { }
+  virtual void visit(Class_def&)      { }
+  virtual void visit(Union_def&)      { }
+  virtual void visit(Enum_def&)       { }
+  virtual void visit(Concept_def&)    { }
 };
 
 
@@ -1974,6 +2053,7 @@ struct Def::Visitor
 struct Defaulted_def : Def
 {
   void accept(Visitor& v) const { return v.visit(*this); }
+  void accept(Mutator& v)       { return v.visit(*this); }
 };
 
 
@@ -1984,6 +2064,26 @@ struct Defaulted_def : Def
 struct Deleted_def : Def
 {
   void accept(Visitor& v) const { return v.visit(*this); }
+  void accept(Mutator& v)       { return v.visit(*this); }
+};
+
+
+// An expression definition defines an entity by an expression.
+// Both functions and concepts can have expression definitions.
+struct Expression_def : Def
+{
+  Expression_def(Expr& e)
+    : expr(&e)
+  { }
+
+  void accept(Visitor& v) const { return v.visit(*this); }
+  void accept(Mutator& v)       { return v.visit(*this); }
+
+  // Returns the expression that defines the entity.
+  Expr const& expression() const { return *expr; }
+  Expr&       expression()       { return *expr; }
+
+  Expr* expr;
 };
 
 
@@ -1999,6 +2099,7 @@ struct Function_def : Def
   { }
 
   void accept(Visitor& v) const { return v.visit(*this); }
+  void accept(Mutator& v)       { return v.visit(*this); }
 
   // Returnse the statement associated with the function
   // definition.
@@ -2019,10 +2120,11 @@ struct Class_def : Def
   { }
 
   void accept(Visitor& v) const { return v.visit(*this); }
+  void accept(Mutator& v)       { return v.visit(*this); }
 
   // Returns the list of member declarations.
   Decl_list const& members() const { return decls; }
-  Decl_list      & members()       { return decls; }
+  Decl_list&       members()       { return decls; }
 
   Decl_list decls;
 };
@@ -2032,6 +2134,7 @@ struct Class_def : Def
 struct Union_def : Def
 {
   void accept(Visitor& v) const { return v.visit(*this); }
+  void accept(Mutator& v)       { return v.visit(*this); }
 };
 
 
@@ -2039,6 +2142,25 @@ struct Union_def : Def
 struct Enum_def : Def
 {
   void accept(Visitor& v) const { return v.visit(*this); }
+  void accept(Mutator& v)       { return v.visit(*this); }
+};
+
+
+// A concept body is a sequence of statements.
+struct Concept_def : Def
+{
+  Concept_def(Decl_list const& ds)
+    : decls(ds)
+  { }
+
+  void accept(Visitor& v) const { return v.visit(*this); }
+  void accept(Mutator& v)       { return v.visit(*this); }
+
+  // Returns the sequence of required declarations.
+  Decl_list const& requirements() const { return decls; }
+  Decl_list&       requirements()       { return decls; }
+
+  Decl_list decls;
 };
 
 
@@ -2052,10 +2174,12 @@ struct Generic_def_visitor : Def::Visitor, Generic_visitor<F, T>
 
   void visit(Defaulted_def const& d)  { this->invoke(d); }
   void visit(Deleted_def const& d)    { this->invoke(d); }
+  void visit(Expression_def const& d) { this->invoke(d); }
   void visit(Function_def const& d)   { this->invoke(d); }
   void visit(Class_def const& d)      { this->invoke(d); }
   void visit(Union_def const& d)      { this->invoke(d); }
   void visit(Enum_def const& d)       { this->invoke(d); }
+  void visit(Concept_def const& d)    { this->invoke(d); }
 };
 
 
@@ -2064,6 +2188,34 @@ inline decltype(auto)
 apply(Def const& t, F fn)
 {
   Generic_def_visitor<F, T> vis(fn);
+  return accept(t, vis);
+}
+
+
+// A generic mutator for definitions.
+template<typename F, typename T>
+struct Generic_def_mutator : Def::Mutator, Generic_visitor<F, T>
+{
+  Generic_def_mutator(F f)
+    : Generic_visitor<F, T>(f)
+  { }
+
+  void visit(Defaulted_def& d)  { this->invoke(d); }
+  void visit(Deleted_def& d)    { this->invoke(d); }
+  void visit(Expression_def& d) { this->invoke(d); }
+  void visit(Function_def& d)   { this->invoke(d); }
+  void visit(Class_def& d)      { this->invoke(d); }
+  void visit(Union_def& d)      { this->invoke(d); }
+  void visit(Enum_def& d)       { this->invoke(d); }
+  void visit(Concept_def& d)    { this->invoke(d); }
+};
+
+
+template<typename F, typename T = typename std::result_of<F(Defaulted_def&)>::type>
+inline decltype(auto)
+apply(Def& t, F fn)
+{
+  Generic_def_mutator<F, T> vis(fn);
   return accept(t, vis);
 }
 
@@ -2470,17 +2622,14 @@ struct Template_decl : Decl
 
 
 // Represents a concept definition.
-//
-// TODO: How do I want to handle syntactic requirements? Make a
-// Concept_def that is either an expression or a body.
 struct Concept_decl : Decl
 {
   Concept_decl(Name& n, Decl_list const& ps)
     : Decl(n), parms(ps), def(nullptr)
   { }
 
-  Concept_decl(Name& n, Decl_list const& ps, Expr& e)
-    : Decl(n), parms(ps), def(&e)
+  Concept_decl(Name& n, Decl_list const& ps, Def& d)
+    : Decl(n), parms(ps), def(&d)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -2492,11 +2641,11 @@ struct Concept_decl : Decl
 
   // Returns the constraint associated with the template.
   // This is valid iff is_constrained() is true.
-  Expr const& definition() const  { return *def; }
-  Expr&       definition()        { return *def; }
+  Def const& definition() const  { return *def; }
+  Def&       definition()        { return *def; }
 
   Decl_list parms;
-  Expr*     def;
+  Def*      def;
 };
 
 
@@ -3040,6 +3189,22 @@ inline Concept_decl&
 Check_expr::declaration()
 {
   return cast<Concept_decl>(*con);
+}
+
+
+// User-defined type
+
+inline Name const&
+User_defined_type::name() const
+{
+  return declaration().name();
+}
+
+
+inline Name&
+User_defined_type::name()
+{
+  return declaration().name();
 }
 
 

@@ -1128,9 +1128,39 @@ Printer::concept_declaration(Concept_decl const& d)
   space();
   token(eq_tok);
   space();
-  expression(d.definition());
+  concept_definition(d.definition());
+}
+
+
+void
+Printer::concept_definition(Def const&)
+{
+  struct fn
+  {
+    Printer& p;
+    void operator()(Def const& d) { banjo_unhandled_case(d); }
+    void operator()(Expression_def const& d) { p.concept_definition(d); }
+    void operator()(Concept_def const& d)    { p.concept_definition(d); }
+  };
+}
+
+
+void
+Printer::concept_definition(Expression_def const& d)
+{
+  expression(d.expression());
   token(semicolon_tok);
 }
+
+
+void
+Printer::concept_definition(Concept_def const& d)
+{
+  token(lbrace_tok);
+  declaration_seq(d.requirements());
+  token(rbrace_tok);
+}
+
 
 
 void
