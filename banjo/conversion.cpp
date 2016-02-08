@@ -624,11 +624,29 @@ compare(Conversion_seq const& a, Conversion_seq const& b)
 // -------------------------------------------------------------------------- //
 // Contextual conversions
 
+
+// Determine if e can be contextually converted to bool, and if so,
+// returns the expression that produces a boolean value from `e`.
 Expr&
 contextual_conversion_to_bool(Context& cxt, Expr& e)
 {
   Builder b(cxt);
-  return direct_initialize(cxt, b.get_bool_type(), e);
+
+  // Contextual conversion to bool tries to do this:
+  //
+  //    bool b(e);
+  //
+  // so we preform direct initialization.
+  Expr& init = direct_initialize(cxt, b.get_bool_type(), e);
+
+  // Based on the initializer selected, we can either
+  // 1. return the converted value directly
+  // 2. synthesize an object using a constructor
+  // 3. invoke a user-defined conversion
+  if (Copy_init* i = as<Copy_init>(&init))
+    return i->expression();
+
+  banjo_unhandled_case(init);
 }
 
 
