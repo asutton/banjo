@@ -603,6 +603,9 @@ struct Integer_type : Type
   int  prec;
 };
 
+// Byte type.
+// Not sure if we should have precision? Are all bytes going to be 8 bits or is
+// it architecture dependent? Also are we going to have signed bytes?
 struct Byte_type : Type
 {
   void accept(Visitor& v) const { v.visit(*this); }
