@@ -117,6 +117,8 @@ Parser::simple_type()
       return on_bool_type(accept());
     case int_tok:
       return on_int_type(accept());
+    case byte_tok:
+      return on_byte_type(accept());
     // TODO: Implement me.
     case char_tok:
     case uint_tok:

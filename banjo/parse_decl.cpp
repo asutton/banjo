@@ -183,8 +183,7 @@ Parser::function_declaration()
 
   return fn;
 }
-
-
+  
 // Parse a parameter list.
 //
 //    parameter-list:
@@ -603,6 +602,7 @@ Parser::declaration_seq()
   } while (peek() && lookahead() != rbrace_tok && lookahead() != identifier_tok);
   return ds;
 }
+
 
 
 } // namespace banjo

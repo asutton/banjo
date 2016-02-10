@@ -10,7 +10,6 @@
 namespace banjo
 {
 
-
 template<typename T>
 inline bool
 is_equivalent(List<T> const& a, List<T> const& b)
@@ -74,7 +73,7 @@ is_equivalent(Placeholder_id const& n1, Placeholder_id const& n2)
   lingo_unimplemented();
 }
 
-
+// they are operator-function-ids formed with the same operator
 inline bool
 is_equivalent(Operator_id const& n1, Operator_id const& n2)
 {
@@ -155,7 +154,6 @@ is_equivalent(Name const& n1, Name const& n2)
   // Find a comparison of the types.
   return apply(n1, fn{n2});
 }
-
 
 // -------------------------------------------------------------------------- //
 // Types

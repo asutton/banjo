@@ -30,6 +30,11 @@ Parser::on_int_type(Token)
   return build.get_int_type();
 }
 
+Type&
+Parser::on_byte_type(Token)
+{
+  return build.get_byte_type();
+}
 
 Type&
 Parser::on_decltype_type(Token, Expr&)

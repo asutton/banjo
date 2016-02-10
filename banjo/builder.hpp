@@ -51,6 +51,7 @@ struct Builder
   // Types
   Void_type&      get_void_type();
   Boolean_type&   get_bool_type();
+  Byte_type&      get_byte_type();
   Integer_type&   get_integer_type(bool, int);
   Integer_type&   get_int_type();
   Integer_type&   get_uint_type();
@@ -287,6 +288,12 @@ inline Integer_type&
 Builder::get_integer_type(bool s, int p)
 {
   return make<Integer_type>(s, p);
+}
+
+inline Byte_type&
+Builder::get_byte_type()
+{
+  return make<Byte_type>();
 }
 
 
