@@ -183,15 +183,7 @@ Parser::function_declaration()
 
   return fn;
 }
-
-  Decl&
-  Parser::class_declaration(){
-    Class_decl *cd;
-    lingo_unimplemented();
-  }
-
-
-
+  
 // Parse a parameter list.
 //
 //    parameter-list:

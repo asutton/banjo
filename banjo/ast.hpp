@@ -435,6 +435,7 @@ apply(Name const& n, F fn)
 struct Type;
 struct Void_type;
 struct Boolean_type;
+struct Byte_type;
 struct Integer_type;
 struct Float_type;
 struct Auto_type;
@@ -518,6 +519,7 @@ struct Type::Visitor
 {
   virtual void visit(Void_type const&)      { }
   virtual void visit(Boolean_type const&)   { }
+  virtual void visit(Byte_type const&)      { }
   virtual void visit(Integer_type const&)   { }
   virtual void visit(Float_type const&)     { }
   virtual void visit(Auto_type const&)      { }
@@ -541,6 +543,7 @@ struct Type::Mutator
 {
   virtual void visit(Void_type&)      { }
   virtual void visit(Boolean_type&)   { }
+  virtual void visit(Byte_type&)      { }
   virtual void visit(Integer_type&)   { }
   virtual void visit(Float_type&)     { }
   virtual void visit(Auto_type&)      { }
@@ -598,6 +601,12 @@ struct Integer_type : Type
 
   bool sgn;
   int  prec;
+};
+
+struct Byte_type : Type
+{
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 

@@ -57,6 +57,7 @@ enum Token_kind
   abstract_tok,
   auto_tok,
   bool_tok,
+  byte_tok,
   char_tok,
   char8_tok,
   char16_tok,
