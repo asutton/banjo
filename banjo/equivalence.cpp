@@ -10,25 +10,6 @@
 namespace banjo
 {
 
-bool is_equivalent(Type const&, Type const&);
-bool is_equivalent(Void_type const&, Void_type const&);
-bool is_equivalent(Boolean_type const&, Boolean_type const&);
-bool is_equivalent(Integer_type const&, Integer_type const&);
-bool is_equivalent(Float_type const&, Float_type const&);
-bool is_equivalent(Auto_type const&, Auto_type const&);
-bool is_equivalent(Decltype_type const&, Decltype_type const&);
-bool is_equivalent(Declauto_type const&, Declauto_type const&);
-bool is_equivalent(Function_type const&, Function_type const&);
-bool is_equivalent(Qualified_type const&, Qualified_type const&);
-bool is_equivalent(Reference_type const&, Reference_type const&);
-bool is_equivalent(Pointer_type const&, Pointer_type const&);
-bool is_equivalent(Array_type const&, Array_type const&);
-bool is_equivalent(Sequence_type const&, Sequence_type const&);
-bool is_equivalent(User_defined_type const&, User_defined_type const&);
-
-bool are_same(Name const&, Name const&);
-
-
 template<typename T>
 inline bool
 is_equivalent(List<T> const& a, List<T> const& b)
@@ -172,26 +153,6 @@ is_equivalent(Name const& n1, Name const& n2)
 
   // Find a comparison of the types.
   return apply(n1, fn{n2});
-}
-
-bool are_Same(Name const& n1, Name const& n2){
-
-  // Need to check scope
-
-  //they are identifiers composed of the same character sequence
-  if (auto id1 = as<Simple_id>(&n1)){
-    if (auto id2 = as<Simple_id>(&n2)){
-      return id1->first->spelling() == id2->first->spelling();
-    }
-  }
-
-  // they are conversion-function-ids formed with the same type
-
-  // they are template-ids that refer to the same class or function
-
-  // they are the names of literal operators (13.5.8) formed with the same literal suffix identifier.
-
-  return false;
 }
 
 // -------------------------------------------------------------------------- //
