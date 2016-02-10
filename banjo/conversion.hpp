@@ -11,6 +11,7 @@
 namespace banjo
 {
 
+struct Context;
 struct Type;
 struct Expr;
 struct Conv;
@@ -186,8 +187,12 @@ enum Conversion_comp
 };
 
 
+// FIXME: All of these should take a context.
+
 Expr&     standard_conversion(Expr const&, Type const&);
 Expr_pair arithmetic_conversion(Expr const&, Expr const&);
+
+Expr& contextual_conversion_to_bool(Context& cxt, Expr&);
 
 Conversion_seq get_conversion_sequence(Expr const&);
 

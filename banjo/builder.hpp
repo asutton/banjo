@@ -95,6 +95,7 @@ struct Builder
   Gt_expr&        make_gt(Type&, Expr&, Expr&);
   Le_expr&        make_le(Type&, Expr&, Expr&);
   Ge_expr&        make_ge(Type&, Expr&, Expr&);
+  Call_expr&      make_call(Type&, Expr&, Expr_list const&);
   Call_expr&      make_call(Type&, Function_decl&, Expr_list const&);
   Synthetic_expr& synthesize_expression(Decl&);
 
@@ -142,13 +143,13 @@ struct Builder
   Type_parm&   make_type_parameter(Name&, Type&);
   Type_parm&   make_type_parameter(char const*, Type&);
 
-  // Constraints
-  //
-  // FIXME: Canonicalize constraints?
-  Concept_cons& make_concept_constraint(Decl&, Term_list&);
-  Predicate_cons& make_predicate_constraint(Expr&);
-  Conjunction_cons& make_conjunction_constraint(Cons&, Cons&);
-  Disjunction_cons& make_disjunction_constraint(Cons&, Cons&);
+  // Constraints.
+  // Note that constraints are canonicalized in order
+  // ensure efficient hashingn and equivalence comparison.
+  Concept_cons&     get_concept_constraint(Decl&, Term_list&);
+  Predicate_cons&   get_predicate_constraint(Expr&);
+  Conjunction_cons& get_conjunction_constraint(Cons&, Cons&);
+  Disjunction_cons& get_disjunction_constraint(Cons&, Cons&);
 
   // Resources
   Symbol_table& symbols() { return cxt.symbols(); }
@@ -513,6 +514,13 @@ Builder::make_reference(Variable_decl& d)
 }
 
 
+inline Reference_expr&
+Builder::make_reference(Function_decl& d)
+{
+  return make<Reference_expr>(get_reference_type(d.type()), d);
+}
+
+
 // Make a concept check. The type is bool.
 inline Check_expr&
 Builder::make_check(Concept_decl& d, Term_list const& as)
@@ -585,9 +593,16 @@ Builder::make_ge(Type& t, Expr& e1, Expr& e2)
 
 
 inline Call_expr&
+Builder::make_call(Type& t, Expr& f, Expr_list const& a)
+{
+  return make<Call_expr>(t, f, a);
+}
+
+
+inline Call_expr&
 Builder::make_call(Type& t, Function_decl& f, Expr_list const& a)
 {
-  return make<Call_expr>(t, make_reference(f), a);
+  return make_call(t, make_reference(f), a);
 }
 
 
@@ -871,36 +886,6 @@ Builder::make_value_parm(char const* s, Type& t)
   return make_value_parm(get_id(s), t);
 }
 
-
-// -------------------------------------------------------------------------- //
-// Constraints
-
-inline Concept_cons&
-Builder::make_concept_constraint(Decl& d, Term_list& ts)
-{
-  return make<Concept_cons>(d, ts);
-}
-
-
-inline Predicate_cons&
-Builder::make_predicate_constraint(Expr& e)
-{
-  return make<Predicate_cons>(e);
-}
-
-
-inline Conjunction_cons&
-Builder::make_conjunction_constraint(Cons& c1, Cons& c2)
-{
-  return make<Conjunction_cons>(c1, c2);
-}
-
-
-inline Disjunction_cons&
-Builder::make_disjunction_constraint(Cons& c1, Cons& c2)
-{
-  return make<Disjunction_cons>(c1, c2);
-}
 
 
 } // namespace banjo

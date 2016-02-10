@@ -2,8 +2,7 @@
 // All rights reserved
 
 #include "parser.hpp"
-#include "scope.hpp"
-#include "overload.hpp"
+#include "declaration.hpp"
 #include "print.hpp"
 
 #include <iostream>
@@ -37,105 +36,6 @@ Parser::templatize_declaration(Decl& d)
 }
 
 
-// -------------------------------------------------------------------------- //
-// Declaration
-//
-// TODO: Move this into a separate semantic module?
-
-// Save `d` as a new declaration in the given overload set.
-//
-// TODO: Implement me.
-//
-// TODO: Actually check for overloading and re-definition
-// errors.
-Decl*
-declare(Overload_set& ovl, Decl& d)
-{
-  lingo_unimplemented();
-  return nullptr;
-}
-
-
-// Returns true if we can declare a kind of decl in scope.
-//
-// FIXME: This, and the function below are somewhat gross.
-// The problem is that I've caused each declarative region
-// of a declaration to encapsulate the others. This means,
-// for example, that:
-//
-//    template<typename T> // Starts template scope
-//    struct S             // In template scope at point of declaration
-//    {                    // Begins class scope.
-//    }                    // Ends class and then template scope.
-//
-// Note that S cannot be declared in template scope, or it
-// would not be visible in its current declaration context.
-//
-// TODO: Be sure to keep this function up to date. Is there a
-// better way to define this? Maybe a virtual function on the
-// scope? In fact, this might be a very good idea.
-bool
-can_declare_in(Scope& scope, Decl& decl)
-{
-  if (is<Function_parameter_scope>(&scope)) {
-    if (is<Object_parm>(&decl))
-      return true;
-    return false;
-  }
-
-  if (is<Template_parameter_scope>(&scope)) {
-    if (is<Type_parm>(&decl))
-      return true;
-    if (is<Value_parm>(&decl))
-      return true;
-    if (is<Template_parm>(&decl))
-      return true;
-    return false;
-  }
-
-  return true;
-}
-
-
-// See the comments above.
-Scope&
-adjust_scope(Scope& scope, Decl& decl)
-{
-  Scope* s = &scope;
-  while (s) {
-    if (can_declare_in(*s, decl))
-      return *s;
-    s = s->enclosing_scope();
-  }
-  lingo_unreachable();
-}
-
-
-// Try to declare a name binding in the current scope.
-//
-// FIXME: The specific rules probably depend on a) the kind of scope,
-// and b) the kind of declaration.
-//
-// FIXME: Check for re-declaration and overloading. This probably
-// requires that we match on the entity declared.
-//
-// FIXME: If `d`'s name is a qualified-id, then we need to adjust
-// the context to that specified by `d`s nested name specifier.
-Decl*
-Parser::declare(Scope& scope, Decl& decl)
-{
-  // Find an appropriate declartive region for the declaration.
-  Scope& s = adjust_scope(scope, decl);
-
-  // Declare the ajusted declaration.
-  if (Overload_set* ovl = s.lookup(decl.declared_name())) {
-    return banjo::declare(*ovl, decl);
-  } else {
-    s.bind(decl);
-    return nullptr;
-  }
-}
-
 
 // -------------------------------------------------------------------------- //
 // Declarators
@@ -159,7 +59,7 @@ Parser::on_variable_declaration(Token, Name& n, Type& t)
 {
   Decl& d1 = build.make_variable(n, t);
   Decl& d2 = templatize_declaration(d1);
-  declare(current_scope(), d2);
+  declare(cxt, current_scope(), d2);
   return d2;
 }
 
@@ -204,7 +104,7 @@ Parser::on_function_declaration(Token, Name& n, Decl_list& ps, Type& t)
 {
   Decl& d1 = build.make_function(n, ps, t);
   Decl& d2 = templatize_declaration(d1);
-  declare(current_scope(), d2);
+  declare(cxt, current_scope(), d2);
   return d2;
 }
 
@@ -213,7 +113,7 @@ Object_parm&
 Parser::on_function_parameter(Name& n, Type& t)
 {
   Object_parm& parm = build.make_object_parm(n, t);
-  declare(current_scope(), parm);
+  declare(cxt, current_scope(), parm);
   return parm;
 }
 
@@ -251,7 +151,7 @@ Parser::on_class_declaration(Token tok, Name& n)
 {
   Decl& d1 = build.make_class(n);
   Decl& d2 = templatize_declaration(d1);
-  declare(current_scope(), d2);
+  declare(cxt, current_scope(), d2);
   return d2;
 }
 
@@ -284,7 +184,7 @@ Type_parm&
 Parser::on_type_template_parameter(Name& n)
 {
   Type_parm& parm = build.make_type_parameter(n);
-  declare(current_scope(), parm);
+  declare(cxt, current_scope(), parm);
   return parm;
 }
 
@@ -293,7 +193,7 @@ Type_parm&
 Parser::on_type_template_parameter(Name& n, Type& t)
 {
   Type_parm& parm = build.make_type_parameter(n, t);
-  declare(current_scope(), parm);
+  declare(cxt, current_scope(), parm);
   return parm;
 }
 
@@ -313,7 +213,7 @@ Decl&
 Parser::on_concept_declaration(Token, Name& n, Decl_list& ps)
 {
   Decl& decl = build.make_concept(n, ps);
-  declare(current_scope(), decl);
+  declare(cxt, current_scope(), decl);
   return decl;
 }
 

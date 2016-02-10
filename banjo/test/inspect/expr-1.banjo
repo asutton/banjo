@@ -1,0 +1,5 @@
+
+type 0 && true;
+inspect.expression true;
+inspect.expression 0;
+inspect.expression true || false;

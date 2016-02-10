@@ -234,32 +234,30 @@ struct Parser
   // Miscellaneous
   Namespace_decl& on_translation_unit(Decl_list&);
 
-  // Symbol table.
-  Symbol_table& symbols();
-
   // Token matching.
   Token      peek() const;
   Token_kind lookahead() const;
   Token_kind lookahead(int) const;
+  bool       next_token_is(Token_kind);
+  bool       next_token_is(char const*);
   Token      match(Token_kind);
   Token      match_if(Token_kind);
   Token      require(Token_kind);
+  Token      require(char const*);
   Token      accept();
 
   // Tree matching.
   template<typename T> T* match_if(T& (Parser::* p)());
 
+  // Resources
+  Symbol_table& symbols();
+  Context&      context();
+
   // Scope management
-  void   set_scope(Scope&);
-  Scope& make_initializer_scope(Decl&);
-  Scope& make_function_scope(Decl&);
-  Scope& make_function_parameter_scope();
-  Scope& make_template_parameter_scope();
   Scope& current_scope();
   Decl&  current_context();
 
   // Declarations
-  Decl* declare(Scope&, Decl&);
   Decl& templatize_declaration(Decl&);
 
   // Maintains the current parse state. This is used to provide
@@ -267,7 +265,6 @@ struct Parser
   // trial parser for caching parse state.
   struct State
   {
-    Scope*     scope;                    // The current scope.
     Decl_list* template_parms = nullptr; // The current (innermost) template parameters
     Expr*      template_cons = nullptr;  // The current (innermost) template constraints
 
@@ -277,7 +274,6 @@ struct Parser
     bool assume_template = false;    // True if the next identifier is a template.
   };
 
-  struct Enter_scope;
   struct Assume_template;
   struct Parsing_template;
 
@@ -286,64 +282,6 @@ struct Parser
   Token_stream& tokens;
   State         state;
 };
-
-
-// An RAII helper that manages the entry and exit of scopes.
-//
-// TODO: Handle scopes for more declarations.
-struct Parser::Enter_scope
-{
-  Enter_scope(Parser&, Namespace_decl&);
-  Enter_scope(Parser&, Variable_decl&);
-  Enter_scope(Parser&, Function_decl&);
-  Enter_scope(Parser&, Scope&);
-  ~Enter_scope();
-
-  Parser& parser;
-  Scope* prev;  // The previous socpe.
-  Scope* alloc; // Only set when locally allocated.
-};
-
-
-// Enter the scope associated with a namespace definition.
-inline
-Parser::Enter_scope::Enter_scope(Parser& p, Namespace_decl& ns)
-  : parser(p), prev(p.state.scope), alloc(nullptr)
-{
-  parser.set_scope(*ns.scope());
-}
-
-
-// Enter the scope associated with the initializer of a variable.
-inline
-Parser::Enter_scope::Enter_scope(Parser& p, Variable_decl& var)
-  : Enter_scope(p, p.make_initializer_scope(var))
-{ }
-
-
-// Enter the scope associated with the body of a function definition.
-inline
-Parser::Enter_scope::Enter_scope(Parser& p, Function_decl& fn)
-  : Enter_scope(p, p.make_function_scope(fn))
-{ }
-
-
-// Enter the given scope. This is auotmatically destroyed when this
-// object is destroyed.
-inline
-Parser::Enter_scope::Enter_scope(Parser& p, Scope& s)
-  : parser(p), prev(&p.current_scope()), alloc(&s)
-{
-  parser.set_scope(*alloc);
-}
-
-
-inline
-Parser::Enter_scope::~Enter_scope()
-{
-  parser.set_scope(*prev);
-  delete alloc;
-}
 
 
 // An RAII helper that sets or clears the flag controlling
@@ -424,7 +362,11 @@ struct Trial_parser
   using State = Parser::State;
 
   Trial_parser(Parser& p)
-    : parser(p), pos(p.tokens.position()), state(p.state), fail(false)
+    : parser(p)
+    , pos(p.tokens.position())
+    , state(p.state)
+    , scope(&p.current_scope())
+    , fail(false)
   { }
 
   void failed() { fail = true; }
@@ -434,14 +376,16 @@ struct Trial_parser
     // TODO: Manage diagnostics as part of the parser in order to
     // detet failures?
     if (fail) {
-      parser.state = state;
       parser.tokens.reposition(pos);
+      parser.cxt.set_scope(*scope);
+      parser.state = state;
     }
   }
 
   Parser&  parser;
   Position pos;
   State    state;
+  Scope*   scope;
   bool     fail;
 };
 

@@ -61,11 +61,30 @@ Parser::lookahead(int n) const
 }
 
 
+// Returns true if the next token has the given kind.
+bool
+Parser::next_token_is(Token_kind k)
+{
+  return lookahead() == k;
+}
+
+
+// Returns true if the next token is an identifier with
+// the given spelling.
+bool
+Parser::next_token_is(char const* s)
+{
+  return next_token_is(identifier_tok) && peek().spelling() == s;
+}
+
+
+// Require that the next token matches in kind. Emit a diagnostic
+// message if it does not.
 Token
 Parser::match(Token_kind k)
 {
   if (lookahead() == k)
-    return tokens.get();
+    return accept();
   String msg = format("expected '{}' but got '{}'",
                       get_spelling(k),
                       token_spelling(tokens));
@@ -83,7 +102,7 @@ Token
 Parser::match_if(Token_kind k)
 {
   if (lookahead() == k)
-    return tokens.get();
+    return accept();
   else
     return Token();
 }
@@ -94,13 +113,23 @@ Parser::match_if(Token_kind k)
 Token
 Parser::require(Token_kind k)
 {
-  assert(lookahead() == k);
-  return tokens.get();
+  lingo_assert(lookahead() == k);
+  return accept();
 }
 
 
-// Returns the current token and advances the
-// underlying token stream.
+Token
+Parser::require(char const* s)
+{
+  lingo_assert(next_token_is(s));
+  return accept();
+}
+
+
+// Returns the current token and advances the underlying
+// token stream.
+//
+// TODO: Record information about matching braces here.
 Token
 Parser::accept()
 {
@@ -108,56 +137,15 @@ Parser::accept()
 }
 
 
-// Enter the given scope. Unless `s` is the scope of the global
-// namespace, `s` must be linked through its enclosing scopes
-// to the global namespace.
-//
-// Do not call this function directly. Use Parser::Scope_sentinel
-// to enter a new scope, and guarantee cleanup and scope exit.
-void
-Parser::set_scope(Scope& s)
-{
-  state.scope = &s;
-}
-
-
-// Create a new initializer scope.
-Scope&
-Parser::make_initializer_scope(Decl& d)
-{
-  return *new Initializer_scope(current_scope(), d);
-}
-
-
-// Create a new function scope.
-Scope&
-Parser::make_function_scope(Decl& d)
-{
-  return *new Function_scope(current_scope(), d);
-}
-
-
-// Create a new function parameter scope.
-Scope&
-Parser::make_function_parameter_scope()
-{
-  return *new Function_parameter_scope(current_scope());
-}
-
-
-// Create a new template parameter scope.
-Scope&
-Parser::make_template_parameter_scope()
-{
-  return *new Template_parameter_scope(current_scope());
-}
+// -------------------------------------------------------------------------- //
+// Scope management
 
 
 // Returns the current scope.
 Scope&
 Parser::current_scope()
 {
-  return *state.scope;
+  return cxt.current_scope();
 }
 
 
@@ -166,10 +154,7 @@ Parser::current_scope()
 Decl&
 Parser::current_context()
 {
-  Scope* p = &current_scope();
-  while (!p->context())
-    p = p->enclosing_scope();
-  return *p->context();
+  return cxt.current_context();
 }
 
 
@@ -186,9 +171,13 @@ Parser::current_context()
 Term&
 Parser::translation_unit()
 {
-  Enter_scope scope(*this, cxt.global_namespace());
+  Enter_scope scope(cxt, cxt.global_namespace());
   Decl_list ds;
-  if (peek())
+
+  // NOTE: We match against identifier so that we don't try to
+  // parse inspect scripts as real programs. Perhaps we should
+  // have a very explicit end-of-program token (e.g., --?).
+  if (peek() && lookahead() != identifier_tok)
     ds = declaration_seq();
   return on_translation_unit(ds);
 }

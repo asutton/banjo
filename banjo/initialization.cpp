@@ -203,7 +203,7 @@ direct_initialize(Context& cxt, Type& t, Expr_list& es)
   // If the destination type is a T&, then perform reference
   // initialization on the only element in the list of expressions.
   if (is_reference_type(t))
-    return reference_initialize(cxt, cast<Reference_type>(t), es.front());
+    return reference_initialize(cxt, cast<Reference_type>(t), e);
 
   // Find a constructor taking the given arguments.
   if (is_maybe_qualified_class_type(t) || is_maybe_qualified_union_type(t))
@@ -224,6 +224,18 @@ direct_initialize(Context& cxt, Type& t, Expr_list& es)
   Expr& c = standard_conversion(e, t);
   return build.make_copy_init(t, c);
 }
+
+
+// Perform direct initialization from a single operand.
+//
+// TODO: We can optimize by simply duplicating cases from above.
+Expr&
+direct_initialize(Context& cxt, Type& t, Expr& e)
+{
+  Expr_list args {&e};
+  return direct_initialize(cxt, t, args);
+}
+
 
 
 // -------------------------------------------------------------------------- //

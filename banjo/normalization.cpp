@@ -12,11 +12,13 @@
 namespace banjo
 {
 
+// TODO: Apply obious simplifications at this point?
+
 Predicate_cons&
 normalize_expr(Context& cxt, Expr& e)
 {
   Builder build(cxt);
-  return build.make_predicate_constraint(e);
+  return build.get_predicate_constraint(e);
 }
 
 
@@ -26,7 +28,7 @@ normalize_and(Context& cxt, And_expr& e)
   Builder build(cxt);
   Cons& l = normalize(cxt, e.left());
   Cons& r = normalize(cxt, e.right());
-  return build.make_conjunction_constraint(l, r);
+  return build.get_conjunction_constraint(l, r);
 }
 
 
@@ -36,7 +38,7 @@ normalize_or(Context& cxt, Or_expr& e)
   Builder build(cxt);
   Cons& l = normalize(cxt, e.left());
   Cons& r = normalize(cxt, e.right());
-  return build.make_disjunction_constraint(l, r);
+  return build.get_disjunction_constraint(l, r);
 }
 
 
@@ -44,7 +46,7 @@ Concept_cons&
 normalize_check(Context& cxt, Check_expr& e)
 {
   Builder build(cxt);
-  return build.make_concept_constraint(e.declaration(), e.arguments());
+  return build.get_concept_constraint(e.declaration(), e.arguments());
 }
 
 

@@ -55,7 +55,7 @@ Parser::variable_declaration()
 
   // Point of declaration.
   Decl& d = on_variable_declaration(tok, n, t);
-  Enter_scope s(*this, make_initializer_scope(d));
+  Enter_scope s(cxt, cxt.make_initializer_scope(d));
 
   // Initialization
   if (lookahead() == semicolon_tok) {
@@ -161,7 +161,7 @@ Parser::function_declaration()
   Name& n = declarator();
 
   // Enter function parameter scope and parse function parameters.
-  Enter_scope pscope(*this, make_function_parameter_scope());
+  Enter_scope pscope(cxt, cxt.make_function_parameter_scope());
   Decl_list ps;
   match(lparen_tok);
   if (lookahead() != rparen_tok)
@@ -177,7 +177,7 @@ Parser::function_declaration()
     match(semicolon_tok);
   } else {
     // Enter function scope and parse the function definition.
-    Enter_scope fscope(*this, make_function_scope(fn));
+    Enter_scope fscope(cxt, cxt.make_function_scope(fn));
     function_definition(fn);
   }
 
@@ -409,7 +409,7 @@ Parser::template_declaration()
 
   // TODO: Allow >> to close the template parameter list in the
   // case of default template arguments.
-  Enter_scope scope(*this, make_template_parameter_scope());
+  Enter_scope scope(cxt, cxt.make_template_parameter_scope());
   match(lt_tok);
   Decl_list ps = template_parameter_list();
   match(gt_tok);
@@ -541,7 +541,7 @@ Parser::concept_declaration()
   Token tok = require(concept_tok);
   Name& n = declarator();
 
-  Enter_scope pscope(*this, make_template_parameter_scope());
+  Enter_scope pscope(cxt, cxt.make_template_parameter_scope());
   match(lt_tok);
   Decl_list ps = template_parameter_list();
   match(gt_tok);
@@ -595,6 +595,10 @@ Parser::declarator()
 // Note that declaration-seqs is only referenced from translation-unit
 // and namespace-definition. Therefore, it must terminate on EOF or
 // a '}'.
+//
+// NOTE: We also terminate on the first identifier in order to support
+// the inspection tool. I wonder if there is a more graceful way of doing
+// this.
 Decl_list
 Parser::declaration_seq()
 {
@@ -603,7 +607,7 @@ Parser::declaration_seq()
   do {
     Decl& d = declaration();
     ds.push_back(d);
-  } while (peek() && lookahead() != rbrace_tok);
+  } while (peek() && lookahead() != rbrace_tok && lookahead() != identifier_tok);
   return ds;
 }
 

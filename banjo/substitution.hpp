@@ -129,9 +129,11 @@ std::ostream& operator<<(std::ostream&, Substitution const&);
 // -------------------------------------------------------------------------- //
 // Operations
 
+Term& substitute(Context&, Term&, Substitution&);
 Type& substitute(Context&, Type&, Substitution&);
 Expr& substitute(Context&, Expr&, Substitution&);
 Decl& substitute(Context&, Decl&, Substitution&);
+Cons& substitute(Context&, Cons&, Substitution&);
 
 
 } // namespace banjo

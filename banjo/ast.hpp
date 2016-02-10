@@ -162,7 +162,6 @@ List<T>::append(I first, I last)
 }
 
 
-
 // Lists
 using Term_list = List<Term>;
 using Type_list = List<Type>;
@@ -1136,7 +1135,9 @@ struct Unary_expr : Expr
     : Expr(t), first(&e)
   { }
 
+  // Returns the operand of the unary expression.
   Expr const& operand() const { return *first; }
+  Expr&       operand()       { return *first; }
 
   Expr* first;
 };
@@ -1225,8 +1226,8 @@ struct Check_expr : Expr
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
-  Decl const& declaration() const { return *con; }
-  Decl&       declaration()       { return *con; }
+  Concept_decl const& declaration() const;
+  Concept_decl&       declaration();
 
   Term_list const& arguments() const { return args; }
   Term_list&       arguments()       { return args; }
@@ -1965,6 +1966,11 @@ struct Def::Visitor
 //
 // C++ allows only defaulted special functions, but this can
 // be made far more general.
+//
+// TODO: When we see this, we're actually going to select a
+// specific kind of behavior, depending on the function defaulted.
+// We should have derived classes for each kind of defaulted
+// behavior (I think).
 struct Defaulted_def : Def
 {
   void accept(Visitor& v) const { return v.visit(*this); }
@@ -2181,7 +2187,8 @@ struct Decl::Mutator
 };
 
 
-Type& declared_type(Decl&);
+Type const& declared_type(Decl const&);
+Type&       declared_type(Decl&);
 
 
 // Declares a variable, constant, or function parameter.
@@ -2303,7 +2310,6 @@ struct Function_decl : Decl
   Expr const& constraint() const     { return *constr; }
   Expr&       constraint()           { return *constr; }
 
-
   // TODO: Implelemnt pre- and post-conditions.
   // Expr const& precondition() const  { return *constr; }
   // Expr const& postcondition() const { return *constr; }
@@ -2313,7 +2319,6 @@ struct Function_decl : Decl
 
   // Returns true if this declaration has function constraints.
   bool is_constrained() const { return constr; }
-
 
   // Returns true iff this declaration is also a definition.
   bool is_definition() const { return def; }
@@ -2494,10 +2499,29 @@ struct Concept_decl : Decl
   Expr*     def;
 };
 
+
+// A parameter index records the depth and offset of the
+// parameter.
+struct Index : std::pair<int, int>
+{
+  // Returns the underlying pair.
+  std::pair<int, int> const& pair() const { return *this; }
+  std::pair<int, int>&       pair()       { return *this; }
+
+  int depth() const  { return first; }
+  int offset() const { return second; }
+
+  bool operator==(Index x) const { return pair() == x.pair(); }
+  bool operator!=(Index x) const { return pair() != x.pair(); }
+};
+
+
 // An object paramter of a function.
 //
 // TODO: Name this variable_parm to be consistent with variable
 // declarations?
+//
+// TODO: Do we want to index function parameters?
 struct Object_parm : Object_decl
 {
   Object_parm(Name& n, Type& t)
@@ -2543,6 +2567,12 @@ struct Value_parm : Object_decl
   Expr&       default_argument()       { return *init; }
 
   bool has_default_arguement() const { return init; }
+
+  // Returns the index of the template parameter.
+  Index  index() const { return ix; }
+  Index& index()       { return ix; }
+
+  Index ix;
 };
 
 
@@ -2585,7 +2615,12 @@ struct Type_parm : Decl
 
   bool has_default_arguement() const { return def; }
 
+  // Returns the index of the template parameter.
+  Index  index() const { return ix; }
+  Index& index()       { return ix; }
+
   Type* def;
+  Index ix;
 };
 
 
@@ -2619,8 +2654,13 @@ struct Template_parm : Decl
 
   bool has_default_arguement() const { return def; }
 
+  // Returns the index of the template parameter.
+  Index  index() const { return ix; }
+  Index& index()       { return ix; }
+
   Decl*     temp;
   Init*     def;
+  Index     ix;
 };
 
 
@@ -2764,10 +2804,8 @@ struct Concept_cons : Cons
   void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the resolved concept declaration.
-  //
-  // FIXME: Make this return a concept declaration.
-  Decl const& declaration() const { return *decl; }
-  Decl&       declaration()       { return *decl; }
+  Concept_decl const& declaration() const { return cast<Concept_decl>(*decl); }
+  Concept_decl&       declaration()       { return cast<Concept_decl>(*decl); }
 
   // Returns the template arguments used to check the template.
   Term_list const& arguments() const { return args; }
@@ -2824,10 +2862,23 @@ struct Deduction_cons : Cons
 };
 
 
-// FIXME: Implement me.
+// Represents the parameterization of a constraint by constraint
+// variables. These are names indicating values of specific types.
+// Once resolved by lookup, they are essentially meaningless.
 struct Parameterized_cons : Cons
 {
-  using Cons::Cons;
+  Parameterized_cons(Decl_list const& ps, Cons* c)
+    : vars(ps), cons(c)
+  { }
+
+  Decl_list const& variables() const { return vars; }
+  Decl_list&       variables()       { return vars; }
+
+  Cons const& constraint() const { return *cons; }
+  Cons&       constraint()       { return *cons; }
+
+  Decl_list vars;
+  Cons*     cons;
 };
 
 
@@ -2974,6 +3025,21 @@ inline Template_decl&
 Template_id::declaration()
 {
   return cast<Template_decl>(*decl);
+}
+
+// Check_expr
+
+inline Concept_decl const&
+Check_expr::declaration() const
+{
+  return cast<Concept_decl>(*con);
+}
+
+
+inline Concept_decl&
+Check_expr::declaration()
+{
+  return cast<Concept_decl>(*con);
 }
 
 
@@ -3156,6 +3222,14 @@ is_scalar_type(Type const& t)
 
 // -------------------------------------------------------------------------- //
 // Queries on expressions
+
+
+// Returns true if `e` has type `bool`.
+inline bool
+has_bool_type(Expr const& e)
+{
+  return is_boolean_type(e.type());
+}
 
 
 // Returns true if the expression `e` has integer type.
