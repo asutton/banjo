@@ -55,6 +55,7 @@ enum Token_kind
   // Keywords
   first_keyword_tok,
   abstract_tok,
+  axiom_tok,
   auto_tok,
   bool_tok,
   char_tok,
@@ -113,6 +114,7 @@ enum Token_kind
   virtual_tok,
   void_tok,
   volatile_tok,
+  where_tok,
   while_tok,
   last_keyword_tok,
 

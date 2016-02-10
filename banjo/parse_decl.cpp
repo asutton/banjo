@@ -33,7 +33,10 @@ Parser::declaration()
       return template_declaration();
     case concept_tok:
       return concept_declaration();
-    default: break;
+    case axiom_tok:
+      return axiom_declaration();
+    default:
+      break;
   }
   throw Syntax_error("invalid declaration");
 }
@@ -395,6 +398,9 @@ Parser::namespace_declaration()
 //
 // FIXME: Support explicit template instantations in one way or
 // another.
+//
+// TODO: Make the requires-clause a where-clause so that we can have
+// top-level sets of named requirements.
 Decl&
 Parser::template_declaration()
 {
@@ -413,8 +419,8 @@ Parser::template_declaration()
   // The definition is parsed in different branches in case I may,
   // in the future, want to establish a new scope for constrained
   // declarations (i.e., separate checking).
-  if (lookahead() == requires_tok) {
-    Expr& c = requires_clause();
+  if (next_token_is(where_tok)) {
+    Expr& c = where_clause();
     Parsing_template save(*this, ps, c);
     return declaration();
   } else {
@@ -516,11 +522,15 @@ Parser::template_template_parameter()
 }
 
 
+// Parse a where clause:
+//
+//    where-clause:
+//      'where' logical-or-expression
 Expr&
-Parser::requires_clause()
+Parser::where_clause()
 {
-  require(requires_tok);
-  return expression();
+  require(where_tok);
+  return logical_or_expression();
 }
 
 
@@ -530,12 +540,22 @@ Parser::requires_clause()
 
 // Parse a concept definition.
 //
-//    concept-definition:
-//      'concept' identifier '<' template-parameter-list '>' concept-initializer
+//    concept-declaration:
+//      'concept' identifier '<' template-parameter-list '>' concept-definition
 //
-//    concept-initializer:
-//      '=' logical-or-expression
-//      concept-body
+// TODO: I'm not sure that I like this syntax. Maybe we should make
+// concepts look like any other template:
+//
+//    template<typename T> concept C = ...
+//
+// Note that this would allow for non-template concepts as well:
+//
+//    concept C = X && Y && Z;
+//
+// The benefit to doing this is that C would now be usable as a constraint
+// in non-function templates.
+//
+// FIXME: Make this happen.
 Decl&
 Parser::concept_declaration()
 {
@@ -551,14 +571,46 @@ Parser::concept_declaration()
   Decl& con = on_concept_declaration(tok, n, ps);
 
   // Match the '=' form.
+  concept_definition(con);
+
+  return con;
+}
+
+
+// Parse a concept definition.
+//
+//    concept-definition:
+//      '=' logical-or-expression
+//      '{' statement-seq '}'
+//
+// TODO: Not all statements are valid within a concept definition.
+// Certain declarations are valid, and certain expression statements
+// are valid, but not the entire set.
+//
+// It would be useful to define a grammatical subset of those things
+// that should be valid.
+Def&
+Parser::concept_definition(Decl& d)
+{
   if (match_if(eq_tok)) {
     Expr& e = expression();
-    on_concept_definition(con, e);
+    Def& def = on_concept_definition(d, e);
     match(semicolon_tok);
-    return con;
+    return def;
   } else {
-    lingo_unimplemented();
+    match(lbrace_tok);
+    Stmt_list ss = statement_seq();
+    Def& def = on_concept_definition(d, ss);
+    match(rbrace_tok);
+    return def;
   }
+}
+
+
+Decl&
+Parser::axiom_declaration()
+{
+  lingo_unimplemented();
 }
 
 

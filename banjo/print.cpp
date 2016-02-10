@@ -507,6 +507,7 @@ precedence(Expr const& e)
     int operator()(Not_expr const& e)       { return 3; }
     int operator()(Call_expr const& e)      { return 2; }
     int operator()(Assign_expr const& e)    { return 15; }
+    int operator()(Requires_expr const& e)  { return 0; }
     int operator()(Conv const& e)           { return precedence(e.source()); }
     int operator()(Init const& e)           { lingo_unreachable(); }
   };
@@ -544,6 +545,7 @@ Printer::expression(Expr const& e)
     void operator()(Not_expr const& e)           { p.unary_expression(e, bang_tok); }
     void operator()(Call_expr const& e)          { p.postfix_expression(e); }
     void operator()(Assign_expr const& e)        { p.binary_expression(e, eq_tok); }
+    void operator()(Requires_expr const& e)      { p.requires_expression(e); }
     void operator()(Synthetic_expr const& e)     { p.id_expression(e); }
     void operator()(Value_conv const& e)         { p.postfix_expression(e); }
     void operator()(Qualification_conv const& e) { p.postfix_expression(e); }
@@ -740,6 +742,21 @@ Printer::binary_expression(Binary_expr const& e, Token_kind k)
 }
 
 
+void
+Printer::requires_expression(Requires_expr const& e)
+{
+  token(requires_tok);
+  space();
+  if (!e.parameters().empty()) {
+    token(lparen_tok);
+    parameter_list(e.parameters());
+    token(rparen_tok);
+    space();
+  }
+  statement(e.body());
+}
+
+
 // -------------------------------------------------------------------------- //
 // Definitions
 
@@ -761,16 +778,22 @@ Printer::statement(Stmt const& s)
 
 
 void
-Printer::compound_statement(Compound_stmt const& s)
+Printer::statement_seq(Stmt_list const& ss)
 {
-  token(lbrace_tok);
-  newline_and_indent();
-  Stmt_list const& ss = s.statements();
   for (auto iter = ss.begin(); iter != ss.end(); ++iter) {
     statement(*iter);
     if (std::next(iter) != ss.end())
       newline();
   }
+}
+
+
+void
+Printer::compound_statement(Compound_stmt const& s)
+{
+  token(lbrace_tok);
+  newline_and_indent();
+  statement_seq(s.statements());
   newline_and_undent();
   token(rbrace_tok);
 }
@@ -986,6 +1009,7 @@ Printer::declaration(Decl const& d)
     void operator()(Namespace_decl const& d) { p.namespace_declaration(d); }
     void operator()(Template_decl const& d)  { p.template_declaration(d); }
     void operator()(Concept_decl const& d)   { p.concept_declaration(d); }
+    void operator()(Axiom_decl const& d)     { p.axiom_declaration(d); }
 
     // Support emitting these here so we can print parameters
     // without an appropriate context.
@@ -1108,7 +1132,7 @@ Printer::template_declaration(Template_decl const& d)
   token(gt_tok);
   if (d.is_constrained()) {
     newline_and_indent();
-    requires_clause(d.constraint());
+    where_clause(d.constraint());
     newline_and_undent();
   } else {
     newline();
@@ -1133,7 +1157,7 @@ Printer::concept_declaration(Concept_decl const& d)
 
 
 void
-Printer::concept_definition(Def const&)
+Printer::concept_definition(Def const& d)
 {
   struct fn
   {
@@ -1142,6 +1166,7 @@ Printer::concept_definition(Def const&)
     void operator()(Expression_def const& d) { p.concept_definition(d); }
     void operator()(Concept_def const& d)    { p.concept_definition(d); }
   };
+  apply(d, fn{*this});
 }
 
 
@@ -1157,16 +1182,36 @@ void
 Printer::concept_definition(Concept_def const& d)
 {
   token(lbrace_tok);
-  declaration_seq(d.requirements());
+  statement_seq(d.requirements());
   token(rbrace_tok);
 }
 
 
+void
+Printer::axiom_declaration(Axiom_decl const& d)
+{
+  token(axiom_tok);
+  space();
+  id(d.name());
+  space();
+
+  token(lparen_tok);
+  parameter_list(d.parameters());
+  token(rparen_tok);
+  space();
+
+  token(lbrace_tok);
+  newline_and_indent();
+  token("..."); // FIXME: Implement me!
+  newline_and_undent();
+  token(rbrace_tok);
+}
+
 
 void
-Printer::requires_clause(Expr const& e)
+Printer::where_clause(Expr const& e)
 {
-  token(requires_tok);
+  token(where_tok);
   space();
   expression(e);
 }

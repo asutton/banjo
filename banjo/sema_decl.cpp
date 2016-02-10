@@ -218,15 +218,22 @@ Parser::on_concept_declaration(Token, Name& n, Decl_list& ps)
 }
 
 
-// FIXME: Make this return a concept definition.
-Decl&
+Def&
 Parser::on_concept_definition(Decl& decl, Expr& e)
 {
   Def& def = build.make_expression_definition(e);
   define_concept(decl, def);
-  return decl;
+  return def;
 }
 
+
+Def&
+Parser::on_concept_definition(Decl& decl, Stmt_list& ds)
+{
+  Def& def = build.make_concept_definition(ds);
+  define_concept(decl, def);
+  return def;
+}
 
 
 // -------------------------------------------------------------------------- //

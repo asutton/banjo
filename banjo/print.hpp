@@ -123,9 +123,11 @@ struct Printer
   void postfix_expression(Ellipsis_conv const&);
   void unary_expression(Unary_expr const&, Token_kind);
   void binary_expression(Binary_expr const&, Token_kind);
+  void requires_expression(Requires_expr const&);
 
   // Statements
   void statement(Stmt const&);
+  void statement_seq(Stmt_list const&);
   void compound_statement(Compound_stmt const&);
   void return_statement(Return_stmt const&);
   void expression_statement(Expression_stmt const&);
@@ -149,6 +151,7 @@ struct Printer
   void enum_declaration(Enum_decl const&);
   void namespace_declaration(Namespace_decl const&);
   void template_declaration(Template_decl const&);
+  void axiom_declaration(Axiom_decl const&);
 
   // Functions
   void function_declaration(Function_decl const&);
@@ -183,7 +186,7 @@ struct Printer
   void template_argument(Term const&);
   void template_argument_list(Term_list const&);
 
-  void requires_clause(Expr const&);
+  void where_clause(Expr const&);
 
   // Constraints
   // These don't really have an external syntax, but it's

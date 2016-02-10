@@ -95,6 +95,7 @@ init_tokens(Symbol_table& syms)
 
   // Keywords
   init_token(syms, abstract_tok, "abstract");
+  init_token(syms, axiom_tok, "axiom");
   init_token(syms, auto_tok, "auto");
   init_token(syms, bool_tok, "bool");
   init_token(syms, char_tok, "char");
@@ -153,6 +154,7 @@ init_tokens(Symbol_table& syms)
   init_token(syms, var_tok, "var");
   init_token(syms, void_tok, "void");
   init_token(syms, volatile_tok, "volatile");
+  init_token(syms, where_tok, "where");
   init_token(syms, while_tok, "while");
 
   init_token_class(syms, identifier_tok, "<identifier>");

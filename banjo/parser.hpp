@@ -96,7 +96,7 @@ struct Parser
   Stmt& return_statement();
   Stmt& declaration_statement();
   Stmt& expression_statement();
-  Stmt_list statement_seq();;
+  Stmt_list statement_seq();
 
   // Declarations
   Name& declarator();
@@ -109,6 +109,8 @@ struct Parser
   Decl& namespace_declaration();
   Decl& template_declaration();
   Decl& concept_declaration();
+  Decl& usage_declaration();
+  Decl& axiom_declaration();
   Decl_list declaration_seq();
   // Function parameters
   Decl& parameter_declaration();
@@ -127,8 +129,9 @@ struct Parser
   // Definitions
   Def& function_definition(Decl&);
   Def& class_definition(Decl&);
-  // Constraints
-  Expr& requires_clause();
+  Def& concept_definition(Decl&);
+  // Constraints, preconditions, and postconditions
+  Expr& where_clause();
   // Classes
   Decl_list member_seq();
   Decl& member_declaration();
@@ -224,7 +227,8 @@ struct Parser
   // Definitions
   Def& on_function_definition(Decl&, Stmt&);
   Def& on_class_definition(Decl&, Decl_list&);
-  Decl& on_concept_definition(Decl&, Expr&);
+  Def& on_concept_definition(Decl&, Expr&);
+  Def& on_concept_definition(Decl&, Stmt_list&);
   Def& on_deleted_definition(Decl&);
   Def& on_defaulted_definition(Decl&);
   // Members

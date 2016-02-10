@@ -1047,6 +1047,7 @@ struct Or_expr;
 struct Not_expr;
 struct Call_expr;
 struct Assign_expr;
+struct Requires_expr;
 struct Synthetic_expr;
 // Conversions
 struct Value_conv;
@@ -1114,6 +1115,7 @@ struct Expr::Visitor
   virtual void visit(Not_expr const&) { }
   virtual void visit(Call_expr const&) { }
   virtual void visit(Assign_expr const&) { }
+  virtual void visit(Requires_expr const&) { }
   virtual void visit(Synthetic_expr const&) { }
   virtual void visit(Value_conv const&) { }
   virtual void visit(Qualification_conv const&) { }
@@ -1154,6 +1156,7 @@ struct Expr::Mutator
   virtual void visit(Not_expr&) { }
   virtual void visit(Call_expr&) { }
   virtual void visit(Assign_expr&) { }
+  virtual void visit(Requires_expr&) { }
   virtual void visit(Synthetic_expr&) { }
   virtual void visit(Value_conv&) { }
   virtual void visit(Qualification_conv&) { }
@@ -1501,6 +1504,32 @@ struct Assign_expr : Binary_expr
 };
 
 
+// An expression denoting a requirement for a valid syntax.
+// Note that the body can (and generally is) a compound
+// statement.
+struct Requires_expr : Expr
+{
+  Requires_expr(Type& t, Decl_list const& ds, Stmt& s)
+    : Expr(t), parms(ds), reqs(&s)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the list of parameters in terms of which the requirements
+  // are written.
+  Decl_list const& parameters() const { return parms; }
+  Decl_list&       parameters()       { return parms; }
+
+  // Returns the list of requirements.
+  Stmt const& body() const { return *reqs; }
+  Stmt&       body()       { return *reqs; }
+
+  Decl_list parms;
+  Stmt*     reqs;
+};
+
+
 // A synthesized value of a specified value. This refers to the
 // declaration from which the expression was synthesized.
 //
@@ -1640,6 +1669,9 @@ struct Ellipsis_conv : Conv
 // object or reference.
 //
 // TODO: Should all initializers have type void?
+//
+// FIXME: Merge initializers back into definitions. They work
+// better there.
 struct Init : Expr
 {
   using Expr::Expr;
@@ -1776,6 +1808,7 @@ struct Generic_expr_visitor : Expr::Visitor, Generic_visitor<F, T>
   void visit(Not_expr const& e)           { this->invoke(e); }
   void visit(Call_expr const& e)          { this->invoke(e); }
   void visit(Assign_expr const& e)        { this->invoke(e); }
+  void visit(Requires_expr const& e)      { this->invoke(e); }
   void visit(Synthetic_expr const& e)     { this->invoke(e); }
   void visit(Value_conv const& e)         { this->invoke(e); }
   void visit(Qualification_conv const& e) { this->invoke(e); }
@@ -1833,6 +1866,7 @@ struct Generic_expr_mutator : Expr::Mutator, Generic_mutator<F, T>
   void visit(Not_expr& e)           { this->invoke(e); }
   void visit(Call_expr& e)          { this->invoke(e); }
   void visit(Assign_expr& e)        { this->invoke(e); }
+  void visit(Requires_expr& e)      { this->invoke(e); }
   void visit(Synthetic_expr& e)     { this->invoke(e); }
   void visit(Value_conv& e)         { this->invoke(e); }
   void visit(Qualification_conv& e) { this->invoke(e); }
@@ -2149,18 +2183,18 @@ struct Enum_def : Def
 // A concept body is a sequence of statements.
 struct Concept_def : Def
 {
-  Concept_def(Decl_list const& ds)
-    : decls(ds)
+  Concept_def(Stmt_list const& ds)
+    : stmts(ds)
   { }
 
   void accept(Visitor& v) const { return v.visit(*this); }
   void accept(Mutator& v)       { return v.visit(*this); }
 
   // Returns the sequence of required declarations.
-  Decl_list const& requirements() const { return decls; }
-  Decl_list&       requirements()       { return decls; }
+  Stmt_list const& requirements() const { return stmts; }
+  Stmt_list&       requirements()       { return stmts; }
 
-  Decl_list decls;
+  Stmt_list stmts;
 };
 
 
@@ -2233,6 +2267,7 @@ struct Enum_decl;
 struct Namespace_decl;
 struct Template_decl;
 struct Concept_decl;
+struct Axiom_decl;
 struct Object_parm;
 struct Value_parm;
 struct Type_parm;
@@ -2311,7 +2346,8 @@ struct Decl::Visitor
   virtual void visit(Enum_decl const&)      { }
   virtual void visit(Namespace_decl const&) { }
   virtual void visit(Template_decl const&)  { }
-  virtual void visit(Concept_decl const&)  { }
+  virtual void visit(Concept_decl const&)   { }
+  virtual void visit(Axiom_decl const&)     { }
   virtual void visit(Object_parm const&)    { }
   virtual void visit(Value_parm const&)     { }
   virtual void visit(Type_parm const&)      { }
@@ -2330,7 +2366,8 @@ struct Decl::Mutator
   virtual void visit(Enum_decl&)      { }
   virtual void visit(Namespace_decl&) { }
   virtual void visit(Template_decl&)  { }
-  virtual void visit(Concept_decl&)  { }
+  virtual void visit(Concept_decl&)   { }
+  virtual void visit(Axiom_decl&)     { }
   virtual void visit(Object_parm&)    { }
   virtual void visit(Value_parm&)     { }
   virtual void visit(Type_parm&)      { }
@@ -2649,6 +2686,30 @@ struct Concept_decl : Decl
 };
 
 
+// Represents the declaration of an axiom or semantic requirements.
+struct Axiom_decl : Decl
+{
+  Axiom_decl(Name& n, Decl_list const& ds, Stmt& s)
+    : Decl(n), parms(ds), reqs(&s)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the list of parameters in terms of which the requirements
+  // are written.
+  Decl_list const& parameters() const { return parms; }
+  Decl_list&       parameters()       { return parms; }
+
+  // Returns the list of requirements.
+  Stmt const& body() const { return *reqs; }
+  Stmt&       body()       { return *reqs; }
+
+  Decl_list parms;
+  Stmt*     reqs;
+};
+
+
 // A parameter index records the depth and offset of the
 // parameter.
 struct Index : std::pair<int, int>
@@ -2830,6 +2891,7 @@ struct Generic_decl_visitor : Decl::Visitor, Generic_visitor<F, T>
   void visit(Namespace_decl const& d) { this->invoke(d); }
   void visit(Template_decl const& d)  { this->invoke(d); }
   void visit(Concept_decl const& d)   { this->invoke(d); }
+  void visit(Axiom_decl const& d)     { this->invoke(d); }
   void visit(Object_parm const& d)    { this->invoke(d); }
   void visit(Value_parm const& d)     { this->invoke(d); }
   void visit(Type_parm const& d)      { this->invoke(d); }
@@ -2865,6 +2927,7 @@ struct Generic_decl_mutator : Decl::Mutator, Generic_mutator<F, T>
   void visit(Namespace_decl& d) { this->invoke(d); }
   void visit(Template_decl& d)  { this->invoke(d); }
   void visit(Concept_decl& d)   { this->invoke(d); }
+  void visit(Axiom_decl& d)     { this->invoke(d); }
   void visit(Object_parm& d)    { this->invoke(d); }
   void visit(Value_parm& d)     { this->invoke(d); }
   void visit(Type_parm& d)      { this->invoke(d); }

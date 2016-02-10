@@ -118,7 +118,7 @@ struct Builder
   Expression_def& make_expression_definition(Expr&);
   Function_def&   make_function_definition(Stmt&);
   Class_def&      make_class_definition(Decl_list const&);
-  Concept_def&    make_concept_definition(Decl_list const&);
+  Concept_def&    make_concept_definition(Stmt_list const&);
 
   Namespace_decl& make_namespace(Name&);
   Namespace_decl& make_namespace(char const*);
@@ -727,9 +727,9 @@ Builder::make_class_definition(Decl_list const& ds)
 
 
 inline Concept_def&
-Builder::make_concept_definition(Decl_list const& ds)
+Builder::make_concept_definition(Stmt_list const& ss)
 {
-  return make<Concept_def>(ds);
+  return make<Concept_def>(ss);
 }
 
 
