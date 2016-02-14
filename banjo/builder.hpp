@@ -8,7 +8,9 @@
 #include "prelude.hpp"
 #include "context.hpp"
 #include "token.hpp"
-#include "ast.hpp"
+#include "ast_base.hpp"
+#include "qualifier.hpp"
+#include "specifier.hpp"
 
 #include <lingo/token.hpp>
 
@@ -173,141 +175,6 @@ struct Builder
 
   Context& cxt;
 };
-
-
-// Returns a simple identifier for the symbol.
-inline Simple_id&
-Builder::get_id(Symbol const* sym)
-{
-  return get_id(*sym);
-}
-
-
-// Returns a simple id for the given token.
-inline Simple_id&
-Builder::get_id(Token tok)
-{
-  return get_id(tok.symbol());
-}
-
-
-inline Boolean_expr&
-Builder::get_true()
-{
-  return get_bool(true);
-}
-
-
-inline Boolean_expr&
-Builder::get_false()
-{
-  return get_bool(false);
-}
-
-
-// Returns the 0 constant, with scalar type `t`.
-//
-// TODO: Verify that t is scalar.
-//
-// TODO: Produce zero interpratations for any T?
-inline Integer_expr&
-Builder::get_zero(Type& t)
-{
-  return get_integer(t, 0);
-}
-
-
-inline Integer_expr&
-Builder::get_int(Integer const& n)
-{
-  return get_integer(get_int_type(), n);
-}
-
-
-inline Integer_expr&
-Builder::get_uint(Integer const& n)
-{
-  // lingo_assert(n.is_nonnegative(n));
-  return get_integer(get_uint_type(), n);
-}
-
-
-inline Call_expr&
-Builder::make_call(Type& t, Function_decl& f, Expr_list const& a)
-{
-  return make_call(t, make_reference(f), a);
-}
-
-
-inline Variable_decl&
-Builder::make_variable(char const* s, Type& t)
-{
-  return make_variable(get_id(s), t);
-}
-
-
-inline Variable_decl&
-Builder::make_variable(char const* s, Type& t, Expr& i)
-{
-  return make_variable(get_id(s), t, i);
-}
-
-
-inline Function_decl&
-Builder::make_function(char const* s, Decl_list const& ps, Type& r)
-{
-  return make_function(get_id(s), ps, r);
-}
-
-
-inline Namespace_decl&
-Builder::make_namespace(char const* s)
-{
-  return make_namespace(get_id(s));
-}
-
-
-inline Concept_decl&
-Builder::make_concept(char const* s, Decl_list const& ps, Def& d)
-{
-  return make_concept(get_id(s), ps, d);
-}
-
-
-inline Concept_decl&
-Builder::make_concept(char const* s, Decl_list const& ps, Expr& e)
-{
-  return make_concept(get_id(s), ps, make_expression_definition(e));
-}
-
-
-inline Object_parm&
-Builder::make_object_parm(char const* s, Type& t)
-{
-  return make_object_parm(get_id(s), t);
-}
-
-
-inline Type_parm&
-Builder::make_type_parameter(char const* n)
-{
-  return make_type_parameter(get_id(n));
-}
-
-
-// Make a type parameter with a default type.
-inline Type_parm&
-Builder::make_type_parameter(char const* n, Type& t)
-{
-  return make_type_parameter(get_id(n), t);
-}
-
-
-inline Value_parm&
-Builder::make_value_parm(char const* s, Type& t)
-{
-  return make_value_parm(get_id(s), t);
-}
 
 
 

@@ -19,6 +19,8 @@ add_library(banjo
   ast_decl.cpp
   ast_def.cpp
   ast_req.cpp
+  qualifier.cpp
+  specifier.cpp
   value.cpp
   builder.cpp
   parser.cpp

@@ -5,43 +5,11 @@
 #define BANJO_AST_TYPE_HPP
 
 #include "ast_base.hpp"
+#include "qualifier.hpp"
 
 
 namespace banjo
 {
-
-// Represents a set of type qualifiers.
-enum Qualifier_set
-{
-  empty_qual    = 0x00,
-  const_qual    = 0x01,
-  volatile_qual = 0x02,
-  total_qual    = const_qual | volatile_qual
-};
-
-
-inline Qualifier_set&
-operator|=(Qualifier_set& a, Qualifier_set b)
-{
-  return a = Qualifier_set(a | b);
-}
-
-
-// Returns true if a is a superset of b.
-inline bool
-is_superset(Qualifier_set a, Qualifier_set b)
-{
-  return (a & b) == b;
-}
-
-
-// Returns true if a is strictly more qualified than b.
-inline bool
-is_more_qualified(Qualifier_set a, Qualifier_set b)
-{
-  return is_superset(a, b) && a != b;
-}
-
 
 // The base class of all types.
 struct Type : Term

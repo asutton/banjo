@@ -5,15 +5,11 @@
 #define BANJO_AST_DECL_HPP
 
 #include "ast_base.hpp"
+#include "specifier.hpp"
 
 
 namespace banjo
 {
-
-// A specifier is a flag.
-//
-// FIXME: Make this a legitimate type.
-using Specifier = std::int32_t;
 
 
 // The base class of all declarations. Each declaration has a set of
@@ -29,11 +25,11 @@ struct Decl : Term
   struct Mutator;
 
   Decl(Name& n)
-    : spec(0), cxt(nullptr), id(&n)
+    : spec(), cxt(nullptr), id(&n)
   { }
 
   Decl(Decl& cxt, Name& n)
-    : spec(0), cxt(&cxt), id(&n)
+    : spec(), cxt(&cxt), id(&n)
   { }
 
   virtual void accept(Visitor& v) const = 0;
@@ -65,9 +61,9 @@ struct Decl : Term
   virtual Scope const* scope() const { return nullptr; }
   virtual Scope*       scope()       { return nullptr; }
 
-  Specifier spec;
-  Decl*     cxt;
-  Name*     id;
+  Specifier_set spec;
+  Decl*         cxt;
+  Name*         id;
 };
 
 

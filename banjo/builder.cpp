@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "builder.hpp"
+#include "ast.hpp"
 #include "equivalence.hpp"
 #include "hash.hpp"
 
@@ -93,6 +94,20 @@ Builder::get_id(Symbol const& sym)
 }
 
 
+// Returns a simple identifier for the symbol.
+Simple_id&
+Builder::get_id(Symbol const* sym)
+{
+  return get_id(*sym);
+}
+
+
+// Returns a simple id for the given token.
+Simple_id&
+Builder::get_id(Token tok)
+{
+  return get_id(tok.symbol());
+}
 
 
 // Returns a placeholder for a name.
@@ -340,12 +355,53 @@ Builder::get_bool(bool b)
 }
 
 
+Boolean_expr&
+Builder::get_true()
+{
+  return get_bool(true);
+}
+
+
+Boolean_expr&
+Builder::get_false()
+{
+  return get_bool(false);
+}
+
+
 // TODO: Verify that T can have an integer value?
 // I think that all scalars can have integer values.
 Integer_expr&
 Builder::get_integer(Type& t, Integer const& n)
 {
   return make<Integer_expr>(t, n);
+}
+
+
+// Returns the 0 constant, with scalar type `t`.
+//
+// TODO: Verify that t is scalar.
+//
+// TODO: Produce zero interpratations for any T?
+Integer_expr&
+Builder::get_zero(Type& t)
+{
+  return get_integer(t, 0);
+}
+
+
+Integer_expr&
+Builder::get_int(Integer const& n)
+{
+  return get_integer(get_int_type(), n);
+}
+
+
+Integer_expr&
+Builder::get_uint(Integer const& n)
+{
+  // lingo_assert(n.is_nonnegative(n));
+  return get_integer(get_uint_type(), n);
 }
 
 
@@ -447,6 +503,13 @@ Call_expr&
 Builder::make_call(Type& t, Expr& f, Expr_list const& a)
 {
   return make<Call_expr>(t, f, a);
+}
+
+
+Call_expr&
+Builder::make_call(Type& t, Function_decl& f, Expr_list const& a)
+{
+  return make_call(t, make_reference(f), a);
 }
 
 
@@ -591,10 +654,24 @@ Builder::make_variable(Name& n, Type& t)
 
 
 Variable_decl&
+Builder::make_variable(char const* s, Type& t)
+{
+  return make_variable(get_id(s), t);
+}
+
+
+Variable_decl&
 Builder::make_variable(Name& n, Type& t, Expr& i)
 {
   lingo_assert(is<Init>(&i));
   return make<Variable_decl>(n, t, i);
+}
+
+
+Variable_decl&
+Builder::make_variable(char const* s, Type& t, Expr& i)
+{
+  return make_variable(get_id(s), t, i);
 }
 
 
@@ -605,6 +682,13 @@ Builder::make_function(Name& n, Decl_list const& ps, Type& r)
 {
   Type& t = get_function_type(ps, r);
   return make<Function_decl>(n, t, ps);
+}
+
+
+Function_decl&
+Builder::make_function(char const* s, Decl_list const& ps, Type& r)
+{
+  return make_function(get_id(s), ps, r);
 }
 
 
@@ -626,6 +710,13 @@ Namespace_decl&
 Builder::make_namespace(Name& n)
 {
   return make<Namespace_decl>(n);
+}
+
+
+Namespace_decl&
+Builder::make_namespace(char const* s)
+{
+  return make_namespace(get_id(s));
 }
 
 
@@ -666,6 +757,20 @@ Builder::make_concept(Name& n, Decl_list const& ps, Expr& e)
 }
 
 
+Concept_decl&
+Builder::make_concept(char const* s, Decl_list const& ps, Def& d)
+{
+  return make_concept(get_id(s), ps, d);
+}
+
+
+Concept_decl&
+Builder::make_concept(char const* s, Decl_list const& ps, Expr& e)
+{
+  return make_concept(get_id(s), ps, make_expression_definition(e));
+}
+
+
 // TODO: Parameters can't be functions or void. Check this
 // property or assert it.
 Object_parm&
@@ -675,10 +780,24 @@ Builder::make_object_parm(Name& n, Type& t)
 }
 
 
+Object_parm&
+Builder::make_object_parm(char const* s, Type& t)
+{
+  return make_object_parm(get_id(s), t);
+}
+
+
 Type_parm&
 Builder::make_type_parameter(Name& n)
 {
   return make<Type_parm>(n);
+}
+
+
+Type_parm&
+Builder::make_type_parameter(char const* n)
+{
+  return make_type_parameter(get_id(n));
 }
 
 
@@ -690,10 +809,25 @@ Builder::make_type_parameter(Name& n, Type& t)
 }
 
 
+// Make a type parameter with a default type.
+Type_parm&
+Builder::make_type_parameter(char const* n, Type& t)
+{
+  return make_type_parameter(get_id(n), t);
+}
+
+
 Value_parm&
 Builder::make_value_parm(Name& n, Type& t)
 {
   return make<Value_parm>(n, t);
+}
+
+
+Value_parm&
+Builder::make_value_parm(char const* s, Type& t)
+{
+  return make_value_parm(get_id(s), t);
 }
 
 

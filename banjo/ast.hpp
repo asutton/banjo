@@ -29,8 +29,6 @@ struct Translation_unit : Term
 };
 
 
-
-
 } // namespace banjo
 
 
