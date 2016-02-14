@@ -5,8 +5,7 @@
 #define BANJO_INITIALIZATION_HPP
 
 #include "prelude.hpp"
-#include "context.hpp"
-#include "ast.hpp"
+#include "ast_base.hpp"
 
 namespace banjo
 {

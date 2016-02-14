@@ -15,6 +15,9 @@ namespace banjo
 using namespace lingo;
 
 
+struct Context;
+
+
 } // namespace banjo
 
 

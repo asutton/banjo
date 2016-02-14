@@ -5,11 +5,14 @@
 #define BANJO_CALL_HPP
 
 #include "prelude.hpp"
-#include "context.hpp"
-#include "ast.hpp"
+#include "ast_base.hpp"
+
 
 namespace banjo
 {
+
+struct Context;
+
 
 // Represeents a candidate for overload resolution.
 struct Function_candidate
