@@ -11,6 +11,14 @@ add_library(banjo
   lexer.cpp
   # Syntactic components
   ast.cpp
+  ast_base.cpp
+  ast_name.cpp
+  ast_type.cpp
+  ast_expr.cpp
+  ast_stmt.cpp
+  ast_decl.cpp
+  ast_def.cpp
+  ast_req.cpp
   value.cpp
   builder.cpp
   parser.cpp
