@@ -491,6 +491,7 @@ apply(Name& n, F fn)
 struct Type;
 struct Void_type;
 struct Boolean_type;
+struct Byte_type;
 struct Integer_type;
 struct Float_type;
 struct Auto_type;
@@ -574,6 +575,7 @@ struct Type::Visitor
 {
   virtual void visit(Void_type const&)      { }
   virtual void visit(Boolean_type const&)   { }
+  virtual void visit(Byte_type const&)      { }
   virtual void visit(Integer_type const&)   { }
   virtual void visit(Float_type const&)     { }
   virtual void visit(Auto_type const&)      { }
@@ -597,6 +599,7 @@ struct Type::Mutator
 {
   virtual void visit(Void_type&)      { }
   virtual void visit(Boolean_type&)   { }
+  virtual void visit(Byte_type&)      { }
   virtual void visit(Integer_type&)   { }
   virtual void visit(Float_type&)     { }
   virtual void visit(Auto_type&)      { }
@@ -654,6 +657,15 @@ struct Integer_type : Type
 
   bool sgn;
   int  prec;
+};
+
+// Byte type.
+// Not sure if we should have precision? Are all bytes going to be 8 bits or is
+// it architecture dependent? Also are we going to have signed bytes?
+struct Byte_type : Type
+{
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -2135,7 +2147,7 @@ struct Function_def : Def
   void accept(Visitor& v) const { return v.visit(*this); }
   void accept(Mutator& v)       { return v.visit(*this); }
 
-  // Returnse the statement associated with the function
+  // Returns the statement associated with the function
   // definition.
   Stmt const& statement() const { return *stmt; }
   Stmt&       statement()       { return *stmt; }

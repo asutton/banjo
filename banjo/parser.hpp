@@ -178,6 +178,7 @@ struct Parser
   Type& on_void_type(Token);
   Type& on_bool_type(Token);
   Type& on_int_type(Token);
+  Type& on_byte_type(Token);
   Type& on_decltype_type(Token, Expr&);
   Type& on_function_type(Type_list&, Type&);
   Type& on_pointer_type(Token, Type&);

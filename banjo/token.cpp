@@ -98,6 +98,7 @@ init_tokens(Symbol_table& syms)
   init_token(syms, axiom_tok, "axiom");
   init_token(syms, auto_tok, "auto");
   init_token(syms, bool_tok, "bool");
+  init_token(syms, byte_tok, "byte");
   init_token(syms, char_tok, "char");
   init_token(syms, char8_tok, "char8");
   init_token(syms, char16_tok, "char16");
