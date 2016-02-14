@@ -2,7 +2,6 @@
 // All rights reserved
 
 #include "expression.hpp"
-#include "ast.hpp"
 #include "builder.hpp"
 #include "lookup.hpp"
 #include "template.hpp"
@@ -31,8 +30,12 @@ make_reference(Context& cxt, Decl& d)
   Builder build(cxt);
 
   // TODO: What other kinds of objects do we have here...
+  //
+  // TODO: Dispatch.
   if (Variable_decl* v = as<Variable_decl>(&d))
     return build.make_reference(*v);
+  if (Object_parm* p = as<Object_parm>(&d))
+    return build.make_reference(*p);
   if (Function_decl* f = as<Function_decl>(&d))
     return build.make_reference(*f);
 
@@ -149,5 +152,20 @@ make_logical_not(Context& cxt, Expr& e)
   return build.make_not(t, c);
 }
 
+
+// -------------------------------------------------------------------------- //
+// Requirements
+
+// TODO: Actually validate informatio about the requires
+// expression. The statement cannot be emtpy. No variadic
+// parameter, etc.
+//
+// A requires expression has type bool.
+Expr&
+make_requirements(Context& cxt, Decl_list const& parms, Stmt& s)
+{
+  Builder build(cxt);
+  return build.make_requires(parms, s);
+}
 
 } // namespace banjo

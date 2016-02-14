@@ -82,10 +82,11 @@ struct Builder
   Integer_expr&   get_zero(Type&);
   Integer_expr&   get_int(Integer const&);
   Integer_expr&   get_uint(Integer const&);
-  Reference_expr& make_reference(Variable_decl& d);
-  Reference_expr& make_reference(Constant_decl& d);
-  Reference_expr& make_reference(Function_decl& d);
-  Check_expr&     make_check(Concept_decl& d, Term_list const&);
+  Reference_expr& make_reference(Variable_decl&);
+  Reference_expr& make_reference(Constant_decl&);
+  Reference_expr& make_reference(Function_decl&);
+  Reference_expr& make_reference(Object_parm&);
+  Check_expr&     make_check(Concept_decl&, Term_list const&);
 
   And_expr&       make_and(Type&, Expr&, Expr&);
   Or_expr&        make_or(Type&, Expr&, Expr&);
@@ -98,6 +99,7 @@ struct Builder
   Ge_expr&        make_ge(Type&, Expr&, Expr&);
   Call_expr&      make_call(Type&, Expr&, Expr_list const&);
   Call_expr&      make_call(Type&, Function_decl&, Expr_list const&);
+  Requires_expr&  make_requires(Decl_list const&, Stmt&);
   Synthetic_expr& synthesize_expression(Decl&);
 
   // Statements
@@ -532,6 +534,13 @@ Builder::make_reference(Function_decl& d)
 }
 
 
+inline Reference_expr&
+Builder::make_reference(Object_parm& d)
+{
+  return make<Reference_expr>(get_reference_type(d.type()), d);
+}
+
+
 // Make a concept check. The type is bool.
 inline Check_expr&
 Builder::make_check(Concept_decl& d, Term_list const& as)
@@ -614,6 +623,13 @@ inline Call_expr&
 Builder::make_call(Type& t, Function_decl& f, Expr_list const& a)
 {
   return make_call(t, make_reference(f), a);
+}
+
+
+inline Requires_expr&
+Builder::make_requires(Decl_list const& ps, Stmt& s)
+{
+  return make<Requires_expr>(get_bool_type(), ps, s);
 }
 
 

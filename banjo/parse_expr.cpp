@@ -206,6 +206,8 @@ Parser::expression_list()
 //    primary-expression:
 //      literal
 //      id-expression
+//      requires-expression
+//      lambda-expression
 //      '(' expression ')'
 Expr&
 Parser::primary_expression()
@@ -220,6 +222,8 @@ Parser::primary_expression()
 
     case identifier_tok:
       return id_expression();
+    case requires_tok:
+      return requires_expression();
     default:
       break;
   }
@@ -247,6 +251,24 @@ Parser::id_expression()
 {
   Name& n = id();
   return on_id_expression(n);
+}
+
+
+Expr&
+Parser::requires_expression()
+{
+  Token tok = require(requires_tok);
+
+  // FIXME: Lay down a scope so these parameters aren't visible
+  // outside of the expression.
+  Decl_list ps;
+  if (match_if(lparen_tok)) {
+    ps = parameter_list();
+    match(rparen_tok);
+  }
+
+  Stmt& stmt = statement();
+  return on_requires_expression(tok, ps, stmt);
 }
 
 

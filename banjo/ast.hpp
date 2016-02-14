@@ -1906,6 +1906,15 @@ apply(Expr& e, F fn)
 
 
 // -------------------------------------------------------------------------- //
+// Requirements
+
+struct Expression_req;
+struct Type_req;
+
+
+
+
+// -------------------------------------------------------------------------- //
 // Statements
 
 struct Stmt;
@@ -2031,7 +2040,7 @@ apply(Stmt const& s, F fn)
 
 
 // -------------------------------------------------------------------------- //
-// Function and type definitions
+// Definitins
 
 struct Def;
 struct Defaulted_def;

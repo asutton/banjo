@@ -89,6 +89,7 @@ struct Parser
   Expr& id_expression();
   Expr& grouped_expression();
   Expr& lambda_expression();
+  Expr& requires_expression();
 
   // Statements
   Stmt& statement();
@@ -202,6 +203,7 @@ struct Parser
   Expr& on_id_expression(Name&);
   Expr& on_boolean_literal(Token, bool);
   Expr& on_integer_literal(Token);
+  Expr& on_requires_expression(Token, Decl_list&, Stmt&);
 
   // Statements
   Compound_stmt& on_compound_statement(Stmt_list const&);

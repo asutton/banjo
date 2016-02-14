@@ -127,4 +127,11 @@ Parser::on_integer_literal(Token tok)
 }
 
 
+Expr&
+Parser::on_requires_expression(Token tok, Decl_list& ps, Stmt& s)
+{
+  return make_requirements(cxt, ps, s);
+}
+
+
 } // namespace banjo
