@@ -230,9 +230,10 @@ Parser::on_concept_definition(Decl& decl, Expr& e)
 Def&
 Parser::on_concept_definition(Decl& decl, Stmt_list& ds)
 {
-  Def& def = build.make_concept_definition(ds);
-  define_concept(decl, def);
-  return def;
+  lingo_unimplemented();
+  // Def& def = build.make_concept_definition(ds);
+  // define_concept(decl, def);
+  // return def;
 }
 
 

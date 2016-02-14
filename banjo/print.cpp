@@ -1181,7 +1181,7 @@ Printer::concept_definition(Concept_def const& d)
 {
   token(lbrace_tok);
   newline_and_indent();
-  statement_seq(d.requirements());
+  // statement_seq(d.requirements());
   newline_and_undent();
   token(rbrace_tok);
 }
