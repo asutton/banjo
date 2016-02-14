@@ -175,38 +175,6 @@ struct Builder
 };
 
 
-// -------------------------------------------------------------------------- //
-// Names
-
-// Returns a simple identifier with the given spelling.
-//
-// TODO: Unique this?
-inline Simple_id&
-Builder::get_id(char const* s)
-{
-  Symbol const* sym = symbols().put_identifier(identifier_tok, s);
-  return make<Simple_id>(*sym);
-}
-
-
-// Returns a simple identifier with the given spelling.
-inline Simple_id&
-Builder::get_id(std::string const& s)
-{
-  Symbol const* sym = symbols().put_identifier(identifier_tok, s);
-  return make<Simple_id>(*sym);
-}
-
-
-// Returns a simple identifier for the given symbol.
-inline Simple_id&
-Builder::get_id(Symbol const& sym)
-{
-  lingo_assert(is<Identifier_sym>(&sym));
-  return make<Simple_id>(sym);
-}
-
-
 // Returns a simple identifier for the symbol.
 inline Simple_id&
 Builder::get_id(Symbol const* sym)
@@ -223,251 +191,6 @@ Builder::get_id(Token tok)
 }
 
 
-// Returns a placeholder for a name.
-//
-// TODO: Make placeholders unique. Globally?
-inline Placeholder_id&
-Builder::get_id()
-{
-  return make<Placeholder_id>();
-}
-
-
-// Returns a destructor-id for the given type.
-inline Destructor_id&
-Builder::get_destructor_id(Type const& t)
-{
-  lingo_unimplemented();
-}
-
-
-inline Template_id&
-Builder::get_template_id(Template_decl& d, Term_list const& t)
-{
-  return make<Template_id>(d, t);
-}
-
-
-inline Concept_id&
-Builder::get_concept_id(Concept_decl& d, Term_list const& t)
-{
-  return make<Concept_id>(d, t);
-}
-
-
-// Returns a qualified-id.
-inline Qualified_id&
-Builder::get_qualified_id(Decl& d, Name& n)
-{
-  return make<Qualified_id>(d, n);
-}
-
-
-// Return the global identifier.
-inline Global_id&
-Builder::get_global_id()
-{
-  // TODO: Global or no?
-  static Global_id n;
-  return n;
-}
-
-
-// -------------------------------------------------------------------------- //
-// Types
-
-inline Void_type&
-Builder::get_void_type()
-{
-  return make<Void_type>();
-}
-
-
-inline Boolean_type&
-Builder::get_bool_type()
-{
-  return make<Boolean_type>();
-}
-
-
-inline Integer_type&
-Builder::get_integer_type(bool s, int p)
-{
-  return make<Integer_type>(s, p);
-}
-
-inline Byte_type&
-Builder::get_byte_type()
-{
-  return make<Byte_type>();
-}
-
-
-// TODO: Default precision depends on configuration.
-inline Integer_type&
-Builder::get_int_type()
-{
-  return get_integer_type(true, 32);
-}
-
-
-// TODO: Default precision depends on configuration.
-inline Integer_type&
-Builder::get_uint_type()
-{
-  return get_integer_type(false, 32);
-}
-
-
-inline Float_type&
-Builder::get_float_type()
-{
-  return make<Float_type>();
-}
-
-
-inline Auto_type&
-Builder::get_auto_type()
-{
-  return make<Auto_type>();
-}
-
-
-inline Decltype_type&
-Builder::get_decltype_type(Expr&)
-{
-  lingo_unimplemented();
-}
-
-
-inline Declauto_type&
-Builder::get_declauto_type()
-{
-  return make<Declauto_type>();
-}
-
-
-inline Function_type&
-Builder::get_function_type(Decl_list const& ps, Type& r)
-{
-  Type_list ts;
-  for (Decl& d : *modify(&ps)) {
-    Object_parm& p = cast<Object_parm>(d);
-    ts.push_back(p.type());
-  }
-  return get_function_type(ts, r);
-}
-
-
-inline Function_type&
-Builder::get_function_type(Type_list const& ts, Type& r)
-{
-  return make<Function_type>(ts, r);
-}
-
-
-// TODO: Do not build qualified types for functions or arrays.
-// Is that a hard error, or do we simply fold the const into
-// the return type and/or element type?
-inline Qualified_type&
-Builder::get_qualified_type(Type& t, Qualifier_set qual)
-{
-  if (Qualified_type* q = as<Qualified_type>(&t)) {
-    q->qual |= qual;
-    return *q;
-  }
-  return make<Qualified_type>(t, qual);
-}
-
-
-inline Qualified_type&
-Builder::get_const_type(Type& t)
-{
-  return get_qualified_type(t, const_qual);
-}
-
-
-inline Qualified_type&
-Builder::get_volatile_type(Type& t)
-{
-  return get_qualified_type(t, volatile_qual);
-}
-
-
-inline Pointer_type&
-Builder::get_pointer_type(Type& t)
-{
-  return make<Pointer_type>(t);
-}
-
-
-inline Reference_type&
-Builder::get_reference_type(Type& t)
-{
-  return make<Reference_type>(t);
-}
-
-
-inline Array_type&
-Builder::get_array_type(Type&, Expr&)
-{
-  lingo_unimplemented();
-}
-
-
-inline Sequence_type&
-Builder::get_sequence_type(Type& t)
-{
-  return make<Sequence_type>(t);
-}
-
-
-// FIXME: Canonicalize class types?
-inline Class_type&
-Builder::get_class_type(Decl& d)
-{
-  return make<Class_type>(d);
-}
-
-
-inline Union_type&
-Builder::get_union_type(Decl& d)
-{
-  lingo_unimplemented();
-}
-
-
-inline Enum_type&
-Builder::get_enum_type(Decl& d)
-{
-  lingo_unimplemented();
-}
-
-
-inline Typename_type&
-Builder::get_typename_type(Decl& d)
-{
-  return make<Typename_type>(d);
-}
-
-
-inline Synthetic_type&
-Builder::synthesize_type(Decl& d)
-{
-  return make<Synthetic_type>(d);
-}
-
-
-// -------------------------------------------------------------------------- //
-// Expressions
-
-inline Boolean_expr&
-Builder::get_bool(bool b)
-{
-  return make<Boolean_expr>(get_bool_type(), b);
-}
-
-
 inline Boolean_expr&
 Builder::get_true()
 {
@@ -479,15 +202,6 @@ inline Boolean_expr&
 Builder::get_false()
 {
   return get_bool(false);
-}
-
-
-// TODO: Verify that T can have an integer value?
-// I think that all scalars can have integer values.
-inline Integer_expr&
-Builder::get_integer(Type& t, Integer const& n)
-{
-  return make<Integer_expr>(t, n);
 }
 
 
@@ -518,251 +232,10 @@ Builder::get_uint(Integer const& n)
 }
 
 
-// Get an expression that refers to a variable. The type
-// is a reference to the declared type of the variable.
-inline Reference_expr&
-Builder::make_reference(Variable_decl& d)
-{
-  return make<Reference_expr>(get_reference_type(d.type()), d);
-}
-
-
-inline Reference_expr&
-Builder::make_reference(Function_decl& d)
-{
-  return make<Reference_expr>(get_reference_type(d.type()), d);
-}
-
-
-inline Reference_expr&
-Builder::make_reference(Object_parm& d)
-{
-  return make<Reference_expr>(get_reference_type(d.type()), d);
-}
-
-
-// Make a concept check. The type is bool.
-inline Check_expr&
-Builder::make_check(Concept_decl& d, Term_list const& as)
-{
-  return make<Check_expr>(get_bool_type(), d, as);
-}
-
-
-inline And_expr&
-Builder::make_and(Type& t, Expr& e1, Expr& e2)
-{
-  return make<And_expr>(t, e1, e2);
-}
-
-
-inline Or_expr&
-Builder::make_or(Type& t, Expr& e1, Expr& e2)
-{
-  return make<Or_expr>(t, e1, e2);
-}
-
-
-inline Not_expr&
-Builder::make_not(Type& t, Expr& e)
-{
-  return make<Not_expr>(t, e);
-}
-
-
-inline Eq_expr&
-Builder::make_eq(Type& t, Expr& e1, Expr& e2)
-{
-  return make<Eq_expr>(t, e1, e2);
-}
-
-
-inline Ne_expr&
-Builder::make_ne(Type& t, Expr& e1, Expr& e2)
-{
-  return make<Ne_expr>(t, e1, e2);
-}
-
-
-inline Lt_expr&
-Builder::make_lt(Type& t, Expr& e1, Expr& e2)
-{
-  return make<Lt_expr>(t, e1, e2);
-}
-
-
-inline Gt_expr&
-Builder::make_gt(Type& t, Expr& e1, Expr& e2)
-{
-  return make<Gt_expr>(t, e1, e2);
-}
-
-
-inline Le_expr&
-Builder::make_le(Type& t, Expr& e1, Expr& e2)
-{
-  return make<Le_expr>(t, e1, e2);
-}
-
-
-inline Ge_expr&
-Builder::make_ge(Type& t, Expr& e1, Expr& e2)
-{
-  return make<Ge_expr>(t, e1, e2);
-}
-
-
-inline Call_expr&
-Builder::make_call(Type& t, Expr& f, Expr_list const& a)
-{
-  return make<Call_expr>(t, f, a);
-}
-
-
 inline Call_expr&
 Builder::make_call(Type& t, Function_decl& f, Expr_list const& a)
 {
   return make_call(t, make_reference(f), a);
-}
-
-
-inline Requires_expr&
-Builder::make_requires(Decl_list const& ps, Stmt& s)
-{
-  return make<Requires_expr>(get_bool_type(), ps, s);
-}
-
-
-inline Synthetic_expr&
-Builder::synthesize_expression(Decl& d)
-{
-  return make<Synthetic_expr>(declared_type(d), d);
-}
-
-
-// -------------------------------------------------------------------------- //
-// Statements
-
-inline Compound_stmt&
-Builder::make_compound_statement(Stmt_list const& ss)
-{
-  return make<Compound_stmt>(ss);
-}
-
-
-inline Return_stmt&
-Builder::make_return_statement(Expr& e)
-{
-  return make<Return_stmt>(e);
-}
-
-
-inline Expression_stmt&
-Builder::make_expression_statement(Expr& e)
-{
-  return make<Expression_stmt>(e);
-}
-
-
-inline Declaration_stmt&
-Builder::make_declaration_statement(Decl& d)
-{
-  return make<Declaration_stmt>(d);
-}
-
-
-// -------------------------------------------------------------------------- //
-// Initializers
-
-inline Trivial_init&
-Builder::make_trivial_init(Type& t)
-{
-  return make<Trivial_init>(t);
-}
-
-
-inline Copy_init&
-Builder::make_copy_init(Type& t, Expr& e)
-{
-  return make<Copy_init>(t, e);
-}
-
-
-inline Bind_init&
-Builder::make_bind_init(Type& t, Expr& e)
-{
-  return make<Bind_init>(t, e);
-}
-
-
-inline Direct_init&
-Builder::make_direct_init(Type& t, Decl& d, Expr_list const& es)
-{
-  return make<Direct_init>(t, d, es);
-}
-
-
-inline Aggregate_init&
-Builder::make_aggregate_init(Type& t, Expr_list const& es)
-{
-  return make<Aggregate_init>(t, es);
-}
-
-
-// -------------------------------------------------------------------------- //
-// Definitions
-
-
-
-inline Deleted_def&
-Builder::make_deleted_definition()
-{
-  return make<Deleted_def>();
-}
-
-
-inline Defaulted_def&
-Builder::make_defaulted_definition()
-{
-  return make<Defaulted_def>();
-}
-
-
-inline Expression_def&
-Builder::make_expression_definition(Expr& e)
-{
-  return make<Expression_def>(e);
-}
-
-
-inline Function_def&
-Builder::make_function_definition(Stmt& s)
-{
-  return make<Function_def>(s);
-}
-
-
-inline Class_def&
-Builder::make_class_definition(Decl_list const& ds)
-{
-  return make<Class_def>(ds);
-}
-
-
-inline Concept_def&
-Builder::make_concept_definition(Req_list const& ss)
-{
-  return make<Concept_def>(ss);
-}
-
-
-// -------------------------------------------------------------------------- //
-// Declarations
-
-inline Variable_decl&
-Builder::make_variable(Name& n, Type& t)
-{
-  return make<Variable_decl>(n, t);
 }
 
 
@@ -774,27 +247,9 @@ Builder::make_variable(char const* s, Type& t)
 
 
 inline Variable_decl&
-Builder::make_variable(Name& n, Type& t, Expr& i)
-{
-  lingo_assert(is<Init>(&i));
-  return make<Variable_decl>(n, t, i);
-}
-
-
-inline Variable_decl&
 Builder::make_variable(char const* s, Type& t, Expr& i)
 {
   return make_variable(get_id(s), t, i);
-}
-
-
-// Creates an undefined function with parameters ps and return
-// type r.
-inline Function_decl&
-Builder::make_function(Name& n, Decl_list const& ps, Type& r)
-{
-  Type& t = get_function_type(ps, r);
-  return make<Function_decl>(n, t, ps);
 }
 
 
@@ -805,68 +260,10 @@ Builder::make_function(char const* s, Decl_list const& ps, Type& r)
 }
 
 
-inline Class_decl&
-Builder::make_class(Name& n)
-{
-  return make<Class_decl>(n);
-}
-
-
-inline Class_decl&
-Builder::make_class(char const* s)
-{
-  return make<Class_decl>(get_id(s));
-}
-
-
-inline Namespace_decl&
-Builder::make_namespace(Name& n)
-{
-  return make<Namespace_decl>(n);
-}
-
-
 inline Namespace_decl&
 Builder::make_namespace(char const* s)
 {
   return make_namespace(get_id(s));
-}
-
-
-// FIXME: This should probably be installed on the context.
-inline Namespace_decl&
-Builder::get_global_namespace()
-{
-  static Namespace_decl ns(get_global_id());
-  return ns;
-}
-
-
-inline Template_decl&
-Builder::make_template(Decl_list const& p, Decl& d)
-{
-  return make<Template_decl>(p, d);
-}
-
-
-inline Concept_decl&
-Builder::make_concept(Name& n, Decl_list const& ps)
-{
-  return make<Concept_decl>(n, ps);
-}
-
-
-inline Concept_decl&
-Builder::make_concept(Name& n, Decl_list const& ps, Def& d)
-{
-  return make<Concept_decl>(n, ps, d);
-}
-
-
-inline Concept_decl&
-Builder::make_concept(Name& n, Decl_list const& ps, Expr& e)
-{
-  return make<Concept_decl>(n, ps, make_expression_definition(e));
 }
 
 
@@ -884,26 +281,10 @@ Builder::make_concept(char const* s, Decl_list const& ps, Expr& e)
 }
 
 
-// TODO: Parameters can't be functions or void. Check this
-// property or assert it.
-inline Object_parm&
-Builder::make_object_parm(Name& n, Type& t)
-{
-  return make<Object_parm>(n, t);
-}
-
-
 inline Object_parm&
 Builder::make_object_parm(char const* s, Type& t)
 {
   return make_object_parm(get_id(s), t);
-}
-
-
-inline Type_parm&
-Builder::make_type_parameter(Name& n)
-{
-  return make<Type_parm>(n);
 }
 
 
@@ -916,24 +297,9 @@ Builder::make_type_parameter(char const* n)
 
 // Make a type parameter with a default type.
 inline Type_parm&
-Builder::make_type_parameter(Name& n, Type& t)
-{
-  return make<Type_parm>(n, t);
-}
-
-
-// Make a type parameter with a default type.
-inline Type_parm&
 Builder::make_type_parameter(char const* n, Type& t)
 {
   return make_type_parameter(get_id(n), t);
-}
-
-
-inline Value_parm&
-Builder::make_value_parm(Name& n, Type& t)
-{
-  return make<Value_parm>(n, t);
 }
 
 
