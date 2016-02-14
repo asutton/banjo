@@ -107,7 +107,6 @@ struct Expression_req;
 struct Simple_req;
 struct Conversion_req;
 struct Deduction_req;
-struct Existential_req;
 
 struct Stmt;
 struct Compound_stmt;

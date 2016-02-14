@@ -78,6 +78,25 @@ Parser::next_token_is(char const* s)
 }
 
 
+// Returns true if the next token does not have the given kind.
+bool
+Parser::next_token_is_not(Token_kind k)
+{
+  return lookahead() != k;
+}
+
+
+// Returns true if the next token is not identifier with
+// the given spelling.
+bool
+Parser::next_token_is_not(char const* s)
+{
+  if (next_token_is_not(identifier_tok))
+    return false;
+  return peek().spelling() == s;
+}
+
+
 // Require that the next token matches in kind. Emit a diagnostic
 // message if it does not.
 Token

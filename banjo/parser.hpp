@@ -102,41 +102,59 @@ struct Parser
   // Declarations
   Name& declarator();
   Decl& declaration();
+  Decl_list declaration_seq();
   Decl& empty_declaration();
-  Decl& variable_declaration();
-  Decl& function_declaration();
-  Decl& class_declaration();
+
   Decl& enum_declaration();
   Decl& namespace_declaration();
-  Decl& template_declaration();
-  Decl& concept_declaration();
-  Decl& usage_declaration();
   Decl& axiom_declaration();
-  Decl_list declaration_seq();
-  // Function parameters
+
+  // Initializers
+  Decl& variable_declaration();
+  Expr& initializer(Decl&);
+  Expr& equal_initializer(Decl&);
+  Expr& paren_initializer(Decl&);
+  Expr& brace_initializer(Decl&);
+
+  // Definitions
+  Decl& function_declaration();
   Decl& parameter_declaration();
   Decl_list parameter_list();
-  // Template parameters
+  Def& function_definition(Decl&);
+
+  // Classes
+  Decl& class_declaration();
+  Def& class_definition(Decl&);
+  Decl_list member_seq();
+  Decl& member_declaration();
+
+  // Templates
+  Decl& template_declaration();
   Decl& template_parameter();
   Decl& type_template_parameter();
   Decl& value_template_parameter();
   Decl& template_template_parameter();
   Decl_list template_parameter_list();
-  // Initializers
-  Expr& initializer(Decl&);
-  Expr& equal_initializer(Decl&);
-  Expr& paren_initializer(Decl&);
-  Expr& brace_initializer(Decl&);
-  // Definitions
-  Def& function_definition(Decl&);
-  Def& class_definition(Decl&);
-  Def& concept_definition(Decl&);
-  // Constraints, preconditions, and postconditions
-  Expr& where_clause();
-  // Classes
-  Decl_list member_seq();
-  Decl& member_declaration();
 
+  // Constraints, preconditions, and postconditions
+  Expr& requires_clause();
+
+  // Concepts
+  Decl& concept_declaration();
+  Def& concept_definition(Decl&);
+  Req& concept_member();
+  Req_list concept_member_seq();
+
+  // Requirements
+  Req& requirement();
+  Req& type_requirement();
+  Req& syntactic_requirement();
+  Req& semantic_requirement();
+  Req& expression_requirement();
+  Req& usage_requirement();
+  Req_list usage_seq();
+
+  // Modules
   Term& translation_unit();
 
   // Semantics
@@ -203,7 +221,7 @@ struct Parser
   Expr& on_id_expression(Name&);
   Expr& on_boolean_literal(Token, bool);
   Expr& on_integer_literal(Token);
-  Expr& on_requires_expression(Token, Decl_list&, Stmt&);
+  Expr& on_requires_expression(Token, Decl_list&, Decl_list&, Req_list&);
 
   // Statements
   Compound_stmt& on_compound_statement(Stmt_list const&);
@@ -231,12 +249,20 @@ struct Parser
   Def& on_function_definition(Decl&, Stmt&);
   Def& on_class_definition(Decl&, Decl_list&);
   Def& on_concept_definition(Decl&, Expr&);
-  Def& on_concept_definition(Decl&, Stmt_list&);
+  Def& on_concept_definition(Decl&, Req_list&);
   Def& on_deleted_definition(Decl&);
   Def& on_defaulted_definition(Decl&);
-  // Members
 
   Name& on_declarator(Name&);
+
+  // Reqirements
+  Req& on_type_requirement(Expr&);
+  Req& on_syntactic_requirement(Expr&);
+  Req& on_semantic_requirement(Decl&);
+  Req& on_expression_requirement(Expr&);
+  Req& on_simple_requirement(Expr&);
+  Req& on_conversion_requirement(Expr&, Type&);
+  Req& on_deduction_requirement(Expr&, Type&);
 
   // Miscellaneous
   Namespace_decl& on_translation_unit(Decl_list&);
@@ -247,6 +273,8 @@ struct Parser
   Token_kind lookahead(int) const;
   bool       next_token_is(Token_kind);
   bool       next_token_is(char const*);
+  bool       next_token_is_not(Token_kind);
+  bool       next_token_is_not(char const*);
   Token      match(Token_kind);
   Token      match_if(Token_kind);
   Token      require(Token_kind);

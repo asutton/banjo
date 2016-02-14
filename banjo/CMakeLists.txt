@@ -29,16 +29,17 @@ add_library(banjo
   parse_expr.cpp
   parse_stmt.cpp
   parse_decl.cpp
+  parse_req.cpp
   sema_id.cpp
   sema_type.cpp
   sema_expr.cpp
   sema_init.cpp
   sema_stmt.cpp
   sema_decl.cpp
-  # Utilities
+  sema_req.cpp
+  # Semantics
   hash.cpp
   equivalence.cpp
-  # Semantics
   scope.cpp
   lookup.cpp
   declaration.cpp

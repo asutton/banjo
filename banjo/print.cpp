@@ -748,13 +748,17 @@ Printer::requires_expression(Requires_expr const& e)
 {
   token(requires_tok);
   space();
-  if (!e.parameters().empty()) {
+
+  // FIXME: Print template parameters.
+
+  Decl_list const& nparms = e.normal_parameters();
+  if (!nparms.empty()) {
     token(lparen_tok);
-    parameter_list(e.parameters());
+    parameter_list(nparms);
     token(rparen_tok);
     space();
   }
-  statement(e.body());
+  usage_seq(e.requirements());
 }
 
 
@@ -1133,7 +1137,7 @@ Printer::template_declaration(Template_decl const& d)
   token(gt_tok);
   if (d.is_constrained()) {
     newline_and_indent();
-    where_clause(d.constraint());
+    requires_clause(d.constraint());
     newline_and_undent();
   } else {
     newline();
@@ -1210,9 +1214,9 @@ Printer::axiom_declaration(Axiom_decl const& d)
 
 
 void
-Printer::where_clause(Expr const& e)
+Printer::requires_clause(Expr const& e)
 {
-  token(where_tok);
+  token(requires_tok);
   space();
   expression(e);
 }
@@ -1340,6 +1344,64 @@ Printer::template_argument_list(Term_list const& ts)
       token(comma_tok);
   }
 }
+
+// -------------------------------------------------------------------------- //
+// Requirements
+
+void
+Printer::usage_seq(Req_list const& rs)
+{
+  for (Req const& r : rs) {
+    usage_requirement(r);
+    newline();
+  }
+}
+
+
+void
+Printer::usage_requirement(Req const& r)
+{
+  struct fn
+  {
+    Printer& p;
+    void operator()(Req const& r) { banjo_unhandled_case(r); }
+    void operator()(Simple_req const& r) { p.requirement(r); }
+    void operator()(Conversion_req const& r) { p.requirement(r); }
+    void operator()(Deduction_req const& r) { p.requirement(r); }
+  };
+  apply(r, fn{*this});
+}
+
+
+void
+Printer::requirement(Simple_req const& r)
+{
+  expression(r.expression());
+  token(semicolon_tok);
+}
+
+
+void
+Printer::requirement(Conversion_req const& r)
+{
+  expression(r.expression());
+  token(arrow_tok);
+  type(r.type());
+  token(semicolon_tok);
+}
+
+
+void
+Printer::requirement(Deduction_req const& r)
+{
+  expression(r.expression());
+  token(colon_tok);
+  type(r.type());
+  token(semicolon_tok);
+}
+
+
+
 
 
 // -------------------------------------------------------------------------- //

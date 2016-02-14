@@ -141,7 +141,6 @@ struct Printer
   void paren_initializer(Direct_init const&);
   void brace_initializer(Aggregate_init const&);
 
-
   // Declarations
   void declaration(Decl const&);
   void declaration_seq(Decl_list const&);
@@ -186,7 +185,14 @@ struct Printer
   void template_argument(Term const&);
   void template_argument_list(Term_list const&);
 
-  void where_clause(Expr const&);
+  void requires_clause(Expr const&);
+
+  // Requirements
+  void usage_seq(Req_list const&);
+  void usage_requirement(Req const&);
+  void requirement(Simple_req const&);
+  void requirement(Conversion_req const&);
+  void requirement(Deduction_req const&);
 
   // Constraints
   // These don't really have an external syntax, but it's

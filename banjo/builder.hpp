@@ -99,7 +99,7 @@ struct Builder
   Ge_expr&        make_ge(Type&, Expr&, Expr&);
   Call_expr&      make_call(Type&, Expr&, Expr_list const&);
   Call_expr&      make_call(Type&, Function_decl&, Expr_list const&);
-  Requires_expr&  make_requires(Decl_list const&, Stmt&);
+  Requires_expr&  make_requires(Decl_list const&, Decl_list const&, Req_list const&);
   Synthetic_expr& synthesize_expression(Decl&);
 
   // Statements
@@ -150,7 +150,9 @@ struct Builder
   Type_parm&   make_type_parameter(Name&, Type&);
   Type_parm&   make_type_parameter(char const*, Type&);
 
-  // Constraints.
+  // Requirements
+
+  // Constraints
   // Note that constraints are canonicalized in order
   // ensure efficient hashingn and equivalence comparison.
   Concept_cons&     get_concept_constraint(Decl&, Term_list&);

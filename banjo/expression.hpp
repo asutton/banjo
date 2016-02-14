@@ -19,7 +19,7 @@ Expr& make_logical_not(Context&, Expr&);
 
 Expr& make_reference(Context& cxt, Name&);
 
-Expr& make_requirements(Context& cxt, Decl_list const&, Stmt&);
+Expr& make_requirements(Context& cxt, Decl_list const&, Decl_list const&, Req_list const&);
 
 
 } // namespace banjo

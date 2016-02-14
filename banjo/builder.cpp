@@ -514,9 +514,9 @@ Builder::make_call(Type& t, Function_decl& f, Expr_list const& a)
 
 
 Requires_expr&
-Builder::make_requires(Decl_list const& ps, Stmt& s)
+Builder::make_requires(Decl_list const& tps, Decl_list const& ps, Req_list const& rs)
 {
-  return make<Requires_expr>(get_bool_type(), ps, s);
+  return make<Requires_expr>(get_bool_type(), tps, ps, rs);
 }
 
 

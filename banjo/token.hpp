@@ -115,7 +115,6 @@ enum Token_kind
   virtual_tok,
   void_tok,
   volatile_tok,
-  where_tok,
   while_tok,
   last_keyword_tok,
 

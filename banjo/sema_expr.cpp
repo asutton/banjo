@@ -129,9 +129,9 @@ Parser::on_integer_literal(Token tok)
 
 
 Expr&
-Parser::on_requires_expression(Token tok, Decl_list& ps, Stmt& s)
+Parser::on_requires_expression(Token tok, Decl_list& tps, Decl_list& ps, Req_list& rs)
 {
-  return make_requirements(cxt, ps, s);
+  return make_requirements(cxt, tps, ps, rs);
 }
 
 

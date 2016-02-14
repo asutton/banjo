@@ -254,21 +254,38 @@ Parser::id_expression()
 }
 
 
+// Parse a requires expression.
+//
+//    requires-expression:
+//      'requires' ['<' template-parameter-list '>'] ['(' parameter-list ')'] requires-body
+//
 Expr&
 Parser::requires_expression()
 {
   Token tok = require(requires_tok);
 
+  // Match template parameter.
+  //
+  // TODO: Introduce a new scope.
+  Decl_list tparms;
+  if (match_if(lt_tok)) {
+    tparms = template_parameter_list();
+    match(gt_tok);
+  }
+
   // FIXME: Lay down a scope so these parameters aren't visible
   // outside of the expression.
-  Decl_list ps;
+  Decl_list parms;
   if (match_if(lparen_tok)) {
-    ps = parameter_list();
+    parms = parameter_list();
     match(rparen_tok);
   }
 
-  Stmt& stmt = statement();
-  return on_requires_expression(tok, ps, stmt);
+  match(lbrace_tok);
+  Req_list reqs = usage_seq();
+  match(rbrace_tok);
+
+  return on_requires_expression(tok, tparms, parms, reqs);
 }
 
 

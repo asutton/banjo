@@ -163,10 +163,13 @@ make_logical_not(Context& cxt, Expr& e)
 //
 // A requires expression has type bool.
 Expr&
-make_requirements(Context& cxt, Decl_list const& parms, Stmt& s)
+make_requirements(Context& cxt,
+                  Decl_list const& tparms,
+                  Decl_list const& parms,
+                  Req_list const& reqs)
 {
   Builder build(cxt);
-  return build.make_requires(parms, s);
+  return build.make_requires(tparms, parms, reqs);
 }
 
 } // namespace banjo

@@ -420,8 +420,8 @@ Parser::template_declaration()
   // The definition is parsed in different branches in case I may,
   // in the future, want to establish a new scope for constrained
   // declarations (i.e., separate checking).
-  if (next_token_is(where_tok)) {
-    Expr& c = where_clause();
+  if (next_token_is(requires_tok)) {
+    Expr& c = requires_clause();
     Parsing_template save(*this, ps, c);
     return declaration();
   } else {
@@ -526,11 +526,11 @@ Parser::template_template_parameter()
 // Parse a where clause:
 //
 //    where-clause:
-//      'where' logical-or-expression
+//      'requires' logical-or-expression
 Expr&
-Parser::where_clause()
+Parser::requires_clause()
 {
-  require(where_tok);
+  require(requires_tok);
   return logical_or_expression();
 }
 
@@ -582,7 +582,7 @@ Parser::concept_declaration()
 //
 //    concept-definition:
 //      '=' logical-or-expression
-//      '{' statement-seq '}'
+//      '{' concept-member-seq '}'
 //
 // TODO: Not all statements are valid within a concept definition.
 // Certain declarations are valid, and certain expression statements
@@ -600,10 +600,61 @@ Parser::concept_definition(Decl& d)
     return def;
   } else {
     match(lbrace_tok);
-    Stmt_list ss = statement_seq();
-    Def& def = on_concept_definition(d, ss);
+    Req_list rs = concept_member_seq();
+    Def& def = on_concept_definition(d, rs);
     match(rbrace_tok);
     return def;
+  }
+}
+
+
+// Parse a sequence of concept members.
+//
+//    concept-member-seq:
+//      concept-member
+//      concept-member-seq concept-member
+Req_list
+Parser::concept_member_seq()
+{
+  Req_list rs;
+  do {
+    Req& r = concept_member();
+    rs.push_back(r);
+  } while (next_token_is_not(rbrace_tok));
+  return rs;
+}
+
+
+
+// Parse a concept member.
+//
+//    concept-member:
+//      type-requirement
+//      syntactic-requirement
+//      semantic-requirement
+//      expression-requirement
+//
+// TODO: When we adopt shorthand for concepts, we'll need to
+// disambiguate some type requirements from expression
+// requirements. For example:
+//
+//    C X<T>; // A type requirement, X<T> must satsify C
+//
+//    C<T>; // An expression requirement, C<T> must be satisfied.
+//
+// We'll need a tentative parse to disambiguate.
+Req&
+Parser::concept_member()
+{
+  switch (lookahead()) {
+    case typename_tok:
+      return type_requirement();
+    case requires_tok:
+      return syntactic_requirement();
+    case axiom_tok:
+      return semantic_requirement();
+    default:
+      return expression_requirement();
   }
 }
 

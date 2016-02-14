@@ -16,6 +16,9 @@ struct Req : Term
 {
   struct Visitor;
   struct Mutator;
+
+  virtual void accept(Visitor&) const = 0;
+  virtual void accept(Mutator&) = 0;
 };
 
 
@@ -28,7 +31,6 @@ struct Req::Visitor
   virtual void visit(Simple_req const&)      { }
   virtual void visit(Conversion_req const&)  { }
   virtual void visit(Deduction_req const&)   { }
-  virtual void visit(Existential_req const&) { }
 };
 
 
@@ -41,14 +43,14 @@ struct Req::Mutator
   virtual void visit(Simple_req&)      { }
   virtual void visit(Conversion_req&)  { }
   virtual void visit(Deduction_req&)   { }
-  virtual void visit(Existential_req&) { }
 };
 
 
 // Represents the requirement for an associated type.
 struct Type_req : Req
 {
-
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -56,6 +58,12 @@ struct Type_req : Req
 // This wraps a requires-expression.
 struct Syntactic_req : Req
 {
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  Expr const& expression() const { return *req; }
+  Expr&       expression()       { return *req; }
+
   Expr* req;
 };
 
@@ -64,13 +72,22 @@ struct Syntactic_req : Req
 // This wraps an axiom-declaration.
 struct Semantic_req : Req
 {
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
   Decl* sema;
 };
 
 
 // Represents the requirement for an expression to be satsified.
-struct Expression_req
+struct Expression_req : Req
 {
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  Expr const& expression() const { return *expr; }
+  Expr&       expression()       { return *expr; }
+
   Expr* expr;
 };
 
@@ -79,6 +96,12 @@ struct Expression_req
 // expression is represented by a unique invented type.
 struct Simple_req : Req
 {
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  Expr const& expression() const { return *expr; }
+  Expr&       expression()       { return *expr; }
+
   Expr* expr;
 };
 
@@ -93,8 +116,17 @@ struct Simple_req : Req
 // prior to determining conversion.
 struct Conversion_req : Req
 {
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  Expr const& expression() const { return *expr; }
+  Expr&       expression()       { return *expr; }
+
+  Type const& type() const { return *ty; }
+  Type&       type()       { return *ty; }
+
   Expr* expr;
-  Type* type;
+  Type* ty;
 };
 
 
@@ -108,23 +140,17 @@ struct Conversion_req : Req
 // the types match.
 struct Deduction_req : Req
 {
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  Expr const& expression() const { return *expr; }
+  Expr&       expression()       { return *expr; }
+
+  Type const& type() const { return *ty; }
+  Type&       type()       { return *ty; }
+
   Expr* expr;
-  Type* type;
-};
-
-
-// Represents the declaration of an existential type, value
-// or template. These aren't requirments as such, but contribute
-// to terms that must be deduced. For example:
-//
-//    typename T; // #1
-//    f(e) : T*;  // #2
-//
-// #1 does not become a constraint. #2 is valid iff the result
-// type is deduced as T*.
-struct Existential_req : Req
-{
-  Decl* decl;
+  Type* ty;
 };
 
 
@@ -143,7 +169,6 @@ struct Generic_req_visitor : Req::Visitor, Generic_visitor<F, T>
   void visit(Simple_req const& r)      { this->invoke(r); }
   void visit(Conversion_req const& r)  { this->invoke(r); }
   void visit(Deduction_req const& r)   { this->invoke(r); }
-  void visit(Existential_req const& r) { this->invoke(r); }
 };
 
 
@@ -172,7 +197,6 @@ struct Generic_req_mutator : Req::Mutator, Generic_mutator<F, T>
   void visit(Simple_req& r)      { this->invoke(r); }
   void visit(Conversion_req& r)  { this->invoke(r); }
   void visit(Deduction_req& r)   { this->invoke(r); }
-  void visit(Existential_req& r) { this->invoke(r); }
 };
 
 

@@ -155,7 +155,6 @@ init_tokens(Symbol_table& syms)
   init_token(syms, var_tok, "var");
   init_token(syms, void_tok, "void");
   init_token(syms, volatile_tok, "volatile");
-  init_token(syms, where_tok, "where");
   init_token(syms, while_tok, "while");
 
   init_token_class(syms, identifier_tok, "<identifier>");

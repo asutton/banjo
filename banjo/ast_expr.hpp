@@ -454,8 +454,8 @@ struct Assign_expr : Binary_expr
 // statement.
 struct Requires_expr : Expr
 {
-  Requires_expr(Type& t, Decl_list const& ds, Stmt& s)
-    : Expr(t), parms(ds), reqs(&s)
+  Requires_expr(Type& t, Decl_list const& tps, Decl_list const& nps, Req_list const& rs)
+    : Expr(t), tparms(tps), nparms(nps), reqs(rs)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -463,15 +463,21 @@ struct Requires_expr : Expr
 
   // Returns the list of parameters in terms of which the requirements
   // are written.
-  Decl_list const& parameters() const { return parms; }
-  Decl_list&       parameters()       { return parms; }
+  Decl_list const& template_parameters() const { return tparms; }
+  Decl_list&       template_parameters()       { return tparms; }
+
+  // Returns the list of parameters in terms of which the requirements
+  // are written.
+  Decl_list const& normal_parameters() const { return nparms; }
+  Decl_list&       normal_parameters()       { return nparms; }
 
   // Returns the list of requirements.
-  Stmt const& body() const { return *reqs; }
-  Stmt&       body()       { return *reqs; }
+  Req_list const& requirements() const { return reqs; }
+  Req_list&       requirements()       { return reqs; }
 
-  Decl_list parms;
-  Stmt*     reqs;
+  Decl_list tparms;
+  Decl_list nparms;
+  Req_list  reqs;
 };
 
 

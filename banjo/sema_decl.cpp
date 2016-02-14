@@ -230,7 +230,7 @@ Parser::on_concept_definition(Decl& decl, Expr& e)
 
 
 Def&
-Parser::on_concept_definition(Decl& decl, Stmt_list& ds)
+Parser::on_concept_definition(Decl& decl, Req_list& ds)
 {
   lingo_unimplemented();
   // Def& def = build.make_concept_definition(ds);
