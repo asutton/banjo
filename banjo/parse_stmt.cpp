@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "parser.hpp"
+#include "ast_stmt.hpp"
 #include "print.hpp"
 
 #include <iostream>

@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "expression.hpp"
+#include "ast_expr.hpp"
 #include "builder.hpp"
 #include "lookup.hpp"
 #include "template.hpp"

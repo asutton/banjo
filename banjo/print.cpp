@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "print.hpp"
+#include "ast.hpp"
 
 #include <iterator>
 #include <iostream>

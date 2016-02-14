@@ -8,9 +8,7 @@
 #include "prelude.hpp"
 #include "context.hpp"
 #include "token.hpp"
-#include "ast_base.hpp"
-#include "qualifier.hpp"
-#include "specifier.hpp"
+#include "language.hpp"
 
 #include <lingo/token.hpp>
 

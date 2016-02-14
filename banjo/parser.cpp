@@ -2,7 +2,7 @@
 // All rights reserved
 
 #include "parser.hpp"
-#include "scope.hpp"
+#include "ast.hpp"
 
 #include <iostream>
 

@@ -2,6 +2,10 @@
 // All rights reserved
 
 #include "parser.hpp"
+#include "ast_name.hpp"
+#include "ast_type.hpp"
+#include "ast_expr.hpp"
+#include "ast_decl.hpp"
 #include "print.hpp"
 
 #include <iostream>

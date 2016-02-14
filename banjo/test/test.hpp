@@ -7,6 +7,7 @@
 #include <banjo/context.hpp>
 #include <banjo/builder.hpp>
 #include <banjo/print.hpp>
+#include <banjo/ast.hpp>
 
 #include <iostream>
 

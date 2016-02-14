@@ -2,6 +2,8 @@
 // All rights reserved
 
 #include "parser.hpp"
+#include "ast_name.hpp"
+#include "ast_decl.hpp"
 #include "print.hpp"
 
 #include <iostream>
@@ -186,7 +188,7 @@ Parser::function_declaration()
 
   return fn;
 }
-  
+
 // Parse a parameter list.
 //
 //    parameter-list:

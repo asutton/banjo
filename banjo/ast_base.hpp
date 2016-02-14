@@ -55,6 +55,8 @@ struct Typename_type;
 struct Synthetic_type;
 
 struct Expr;
+struct Unary_expr;
+struct Binary_expr;
 struct Boolean_expr;
 struct Integer_expr;
 struct Real_expr;

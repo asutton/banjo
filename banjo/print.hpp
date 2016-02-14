@@ -5,7 +5,7 @@
 #define BANJO_PRINT_HPP
 
 #include "token.hpp"
-#include "ast.hpp"
+#include "language.hpp"
 
 #include <iosfwd>
 

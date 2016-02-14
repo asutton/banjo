@@ -6,8 +6,8 @@
 
 #include "lexer.hpp"
 #include "token.hpp"
-#include "ast.hpp"
 #include "scope.hpp"
+#include "language.hpp"
 #include "builder.hpp"
 
 

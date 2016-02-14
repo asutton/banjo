@@ -2,6 +2,8 @@
 // All rights reserved
 
 #include "parser.hpp"
+#include "ast_expr.hpp"
+#include "ast_decl.hpp"
 #include "initialization.hpp"
 #include "print.hpp"
 

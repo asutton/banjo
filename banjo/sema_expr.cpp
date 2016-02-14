@@ -2,6 +2,9 @@
 // All rights reserved
 
 #include "parser.hpp"
+#include "ast_expr.hpp"
+#include "ast_type.hpp"
+#include "ast_decl.hpp"
 #include "expression.hpp"
 #include "print.hpp"
 
@@ -10,8 +13,6 @@
 
 namespace banjo
 {
-
-// FIXME: Actually perform semantic anlaysis.
 
 Expr&
 Parser::on_logical_and_expression(Token tok, Expr& e1, Expr& e2)
