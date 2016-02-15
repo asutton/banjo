@@ -36,6 +36,12 @@ struct Internal_error : std::runtime_error
   throw banjo::Internal_error("{}:{}: unhandled case '{}'", __FILE__, __LINE__, lingo::type_str(x))
 
 
+// Throws an internal error to indicate an unhandled case for
+// the dynamic type of x.
+#define banjo_unimplemented(s) \
+  throw banjo::Internal_error("{}:{}: unimplemented: '{}'", __FILE__, __LINE__, s)
+
+
 // Represents an error that occurs during translation. Translation
 // errors occurring in certain contexts are recoverable.
 struct Translation_error : std::runtime_error

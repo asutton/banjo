@@ -76,10 +76,10 @@ Parser::usage_requirement()
   Req* r;
   if (match_if(colon_tok)) {
     Type& t = type();
-    r = &on_conversion_requirement(e, t);
+    r = &on_deduction_requirement(e, t);
   } else if (match_if(arrow_tok)) {
     Type& t = type();
-    r = &on_deduction_requirement(e, t);
+    r = &on_conversion_requirement(e, t);
   } else {
     r = &on_simple_requirement(e);
   }

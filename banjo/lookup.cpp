@@ -2,6 +2,8 @@
 // All rights reserved
 
 #include "lookup.hpp"
+#include "ast_name.hpp"
+#include "ast_decl.hpp"
 #include "scope.hpp"
 #include "print.hpp"
 
@@ -10,9 +12,6 @@
 
 namespace banjo
 {
-
-// For convenience
-using Binding = Scope::Binding;
 
 
 // Returns the non-empty set of declarations for give (unqualified) id.

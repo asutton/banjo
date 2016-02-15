@@ -291,8 +291,14 @@ struct Array_type : Type
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
-  Type* first;
-  Expr* second;
+  Type const& type() const { return *ty; }
+  Type&       type()       { return *ty; }
+
+  Expr const& extent() const { return *ext; }
+  Expr&       extent()       { return *ext; }
+
+  Type* ty;
+  Expr* ext;
 };
 
 
@@ -534,6 +540,7 @@ is_scalar_type(Type const& t)
 
 
 bool is_object_type(Type const&);
+bool is_dependent_type(Type const&);
 
 
 // -------------------------------------------------------------------------- //

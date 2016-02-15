@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "declaration.hpp"
+#include "ast_decl.hpp"
 #include "scope.hpp"
 #include "lookup.hpp"
 #include "overload.hpp"

@@ -38,16 +38,14 @@ Parser::on_logical_not_expression(Token tok, Expr& e)
 Expr&
 Parser::on_eq_expression(Token tok, Expr& e1, Expr& e2)
 {
-  Type& t = build.get_bool_type();
-  return build.make_eq(t, e1, e2);
+  return make_eq(cxt, e1, e2);
 }
 
 
 Expr&
 Parser::on_ne_expression(Token tok, Expr& e1, Expr& e2)
 {
-  Type& t = build.get_bool_type();
-  return build.make_ne(t, e1, e2);
+  return make_ne(cxt, e1, e2);
 }
 
 
@@ -80,6 +78,41 @@ Parser::on_ge_expression(Token tok, Expr& e1, Expr& e2)
 {
   Type& t = build.get_bool_type();
   return build.make_ge(t, e1, e2);
+}
+
+
+Expr&
+Parser::on_add_expression(Token tok, Expr& e1, Expr& e2)
+{
+  lingo_unimplemented();
+}
+
+
+Expr&
+Parser::on_sub_expression(Token tok, Expr& e1, Expr& e2)
+{
+  lingo_unimplemented();
+}
+
+
+Expr&
+Parser::on_mul_expression(Token tok, Expr& e1, Expr& e2)
+{
+  lingo_unimplemented();
+}
+
+
+Expr&
+Parser::on_div_expression(Token tok, Expr& e1, Expr& e2)
+{
+  lingo_unimplemented();
+}
+
+
+Expr&
+Parser::on_rem_expression(Token tok, Expr& e1, Expr& e2)
+{
+  lingo_unimplemented();
 }
 
 

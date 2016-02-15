@@ -1,0 +1,19 @@
+
+template<typename T>
+concept C
+{
+  requires <typename U> (T a, U b)
+  {
+    f(a, b);
+    f(a) : U;
+
+    g(b); // g takes all U. Solve by deduction.
+
+    g1(a) : U; // FIXME: This doesn't work.
+
+    g(b) -> U;
+    g(b) : U;
+
+    typename X<U>;
+  }
+}

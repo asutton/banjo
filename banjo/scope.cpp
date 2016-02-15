@@ -9,7 +9,7 @@ namespace banjo
 {
 
 // For convenience.
-using Binding = Scope::Binding;
+using Name_binding = Scope::Name_binding;
 
 
 // Construct a scope enclosed by that of its surrounding
@@ -20,7 +20,7 @@ Scope::Scope(Decl& cxt, Decl& d)
 
 
 // Register a name binding for the declaration `d`.
-Binding&
+Name_binding&
 Scope::bind(Decl& d)
 {
   return bind(d.declared_name(), d);

@@ -2,8 +2,10 @@
 // All rights reserved
 
 #include "expression.hpp"
+#include "ast_type.hpp"
 #include "ast_expr.hpp"
 #include "builder.hpp"
+#include "type.hpp"
 #include "lookup.hpp"
 #include "template.hpp"
 #include "equivalence.hpp"
@@ -151,6 +153,97 @@ make_logical_not(Context& cxt, Expr& e)
   Expr& c = contextual_conversion_to_bool(cxt, e);
   Type& t = c.type();
   return build.make_not(t, c);
+}
+
+
+// -------------------------------------------------------------------------- //
+// Relational expressions
+
+
+// Apply the usual arithmetic conversions. The result type of
+// the expression is that determined by the conversions.
+template<typename Make>
+static Expr&
+make_standard_relational_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
+{
+  Expr_pair conv = arithmetic_conversion(e1, e2);
+  Type& t = e1.type();
+  return make(t, conv.first, conv.second);
+}
+
+
+// If either expression has dependent type, then the type of the
+// expression is a fresh type.
+//
+// TODO: If either expression has occurred previously, then we should
+// use it's result type and not generate a fresh type.
+template<typename Make>
+static Expr&
+make_dependent_relational_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
+{
+  // Type* t1 = dependent_lookup(cxt.current_scope(), e1);
+  // Decl_list d2 = dependent_lookup(cxt.current_scope(), e1);
+
+  Type& t = make_fresh_type(cxt);
+  return make(t, e1, e2);
+}
+
+
+// Search for an overload of the given operator. The type is determined
+// by overload resolution.
+//
+// FIXME: This doesn't say which operator!
+template<typename Make>
+static Expr&
+make_overloaded_relational_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
+{
+  lingo_unimplemented();
+}
+
+
+// Determine the result type of the relational expression.
+template<typename Make>
+static Expr&
+make_relational_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
+{
+  Type& t1 = e1.type();
+  Type& t2 = e2.type();
+  try {
+    if (is_dependent_type(t1) || is_dependent_type(t2))
+      return make_dependent_relational_expr(cxt, e1, e2, make);
+    else if (is_maybe_qualified_class_type(t1) || is_maybe_qualified_class_type(t2))
+      return make_overloaded_relational_expr(cxt, e1, e2, make);
+    else
+      return make_standard_relational_expr(cxt, e1, e2, make);
+  } catch (Translation_error&) {
+    // FIXME: it would be nice if actually had source locations.
+    error("no matching operator");
+    throw;
+  }
+}
+
+
+Expr&
+make_eq(Context& cxt, Expr& e1, Expr& e2)
+{
+  Builder build(cxt);
+  auto make = [&build](Type& t, Expr& e1, Expr& e2) -> Expr&
+  {
+    return build.make_eq(t, e1, e2);
+  };
+  return make_relational_expr(cxt, e1, e2, make);
+}
+
+
+Expr&
+make_ne(Context& cxt, Expr& e1, Expr& e2)
+{
+  Builder build(cxt);
+  auto make = [&build](Type& t, Expr& e1, Expr& e2) -> Expr&
+  {
+    return build.make_ne(t, e1, e2);
+  };
+  return make_relational_expr(cxt, e1, e2, make);
 }
 
 

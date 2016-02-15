@@ -5,36 +5,44 @@
 #define BANJO_SCOPE_HPP
 
 #include "prelude.hpp"
+#include "language.hpp"
 #include "hash.hpp"
 #include "equivalence.hpp"
 #include "overload.hpp"
-#include "context.hpp"
 
 
 namespace banjo
 {
 
-struct Decl;
-struct Namespace_decl;
-struct Function_decl;
-struct Class_decl;
-struct Object_decl;
-
-
 // -------------------------------------------------------------------------- //
 // Scope definitions
+
+// An assumption set stores information about an expression occurring
+// within a template definition (or concept).
+struct Result_set
+{
+  Type*     ty;
+  Type_list conv;
+};
 
 
 // Maps names to overload sets.
 using Name_map = std::unordered_map<Name const*, Overload_set, Name_hash, Name_eq>;
 
 
+// Maps expressions to information about their types and conversions.
+using Expr_map = std::unordered_map<Expr const*, Result_set, Expr_hash, Expr_eq>;
+
+
 // A scope defines a maximal lexical region of text where an
-// entity  may be referred to without qualification. A scope can
+// entity may be referred to without qualification. A scope can
 // be (but is not always) associated with a declaration.
-struct Scope : Name_map
+//
+// The scope class also defines a region of text where a dependent
+// expression may occur.
+struct Scope
 {
-  using Binding = Name_map::value_type;
+  using Name_binding = Name_map::value_type;
 
   // Construct a new scope with the given parent. This is
   // used to create scopes that are not affiliated with a
@@ -60,8 +68,6 @@ struct Scope : Name_map
 
   virtual ~Scope() { }
 
-  using Name_map::size;
-
   // Returns the enclosing scope, if any. Only the global
   // namespace does not have an enclosing scope.
   Scope const* enclosing_scope() const { return parent; }
@@ -77,8 +83,8 @@ struct Scope : Name_map
   // is undefined if a name binding already exists.
   //
   // TODO: Assert that `n` is a form of simple id.
-  Binding& bind(Decl& d);
-  Binding& bind(Name const&, Decl&);
+  Name_binding& bind(Decl& d);
+  Name_binding& bind(Name const&, Decl&);
 
   // Return the binding for the given symbol, or nullptr
   // if no such binding exists.
@@ -86,10 +92,12 @@ struct Scope : Name_map
   Overload_set*       lookup(Name const& n);
 
   // Returns 1 if the name is bound and 0 otherwise.
-  std::size_t count(Name const& n) const { return Name_map::count(&n); }
+  std::size_t count(Name const& n) const { return names.count(&n); }
 
-  Scope* parent;
-  Decl*  decl;
+  Scope*   parent;
+  Decl*    decl;
+  Name_map names;
+  Expr_map exprs;
 };
 
 
@@ -97,11 +105,11 @@ struct Scope : Name_map
 //
 // Note that the addition of declarations to an overload set
 // must be handled by semantic rules.
-inline Scope::Binding&
+inline Scope::Name_binding&
 Scope::bind(Name const& n, Decl& d)
 {
   lingo_assert(count(n) == 0);
-  auto ins = insert({&n, {&d}});
+  auto ins = names.insert({&n, {&d}});
   return *ins.first;
 }
 
@@ -110,8 +118,8 @@ Scope::bind(Name const& n, Decl& d)
 inline Overload_set const*
 Scope::lookup(Name const& n) const
 {
-  auto iter = find(&n);
-  if (iter != end())
+  auto iter = names.find(&n);
+  if (iter != names.end())
     return &iter->second;
   else
     return nullptr;
@@ -121,8 +129,8 @@ Scope::lookup(Name const& n) const
 inline Overload_set*
 Scope::lookup(Name const& n)
 {
-  auto iter = find(&n);
-  if (iter != end())
+  auto iter = names.find(&n);
+  if (iter != names.end())
     return &iter->second;
   else
     return nullptr;

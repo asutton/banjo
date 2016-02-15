@@ -136,6 +136,6 @@ main(int argc, char* argv[])
 {
   Context cxt;
   test_canonical(cxt);
-  // test_subsume_1(cxt);
+  test_subsume_1(cxt);
   test_subsume_2(cxt);
 }

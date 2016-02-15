@@ -5,17 +5,11 @@
 #define BANJO_LOOKUP_HPP
 
 #include "prelude.hpp"
-#include "context.hpp"
-#include "ast.hpp"
-
-#include <lingo/environment.hpp>
+#include "language.hpp"
 
 
 namespace banjo
 {
-
-
-struct Simple_id;
 
 
 Decl&     simple_lookup(Scope&, Simple_id const&);

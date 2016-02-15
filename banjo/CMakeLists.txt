@@ -42,6 +42,7 @@ add_library(banjo
   equivalence.cpp
   scope.cpp
   lookup.cpp
+  type.cpp
   declaration.cpp
   overload.cpp
   expression.cpp
@@ -52,6 +53,7 @@ add_library(banjo
   template.cpp
   substitution.cpp
   deduction.cpp
+  requirement.cpp
   constraint.cpp
   normalization.cpp
   satisfaction.cpp

@@ -87,7 +87,7 @@ Parser::equality_expression()
 }
 
 
-// Parser an relational expression.
+// Parse a relational expression.
 //
 //    relational-expression:
 //      unary-expression:
@@ -95,8 +95,6 @@ Parser::equality_expression()
 //      relational-expression '>' unary-expression
 //      relational-expression '<=' unary-expression
 //      relational-expression '>=' unary-expression
-//
-// FIXME: This omits the arithmetic expressions.
 Expr&
 Parser::relational_expression()
 {
@@ -115,6 +113,62 @@ Parser::relational_expression()
     } else if (Token tok = match_if(gt_eq_tok)) {
       Expr& e2 = unary_expression();
       e1 = &on_ge_expression(tok, *e1, e2);
+    } else {
+      break;
+    }
+  }
+  return *e1;
+}
+
+
+// Parse an additive expression.
+//
+//    additive-expression:
+//      multiplicative-expression:
+//      additive-expression '+' multiplicative-expression
+//      additive-expression '-' multiplicative-expression
+Expr&
+Parser::additive_expression()
+{
+  Expr* e1 = &multiplicative_expression();
+  while (true) {
+    // Use a switch?
+    if (Token tok = match_if(plus_tok)) {
+      Expr& e2 = multiplicative_expression();
+      e1 = &on_add_expression(tok, *e1, e2);
+    } else if (Token tok = match_if(minus_tok)) {
+      Expr& e2 = unary_expression();
+      e1 = &on_sub_expression(tok, *e1, e2);
+    } else {
+      break;
+    }
+  }
+  return *e1;
+}
+
+
+// Parse a multiplicative expression.
+//
+//    multiplicative-expression:
+//      unary-expression:
+//      multiplicative-expression '*' unary-expression
+//      multiplicative-expression '/' unary-expression
+//      multiplicative-expression '%' unary-expression
+Expr&
+Parser::multiplicative_expression()
+{
+  Expr* e1 = &unary_expression();
+  while (true) {
+    // Use a switch?
+    if (Token tok = match_if(star_tok)) {
+      Expr& e2 = unary_expression();
+      e1 = &on_mul_expression(tok, *e1, e2);
+    } else if (Token tok = match_if(slash_tok)) {
+      Expr& e2 = unary_expression();
+      e1 = &on_div_expression(tok, *e1, e2);
+    } else if (Token tok = match_if(percent_tok)) {
+      Expr& e2 = unary_expression();
+      e1 = &on_rem_expression(tok, *e1, e2);
     } else {
       break;
     }
@@ -300,8 +354,6 @@ Parser::grouped_expression()
   match(rparen_tok);
   return e;
 }
-
-
 
 
 } // namespace banjo

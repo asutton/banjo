@@ -74,7 +74,6 @@ struct Parser
 
   // Expressions
   Expr& expression();
-  Expr_list expression_list();
   Expr& logical_or_expression();
   Expr& logical_and_expression();
   Expr& equality_expression();
@@ -90,6 +89,7 @@ struct Parser
   Expr& grouped_expression();
   Expr& lambda_expression();
   Expr& requires_expression();
+  Expr_list expression_list();
 
   // Statements
   Stmt& statement();
@@ -217,6 +217,11 @@ struct Parser
   Expr& on_gt_expression(Token, Expr&, Expr&);
   Expr& on_le_expression(Token, Expr&, Expr&);
   Expr& on_ge_expression(Token, Expr&, Expr&);
+  Expr& on_add_expression(Token, Expr&, Expr&);
+  Expr& on_sub_expression(Token, Expr&, Expr&);
+  Expr& on_mul_expression(Token, Expr&, Expr&);
+  Expr& on_div_expression(Token, Expr&, Expr&);
+  Expr& on_rem_expression(Token, Expr&, Expr&);
   Expr& on_call_expression(Expr&, Expr_list&);
   Expr& on_id_expression(Name&);
   Expr& on_boolean_literal(Token, bool);

@@ -7,6 +7,7 @@
 #include "ast_expr.hpp"
 #include "ast_decl.hpp"
 #include "ast_req.hpp"
+#include "requirement.hpp"
 #include "print.hpp"
 
 #include <iostream>
@@ -44,23 +45,23 @@ Parser::on_expression_requirement(Expr&)
 
 
 Req&
-Parser::on_simple_requirement(Expr&)
+Parser::on_simple_requirement(Expr& e)
 {
-  lingo_unimplemented();
+  return make_simple_requirement(cxt, e);
 }
 
 
 Req&
-Parser::on_conversion_requirement(Expr&, Type&)
+Parser::on_conversion_requirement(Expr& e, Type& t)
 {
-  lingo_unimplemented();
+  return make_conversion_requirement(cxt, e, t);
 }
 
 
 Req&
-Parser::on_deduction_requirement(Expr&, Type&)
+Parser::on_deduction_requirement(Expr& e, Type& t)
 {
-  lingo_unimplemented();
+  return make_deduction_requirement(cxt, e, t);
 }
 
 

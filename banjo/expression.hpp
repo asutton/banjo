@@ -1,8 +1,8 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BANJO_DECLARATION_HPP
-#define BANJO_DECLARATION_HPP
+#ifndef BANJO_EXPRESSION_HPP
+#define BANJO_EXPRESSION_HPP
 
 #include "prelude.hpp"
 #include "language.hpp"
@@ -16,6 +16,9 @@ struct Context;
 Expr& make_logical_and(Context&, Expr&, Expr&);
 Expr& make_logical_or(Context&, Expr&, Expr&);
 Expr& make_logical_not(Context&, Expr&);
+
+Expr& make_eq(Context&, Expr&, Expr&);
+Expr& make_ne(Context&, Expr&, Expr&);
 
 Expr& make_reference(Context& cxt, Name&);
 
