@@ -161,9 +161,24 @@ using lingo::Integer;
 // Terms
 
 // The base class of all terms in the language.
+//
+// Each term has an associated source code location. However, this
+// is not meaningful for all terms. In particular, canonicalized
+// terms must not include a valid source code location.
 struct Term
 {
   virtual ~Term() { }
+
+  // Returns the source code location of the term. this
+  // may be an invalid position.
+  Location location() const { return loc; }
+
+  // Returns the region of text over which the term is written.
+  // By default, this is is the empty region, which starts
+  // and ends at the term's location.
+  virtual Region region() const { return {loc, loc}; }
+
+  Location loc;
 };
 
 
