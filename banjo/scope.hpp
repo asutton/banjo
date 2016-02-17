@@ -30,10 +30,6 @@ struct Result_set
 using Name_map = std::unordered_map<Name const*, Overload_set, Name_hash, Name_eq>;
 
 
-// Maps expressions to information about their types and conversions.
-using Expr_map = std::unordered_map<Expr const*, Result_set, Expr_hash, Expr_eq>;
-
-
 // A scope defines a maximal lexical region of text where an
 // entity may be referred to without qualification. A scope can
 // be (but is not always) associated with a declaration.
@@ -97,7 +93,6 @@ struct Scope
   Scope*   parent;
   Decl*    decl;
   Name_map names;
-  Expr_map exprs;
 };
 
 
