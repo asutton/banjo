@@ -1,11 +1,13 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
+#ifndef BANJO_HASH_HPP
+#define BANJO_HASH_HPP
+
 #include "prelude.hpp"
 #include "equivalence.hpp"
 
 #include <boost/functional/hash.hpp>
-
 
 
 namespace banjo
@@ -35,3 +37,6 @@ using Cons_hash = Term_hash<Cons>;
 
 
 } // namespace banjo
+
+
+#endif
