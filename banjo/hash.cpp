@@ -196,6 +196,7 @@ hash_value(Type const& t)
     std::size_t operator()(Pointer_type const& t) const   { lingo_unimplemented(); }
     std::size_t operator()(Reference_type const& t) const { lingo_unimplemented(); }
     std::size_t operator()(Array_type const& t) const     { lingo_unimplemented(); }
+    std::size_t operator()(Dynarray_type const& t) const  { lingo_unimplemented(); }    
     std::size_t operator()(Sequence_type const& t) const  { lingo_unimplemented(); }
     std::size_t operator()(Class_type const& t) const     { lingo_unimplemented(); }
     std::size_t operator()(Union_type const& t) const     { lingo_unimplemented(); }

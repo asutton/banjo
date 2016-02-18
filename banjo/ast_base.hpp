@@ -47,6 +47,7 @@ struct Qualified_type;
 struct Pointer_type;
 struct Reference_type;
 struct Array_type;
+struct Dynarray_type;
 struct Sequence_type;
 struct Class_type;
 struct Union_type;

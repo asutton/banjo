@@ -267,6 +267,7 @@ precedence(Type const& t)
     int operator()(Pointer_type const& t)   { return 1; }
     int operator()(Reference_type const& t) { return 3; }
     int operator()(Array_type const& t)     { return 1; }
+    int operator()(Dynarray_type const& t)  { return 1; }
     int operator()(Sequence_type const& t)  { return 2; }
     int operator()(Class_type const& t)     { return 0; }
     int operator()(Union_type const& t)     { return 0; }
@@ -297,6 +298,7 @@ Printer::type(Type const& t)
     void operator()(Pointer_type const& t)   { p.postfix_type(t); }
     void operator()(Reference_type const& t) { p.reference_type(t); }
     void operator()(Array_type const& t)     { p.postfix_type(t); }
+    void operator()(Dynarray_type const& t)  { p.postfix_type(t); }
     void operator()(Sequence_type const& t)  { p.sequence_type(t); }
     void operator()(Class_type const& t)     { p.simple_type(t); }
     void operator()(Union_type const& t)     { lingo_unimplemented(); }
@@ -448,6 +450,11 @@ Printer::postfix_type(Array_type const& t)
   lingo_unimplemented();
 }
 
+void
+Printer::postfix_type(Dynarray_type const& t)
+{
+  lingo_unimplemented();
+}
 
 void
 Printer::sequence_type(Sequence_type const& t)

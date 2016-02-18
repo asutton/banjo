@@ -51,6 +51,7 @@ struct Type::Visitor
   virtual void visit(Pointer_type const&)   { }
   virtual void visit(Reference_type const&) { }
   virtual void visit(Array_type const&)     { }
+  virtual void visit(Dynarray_type const&)   { }
   virtual void visit(Sequence_type const&)  { }
   virtual void visit(Class_type const&)     { }
   virtual void visit(Union_type const&)     { }
@@ -75,6 +76,7 @@ struct Type::Mutator
   virtual void visit(Pointer_type&)   { }
   virtual void visit(Reference_type&) { }
   virtual void visit(Array_type&)     { }
+  virtual void visit(Dynarray_type&)  { }
   virtual void visit(Sequence_type&)  { }
   virtual void visit(Class_type&)     { }
   virtual void visit(Union_type&)     { }
@@ -301,6 +303,20 @@ struct Array_type : Type
   Expr* ext;
 };
 
+struct Dynarray_type : Type
+{
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  Type const& type() const { return *ty; }
+  Type&       type()       { return *ty; }
+
+  Expr const& extent() const { return *ext; }
+  Expr&       extent()       { return *ext; }
+
+  Type* ty;
+  Expr* ext;
+};
 
 // The type of an unspecified sequence of objects. An array
 // of unknown bound.
@@ -486,6 +502,12 @@ is_array_type(Type const& t)
   return is<Array_type>(&t);
 }
 
+// Returns tru if `t` is a Dynarray type.
+inline bool
+is_Dynarray_type(Type const& t)
+{
+  return is<Dynarray_type>(&t);
+}
 
 // Returns true if `t` is a sequence type.
 inline bool
@@ -567,6 +589,7 @@ struct Generic_type_visitor : Type::Visitor, Generic_visitor<F, T>
   void visit(Pointer_type const& t)   { this->invoke(t); }
   void visit(Reference_type const& t) { this->invoke(t); }
   void visit(Array_type const& t)     { this->invoke(t); }
+  void visit(Dynarray_type const& t)  { this->invoke(t); }
   void visit(Sequence_type const& t)  { this->invoke(t); }
   void visit(Class_type const& t)     { this->invoke(t); }
   void visit(Union_type const& t)     { this->invoke(t); }
@@ -606,6 +629,7 @@ struct Generic_type_mutator : Type::Mutator, Generic_mutator<F, T>
   void visit(Pointer_type& t)   { this->invoke(t); }
   void visit(Reference_type& t) { this->invoke(t); }
   void visit(Array_type& t)     { this->invoke(t); }
+  void visit(Dynarray_type& t)   { this->invoke(t); }
   void visit(Sequence_type& t)  { this->invoke(t); }
   void visit(Class_type& t)     { this->invoke(t); }
   void visit(Union_type& t)     { this->invoke(t); }
