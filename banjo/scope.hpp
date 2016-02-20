@@ -16,14 +16,6 @@ namespace banjo
 // -------------------------------------------------------------------------- //
 // Scope definitions
 
-// An assumption set stores information about an expression occurring
-// within a template definition (or concept).
-struct Result_set
-{
-  Type*     ty;
-  Type_list conv;
-};
-
 
 // Maps names to overload sets.
 using Name_map = std::unordered_map<Name const*, Overload_set, Name_hash, Name_eq>;
@@ -37,7 +29,7 @@ using Name_map = std::unordered_map<Name const*, Overload_set, Name_hash, Name_e
 // expression may occur.
 struct Scope
 {
-  using Name_binding = Name_map::value_type;
+  using Binding = Name_map::value_type;
 
   // Construct a new scope with the given parent. This is
   // used to create scopes that are not affiliated with a
@@ -78,8 +70,8 @@ struct Scope
   // is undefined if a name binding already exists.
   //
   // TODO: Assert that `n` is a form of simple id.
-  Name_binding& bind(Decl& d);
-  Name_binding& bind(Name const&, Decl&);
+  Binding& bind(Decl& d);
+  Binding& bind(Name const&, Decl&);
 
   // Return the binding for the given symbol, or nullptr
   // if no such binding exists.
@@ -99,7 +91,7 @@ struct Scope
 //
 // Note that the addition of declarations to an overload set
 // must be handled by semantic rules.
-inline Scope::Name_binding&
+inline Scope::Binding&
 Scope::bind(Name const& n, Decl& d)
 {
   lingo_assert(count(n) == 0);

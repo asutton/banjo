@@ -107,10 +107,6 @@ struct Decl::Mutator
 };
 
 
-Type const& declared_type(Decl const&);
-Type&       declared_type(Decl&);
-
-
 // Declares a variable, constant, or function parameter.
 struct Object_decl : Decl
 {
@@ -603,6 +599,33 @@ struct Template_parm : Decl
   Init*     def;
   Index     ix;
 };
+
+
+// -------------------------------------------------------------------------- //
+// Operations
+
+// Returns true if `d` is a (normal) function.
+inline bool
+is_function(Decl const& d)
+{
+  return is<Function_decl>(&d);
+}
+
+
+// Returns true if d is a function template.
+inline bool
+is_function_template(Decl const& d)
+{
+  if (Template_decl const* t = as<Template_decl>(&d))
+    return is_function(t->parameterized_declaration());
+  return false;
+}
+
+
+Type const& declared_type(Decl const&);
+Type&       declared_type(Decl&);
+
+
 
 
 // A generic visitor for declarations.

@@ -5,21 +5,13 @@
 #define BANJO_EQUIVALENCE_HPP
 
 #include "prelude.hpp"
+#include "language.hpp"
 
-#include <vector>
-#include <unordered_map>
+#include <algorithm>
 
 
 namespace banjo
 {
-
-struct Term;
-struct Name;
-struct Type;
-struct Expr;
-struct Decl;
-struct Cons;
-
 
 bool is_equivalent(Term const&, Term const&);
 bool is_equivalent(Name const&, Name const&);
@@ -27,6 +19,18 @@ bool is_equivalent(Type const&, Type const&);
 bool is_equivalent(Expr const&, Expr const&);
 bool is_equivalent(Decl const&, Decl const&);
 bool is_equivalent(Cons const&, Cons const&);
+
+
+template<typename T>
+inline bool
+is_equivalent(List<T> const& a, List<T> const& b)
+{
+  auto cmp = [](T const& x, T const& y) {
+    return is_equivalent(x, y);
+  };
+  return std::equal(a.begin(), a.end(), b.begin(), b.end(), cmp);
+}
+
 
 
 // Equality comparison for pointers.

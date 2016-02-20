@@ -10,16 +10,6 @@
 namespace banjo
 {
 
-template<typename T>
-inline bool
-is_equivalent(List<T> const& a, List<T> const& b)
-{
-  auto cmp = [](T const& a, T const& b) {
-    return is_equivalent(a, b);
-  };
-  return std::equal(a.begin(), a.end(), b.begin(), b.end(), cmp);
-}
-
 
 // -------------------------------------------------------------------------- //
 // Terms
@@ -43,7 +33,7 @@ is_equivalent(Term const& x1, Term const& x2)
     return is_equivalent(*t1, cast<Expr>(x2));
   if (Decl const* t1 = as<Decl>(&x1))
     return is_equivalent(*t1, cast<Decl>(x2));
-  lingo_unreachable();
+  banjo_unhandled_case(x1);
 }
 
 

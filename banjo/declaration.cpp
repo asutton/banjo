@@ -15,34 +15,21 @@ namespace banjo
 {
 
 
-// Find the elements in ovl with which d has an equivalent type and
-// diagnose that.
-//
-// Throw an exception to indicate the semantic failure.
-//
-// FIXME: Actually do what the comments say.
-static void
-explain_overload_error(Overload_set& ovl, Decl& d)
-{
-  throw Translation_error("cannot overload '{}'", d.name());
-}
-
-
 // Save `d` as a new declaration in the given overload set.
-//
-// TODO: Actually check for overloading and re-definition
-// errors.
 Decl*
 declare(Overload_set& ovl, Decl& d)
 {
-  if (can_categorically_overload(ovl, d)) {
-    auto ins = ovl.insert(d);
-    if (!ins.second)
-      explain_overload_error(ovl, d);
-  } else {
-    error("declaration of '{}' conflicts with previous declaration(s)", d.name());
-    throw Translation_error("overload conflict");
-  }
+  declare_overload(ovl, d);
+
+  // if (can_categorically_overload(ovl, d)) {
+  //   auto ins = ovl.insert(d);
+  //   if (!ins.second)
+  //     explain_overload_error(ovl, d);
+  // } else {
+  //   error("declaration of '{}' conflicts with previous declaration(s)", d.name());
+  //   throw Translation_error("overload conflict");
+  // }
+
   return nullptr;
 }
 
@@ -104,11 +91,27 @@ adjust_scope(Scope& scope, Decl& decl)
 
 // Try to declare a name binding in the current scope.
 //
-// FIXME: The specific rules probably depend on a) the kind of scope,
-// and b) the kind of declaration.
+// FIXME: Handle re-declarations gracefully. Note that nearly every kind
+// of declaration can be re-declared. For example:
 //
-// FIXME: Check for re-declaration and overloading. This probably
-// requires that we match on the entity declared.
+//    struct S;
+//    struct S; // OK: redeclaration
+//
+//    def f(int) -> int;
+//    def f(int) -> int; // OK: redeclaraiton
+//
+//    extern int n;
+//    extern int n; // OK: redeclaration
+//
+// This gets a bit interesting with overloading. We don't want to
+// put each declaration of a function in an overload set -- we just
+// want a single declaration.
+//
+// FIXME: Handle redefinition errors:
+//
+//    struct S { }
+//    struct S { } // error: redefinition
+//
 //
 // FIXME: If `d`'s name is a qualified-id, then we need to adjust
 // the context to that specified by `d`s nested name specifier.
@@ -118,9 +121,9 @@ declare(Context&, Scope& scope, Decl& decl)
   // Find an appropriate declartive region for the declaration.
   Scope& s = adjust_scope(scope, decl);
 
-  // Declare the ajusted declaration.
+  // Try to declare entity.
   if (Overload_set* ovl = s.lookup(decl.declared_name())) {
-    return banjo::declare(*ovl, decl);
+    return declare(*ovl, decl);
   } else {
     s.bind(decl);
     return nullptr;
