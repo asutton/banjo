@@ -38,8 +38,7 @@ struct Overload_set : Decl_list
 };
 
 
-bool declare_overload(Overload_set&, Decl&);
-bool declare_overload(Decl&, Decl&);
+void declare_overload(Overload_set&, Decl&);
 
 
 std::ostream& operator<<(std::ostream&, Overload_set const&);

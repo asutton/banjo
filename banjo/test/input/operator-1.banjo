@@ -7,3 +7,7 @@ def operator==(S2, S2) -> bool;
 
 def f() -> int;
 def f(int) -> int;
+// var int f;
+
+def g() -> int;
+// def g() -> void;
