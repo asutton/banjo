@@ -18,6 +18,24 @@ std::size_t hash_type(T const& t)
 
 
 // -------------------------------------------------------------------------- //
+// Terms
+
+
+std::size_t
+hash_value(Term const& x)
+{
+  if (Name const* n = as<Name>(&x))
+    return hash_value(*n);
+  if (Type const* t = as<Type>(&x))
+    return hash_value(*t);
+  if (Expr const* e = as<Expr>(&x))
+    return hash_value(*e);
+  if (Decl const* d = as<Decl>(&x))
+    return hash_value(*d);
+  lingo_unreachable();
+}
+
+// -------------------------------------------------------------------------- //
 // Names
 
 inline std::size_t
@@ -120,21 +138,21 @@ hash_value(Name const& n)
 // Types
 
 inline std::size_t
-hash_value(Void_type const& t)
+hash_void(Void_type const& t)
 {
   return hash_type(t);
 }
 
 
 inline std::size_t
-hash_value(Boolean_type const& t)
+hash_boolean(Boolean_type const& t)
 {
   return hash_type(t);
 }
 
 
 inline std::size_t
-hash_value(Integer_type const& t)
+hash_integer(Integer_type const& t)
 {
   std::size_t h = hash_type(t);
   boost::hash_combine(h, t.sign());
@@ -143,7 +161,7 @@ hash_value(Integer_type const& t)
 }
 
 inline std::size_t
-hash_value(Float_type const& t)
+hash_float(Float_type const& t)
 {
   std::size_t h = hash_type(t);
   boost::hash_combine(h, t.precision());
@@ -182,16 +200,26 @@ hash_value(Function_type const& t)
 }
 
 
+// The hash value of a user-defined type is that of its declaration.
+inline std::size_t
+hash_udt(User_defined_type const& t)
+{
+  std::size_t h = hash_type(t);
+  boost::hash_combine(h, t.declaration());
+  return h;
+}
+
+
 // Compute the hash value of a type.
 std::size_t
 hash_value(Type const& t)
 {
   struct fn
   {
-    std::size_t operator()(Void_type const& t) const      { return hash_value(t); }
-    std::size_t operator()(Boolean_type const& t) const   { return hash_value(t); }
-    std::size_t operator()(Integer_type const& t) const   { return hash_value(t); }
-    std::size_t operator()(Float_type const& t) const     { return hash_value(t); }
+    std::size_t operator()(Void_type const& t) const      { return hash_void(t); }
+    std::size_t operator()(Boolean_type const& t) const   { return hash_boolean(t); }
+    std::size_t operator()(Integer_type const& t) const   { return hash_integer(t); }
+    std::size_t operator()(Float_type const& t) const     { return hash_float(t); }
     std::size_t operator()(Auto_type const& t) const      { return hash_value(t); }
     std::size_t operator()(Decltype_type const& t) const  { return hash_value(t); }
     std::size_t operator()(Declauto_type const& t) const  { return hash_value(t); }
@@ -201,9 +229,9 @@ hash_value(Type const& t)
     std::size_t operator()(Reference_type const& t) const { lingo_unimplemented(); }
     std::size_t operator()(Array_type const& t) const     { lingo_unimplemented(); }
     std::size_t operator()(Sequence_type const& t) const  { lingo_unimplemented(); }
-    std::size_t operator()(Class_type const& t) const     { lingo_unimplemented(); }
-    std::size_t operator()(Union_type const& t) const     { lingo_unimplemented(); }
-    std::size_t operator()(Enum_type const& t) const      { lingo_unimplemented(); }
+    std::size_t operator()(Class_type const& t) const     { return hash_udt(t); }
+    std::size_t operator()(Union_type const& t) const     { return hash_udt(t); }
+    std::size_t operator()(Enum_type const& t) const      { return hash_udt(t); }
     std::size_t operator()(Typename_type const& t) const  { lingo_unimplemented(); }
     std::size_t operator()(Synthetic_type const& t) const { lingo_unimplemented(); }
   };

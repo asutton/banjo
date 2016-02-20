@@ -207,7 +207,7 @@ struct List_iterator
   pointer  operator->() const { return *iter; }
 
   List_iterator& operator++()    { ++iter; return *this; }
-  List_iterator& operator++(int) { List_iterator x = *this; ++iter; return x; }
+  List_iterator  operator++(int) { List_iterator x = *this; ++iter; return x; }
 
   bool operator==(List_iterator i) const { return iter == i.iter; }
   bool operator!=(List_iterator i) const { return iter != i.iter; }
@@ -240,7 +240,7 @@ struct List_iterator<T const>
   pointer  operator->() const { return *iter; }
 
   List_iterator& operator++()    { ++iter; return *this; }
-  List_iterator& operator++(int) { List_iterator x = *this; ++iter; return x; }
+  List_iterator  operator++(int) { List_iterator x = *this; ++iter; return x; }
 
   bool operator==(List_iterator i) const { return iter == i.iter; }
   bool operator!=(List_iterator i) const { return iter != i.iter; }

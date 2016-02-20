@@ -1,4 +1,9 @@
 
 struct S1 { }
+struct S2 { }
 
 def operator==(S1, S1) -> bool;
+def operator==(S2, S2) -> bool;
+
+def f() -> int;
+def f(int) -> int;

@@ -28,8 +28,12 @@ unqualified_lookup(Scope& scope, Simple_id const& id)
   while (p) {
     // In general, a name used in any context must be declared
     // before it's use. Search this scope for such a declaration.
-    if (Overload_set* ovl = p->lookup(id))
-      return ovl->base();
+    if (Overload_set* ovl = p->lookup(id)) {
+      Decl_list ds;
+      for (Decl& d : *ovl)
+        ds.push_back(d);
+      return ds;
+    }
 
     // Depending on current scope, we might re-direct the scope
     // to search different things.

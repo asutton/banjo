@@ -14,16 +14,35 @@
 namespace banjo
 {
 
-// Save `d` as a new declaration in the given overload set.
+
+// Find the elements in ovl with which d has an equivalent type and
+// diagnose that.
 //
-// TODO: Implement me.
+// Throw an exception to indicate the semantic failure.
+//
+// FIXME: Actually do what the comments say.
+static void
+explain_overload_error(Overload_set& ovl, Decl& d)
+{
+  throw Translation_error("cannot overload '{}'", d.name());
+}
+
+
+// Save `d` as a new declaration in the given overload set.
 //
 // TODO: Actually check for overloading and re-definition
 // errors.
 Decl*
 declare(Overload_set& ovl, Decl& d)
 {
-  lingo_unimplemented();
+  if (can_categorically_overload(ovl, d)) {
+    auto ins = ovl.insert(d);
+    if (!ins.second)
+      explain_overload_error(ovl, d);
+  } else {
+    error("declaration of '{}' conflicts with previous declaration(s)", d.name());
+    throw Translation_error("overload conflict");
+  }
   return nullptr;
 }
 

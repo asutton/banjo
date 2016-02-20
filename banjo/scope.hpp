@@ -7,7 +7,6 @@
 #include "prelude.hpp"
 #include "language.hpp"
 #include "hash.hpp"
-#include "equivalence.hpp"
 #include "overload.hpp"
 
 
@@ -104,7 +103,7 @@ inline Scope::Name_binding&
 Scope::bind(Name const& n, Decl& d)
 {
   lingo_assert(count(n) == 0);
-  auto ins = names.insert({&n, {&d}});
+  auto ins = names.insert({&n, {d}});
   return *ins.first;
 }
 
