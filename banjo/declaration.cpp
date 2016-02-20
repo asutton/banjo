@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "declaration.hpp"
+#include "ast_type.hpp"
 #include "ast_decl.hpp"
 #include "scope.hpp"
 #include "lookup.hpp"
@@ -14,23 +15,89 @@
 namespace banjo
 {
 
+// A given function or variable declaration is a redeclaration if
+// there exists a previous function or variable with the same
+// name, scope, and declared type.
+static inline Decl*
+redeclare_object(Decl& prev, Decl& given)
+{
+  Type& t1 = declared_type(prev);
+  Type& t2 = declared_type(given);
+  if (is_equivalent(t1, t2))
+    return &prev;
+  else
+    return nullptr;
+}
 
-// Save `d` as a new declaration in the given overload set.
+
+// Determine if a given declaration is a redeclaration of a
+// previously declared entity. Return the previous entity,
+// or nullptr if not redeclared.
+//
+// Note that we are guaranteed that decl and prev have the same
+// scope (because we're trying to declare given in this scope)
+// and name (because prev is a previous declaraiton in an overload
+// set).
 Decl*
+redeclare(Decl& prev, Decl& given)
+{
+  struct fn
+  {
+    Decl& prev;
+    Decl* operator()(Decl& given) { banjo_unhandled_case(given); }
+
+    // An object or function is a redeclaration if it has
+    // the same declared type.
+    Decl* operator()(Variable_decl& given) { return redeclare_object(prev, given); }
+    Decl* operator()(Function_decl& given) { return redeclare_object(prev, given); }
+
+    // User-defined types with the same names must be redeclarations.
+    Decl* operator()(Class_decl& given)    { return &prev; }
+    Decl* operator()(Union_decl& given)    { return &prev; }
+    Decl* operator()(Enum_decl& given)     { return &prev; }
+  };
+  return apply(given, fn{prev});
+}
+
+
+// Determine if a given declaration is a redeclaration of a
+// previously declared entity. Return the previous entity,
+// or nullptr if not redeclared.
+Decl*
+redeclare(Overload_set& ovl, Decl& given)
+{
+  // If the declarations have different kinds, then this
+  // is clearly not a redeclaraiton.
+  Decl& rep = ovl.front();
+  if (typeid(rep) != typeid(given))
+    return nullptr;
+
+  // Every declaration in ovl has the same kind as given.
+  // We need to search.
+  for (Decl& prev : ovl) {
+    if (Decl* orig = redeclare(prev, given))
+      return orig;
+  }
+  return nullptr;
+}
+
+
+// Save `d` as a new declaration in the given overload set, if
+// possible. Two declarations with the same name and type declare
+// the same entity and are therefore not overloads.
+void
 declare(Overload_set& ovl, Decl& d)
 {
+  // Handle redeclarations. Note that we may can't check for
+  // redefinition at this point because the point of declaration
+  // always preceeds the definition. That's done elsewhere.
+  //
+  // TODO: Chain d to the the previous declaration.
+  if (redeclare(ovl, d))
+    return;
+
+  // If it's not a redeclaration, try to overload.
   declare_overload(ovl, d);
-
-  // if (can_categorically_overload(ovl, d)) {
-  //   auto ins = ovl.insert(d);
-  //   if (!ins.second)
-  //     explain_overload_error(ovl, d);
-  // } else {
-  //   error("declaration of '{}' conflicts with previous declaration(s)", d.name());
-  //   throw Translation_error("overload conflict");
-  // }
-
-  return nullptr;
 }
 
 
@@ -115,19 +182,17 @@ adjust_scope(Scope& scope, Decl& decl)
 //
 // FIXME: If `d`'s name is a qualified-id, then we need to adjust
 // the context to that specified by `d`s nested name specifier.
-Decl*
+void
 declare(Context&, Scope& scope, Decl& decl)
 {
   // Find an appropriate declartive region for the declaration.
   Scope& s = adjust_scope(scope, decl);
 
   // Try to declare entity.
-  if (Overload_set* ovl = s.lookup(decl.declared_name())) {
-    return declare(*ovl, decl);
-  } else {
+  if (Overload_set* ovl = s.lookup(decl.declared_name()))
+    declare(*ovl, decl);
+  else
     s.bind(decl);
-    return nullptr;
-  }
 }
 
 

@@ -626,6 +626,8 @@ Type const& declared_type(Decl const&);
 Type&       declared_type(Decl&);
 
 
+// -------------------------------------------------------------------------- //
+// Visitors
 
 
 // A generic visitor for declarations.

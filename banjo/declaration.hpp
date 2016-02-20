@@ -15,7 +15,7 @@ struct Decl;
 struct Scope;
 
 
-Decl* declare(Context&, Scope&, Decl&);
+void declare(Context&, Scope&, Decl&);
 
 
 } // namespace banjo
