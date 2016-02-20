@@ -5,6 +5,7 @@
 #define BANJO_CONTEXT_HPP
 
 #include "prelude.hpp"
+#include "lookup.hpp"
 
 
 namespace banjo
@@ -51,7 +52,18 @@ struct Context
 
   Symbol_table    syms;
   Namespace_decl* global; // The global namespace
-  Scope*          scope;  // The current scope.
+  Scope*          scope;  // The current scope
+  Evidence*       facts;  // Knowledge of dependent terms
+
+  // Determines the kind of code under analysis.
+  enum State
+  {
+    regular_code,  // Analyzing regular (non-dependent) code
+    template_code, // Analyzing template code
+    concept_code   // Analyzing dependent code
+  };
+
+  State state;
 };
 
 
@@ -66,6 +78,39 @@ struct Enter_scope
   Scope*   prev;  // The previous socpe.
   Scope*   alloc; // Only set when locally allocated.
 };
+
+
+// An RAII helper that manages the entry and exit of factual
+// environments with a concept.
+struct Enter_concept
+{
+  using State = Context::State;
+
+  Enter_concept(Context&);
+  ~Enter_concept();
+
+  Context&  cxt;
+  Evidence* facts;
+  State     state;
+};
+
+
+inline
+Enter_concept::Enter_concept(Context& c)
+  : cxt(c), facts(cxt.facts), state(cxt.state)
+{
+  cxt.facts = new Evidence(facts);
+  cxt.state = Context::concept_code;
+}
+
+
+inline
+Enter_concept::~Enter_concept()
+{
+  delete cxt.facts;
+  cxt.facts = facts;
+  cxt.state = state;
+}
 
 
 } // namespace banjo
