@@ -5,6 +5,7 @@
 #define BANJO_AST_NAME_HPP
 
 #include "ast_base.hpp"
+#include "operator.hpp"
 
 
 namespace banjo
@@ -101,8 +102,17 @@ struct Placeholder_id : Name
 // TODO: Implement me.
 struct Operator_id : Name
 {
+  Operator_id(Operator_kind k)
+    : op(k)
+  { }
+
   void accept(Visitor& v) const { v.visit(*this); };
   void accept(Mutator& v)       { v.visit(*this); };
+
+  // Returns the operator kind.
+  Operator_kind kind() const { return op; }
+
+  Operator_kind op;
 };
 
 

@@ -170,11 +170,58 @@ Printer::destructor_id(Destructor_id const& n)
 }
 
 
-// TODO: Implement me.
 void
-Printer::operator_id(Operator_id const&)
+Printer::operator_id(Operator_id const& n)
 {
   token("operator");
+  switch (n.kind()) {
+    case add_op:
+      token(plus_tok);
+      break;
+    case sub_op:
+      token(minus_tok);
+      break;
+    case mul_op:
+      token(star_tok);
+      break;
+    case div_op:
+      token(slash_tok);
+      break;
+    case rem_op:
+      token(percent_tok);
+      break;
+    case eq_op:
+      token(eq_eq_tok);
+      break;
+    case ne_op:
+      token(bang_eq_tok);
+      break;
+    case lt_op:
+      token(lt_tok);
+      break;
+    case gt_op:
+      token(gt_tok);
+      break;
+    case le_op:
+      token(lt_eq_tok);
+      break;
+    case ge_op:
+      token(gt_eq_tok);
+      break;
+    case call_op:
+      token(lparen_tok);
+      token(rparen_tok);
+      break;
+    case index_op:
+      token(lbracket_tok);
+      token(rbracket_tok);
+      break;
+    case assign_op:
+      token(eq_tok);
+      break;
+    default:
+      lingo_unreachable();
+  }
 }
 
 

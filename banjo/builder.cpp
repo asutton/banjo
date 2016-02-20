@@ -120,6 +120,13 @@ Builder::get_id()
 }
 
 
+Operator_id&
+Builder::get_id(Operator_kind k)
+{
+  return make<Operator_id>(k);
+}
+
+
 // Returns a destructor-id for the given type.
 Destructor_id&
 Builder::get_destructor_id(Type const& t)

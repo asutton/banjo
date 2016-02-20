@@ -8,6 +8,7 @@
 #include "prelude.hpp"
 #include "context.hpp"
 #include "token.hpp"
+#include "operator.hpp"
 #include "language.hpp"
 
 #include <lingo/token.hpp>
@@ -39,7 +40,7 @@ struct Builder
   Simple_id&      get_id(Symbol const*);
   Simple_id&      get_id(Token tok);
   Placeholder_id& get_id();
-  // Operator_id&    get_id();
+  Operator_id&    get_id(Operator_kind);
   // Conversion_id&  get_id();
   // Literal_id&     get_id();
   Destructor_id&  get_destructor_id(Type const&);
