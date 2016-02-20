@@ -25,6 +25,9 @@ struct Parser
 
   Term& operator()();
 
+  // Syntactic forms
+  Operator_kind any_operator();
+
   // Syntax
   // Unresolved names
   Name& id();
@@ -162,7 +165,7 @@ struct Parser
   // Identifiers
   Name& on_simple_id(Token);
   Name& on_destructor_id(Token, Type&);
-  Name& on_operator_id();
+  Name& on_operator_id(Token, Operator_kind);
   Name& on_conversion_id();
   Name& on_literal_id();
   Name& on_template_id(Token, Decl&, Term_list const&);

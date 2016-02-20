@@ -94,6 +94,7 @@ enum Token_kind
   int64_tok,
   int128_tok,
   namespace_tok,
+  operator_tok,
   requires_tok,
   return_tok,
   static_tok,

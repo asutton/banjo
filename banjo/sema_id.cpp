@@ -30,9 +30,9 @@ Parser::on_destructor_id(Token, Type& t)
 
 
 Name&
-Parser::on_operator_id()
+Parser::on_operator_id(Token tok, Operator_kind op)
 {
-  lingo_unimplemented();
+  return build.get_id(op);
 }
 
 

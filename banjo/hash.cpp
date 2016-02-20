@@ -37,16 +37,20 @@ hash_value(Global_id const& n)
 
 
 inline std::size_t
-hash_value(Placeholder_id const&)
+hash_value(Placeholder_id const& n)
 {
-  lingo_unimplemented();
+  std::size_t h = hash_type(n);
+  boost::hash_combine(h, n.number());
+  return h;
 }
 
 
 inline std::size_t
-hash_value(Operator_id const&)
+hash_value(Operator_id const& n)
 {
-  lingo_unimplemented();
+  std::size_t h = hash_type(n);
+  boost::hash_combine(h, n.kind());
+  return h;
 }
 
 

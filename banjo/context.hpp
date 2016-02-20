@@ -41,6 +41,9 @@ struct Context
   Namespace_decl const& global_namespace() const { return *global; }
   Namespace_decl&       global_namespace()       { return *global; }
 
+  // Unique ids
+  int get_unique_id();
+
   // Scope management
   void   set_scope(Scope&);
   Scope& make_initializer_scope(Decl&);
@@ -55,6 +58,8 @@ struct Context
   Scope*          scope;  // The current scope
   Evidence*       facts;  // Knowledge of dependent terms
 
+  int id = 0; // The current id counter.
+
   // Determines the kind of code under analysis.
   enum State
   {
@@ -65,6 +70,16 @@ struct Context
 
   State state;
 };
+
+
+// Returns a unique id number and updates the context so that the
+// next id will be different than this one. This is primarily used
+// to maintain placehoder ids.
+inline int
+Context::get_unique_id()
+{
+  return id++;
+}
 
 
 // An RAII helper that manages the entry and exit of scopes.

@@ -70,14 +70,14 @@ is_equivalent(Global_id const& n1, Global_id const& n2)
 inline bool
 is_equivalent(Placeholder_id const& n1, Placeholder_id const& n2)
 {
-  lingo_unimplemented();
+  return n1.number() == n2.number();
 }
 
 // they are operator-function-ids formed with the same operator
 inline bool
 is_equivalent(Operator_id const& n1, Operator_id const& n2)
 {
-  lingo_unimplemented();
+  return n1.kind() == n2.kind();
 }
 
 

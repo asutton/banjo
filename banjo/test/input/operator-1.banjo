@@ -1,0 +1,4 @@
+
+struct S1 { }
+
+def operator==(S1, S1) -> bool;

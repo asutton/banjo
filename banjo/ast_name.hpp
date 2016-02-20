@@ -87,13 +87,22 @@ struct Global_id : Name
 };
 
 
-// An placeholder for a name.
+// An placeholder for a name. Each placeholder is assigned a unique
+// identifier (number), making it distinct from all others.
 //
 // FIXME: This is not a good name for this class.
 struct Placeholder_id : Name
 {
+  Placeholder_id(int n)
+    : num(n)
+  { }
+
   void accept(Visitor& v) const { v.visit(*this); };
   void accept(Mutator& v)       { v.visit(*this); };
+
+  int number() const { return num; }
+
+  int num;
 };
 
 

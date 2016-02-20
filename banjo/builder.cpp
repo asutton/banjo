@@ -116,7 +116,7 @@ Builder::get_id(Token tok)
 Placeholder_id&
 Builder::get_id()
 {
-  return make<Placeholder_id>();
+  return make<Placeholder_id>(cxt.get_unique_id());
 }
 
 

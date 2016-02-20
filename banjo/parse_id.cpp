@@ -14,6 +14,54 @@ namespace banjo
 {
 
 
+static inline Operator_kind
+consume_op(Parser& p, Operator_kind op)
+{
+  p.accept();
+  return op;
+}
+
+
+static inline Operator_kind
+consume_op(Parser& p, Token_kind tok, Operator_kind op)
+{
+  p.accept();
+  p.match(tok);
+  return op;
+}
+
+
+// Match any operator.
+//
+//    operator: one_of
+//      + - * / % == != < > <= >=
+//      () []
+//      =
+//
+// FIXME: Match more operators.
+Operator_kind
+Parser::any_operator()
+{
+  switch (lookahead()) {
+    case plus_tok: return consume_op(*this, add_op);
+    case minus_tok: return consume_op(*this, sub_op);
+    case star_tok: return consume_op(*this, mul_op);
+    case slash_tok: return consume_op(*this, div_op);
+    case percent_tok: return consume_op(*this, rem_op);
+    case eq_eq_tok: return consume_op(*this, eq_op);
+    case bang_eq_tok: return consume_op(*this, ne_op);
+    case lt_tok: return consume_op(*this, lt_op);
+    case gt_tok: return consume_op(*this, gt_op);
+    case lt_eq_tok: return consume_op(*this, le_op);
+    case gt_eq_tok: return consume_op(*this, ge_op);
+    case eq_tok: return consume_op(*this, assign_op);
+    case lparen_tok: return consume_op(*this, rparen_tok, call_op);
+    case lbrace_tok: return consume_op(*this, rbrace_tok, index_op);
+    default: throw Syntax_error("expected operator");
+  }
+}
+
+
 // -------------------------------------------------------------------------- //
 // Ids, names, and aliases
 //
@@ -71,8 +119,13 @@ Parser::id()
 Name&
 Parser::unqualified_id()
 {
-  if (lookahead() == tilde_tok)
+  if (next_token_is(tilde_tok))
     return destructor_id();
+
+  if (Token tok = match_if(operator_tok)) {
+    Operator_kind op = any_operator();
+    return on_operator_id(tok, op);
+  }
 
   // Use a trial parser to determine if we're looking at a template-id
   // or concept-id instead of a plain old identifier.
