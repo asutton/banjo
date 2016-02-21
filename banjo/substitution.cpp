@@ -2,7 +2,7 @@
 // All rights reserved
 
 #include "substitution.hpp"
-#include "builder.hpp"
+#include "expression.hpp"
 #include "print.hpp"
 
 #include <iostream>
@@ -177,14 +177,21 @@ substitute_type(Context& cxt, Typename_type& t, Substitution& sub)
 //
 // FIXME: None of this is correct. We actually need to elaborate the
 // result of substitution.
+//
+// FIXME: There's an absolute ton of redundant code here. Much of
+// this might be compacted using lambda expressions.
 
 
-// FIXME: This isn't right... we probably need to re-bind references,
-// especially when they refer to parameters or local variables.
+// Substitute into a declaration reference. The result of the
+// substitution depends on whether the name refers to a member
+// of the current instantation. If so, then we need to rebind
+// the identfier to the locally instantiated declaration.
+//
+// FIXME: This is almost certainly incorrect.
 Expr&
 subst_ref(Context& cxt, Reference_expr& e, Substitution& sub)
 {
-  return e;
+  return make_reference(cxt, e.declaration().name());
 }
 
 
@@ -207,32 +214,22 @@ subst_call(Context& cxt, Call_expr& e, Substitution& sub)
 }
 
 
+template<typename T, typename Make>
 Expr&
-subst_expr(Context& cxt, And_expr& e, Substitution& sub)
+subst_unary(Context& cxt, T& e, Substitution& sub, Make make)
 {
-  Builder build(cxt);
-  Expr& e1 = substitute(cxt, e.left(), sub);
-  Expr& e2 = substitute(cxt, e.right(), sub);
-  return build.make_and(e.type(), e1, e2);
+  Expr& e0 = substitute(cxt, e.operand(), sub);
+  return make(cxt, e0);
 }
 
 
+template<typename T, typename Make>
 Expr&
-subst_expr(Context& cxt, Or_expr& e, Substitution& sub)
+subst_binary(Context& cxt, T& e, Substitution& sub, Make make)
 {
-  Builder build(cxt);
   Expr& e1 = substitute(cxt, e.left(), sub);
   Expr& e2 = substitute(cxt, e.right(), sub);
-  return build.make_or(e.type(), e1, e2);
-}
-
-
-Expr&
-subst_expr(Context& cxt, Not_expr& e, Substitution& sub)
-{
-  Builder build(cxt);
-  Expr& e1 = substitute(cxt, e.operand(), sub);
-  return build.make_not(e.type(), e1);
+  return make(cxt, e1, e2);
 }
 
 
@@ -256,9 +253,11 @@ substitute(Context& cxt, Expr& e, Substitution& sub)
     Expr& operator()(Check_expr& e)     { return subst_check(cxt, e, sub); }
     Expr& operator()(Call_expr& e)      { return subst_call(cxt, e, sub); }
 
-    Expr& operator()(And_expr& e) { return subst_expr(cxt, e, sub); }
-    Expr& operator()(Or_expr& e)  { return subst_expr(cxt, e, sub); }
-    Expr& operator()(Not_expr& e) { return subst_expr(cxt, e, sub); }
+    Expr& operator()(Eq_expr& e)  { return subst_binary(cxt, e, sub, make_eq); }
+    Expr& operator()(Ne_expr& e)  { return subst_binary(cxt, e, sub, make_ne); }
+    Expr& operator()(And_expr& e) { return subst_binary(cxt, e, sub, make_logical_and); }
+    Expr& operator()(Or_expr& e)  { return subst_binary(cxt, e, sub, make_logical_or); }
+    Expr& operator()(Not_expr& e) { return subst_unary(cxt, e, sub, make_logical_not); }
 
   };
   return apply(e, fn{cxt, sub});
@@ -323,6 +322,62 @@ substitute(Context& cxt, Decl& d, Substitution& sub)
 
 // -------------------------------------------------------------------------- //
 // Substitution into constraints
+//
+// TODO: Substitution through constraints should almost never
+// result in outright failure.
+
+Cons&
+subst_predicate(Context& cxt, Predicate_cons& c, Substitution& sub)
+{
+  Expr& e = substitute(cxt, c.expression(), sub);
+  return cxt.get_predicate_constraint(e);
+}
+
+
+Cons&
+subst_usage(Context& cxt, Expression_cons& c, Substitution& sub)
+{
+  Expr& e = substitute(cxt, c.expression(), sub);
+  Type& t = substitute(cxt, c.type(), sub);
+  return cxt.get_expression_constraint(e, t);
+}
+
+
+Cons&
+subst_usage(Context& cxt, Conversion_cons& c, Substitution& sub)
+{
+  Expr& e = substitute(cxt, c.expression(), sub);
+  Type& t = substitute(cxt, c.type(), sub);
+  return cxt.get_conversion_constraint(e, t);
+}
+
+
+Cons&
+subst_parametric(Context& cxt, Parameterized_cons& c, Substitution& sub)
+{
+  Enter_requires_scope rscope(cxt);
+  Decl_list parms = substitute(cxt, c.variables(), sub);
+  Cons& cons = substitute(cxt, c.constraint(), sub);
+  return cxt.get_parameterized_constraint(parms, cons);
+}
+
+
+Cons&
+subst_conjunction(Context& cxt, Conjunction_cons& c, Substitution& sub)
+{
+  Cons& c1 = substitute(cxt, c.left(), sub);
+  Cons& c2 = substitute(cxt, c.right(), sub);
+  return cxt.get_conjunction_constraint(c1, c2);
+}
+
+
+Cons&
+subst_disjunction(Context& cxt, Disjunction_cons& c, Substitution& sub)
+{
+  Cons& c1 = substitute(cxt, c.left(), sub);
+  Cons& c2 = substitute(cxt, c.right(), sub);
+  return cxt.get_disjunction_constraint(c1, c2);
+}
 
 
 Cons&
@@ -332,7 +387,13 @@ substitute(Context& cxt, Cons& c, Substitution& sub)
   {
     Context&      cxt;
     Substitution& sub;
-    Cons& operator()(Cons& c)           { banjo_unhandled_case(c); }
+    Cons& operator()(Cons& c)               { banjo_unhandled_case(c); }
+    Cons& operator()(Predicate_cons& c)     { return subst_predicate(cxt, c, sub); }
+    Cons& operator()(Expression_cons& c)    { return subst_usage(cxt, c, sub); }
+    Cons& operator()(Conversion_cons& c)    { return subst_usage(cxt, c, sub); }
+    Cons& operator()(Parameterized_cons& c) { return subst_parametric(cxt, c, sub); }
+    Cons& operator()(Conjunction_cons& c)   { return subst_conjunction(cxt, c, sub); }
+    Cons& operator()(Disjunction_cons& c)   { return subst_disjunction(cxt, c, sub); }
   };
   return apply(c, fn{cxt, sub});
 }

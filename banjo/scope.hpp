@@ -166,6 +166,30 @@ struct Function_parameter_scope : Scope
 };
 
 
+// Represents the pseudo-scope of a template declaration. This
+// is primarily used to save the current template parameters and
+// the current constraints.
+//
+// This object does not contain name bindings.
+struct Template_scope : Scope
+{
+  Template_scope(Scope& s)
+    : Scope(s)
+  { }
+
+  // Returns the parameters of the template scope.
+  Decl_list const& parameters() const { return parms; }
+  Decl_list&       parameters()       { return parms; }
+
+  // Returns the constraint associated with the template scope.
+  Expr const& constraint() const { return *cons; }
+  Expr&       constraint()       { return *cons; }
+
+  Decl_list  parms;
+  Expr*      cons;
+};
+
+
 // Represents the scope of template parameter names.
 struct Template_parameter_scope : Scope
 {
@@ -208,6 +232,48 @@ struct Block_scope : Scope
   Block_scope(Scope& s)
     : Scope(s)
   { }
+};
+
+
+// A requires scope is the block scope of a requires-expression.
+// We differentiate the two because lookup of expressions within
+// the this context is different than lookup in a regular block
+// scope. Otherwise, there is no difference.
+struct Requires_scope : Block_scope
+{
+  using Block_scope::Block_scope;
+};
+
+
+// Represents the scope of entities declared (or assumed) within a
+// concept definition.
+struct Concept_scope : Scope
+{
+  using Scope::Scope;
+
+  // Returns the function declaration associated with the scope.
+  Concept_decl const& declaration() const;
+  Concept_decl&       declaration();
+};
+
+
+// Represents the scope of assumed declarations in a template.
+//
+// This object does not directly contain name bindings.
+//
+// TODO: This may ultimately host nested sub-scopes based on
+// a decomposition of constraints.
+struct Constrained_scope : Scope
+{
+  Constrained_scope(Scope& s, Expr& e)
+    : Scope(s), expr(&e)
+  { }
+
+  // Returns the constraint expression associated with the scope.
+  Expr const& associated_constraints() const { return *expr; }
+  Expr&       associated_constraints()       { return *expr; }
+
+  Expr* expr;
 };
 
 

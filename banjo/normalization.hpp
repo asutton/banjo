@@ -13,6 +13,7 @@ namespace banjo
 
 Cons& normalize(Context&, Expr&);
 Cons& normalize(Context&, Req&);
+Cons& normalize(Context&, Concept_def&);
 
 
 } // namespace banjo

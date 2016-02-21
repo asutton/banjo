@@ -5,16 +5,13 @@
 #define BANJO_CONTEXT_HPP
 
 #include "prelude.hpp"
-#include "lookup.hpp"
+#include "scope.hpp"
+#include "builder.hpp"
 
 
 namespace banjo
 {
 
-struct Decl;
-struct Variable_decl;
-struct Function_decl;
-struct Namespace_decl;
 struct Scope;
 
 
@@ -23,9 +20,7 @@ struct Scope;
 // TODO: Add an allocator/object pool and management support.
 //
 // TODO: Integrate diagnostics.
-//
-// TODO: Have a global context?
-struct Context
+struct Context : Builder
 {
   Context();
 
@@ -44,33 +39,62 @@ struct Context
   // Unique ids
   int get_unique_id();
 
+  // Input location
+  Location input_location() const       { return input; }
+  void     input_location(Location loc) { input = loc; }
+
   // Scope management
   void   set_scope(Scope&);
-  Scope& make_initializer_scope(Decl&);
-  Scope& make_function_scope(Decl&);
-  Scope& make_function_parameter_scope();
-  Scope& make_template_parameter_scope();
-  Scope& make_block_scope();
-  Scope& current_scope();
-  Decl&  current_context();
+  Initializer_scope&        make_initializer_scope(Decl&);
+  Function_scope&           make_function_scope(Decl&);
+  Function_parameter_scope& make_function_parameter_scope();
+  Template_scope&           make_template_scope();
+  Template_parameter_scope& make_template_parameter_scope();
+  Block_scope&              make_block_scope();
+  Requires_scope&           make_requires_scope();
+  Concept_scope&            make_concept_scope(Decl&);
+  Constrained_scope&        make_constrained_scope(Expr&);
+
+  // Scope queries
+  Scope&          current_scope();
+  Template_scope* current_template_scope();
+  Decl_list*      current_template_parameters();
+  Expr*           current_template_constraints();
+  Requires_scope* current_requires_scope();
+
+  // Declaration context queries
+  Decl&           current_context();
+  Template_decl*  current_template();
+
+  // Returns true if there we are in the scope of a template.
+  bool in_template() const;
+
+  // Returns true we are in the scope of a requires-expression.
+  bool in_requirements() const;
 
   Symbol_table    syms;
+  Location        input;  // The input location
   Namespace_decl* global; // The global namespace
   Scope*          scope;  // The current scope
-  Evidence*       facts;  // Knowledge of dependent terms
 
-  int id = 0; // The current id counter.
-
-  // Determines the kind of code under analysis.
-  enum State
-  {
-    regular_code,  // Analyzing regular (non-dependent) code
-    template_code, // Analyzing template code
-    concept_code   // Analyzing dependent code
-  };
-
-  State state;
+  int id = 0; // The current id counter
 };
+
+
+// Returns true if there we are in the scope of a template.
+inline bool
+Context::in_template() const
+{
+  return modify(this)->current_template_scope();
+}
+
+// Returns true we are in the scope of a requires-expression.
+inline bool
+Context::in_requirements() const
+{
+  return modify(this)->current_requires_scope();
+}
+
 
 
 // Returns a unique id number and updates the context so that the
@@ -96,36 +120,47 @@ struct Enter_scope
 };
 
 
-// An RAII helper that manages the entry and exit of factual
-// environments with a concept.
-struct Enter_concept
+struct Enter_requires_scope : Enter_scope
 {
-  using State = Context::State;
-
-  Enter_concept(Context&);
-  ~Enter_concept();
-
-  Context&  cxt;
-  Evidence* facts;
-  State     state;
+  Enter_requires_scope(Context& cxt)
+    : Enter_scope(cxt, cxt.make_requires_scope())
+  { }
 };
 
 
-inline
-Enter_concept::Enter_concept(Context& c)
-  : cxt(c), facts(cxt.facts), state(cxt.state)
+
+// -------------------------------------------------------------------------- //
+// Diagnostic utilities
+
+using lingo::error;
+using lingo::warning;
+using lingo::note;
+
+
+// Emit a formatted message at the current input position.
+template<typename... Args>
+inline void
+error(Context& cxt, char const* msg, Args const&... args)
 {
-  cxt.facts = new Evidence(facts);
-  cxt.state = Context::concept_code;
+  error(cxt.input_location(), msg, args...);
 }
 
 
-inline
-Enter_concept::~Enter_concept()
+// Emit a formatted message at the current input position.
+template<typename... Args>
+inline void
+warning(Context& cxt, char const* msg, Args const&... args)
 {
-  delete cxt.facts;
-  cxt.facts = facts;
-  cxt.state = state;
+  warning(cxt.input_location(), msg, args...);
+}
+
+
+// Emit a formatted message at the current input position.
+template<typename... Args>
+inline void
+note(Context& cxt, char const* msg, Args const&... args)
+{
+  note(cxt.input_location(), msg, args...);
 }
 
 

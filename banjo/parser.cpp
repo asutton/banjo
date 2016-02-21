@@ -152,7 +152,9 @@ Parser::require(char const* s)
 Token
 Parser::accept()
 {
-  return tokens.get();
+  Token tok = tokens.get();
+  cxt.input_location(tok.location());
+  return tok;
 }
 
 

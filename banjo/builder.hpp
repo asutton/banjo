@@ -6,9 +6,7 @@
 #define BANJO_BUILDER_HPP
 
 #include "prelude.hpp"
-#include "context.hpp"
 #include "token.hpp"
-#include "operator.hpp"
 #include "language.hpp"
 
 #include <lingo/token.hpp>
@@ -160,12 +158,14 @@ struct Builder
   // ensure efficient hashingn and equivalence comparison.
   Concept_cons&       get_concept_constraint(Decl&, Term_list const&);
   Predicate_cons&     get_predicate_constraint(Expr&);
+  Expression_cons&    get_expression_constraint(Expr&, Type&);
+  Conversion_cons&    get_conversion_constraint(Expr&, Type&);
   Parameterized_cons& get_parameterized_constraint(Decl_list const&, Cons&);
   Conjunction_cons&   get_conjunction_constraint(Cons&, Cons&);
   Disjunction_cons&   get_disjunction_constraint(Cons&, Cons&);
 
   // Resources
-  Symbol_table& symbols() { return cxt.symbols(); }
+  Symbol_table& symbols();
 
   // Allocate an objet of the given type.
   //

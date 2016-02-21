@@ -206,6 +206,9 @@ struct Printer
   void constraint(Cons const&);
   void constraint(Concept_cons const&);
   void constraint(Predicate_cons const&);
+  void constraint(Expression_cons const&);
+  void constraint(Conversion_cons const&);
+  void constraint(Parameterized_cons const&);
   void constraint(Conjunction_cons const&);
   void constraint(Disjunction_cons const&);
   void grouped_constraint(Cons const&);

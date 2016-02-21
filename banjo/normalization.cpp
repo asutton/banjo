@@ -92,10 +92,13 @@ normalize_type_req(Context& cxt, Type_req& r)
 }
 
 
+// The normal form of a basic requirement is an expression
+// constraint having that expression and type.
 Cons&
 normalize_basic_req(Context& cxt, Basic_req& r)
 {
-  lingo_unimplemented();
+  Builder build(cxt);
+  return build.get_expression_constraint(r.expression(), r.type());
 }
 
 
@@ -125,7 +128,8 @@ normalize(Context& cxt, Req& r)
 }
 
 
-// Normalize a list of requirements.
+// The normal form of a list of requiremnts is the conjunction
+// of their normal forms.
 Cons&
 normalize(Context& cxt, Req_list& rs)
 {
@@ -139,6 +143,15 @@ normalize(Context& cxt, Req_list& rs)
     ++iter;
   }
   return *c1;
+}
+
+
+// The normal form of a concept definition is a conjunction
+// of its requirements.
+Cons&
+normalize(Context& cxt, Concept_def& def)
+{
+  return normalize(cxt, def.requirements());
 }
 
 

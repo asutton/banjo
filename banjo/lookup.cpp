@@ -103,24 +103,4 @@ argument_dependent_lookup(Scope&, Expr_list&)
 */
 
 
-// -------------------------------------------------------------------------- //
-// Dependent lookup
-
-
-// Return the cumulative set of facts about the expression e. Lookup
-// ends when all fact environments have been searched.
-Fact
-dependent_lookup(Evidence& env, Expr const& e)
-{
-  Fact ret;
-  Evidence* p = &env;
-  while (p) {
-    if (Fact* f = p->lookup(e))
-      ret.merge(*f);
-    p = p->prev;
-  }
-  return ret;
-}
-
-
 } // namespace banjo

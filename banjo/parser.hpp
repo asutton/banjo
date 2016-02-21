@@ -8,7 +8,7 @@
 #include "token.hpp"
 #include "scope.hpp"
 #include "language.hpp"
-#include "builder.hpp"
+#include "context.hpp"
 
 
 namespace banjo
@@ -351,10 +351,13 @@ struct Parser::Assume_template
 
 // An RAII helper that manages parsing state related to the parsing
 // of a declaration nested within a template.
+//
+// TODO: This can probably be removed and templatize_declaration could
+// be implemented in terms of the template scope.
 struct Parser::Parsing_template
 {
-  Parsing_template(Parser&, Decl_list&s);
-  Parsing_template(Parser&, Decl_list&s, Expr&);
+  Parsing_template(Parser&, Decl_list*);
+  Parsing_template(Parser&, Decl_list*, Expr*);
   ~Parsing_template();
 
   Parser&    parser;
@@ -364,24 +367,24 @@ struct Parser::Parsing_template
 
 
 inline
-Parser::Parsing_template::Parsing_template(Parser& p, Decl_list& ps)
+Parser::Parsing_template::Parsing_template(Parser& p, Decl_list* ps)
   : parser(p)
   , saved_parms(p.state.template_parms)
   , saved_cons(p.state.template_cons)
 {
-  parser.state.template_parms = &ps;
+  parser.state.template_parms = ps;
   parser.state.template_cons = nullptr;
 }
 
 
 inline
-Parser::Parsing_template::Parsing_template(Parser& p, Decl_list& ps, Expr& c)
+Parser::Parsing_template::Parsing_template(Parser& p, Decl_list* ps, Expr* c)
   : parser(p)
   , saved_parms(p.state.template_parms)
   , saved_cons(p.state.template_cons)
 {
-  parser.state.template_parms = &ps;
-  parser.state.template_cons = &c;
+  parser.state.template_parms = ps;
+  parser.state.template_cons = c;
 }
 
 

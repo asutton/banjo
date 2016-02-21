@@ -1501,6 +1501,10 @@ void
 Printer::requirement(Basic_req const& r)
 {
   expression(r.expression());
+  space();
+  token(colon_tok);
+  space();
+  type(r.type());
   token(semicolon_tok);
 }
 
@@ -1537,11 +1541,14 @@ Printer::constraint(Cons const& c)
   struct fn
   {
     Printer& p;
-    void operator()(Cons const& c)             { lingo_unimplemented(); }
-    void operator()(Concept_cons const& c)     { p.constraint(c); }
-    void operator()(Predicate_cons const& c)   { p.constraint(c); }
-    void operator()(Conjunction_cons const& c) { p.constraint(c); }
-    void operator()(Disjunction_cons const& c) { p.constraint(c); }
+    void operator()(Cons const& c)               { banjo_unhandled_case(c); }
+    void operator()(Concept_cons const& c)       { p.constraint(c); }
+    void operator()(Predicate_cons const& c)     { p.constraint(c); }
+    void operator()(Expression_cons const& c)    { p.constraint(c); }
+    void operator()(Conversion_cons const& c)    { p.constraint(c); }
+    void operator()(Parameterized_cons const& c) { p.constraint(c); }
+    void operator()(Conjunction_cons const& c)   { p.constraint(c); }
+    void operator()(Disjunction_cons const& c)   { p.constraint(c); }
   };
   apply(c, fn{*this});
 }
@@ -1564,6 +1571,46 @@ Printer::constraint(Predicate_cons const& c)
   token(lbracket_tok);
   expression(c.expression());
   token(rbracket_tok);
+}
+
+
+// Write this as |e : t|
+void
+Printer::constraint(Expression_cons const& c)
+{
+  token(bar_tok);
+  expression(c.expression());
+  space();
+  token(colon_tok);
+  space();
+  type(c.type());
+  token(bar_tok);
+}
+
+
+// Write this as |e -> t|
+void
+Printer::constraint(Conversion_cons const& c)
+{
+  token(bar_tok);
+  expression(c.expression());
+  space();
+  token(arrow_tok);
+  space();
+  type(c.type());
+  token(bar_tok);
+}
+
+
+void
+Printer::constraint(Parameterized_cons const& c)
+{
+  token("\\");
+  token(lparen_tok);
+  parameter_list(c.variables());
+  token(rparen_tok);
+  space();
+  constraint(c.constraint());
 }
 
 

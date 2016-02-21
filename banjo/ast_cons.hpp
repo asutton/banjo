@@ -97,7 +97,21 @@ struct Predicate_cons : Cons
 // FIXME: Implement me.
 struct Expression_cons : Cons
 {
-  using Cons::Cons;
+  Expression_cons(Expr& e, Type& t)
+    : expr(&e), ty(&t)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  Expr const& expression() const { return *expr; }
+  Expr&       expression()       { return *expr; }
+
+  Type const& type() const { return *ty; }
+  Type&       type()       { return *ty; }
+
+  Expr* expr;
+  Type* ty;
 };
 
 
@@ -105,13 +119,30 @@ struct Expression_cons : Cons
 struct Type_cons : Cons
 {
   using Cons::Cons;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
 // FIXME: Implement me.
 struct Conversion_cons : Cons
 {
-  using Cons::Cons;
+  Conversion_cons(Expr& e, Type& t)
+    : expr(&e), ty(&t)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  Expr const& expression() const { return *expr; }
+  Expr&       expression()       { return *expr; }
+
+  Type const& type() const { return *ty; }
+  Type&       type()       { return *ty; }
+
+  Expr* expr;
+  Type* ty;
 };
 
 
@@ -119,6 +150,9 @@ struct Conversion_cons : Cons
 struct Deduction_cons : Cons
 {
   using Cons::Cons;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 

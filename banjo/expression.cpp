@@ -11,6 +11,7 @@
 #include "equivalence.hpp"
 #include "initialization.hpp"
 #include "conversion.hpp"
+#include "constraint.hpp"
 #include "print.hpp"
 
 #include <iostream>
@@ -181,11 +182,31 @@ template<typename Make>
 static Expr&
 make_dependent_relational_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
 {
-  // Type* t1 = dependent_lookup(cxt.current_scope(), e1);
-  // Decl_list d2 = dependent_lookup(cxt.current_scope(), e1);
-
+  // Build a dependent expression.
   Type& t = make_fresh_type(cxt);
-  return make(t, e1, e2);
+  Expr& e = make(t, e1, e2);
+
+  // Don't do dependent lookup.
+  if (cxt.in_requirements())
+    return e;
+
+  // Inside a constrained template, search the constraints to
+  // determine if the expression is admissible.
+  //
+  // TODO: In fully generality, we have to accumulate constraints
+  // in each scope and search that.
+  //
+  // TODO: This would be more lookup-oriented if we were decomposing
+  // constraints on the fly.
+  if (Expr* con = cxt.current_template_constraints()) {
+    // FIXME: Do we need to transform ret or not?
+    if (Expr* ret = admit_expression(cxt, *con, e))
+      return *ret;
+    warning(cxt, "expression '{}' may result in substitution failure", e);
+    return e;
+  }
+
+  banjo_unimplemented("unconstrained lookup");
 }
 
 

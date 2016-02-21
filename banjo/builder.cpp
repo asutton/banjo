@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "builder.hpp"
+#include "context.hpp"
 #include "ast.hpp"
 #include "equivalence.hpp"
 #include "hash.hpp"
@@ -60,6 +61,13 @@ struct Eq
 
 template<typename T>
 using Factory = Hashed_unique_factory<T, Hash<T>, Eq<T>>;
+
+
+// -------------------------------------------------------------------------- //
+// Builder definition
+
+Symbol_table&
+Builder::symbols() { return cxt.symbols(); }
 
 
 // -------------------------------------------------------------------------- //
@@ -873,6 +881,23 @@ Builder::get_predicate_constraint(Expr& e)
 {
   static Factory<Predicate_cons> f;
   return f.make(e);
+}
+
+
+Expression_cons&
+Builder::get_expression_constraint(Expr& e, Type& t)
+{
+  static Factory<Expression_cons> f;
+  return f.make(e, t);
+}
+
+
+Conversion_cons&
+Builder::get_conversion_constraint(Expr& e, Type& t)
+{
+  static Factory<Conversion_cons> f;
+  return f.make(e, t);
+
 }
 
 
