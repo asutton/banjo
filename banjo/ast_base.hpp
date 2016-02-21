@@ -104,7 +104,7 @@ struct Type_req;
 struct Syntactic_req;
 struct Semantic_req;
 struct Expression_req;
-struct Simple_req;
+struct Basic_req;
 struct Conversion_req;
 struct Deduction_req;
 

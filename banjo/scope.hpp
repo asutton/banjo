@@ -123,6 +123,10 @@ Scope::lookup(Name const& n)
 }
 
 
+// A list of scopes.
+using Scope_list = std::vector<Scope*>;
+
+
 
 // Represents a namespace scope.
 struct Namespace_scope : Scope
@@ -201,6 +205,9 @@ struct Initializer_scope : Scope
 // Represents a block scope.
 struct Block_scope : Scope
 {
+  Block_scope(Scope& s)
+    : Scope(s)
+  { }
 };
 
 

@@ -79,6 +79,14 @@ Context::make_template_parameter_scope()
 }
 
 
+// Create a new block scope.
+Scope&
+Context::make_block_scope()
+{
+  return *new Block_scope(current_scope());
+}
+
+
 // Returns the current scope.
 Scope&
 Context::current_scope()

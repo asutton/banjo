@@ -839,12 +839,29 @@ Builder::make_value_parm(char const* s, Type& t)
 
 
 // -------------------------------------------------------------------------- //
+// Requirements
+
+Basic_req&
+Builder::make_basic_requirement(Expr& e, Type& t)
+{
+  return make<Basic_req>(e, t);
+}
+
+
+Syntactic_req&
+Builder::make_syntactic_requirement(Expr& e)
+{
+  return make<Syntactic_req>(e);
+}
+
+
+// -------------------------------------------------------------------------- //
 // Constraints
 
 // FIXME: Save all uniqued terms in the context, not as global variables.
 
 Concept_cons&
-Builder::get_concept_constraint(Decl& d, Term_list& ts)
+Builder::get_concept_constraint(Decl& d, Term_list const& ts)
 {
   static Factory<Concept_cons> f;
   return f.make(d, ts);
@@ -856,6 +873,14 @@ Builder::get_predicate_constraint(Expr& e)
 {
   static Factory<Predicate_cons> f;
   return f.make(e);
+}
+
+
+Parameterized_cons&
+Builder::get_parameterized_constraint(Decl_list const& ds, Cons& c)
+{
+  static Factory<Parameterized_cons> f;
+  return f.make(ds, c);
 }
 
 

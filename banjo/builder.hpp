@@ -152,14 +152,17 @@ struct Builder
   Type_parm&   make_type_parameter(char const*, Type&);
 
   // Requirements
+  Basic_req&     make_basic_requirement(Expr&, Type&);
+  Syntactic_req& make_syntactic_requirement(Expr&);
 
   // Constraints
   // Note that constraints are canonicalized in order
   // ensure efficient hashingn and equivalence comparison.
-  Concept_cons&     get_concept_constraint(Decl&, Term_list&);
-  Predicate_cons&   get_predicate_constraint(Expr&);
-  Conjunction_cons& get_conjunction_constraint(Cons&, Cons&);
-  Disjunction_cons& get_disjunction_constraint(Cons&, Cons&);
+  Concept_cons&       get_concept_constraint(Decl&, Term_list const&);
+  Predicate_cons&     get_predicate_constraint(Expr&);
+  Parameterized_cons& get_parameterized_constraint(Decl_list const&, Cons&);
+  Conjunction_cons&   get_conjunction_constraint(Cons&, Cons&);
+  Disjunction_cons&   get_disjunction_constraint(Cons&, Cons&);
 
   // Resources
   Symbol_table& symbols() { return cxt.symbols(); }

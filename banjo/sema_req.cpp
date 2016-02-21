@@ -24,9 +24,9 @@ Parser::on_type_requirement(Expr&)
 
 
 Req&
-Parser::on_syntactic_requirement(Expr&)
+Parser::on_syntactic_requirement(Expr& e)
 {
-  lingo_unimplemented();
+  return make_syntactic_requirement(cxt, e);
 }
 
 
@@ -45,9 +45,16 @@ Parser::on_expression_requirement(Expr&)
 
 
 Req&
-Parser::on_simple_requirement(Expr& e)
+Parser::on_basic_requirement(Expr& e)
 {
-  return make_simple_requirement(cxt, e);
+  return make_basic_requirement(cxt, e);
+}
+
+
+Req&
+Parser::on_basic_requirement(Expr& e, Type& t)
+{
+  return make_basic_requirement(cxt, e, t);
 }
 
 

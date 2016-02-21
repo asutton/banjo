@@ -268,7 +268,8 @@ struct Parser
   Req& on_syntactic_requirement(Expr&);
   Req& on_semantic_requirement(Decl&);
   Req& on_expression_requirement(Expr&);
-  Req& on_simple_requirement(Expr&);
+  Req& on_basic_requirement(Expr&);
+  Req& on_basic_requirement(Expr&, Type&);
   Req& on_conversion_requirement(Expr&, Type&);
   Req& on_deduction_requirement(Expr&, Type&);
 

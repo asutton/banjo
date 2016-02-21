@@ -265,6 +265,7 @@ struct Generic_name_visitor : Name::Visitor, Generic_visitor<F, T>
   void visit(Literal_id const& n)     { this->invoke(n); }
   void visit(Destructor_id const& n)  { this->invoke(n); }
   void visit(Template_id const& n)    { this->invoke(n); }
+  void visit(Concept_id const& n)     { this->invoke(n); }
   void visit(Qualified_id const& n)   { this->invoke(n); }
 };
 
@@ -295,6 +296,7 @@ struct Generic_name_mutator : Name::Mutator, Generic_mutator<F, T>
   void visit(Literal_id& n)     { this->invoke(n); }
   void visit(Destructor_id& n)  { this->invoke(n); }
   void visit(Template_id& n)    { this->invoke(n); }
+  void visit(Concept_id& n)     { this->invoke(n); }
   void visit(Qualified_id& n)   { this->invoke(n); }
 };
 

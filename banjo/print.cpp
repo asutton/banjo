@@ -149,6 +149,7 @@ Printer::unqualified_id(Name const& n)
     void operator()(Literal_id const& n)     { p.literal_id(n); }
     void operator()(Destructor_id const& n)  { p.destructor_id(n); }
     void operator()(Template_id const& n)    { p.template_id(n); }
+    void operator()(Concept_id const& n)     { p.concept_id(n); }
     void operator()(Qualified_id const& n)   { lingo_unreachable(); }
   };
   apply(n, fn{*this});
@@ -248,6 +249,17 @@ Printer::template_id(Template_id const& n)
   id(n.declaration().name());
 
   // FIXME: Don't insert spaces after the template name.
+  token(lt_tok);
+  template_argument_list(n.arguments());
+  token(gt_tok);
+}
+
+
+void
+Printer::concept_id(Concept_id const& n)
+{
+  // FIXME: Use a concept-name production?
+  id(n.declaration().name());
   token(lt_tok);
   template_argument_list(n.arguments());
   token(gt_tok);
@@ -805,7 +817,12 @@ Printer::requires_expression(Requires_expr const& e)
     token(rparen_tok);
     space();
   }
+
+  token(lbrace_tok);
+  newline_and_indent();
   usage_seq(e.requirements());
+  newline_and_undent();
+  token(rbrace_tok);
 }
 
 
@@ -1233,9 +1250,68 @@ Printer::concept_definition(Concept_def const& d)
 {
   token(lbrace_tok);
   newline_and_indent();
-  // statement_seq(d.requirements());
+  concept_member_seq(d.requirements());
   newline_and_undent();
   token(rbrace_tok);
+}
+
+
+void
+Printer::concept_member_seq(Req_list const& rs)
+{
+  for (auto iter = rs.begin(); iter != rs.end(); ++iter) {
+    concept_member(*iter);
+    if (std::next(iter) != rs.end())
+      newline();
+  }
+}
+
+
+void
+Printer::concept_member(Req const& r)
+{
+  struct fn
+  {
+    Printer& p;
+    void operator()(Req const& r)            { lingo_unreachable(); }
+    void operator()(Syntactic_req const& r)  { p.concept_member(r); }
+    void operator()(Semantic_req const& r)   { p.concept_member(r); }
+    void operator()(Type_req const& r)       { p.concept_member(r); }
+    void operator()(Expression_req const& r) { p.concept_member(r); }
+  };
+  apply(r, fn{*this});
+}
+
+
+void
+Printer::concept_member(Syntactic_req const& r)
+{
+  expression(r.expression());
+}
+
+
+void
+Printer::concept_member(Semantic_req const& r)
+{
+  declaration(r.declaration());
+}
+
+
+void
+Printer::concept_member(Type_req const& r)
+{
+  token(typename_tok);
+  space();
+  type(r.type());
+  token(semicolon_tok);
+}
+
+
+void
+Printer::concept_member(Expression_req const& r)
+{
+  expression(r.expression());
+  token(semicolon_tok);
 }
 
 
@@ -1398,9 +1474,10 @@ Printer::template_argument_list(Term_list const& ts)
 void
 Printer::usage_seq(Req_list const& rs)
 {
-  for (Req const& r : rs) {
-    usage_requirement(r);
-    newline();
+  for (auto iter = rs.begin(); iter != rs.end(); ++iter) {
+    usage_requirement(*iter);
+    if (std::next(iter) != rs.end())
+      newline();
   }
 }
 
@@ -1411,17 +1488,17 @@ Printer::usage_requirement(Req const& r)
   struct fn
   {
     Printer& p;
-    void operator()(Req const& r) { banjo_unhandled_case(r); }
-    void operator()(Simple_req const& r) { p.requirement(r); }
+    void operator()(Req const& r)            { banjo_unhandled_case(r); }
+    void operator()(Basic_req const& r)      { p.requirement(r); }
     void operator()(Conversion_req const& r) { p.requirement(r); }
-    void operator()(Deduction_req const& r) { p.requirement(r); }
+    void operator()(Deduction_req const& r)  { p.requirement(r); }
   };
   apply(r, fn{*this});
 }
 
 
 void
-Printer::requirement(Simple_req const& r)
+Printer::requirement(Basic_req const& r)
 {
   expression(r.expression());
   token(semicolon_tok);

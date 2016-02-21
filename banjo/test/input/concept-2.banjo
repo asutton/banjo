@@ -1,19 +1,19 @@
 
-template<typename T>
-concept C
+concept Eq<typename T>
 {
-  requires <typename U> (T a, U b)
-  {
-    f(a, b);
-    f(a) : U;
+  requires (T a, T b) {
+    a == b : bool;
+    a != b : bool;
+  }
+}
 
-    g(b); // g takes all U. Solve by deduction.
 
-    g1(a) : U; // FIXME: This doesn't work.
-
-    g(b) -> U;
-    g(b) : U;
-
-    typename X<U>;
+concept Ord<typename T>
+{
+  requires (T a, T b) {
+    a < b : bool;
+    a > b : bool;
+    a <= b : bool;
+    a >= b : bool;
   }
 }

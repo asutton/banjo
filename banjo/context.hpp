@@ -50,6 +50,7 @@ struct Context
   Scope& make_function_scope(Decl&);
   Scope& make_function_parameter_scope();
   Scope& make_template_parameter_scope();
+  Scope& make_block_scope();
   Scope& current_scope();
   Decl&  current_context();
 

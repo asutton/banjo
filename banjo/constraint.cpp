@@ -2,12 +2,11 @@
 // All rights reserved
 
 #include "constraint.hpp"
-#include "ast.hpp"
+#include "ast_cons.hpp"
 #include "builder.hpp"
 #include "substitution.hpp"
 #include "normalization.hpp"
 #include "hash.hpp"
-#include "equivalence.hpp"
 #include "print.hpp"
 
 #include <iostream>
@@ -15,6 +14,9 @@
 
 namespace banjo
 {
+
+// -------------------------------------------------------------------------- //
+// Concept expansion
 
 // Expand the concept by substituting the template arguments
 // throughthe concept's definition and normalizing the result.
@@ -46,6 +48,7 @@ expand(Context& cxt, Concept_cons const& c)
 {
   return expand(cxt, const_cast<Concept_cons&>(c));
 }
+
 
 
 } // namespace banjo

@@ -79,6 +79,7 @@ struct Printer
   void conversion_id(Conversion_id const&);
   void literal_id(Literal_id const&);
   void template_id(Template_id const&);
+  void concept_id(Concept_id const&);
   void qualified_id(Qualified_id const&);
   void nested_name_specifier(Decl const&);
 
@@ -149,7 +150,6 @@ struct Printer
   void union_declaration(Union_decl const&);
   void enum_declaration(Enum_decl const&);
   void namespace_declaration(Namespace_decl const&);
-  void template_declaration(Template_decl const&);
   void axiom_declaration(Axiom_decl const&);
 
   // Functions
@@ -158,6 +158,10 @@ struct Printer
   void function_definition(Function_def const&);
   void function_definition(Deleted_def const&);
   void function_definition(Defaulted_def const&);
+  void parameter(Decl const&);
+  void parameter(Object_parm const&);
+  void parameter(Variadic_parm const&);
+  void parameter_list(Decl_list const&);
 
   // Classes
   void class_declaration(Class_decl const&);
@@ -171,12 +175,15 @@ struct Printer
   void concept_definition(Def const&);
   void concept_definition(Expression_def const&);
   void concept_definition(Concept_def const&);
+  void concept_member_seq(Req_list const&);
+  void concept_member(Req const&);
+  void concept_member(Syntactic_req const&);
+  void concept_member(Semantic_req const&);
+  void concept_member(Type_req const&);
+  void concept_member(Expression_req const&);
 
-  void parameter(Decl const&);
-  void parameter(Object_parm const&);
-  void parameter(Variadic_parm const&);
-  void parameter_list(Decl_list const&);
-
+  // Templates
+  void template_declaration(Template_decl const&);
   void type_template_parameter(Type_parm const&);
   void value_template_parameter(Value_parm const&);
   void template_template_parameter(Template_parm const&);
@@ -184,13 +191,12 @@ struct Printer
   void template_parameter_list(Decl_list const&);
   void template_argument(Term const&);
   void template_argument_list(Term_list const&);
-
   void requires_clause(Expr const&);
 
   // Requirements
   void usage_seq(Req_list const&);
   void usage_requirement(Req const&);
-  void requirement(Simple_req const&);
+  void requirement(Basic_req const&);
   void requirement(Conversion_req const&);
   void requirement(Deduction_req const&);
 

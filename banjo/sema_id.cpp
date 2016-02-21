@@ -50,6 +50,9 @@ Parser::on_literal_id()
 }
 
 
+// FIXME: Actally match template arguments? Or do that when we
+// require the id to be resolved (e.g., as a type-name or an
+// id-expression)?
 Name&
 Parser::on_template_id(Token, Decl& d, Term_list const& a)
 {
@@ -57,6 +60,8 @@ Parser::on_template_id(Token, Decl& d, Term_list const& a)
 }
 
 
+// FIXME: Actually match the template arguments? Or do that when
+// we require the id to be resolved (i.e., as a check expression).
 Name&
 Parser::on_concept_id(Decl& d, Term_list const& a)
 {

@@ -4,6 +4,7 @@
 #include "requirement.hpp"
 #include "ast_req.hpp"
 #include "builder.hpp"
+#include "type.hpp"
 #include "print.hpp"
 
 #include <iostream>
@@ -12,21 +13,31 @@
 namespace banjo
 {
 
+
+// Create a basic requirement for the expression e. Synthesize
+// a fresh type for its result.
 Req&
-make_simple_requirement(Context& cxt, Expr& e)
+make_basic_requirement(Context& cxt, Expr& e)
 {
-  lingo_unimplemented();
+  Builder build(cxt);
+  Type& t = make_fresh_type(cxt);
+  return build.make_basic_requirement(e, t);
+}
+
+
+// Construct a basic requirement for the expression e.
+Req&
+make_basic_requirement(Context& cxt, Expr& e, Type& t)
+{
+  Builder build(cxt);
+  return build.make_basic_requirement(e, t);
 }
 
 
 Req&
 make_conversion_requirement(Context& cxt, Expr& e, Type& t)
 {
-  std::cout << "YEAH!\n";
   lingo_unimplemented();
-  // FIXME: Is there actually anything we need to do here?
-  // Builder build(cxt);
-  // return build.make_conversion_requirement(e, t);
 }
 
 
@@ -34,6 +45,14 @@ Req&
 make_deduction_requirement(Context& cxt, Expr& e, Type& t)
 {
   lingo_unimplemented();
+}
+
+
+Req&
+make_syntactic_requirement(Context& cxt, Expr& e)
+{
+  Builder build(cxt);
+  return build.make_syntactic_requirement(e);
 }
 
 

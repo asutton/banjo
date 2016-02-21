@@ -5,17 +5,16 @@
 #define BANJO_CONSTRAINT_HPP
 
 #include "prelude.hpp"
+#include "language.hpp"
+#include "scope.hpp"
+
 
 namespace banjo
 {
 
-struct Cons;
-struct Concept_cons;
-struct Context;
-
-
 Cons&       expand(Context&, Concept_cons&);
 Cons const& expand(Context&, Concept_cons const&);
+
 
 } // namespace banjo
 
