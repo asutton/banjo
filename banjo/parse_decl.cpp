@@ -406,12 +406,15 @@ Parser::template_declaration()
   require(template_tok);
 
   // Build a psuedo-scope.
+  //
+  // FIXME: Merge this with template parameter scope. I don't think
+  // that it's serving a very useful purpose.
   Template_scope& tmp = cxt.make_template_scope();
   Enter_scope tscope(cxt, tmp);
 
   // TODO: Allow >> to close the template parameter list in the
   // case of default template arguments.
-  Enter_scope pscope(cxt, cxt.make_template_parameter_scope());
+  Enter_template_parameter_scope pscope(cxt);
   match(lt_tok);
   tmp.parms = template_parameter_list();
   match(gt_tok);
@@ -421,7 +424,7 @@ Parser::template_declaration()
   if (next_token_is(requires_tok)) {
     // TODO: How are dependent names resolved in a requires clause?
     tmp.cons = &requires_clause();
-    Enter_scope cscope(cxt, cxt.make_constrained_scope(*tmp.cons));    
+    Enter_scope cscope(cxt, cxt.make_constrained_scope(*tmp.cons));
     Parsing_template save(*this, &tmp.parms, tmp.cons);
     return declaration();
   } else {
@@ -562,7 +565,7 @@ Parser::concept_declaration()
   Token tok = require(concept_tok);
   Name& n = declarator();
 
-  Enter_scope pscope(cxt, cxt.make_template_parameter_scope());
+  Enter_template_parameter_scope pscope(cxt);
   match(lt_tok);
   Decl_list ps = template_parameter_list();
   match(gt_tok);

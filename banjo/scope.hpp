@@ -171,6 +171,9 @@ struct Function_parameter_scope : Scope
 // the current constraints.
 //
 // This object does not contain name bindings.
+//
+// A template scope maintains information about its level, since
+// template scopes can be nested. When combined
 struct Template_scope : Scope
 {
   Template_scope(Scope& s)

@@ -328,6 +328,16 @@ using Cons_iter = Cons_list::iterator;
 using Expr_pair = std::pair<Expr&, Expr&>;
 
 
+// An index records the depth and offset of a parameter.
+struct Index : std::pair<int, int>
+{
+  using std::pair<int, int>::pair;
+
+  int depth() const  { return first; }
+  int offset() const { return second; }
+};
+
+
 } // namesapce banjo
 
 #endif

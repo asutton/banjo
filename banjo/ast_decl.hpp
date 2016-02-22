@@ -437,19 +437,28 @@ struct Axiom_decl : Decl
 };
 
 
-// A parameter index records the depth and offset of the
-// parameter.
-struct Index : std::pair<int, int>
+// The base class of all parameters. This provides deriviation from
+// T. Note that the constructor of this clas
+template<typename T>
+struct Parameter_decl : T
 {
-  // Returns the underlying pair.
-  std::pair<int, int> const& pair() const { return *this; }
-  std::pair<int, int>&       pair()       { return *this; }
+  // FIXME: Deprecate this constructor. Every parameter must be
+  // declared with an index.
+  template<typename... Args>
+  Parameter_decl(Args&&... args)
+    : T(std::forward<Args>(args)...)
+  { }
 
-  int depth() const  { return first; }
-  int offset() const { return second; }
+  template<typename... Args>
+  Parameter_decl(Index x, Args&&... args)
+    : T(std::forward<Args>(args)...), ix(x)
+  { }
 
-  bool operator==(Index x) const { return pair() == x.pair(); }
-  bool operator!=(Index x) const { return pair() != x.pair(); }
+  // Returns the index of the template parameter.
+  Index  index() const { return ix; }
+  Index& index()       { return ix; }
+
+  Index ix;
 };
 
 
@@ -458,15 +467,17 @@ struct Index : std::pair<int, int>
 // TODO: Name this variable_parm to be consistent with variable
 // declarations?
 //
-// TODO: Do we want to index function parameters?
-struct Object_parm : Object_decl
+// TODO: Object parameters have single-value indexes because
+// we don't allow nested parameters. How important is it that we
+// actually store the index of a parameter.
+struct Object_parm : Parameter_decl<Object_decl>
 {
   Object_parm(Name& n, Type& t)
-    : Object_decl(n, t)
+    : Parameter_decl<Object_decl>(n, t)
   { }
 
   Object_parm(Name& n, Type& t, Expr& i)
-    : Object_decl(n, t, i)
+    : Parameter_decl<Object_decl>(n, t, i)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -485,14 +496,14 @@ struct Object_parm : Object_decl
 //
 // TODO: Name this Constant_parm to be consistent with
 // constant declarations?
-struct Value_parm : Object_decl
+struct Value_parm : Parameter_decl<Object_decl>
 {
-  Value_parm(Name& n, Type& t)
-    : Object_decl(n, t)
+  Value_parm(Index x, Name& n, Type& t)
+    : Parameter_decl<Object_decl>(x, n, t)
   { }
 
-  Value_parm(Name& n, Type& t, Expr& i)
-    : Object_decl(n, t, i)
+  Value_parm(Index x, Name& n, Type& t, Expr& i)
+    : Parameter_decl<Object_decl>(x, n, t, i)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -504,12 +515,6 @@ struct Value_parm : Object_decl
   Expr&       default_argument()       { return *init; }
 
   bool has_default_arguement() const { return init; }
-
-  // Returns the index of the template parameter.
-  Index  index() const { return ix; }
-  Index& index()       { return ix; }
-
-  Index ix;
 };
 
 
@@ -532,14 +537,16 @@ struct Variadic_parm : Decl
 
 
 // A type parameter of a template.
-struct Type_parm : Decl
+//
+// TODO: It would be nice to derive from type-decl.
+struct Type_parm : Parameter_decl<Decl>
 {
-  Type_parm(Name& n)
-    : Decl(n), def()
+  Type_parm(Index x, Name& n)
+    : Parameter_decl<Decl>(x, n), def()
   { }
 
-  Type_parm(Name& n, Type& t)
-    : Decl(n), def(&t)
+  Type_parm(Index x, Name& n, Type& t)
+    : Parameter_decl<Decl>(x, n), def(&t)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -552,12 +559,7 @@ struct Type_parm : Decl
 
   bool has_default_arguement() const { return def; }
 
-  // Returns the index of the template parameter.
-  Index  index() const { return ix; }
-  Index& index()       { return ix; }
-
   Type* def;
-  Index ix;
 };
 
 
@@ -566,14 +568,14 @@ struct Type_parm : Decl
 // The nested effectively denotes the "kind" of the template. It
 // must be a template declaration. The name of the parameter and
 // that of the underlying declaration must be the same.
-struct Template_parm : Decl
+struct Template_parm : Parameter_decl<Decl>
 {
   Template_parm(Name& n, Decl& t)
-    : Decl(n), temp(&t), def()
+    : Parameter_decl<Decl>(n), temp(&t), def()
   { }
 
   Template_parm(Name& n, Decl& t, Init& i)
-    : Decl(n), temp(&t), def(&i)
+    : Parameter_decl<Decl>(n), temp(&t), def(&i)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }

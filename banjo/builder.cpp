@@ -802,10 +802,26 @@ Builder::make_object_parm(char const* s, Type& t)
 }
 
 
+Value_parm&
+Builder::make_value_parm(Name& n, Type& t)
+{
+  Index x = cxt.make_template_parameter_index();
+  return make<Value_parm>(x, n, t);
+}
+
+
+Value_parm&
+Builder::make_value_parm(char const* s, Type& t)
+{
+  return make_value_parm(get_id(s), t);
+}
+
+
 Type_parm&
 Builder::make_type_parameter(Name& n)
 {
-  return make<Type_parm>(n);
+  Index x = cxt.make_template_parameter_index();
+  return make<Type_parm>(x, n);
 }
 
 
@@ -820,7 +836,8 @@ Builder::make_type_parameter(char const* n)
 Type_parm&
 Builder::make_type_parameter(Name& n, Type& t)
 {
-  return make<Type_parm>(n, t);
+  Index x = cxt.make_template_parameter_index();
+  return make<Type_parm>(x, n, t);
 }
 
 
@@ -832,17 +849,15 @@ Builder::make_type_parameter(char const* n, Type& t)
 }
 
 
-Value_parm&
-Builder::make_value_parm(Name& n, Type& t)
+// Create a new placeholder type. This creates a new, uniqe type
+// parameter and returns its associated type.
+Typename_type&
+Builder::make_placeholder_type()
 {
-  return make<Value_parm>(n, t);
-}
-
-
-Value_parm&
-Builder::make_value_parm(char const* s, Type& t)
-{
-  return make_value_parm(get_id(s), t);
+  Name& n = get_id();
+  Index x = cxt.make_placeholder_index();
+  Decl& d = make<Type_parm>(x, n);
+  return get_typename_type(d);
 }
 
 

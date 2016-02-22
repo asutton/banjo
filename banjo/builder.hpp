@@ -140,6 +140,7 @@ struct Builder
   Concept_decl&   make_concept(char const*, Decl_list const&, Def&);
   Concept_decl&   make_concept(char const*, Decl_list const&, Expr&);
 
+  // Parameters
   Object_parm& make_object_parm(Name&, Type&);
   Object_parm& make_object_parm(char const*, Type&);
   Value_parm&  make_value_parm(Name&, Type&);
@@ -148,6 +149,11 @@ struct Builder
   Type_parm&   make_type_parameter(char const*);
   Type_parm&   make_type_parameter(Name&, Type&);
   Type_parm&   make_type_parameter(char const*, Type&);
+
+  // Placeholders
+  // A placeholder is essentially a type parameter whose declaration
+  // is implied by its use. Note, use the get_placeholder_type()
+  Typename_type& make_placeholder_type();
 
   // Requirements
   Basic_req&     make_basic_requirement(Expr&, Type&);

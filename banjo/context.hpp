@@ -66,6 +66,17 @@ struct Context : Builder
   Decl&           current_context();
   Template_decl*  current_template();
 
+  // Template depth and offset. When the template level is -1,
+  // we are not inside a template. When the template index is -1,
+  // we have yet to declare a new parameter at this level.
+  int current_template_level() const { return tparms.first; }
+  int current_template_index() const { return tparms.second; }
+
+  // Allocate a new template parameter or placeholder index.
+  // This increments the count in the corresponding level.
+  Index make_template_parameter_index();
+  Index make_placeholder_index();
+
   // Returns true if there we are in the scope of a template.
   bool in_template() const;
 
@@ -77,8 +88,28 @@ struct Context : Builder
   Namespace_decl* global; // The global namespace
   Scope*          scope;  // The current scope
 
-  int id = 0; // The current id counter
+  // Store information for generating unique names.
+  int             id;     // The current id counter
+
+  // Store information that can be used to generate template
+  // parameter indexes, and unique indexes for placeholders.
+  Index   tparms;  // template parameters
+  Index   pholds; // placeholders
 };
+
+
+inline Index
+Context::make_template_parameter_index()
+{
+  return {tparms.first, ++tparms.second};
+}
+
+
+inline Index
+Context::make_placeholder_index()
+{
+  return {pholds.first, ++pholds.second};
+}
 
 
 // Returns true if there we are in the scope of a template.
@@ -94,7 +125,6 @@ Context::in_requirements() const
 {
   return modify(this)->current_requires_scope();
 }
-
 
 
 // Returns a unique id number and updates the context so that the
@@ -117,6 +147,35 @@ struct Enter_scope
   Context& cxt;
   Scope*   prev;  // The previous socpe.
   Scope*   alloc; // Only set when locally allocated.
+};
+
+
+// Enter a template scope.
+struct Enter_template_scope : Enter_scope
+{
+  Enter_template_scope(Context& cxt)
+    : Enter_scope(cxt, cxt.make_template_scope())
+  { }
+};
+
+
+// Enter a template parameter scope. This replaces the previous template
+// index info so that that parameters in the new scope are distinct
+// from those in the enclosing scope.
+struct Enter_template_parameter_scope : Enter_scope
+{
+  Enter_template_parameter_scope(Context& cxt)
+    : Enter_scope(cxt, cxt.make_template_parameter_scope()), prev(cxt.tparms)
+  {
+    cxt.tparms = {prev.first + 1, -1};
+  }
+
+  ~Enter_template_parameter_scope()
+  {
+    cxt.tparms = prev;
+  }
+
+  Index prev;
 };
 
 
