@@ -19,6 +19,10 @@ Expr& make_logical_not(Context&, Expr&);
 
 Expr& make_eq(Context&, Expr&, Expr&);
 Expr& make_ne(Context&, Expr&, Expr&);
+Expr& make_lt(Context&, Expr&, Expr&);
+Expr& make_gt(Context&, Expr&, Expr&);
+Expr& make_le(Context&, Expr&, Expr&);
+Expr& make_ge(Context&, Expr&, Expr&);
 
 Expr& make_reference(Context& cxt, Name&);
 

@@ -68,6 +68,7 @@ struct Expr::Visitor
   virtual void visit(Integer_conv const&) { }
   virtual void visit(Float_conv const&) { }
   virtual void visit(Numeric_conv const&) { }
+  virtual void visit(Dependent_conv const&) { }
   virtual void visit(Ellipsis_conv const&) { }
   virtual void visit(Trivial_init const&) { }
   virtual void visit(Copy_init const&) { }
@@ -109,6 +110,7 @@ struct Expr::Mutator
   virtual void visit(Integer_conv&) { }
   virtual void visit(Float_conv&) { }
   virtual void visit(Numeric_conv&) { }
+  virtual void visit(Dependent_conv&) { }
   virtual void visit(Ellipsis_conv&) { }
   virtual void visit(Trivial_init&) { }
   virtual void visit(Copy_init&) { }
@@ -608,6 +610,18 @@ struct Numeric_conv : Standard_conv
 };
 
 
+// A conversion from a type-dependent expression to some
+// other type. When instantiated, an implicit conversion must
+// be applied.
+struct Dependent_conv : Conv
+{
+  using Conv::Conv;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
 // Represents the conversion of an argument type the ellipsis
 // parameter.
 struct Ellipsis_conv : Conv
@@ -745,6 +759,8 @@ bool has_array_type(Expr const&);
 bool has_class_type(Expr const&);
 bool has_union_type(Expr const&);
 
+Type const& declared_type(Expr const&);
+Type&       declared_type(Expr&);
 
 // -------------------------------------------------------------------------- //
 // Operations on conversions
@@ -807,6 +823,7 @@ struct Generic_expr_visitor : Expr::Visitor, Generic_visitor<F, T>
   void visit(Integer_conv const& e)       { this->invoke(e); }
   void visit(Float_conv const& e)         { this->invoke(e); }
   void visit(Numeric_conv const& e)       { this->invoke(e); }
+  void visit(Dependent_conv const& e)     { this->invoke(e); }
   void visit(Ellipsis_conv const& e)      { this->invoke(e); }
   void visit(Trivial_init const& e)       { this->invoke(e); }
   void visit(Copy_init const& e)          { this->invoke(e); }
@@ -865,6 +882,7 @@ struct Generic_expr_mutator : Expr::Mutator, Generic_mutator<F, T>
   void visit(Integer_conv& e)       { this->invoke(e); }
   void visit(Float_conv& e)         { this->invoke(e); }
   void visit(Numeric_conv& e)       { this->invoke(e); }
+  void visit(Dependent_conv& e)     { this->invoke(e); }
   void visit(Ellipsis_conv& e)      { this->invoke(e); }
   void visit(Trivial_init& e)       { this->invoke(e); }
   void visit(Copy_init& e)          { this->invoke(e); }

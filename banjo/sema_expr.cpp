@@ -52,32 +52,28 @@ Parser::on_ne_expression(Token tok, Expr& e1, Expr& e2)
 Expr&
 Parser::on_lt_expression(Token tok, Expr& e1, Expr& e2)
 {
-  Type& t = build.get_bool_type();
-  return build.make_lt(t, e1, e2);
+  return make_lt(cxt, e1, e2);
 }
 
 
 Expr&
 Parser::on_gt_expression(Token tok, Expr& e1, Expr& e2)
 {
-  Type& t = build.get_bool_type();
-  return build.make_gt(t, e1, e2);
+  return make_gt(cxt, e1, e2);
 }
 
 
 Expr&
 Parser::on_le_expression(Token tok, Expr& e1, Expr& e2)
 {
-  Type& t = build.get_bool_type();
-  return build.make_le(t, e1, e2);
+  return make_le(cxt, e1, e2);
 }
 
 
 Expr&
 Parser::on_ge_expression(Token tok, Expr& e1, Expr& e2)
 {
-  Type& t = build.get_bool_type();
-  return build.make_ge(t, e1, e2);
+  return make_ge(cxt, e1, e2);
 }
 
 

@@ -156,8 +156,9 @@ struct Builder
   Typename_type& make_placeholder_type();
 
   // Requirements
-  Basic_req&     make_basic_requirement(Expr&, Type&);
-  Syntactic_req& make_syntactic_requirement(Expr&);
+  Basic_req&      make_basic_requirement(Expr&, Type&);
+  Conversion_req& make_conversion_requirement(Expr&, Type&);
+  Syntactic_req&  make_syntactic_requirement(Expr&);
 
   // Constraints
   // Note that constraints are canonicalized in order

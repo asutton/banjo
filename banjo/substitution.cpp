@@ -3,6 +3,7 @@
 
 #include "substitution.hpp"
 #include "expression.hpp"
+#include "declaration.hpp"
 #include "print.hpp"
 
 #include <iostream>
@@ -62,7 +63,6 @@ substitute(Context& cxt, Term& x, Substitution& sub)
     return substitute(cxt, *d, sub);
   lingo_unreachable();
 }
-
 
 
 // -------------------------------------------------------------------------- //
@@ -241,11 +241,7 @@ substitute(Context& cxt, Expr& e, Substitution& sub)
     Context&      cxt;
     Substitution& sub;
 
-    Expr& operator()(Expr& e)
-    {
-      std::cout << type_str(e) << '\n';
-      lingo_unimplemented();
-    }
+    Expr& operator()(Expr& e) { banjo_unhandled_case(e); }
 
     Expr& operator()(Boolean_expr& e)   { return e; }
     Expr& operator()(Integer_expr& e)   { return e; }
@@ -255,6 +251,10 @@ substitute(Context& cxt, Expr& e, Substitution& sub)
 
     Expr& operator()(Eq_expr& e)  { return subst_binary(cxt, e, sub, make_eq); }
     Expr& operator()(Ne_expr& e)  { return subst_binary(cxt, e, sub, make_ne); }
+    Expr& operator()(Lt_expr& e)  { return subst_binary(cxt, e, sub, make_lt); }
+    Expr& operator()(Gt_expr& e)  { return subst_binary(cxt, e, sub, make_gt); }
+    Expr& operator()(Le_expr& e)  { return subst_binary(cxt, e, sub, make_le); }
+    Expr& operator()(Ge_expr& e)  { return subst_binary(cxt, e, sub, make_ge); }
     Expr& operator()(And_expr& e) { return subst_binary(cxt, e, sub, make_logical_and); }
     Expr& operator()(Or_expr& e)  { return subst_binary(cxt, e, sub, make_logical_or); }
     Expr& operator()(Not_expr& e) { return subst_unary(cxt, e, sub, make_logical_not); }
@@ -284,9 +284,9 @@ substitute_decl(Context& cxt, Variable_decl& d, Substitution& sub)
 {
   Name& n = d.name();
   Type& t = substitute(cxt, d.type(), sub);
-
-  Builder build(cxt);
-  return build.make_variable(n, t);
+  Decl& var = cxt.make_variable(n, t);
+  declare(cxt, var);
+  return var;
 }
 
 
@@ -299,9 +299,9 @@ substitute_decl(Context& cxt, Object_parm& d, Substitution& sub)
 {
   Name& n = d.name();
   Type& t = substitute(cxt, d.type(), sub);
-
-  Builder build(cxt);
-  return build.make_object_parm(n, t);
+  Decl& parm = cxt.make_object_parm(n, t);
+  declare(cxt, parm);
+  return parm;
 }
 
 
@@ -339,6 +339,10 @@ subst_usage(Context& cxt, Expression_cons& c, Substitution& sub)
 {
   Expr& e = substitute(cxt, c.expression(), sub);
   Type& t = substitute(cxt, c.type(), sub);
+
+  // Ensure that e has type t: that's what's been assumed.
+  e.ty = &t;
+
   return cxt.get_expression_constraint(e, t);
 }
 
@@ -348,6 +352,10 @@ subst_usage(Context& cxt, Conversion_cons& c, Substitution& sub)
 {
   Expr& e = substitute(cxt, c.expression(), sub);
   Type& t = substitute(cxt, c.type(), sub);
+
+  // FIXME: We should be doing a lookup to determine the correct
+  // type of
+
   return cxt.get_conversion_constraint(e, t);
 }
 

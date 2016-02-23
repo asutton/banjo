@@ -871,6 +871,13 @@ Builder::make_basic_requirement(Expr& e, Type& t)
 }
 
 
+Conversion_req&
+Builder::make_conversion_requirement(Expr& e, Type& t)
+{
+  return make<Conversion_req>(e, t);
+}
+
+
 Syntactic_req&
 Builder::make_syntactic_requirement(Expr& e)
 {

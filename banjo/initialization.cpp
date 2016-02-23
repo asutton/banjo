@@ -2,11 +2,16 @@
 // All rights reserved
 
 #include "initialization.hpp"
+#include "ast_type.hpp"
+#include "ast_expr.hpp"
 #include "conversion.hpp"
 #include "inheritance.hpp"
 #include "equivalence.hpp"
-#include "ast.hpp"
 #include "builder.hpp"
+#include "print.hpp"
+
+#include <iostream>
+
 
 namespace banjo
 {
@@ -139,26 +144,41 @@ copy_initialize(Context& cxt, Type& t, Expr& e)
   if (is_reference_type(t))
     return reference_initialize(cxt, cast<Reference_type>(t), e);
 
+  // Otherwise, If the target type is dependent, perform dependent
+  // conversions.
+  if (is_dependent_type(t)) {
+    Expr& c = dependent_conversion(cxt, e, t);
+    return cxt.make_copy_init(t, c);
+  }
+
   // If the destination type is T[N] or T[] and the initializer
   // is `= s` where `s` is a string literal, perform string
   // initialization.
   if (is_array_type(t) || is_sequence_type(t))
-    lingo_unimplemented();
+    banjo_unhandled_case(t);
 
   // Find a constructor taking `e` as an argument or if not available,
   // find a user-defined conversion from `e` to `t`.
   if (is_maybe_qualified_class_type(t) || is_maybe_qualified_union_type(t))
-    lingo_unimplemented();
+    banjo_unhandled_case(t);
 
   // If the initializer has a source type, then try to find a
   // user-defined conversion from s to the destination type, which
   // should be a (possibly qualified) fundamental type.
   Type& s = e.type();
-  if (is_maybe_qualified_class_type(s) || is_maybe_qualified_union_type(s))
-    lingo_unimplemented();
 
-  // If all else fails, try a a standard conversion. This should be
-  // the case that we have a non-class, fundamental type.
+  // If the source type is dependent, search for dependent conversions.
+  if (is_dependent_type(s)) {
+    Expr& c = dependent_conversion(cxt, e, t);
+    return cxt.make_copy_init(t, c);
+  }
+
+  // Search for user-defined conversions to a fundamental type.
+  if (is_maybe_qualified_class_type(s) || is_maybe_qualified_union_type(s))
+    banjo_unhandled_case(t);
+
+  // If all else fails, try a standard conversion. This should be the
+  // case that we have a non-class, fundamental, or dependent type.
   //
   // TODO: Catch exceptions and restructure the error with
   // the conversion error as an explanation.
@@ -180,8 +200,6 @@ copy_initialize(Context& cxt, Type& t, Expr& e)
 Expr&
 direct_initialize(Context& cxt, Type& t, Expr_list& es)
 {
-  Builder build(cxt);
-
   // Arrays must be copy or list-initialized.
   //
   // FIXME: Provide a better diagnostic.
@@ -205,6 +223,15 @@ direct_initialize(Context& cxt, Type& t, Expr_list& es)
   if (is_reference_type(t))
     return reference_initialize(cxt, cast<Reference_type>(t), e);
 
+  // Otherwise, If the target type is dependent, perform dependent
+  // conversions.
+  //
+  // FIXME: Why does this result in copy initialization?
+  if (is_dependent_type(t)) {
+    Expr& c = dependent_conversion(cxt, e, t);
+    return cxt.make_copy_init(t, c);
+  }
+
   // Find a constructor taking the given arguments.
   if (is_maybe_qualified_class_type(t) || is_maybe_qualified_union_type(t))
     lingo_unimplemented();
@@ -213,6 +240,17 @@ direct_initialize(Context& cxt, Type& t, Expr_list& es)
   // user-defined conversion from s to the destination type, which
   // should be a (possibly qualified) fundamental type.
   Type& s = e.type();
+
+  // Otherwise, If the target type is dependent, perform dependent
+  // conversions.
+  //
+  // FIXME: Why does this result in copy initialization?
+  if (is_dependent_type(s)) {
+    Expr& c = dependent_conversion(cxt, e, t);
+    return cxt.make_copy_init(t, c);
+  }
+
+  // Search for user-defined conversion from the source expression.
   if (is_maybe_qualified_class_type(s))
     lingo_unimplemented();
 
@@ -222,7 +260,7 @@ direct_initialize(Context& cxt, Type& t, Expr_list& es)
   // TODO: Catch exceptions and restructure the error with
   // the conversion error as an explanation.
   Expr& c = standard_conversion(e, t);
-  return build.make_copy_init(t, c);
+  return cxt.make_copy_init(t, c);
 }
 
 
@@ -275,33 +313,15 @@ is_reference_related(Type const& t1, Type const& t2)
 }
 
 
-// Returns true if t1 is noexcept T and t2 is T (where T is a
-// function type). If neither t1 nor t2 are function types, this
-// returns false.
-//
-// TODO: Implement me and put me in the right module.
-//
-// TODO: Require function types as a precondition?
-bool
-is_stricter_function(Type const& t1, Type const& t2)
-{
-  return false;
-}
-
-
-// Two types q1-t1 and q-t2 are reference compatible if either:
-//
-//    - t1 is reference-related to t2, or
-//    - t2 is a stricter function type than t2
-//
-// and q1 is a superset of q2 (i.e., t1 is as qualified as or more
-// qualified than t2).
+// Two types q1-t1 and q-t2 are reference compatible if 1 is
+// reference-related to t2, and q1 is a superset of q2 (i.e.,
+// t1 is as qualified as or more qualified than t2).
 //
 // TODO: Check for ambiguous base classes.
 bool
 is_reference_compatible(Type const& t1, Type const& t2)
 {
-  if (is_reference_related(t1, t2) || is_stricter_function(t1, t2)) {
+  if (is_reference_related(t1, t2)) {
     Qualifier_set q1 = t1.qualifier();
     Qualifier_set q2 = t2.qualifier();
     return is_superset(q1, q2);
@@ -324,18 +344,21 @@ is_reference_compatible(Type const& t1, Type const& t2)
 Expr&
 reference_initialize(Context& cxt, Reference_type& t1, Expr& e)
 {
-  Builder build(cxt);
+  Type& r1 = t1.non_reference_type();
 
   // The initializer has reference type.
   Type& t2 = e.type();
+
   if (is_reference_type(t2)) {
-    // If t1 is reference-compatible with t2, then bind directly.
+    Type& r2 = t2.non_reference_type();
+    // If t1 is reference-compatible with t2, then t1 binds directly
+    // to the initializer. This is true for dependent types also.
     //
     // TODO: If we bind to a base class, we might need to apply a
     // base class conversion in order to explicitly adjust pointer
     // offsets.
-    if (is_reference_compatible(t1, t2))
-      return build.make_bind_init(t1, e);
+    if (is_reference_compatible(r1, r2))
+      return cxt.make_bind_init(t1, e);
 
     // t2 has class type and has a user-defined conversion that is
     // reference compatible with t1, then bind the the to the
@@ -353,7 +376,7 @@ reference_initialize(Context& cxt, Reference_type& t1, Expr& e)
 
   // TODO: Handle bindings to temporaries.
 
-  throw std::runtime_error("cannot bind reference");
+  throw Type_error("reference binding");
 }
 
 

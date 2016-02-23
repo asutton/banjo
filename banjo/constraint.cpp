@@ -2,13 +2,14 @@
 // All rights reserved
 
 #include "constraint.hpp"
-#include "ast_cons.hpp"
-#include "ast_def.hpp"
-#include "builder.hpp"
+#include "ast.hpp"
+#include "context.hpp"
+#include "initialization.hpp"
 #include "substitution.hpp"
 #include "normalization.hpp"
 #include "hash.hpp"
 #include "print.hpp"
+#include "inspection.hpp"
 
 #include <iostream>
 
@@ -36,7 +37,6 @@ expand_def(Context& cxt, Concept_def& def, Substitution& sub)
   Cons& c1 = normalize(cxt, def);
   return substitute(cxt, c1, sub);
 }
-
 
 
 // Expand the concept by substituting the template arguments
@@ -72,7 +72,7 @@ expand(Context& cxt, Concept_cons const& c)
 
 
 // -------------------------------------------------------------------------- //
-// Admissibility of expressons
+// Admissibility of expressions
 //
 // Determine the admissibility of an expression within a dependent
 // context. Note that this is the slow way of doing it since we
@@ -95,25 +95,59 @@ admit_concept(Context& cxt, Concept_cons& c, Expr& e)
 }
 
 
+// For both basic and conversion constraints. Determine if the operands
+// of e can be converted to the declared types of the required expression.
+// If so, return e with its result type adjusted to that of the required
+// expression.
+//
+// Note that for a conversion constraint, the result type of the matched
+// expression is *not* the destinatio type. It is the expression type.
+template<typename Usage>
 Expr*
-admit_usage(Context& cxt, Expression_cons& c, Expr& e)
+admit_binary(Context& cxt, Usage& c, Binary_expr& e)
 {
-  note("looking in {}", c);
-  Expr& a = c.expression();
-  if (is_equivalent(a, e)) {
-    note("matched expression {}", e);
-    e.ty = a.ty;
-    return &e;
+  // Determine if the operands can be converted to the
+  // declared type of the required expressin.
+  Expr *c1, *c2;
+  Binary_expr& a = cast<Binary_expr>(c.expression());
+  Type& t1 = declared_type(a.left());
+  Type& t2 = declared_type(a.right());
+  std::cout << e.left() << " ~> " << t1 << '\n';
+  std::cout << e.right() << " ~> " << t2 << '\n';
+  try {
+    c1 = &copy_initialize(cxt, t1, e.left());
+    c2 = &copy_initialize(cxt, t2, e.right());
+  } catch(Translation_error&) {
+    return nullptr;
   }
-  return nullptr;
+
+  // Adjust the type of the expression under test to that of
+  // the required expression.
+  e.ty = &a.type();
+  return &e;
 }
 
 
+template<typename Usage>
 Expr*
-admit_usage(Context& cxt, Conversion_cons& c, Expr& e)
+admit_usage(Context& cxt, Usage& c, Expr& e)
 {
+  struct fn
+  {
+    Context& cxt;
+    Usage&   c;
+    Expr* operator()(Expr& e)        { banjo_unhandled_case(e); }
+    Expr* operator()(Binary_expr& e) { return admit_binary(cxt, c, e); }
+  };
+
   note("looking in {}", c);
-  return nullptr;
+
+  // An expression of a different kind prove admissibility.
+  std::cout << type_str(c.expression()) << ' ' << type_str(e) << '\n';
+  if (typeid(c.expression()) != typeid(e))
+    return nullptr;
+
+  return apply(e, fn{cxt, c});
 }
 
 
@@ -134,7 +168,8 @@ admit_conjunction(Context& cxt, Conjunction_cons& c, Expr& e)
   note("looking in {}", c);
   if (Expr* e1 = admit_expression(cxt, c.left(), e))
     return e1;
-  return admit_expression(cxt, c.right(), e);
+  else
+    return admit_expression(cxt, c.right(), e);
 }
 
 
@@ -196,6 +231,140 @@ admit_expression(Context& cxt, Cons& c, Expr& e)
     Expr* operator()(Disjunction_cons& c)   { return admit_disjunction(cxt, c, e); }
   };
   return apply(c, fn{cxt, e});
+}
+
+
+// -------------------------------------------------------------------------- //
+// Availability of conversions
+
+Expr*
+admit_concept_conv(Context& cxt, Concept_cons& c, Expr& e, Type& t)
+{
+  note("search conv in {}", c);
+  return admit_expression(cxt, expand(cxt, c), e);
+}
+
+
+// Note that, within this function, the the conversion's type
+// is equivalent to the destination type.
+//
+// FIXME: Factor out the "conformance checking" code.
+Expr*
+admit_binary_conv(Context& cxt, Conversion_cons& c, Binary_expr& e)
+{
+  // Determine if the operands can be converted to the
+  // declared type of the required expressin.
+  Expr *c1, *c2;
+  Binary_expr& a = cast<Binary_expr>(c.expression());
+  Type& t1 = declared_type(a.left());
+  Type& t2 = declared_type(a.right());
+  std::cout << "TEST\n";
+  std::cout << t1 << " -- " << t2 << '\n';
+  try {
+    c1 = &copy_initialize(cxt, t1, e.left());
+    std::cout << c1 << '\n';
+    c2 = &copy_initialize(cxt, t2, e.right());
+  } catch(Translation_error&) {
+    return nullptr;
+  }
+
+  // Adjust the type of the expression under test to that of
+  // the required expression.
+  //
+  // FIXME: Add constructors to the builder. This is just plain dumb.
+  return new Dependent_conv(a.type(), e);
+}
+
+
+Expr*
+admit_usage_conv(Context& cxt, Conversion_cons& c, Expr& e, Type& t)
+{
+  struct fn
+  {
+    Context&         cxt;
+    Conversion_cons& c;
+    Expr* operator()(Expr& e)        { banjo_unhandled_case(e); }
+    Expr* operator()(Binary_expr& e) { return admit_binary_conv(cxt, c, e); }
+  };
+
+  note("search conv in {}", c);
+
+  // An expression of a different kind prove admissibility.
+  Expr& e2 = c.expression();
+  std::cout << "TEST: " << e2 << ' ' << e << '\n';
+  if (typeid(e2) != typeid(e))
+    return nullptr;
+
+  // If the expression's type is not equivalent to t, this constraint
+  // does not prove admissibility.
+  if (!is_equivalent(c.type(), t))
+    return nullptr;
+
+  return apply(e, fn{cxt, c});
+}
+
+
+Expr*
+admit_parametric_conv(Context& cxt, Parameterized_cons& c, Expr& e, Type& t)
+{
+  note("search conv in {}", c);
+  return admit_expression(cxt, c.constraint(), e);
+}
+
+
+Expr*
+admit_conjunction_conv(Context& cxt, Conjunction_cons& c, Expr& e, Type& t)
+{
+  note("search conv in {}", c);
+  if (Expr* c1 = admit_conversion(cxt, c.left(), e, t))
+    return c1;
+  else
+    return admit_conversion(cxt, c.right(), e, t);
+}
+
+
+Expr*
+admit_disjunction_conv(Context& cxt, Disjunction_cons& c, Expr& e, Type& t)
+{
+  note("search conv in {}", c);
+  // Note that if we find evidence for a conversion in both branches
+  // then it is guaranteed that they are equivalent.
+  if (Expr* c1 = admit_conversion(cxt, c.left(), e, t)) {
+    if (admit_conversion(cxt, c.right(), e, t))
+      return c1;
+  }
+  return nullptr;
+}
+
+
+
+// TODO: Factor out the traversal of constraints in order to avoid
+// repeating all this bolier plate?
+Expr*
+admit_conversion(Context& cxt, Cons& c, Expr& e, Type& t)
+{
+  struct fn
+  {
+    Context& cxt;
+    Expr&    e;
+    Type&    t;
+    Expr* operator()(Cons& c)               { banjo_unhandled_case(c); }
+    Expr* operator()(Concept_cons& c)       { return admit_concept_conv(cxt, c, e, t); }
+    Expr* operator()(Expression_cons& c)    { return nullptr; }
+    Expr* operator()(Conversion_cons& c)    { return admit_usage_conv(cxt, c, e, t); }
+    Expr* operator()(Parameterized_cons& c) { return admit_parametric_conv(cxt, c, e, t); }
+    Expr* operator()(Conjunction_cons& c)   { return admit_conjunction_conv(cxt, c, e, t); }
+    Expr* operator()(Disjunction_cons& c)   { return admit_disjunction_conv(cxt, c, e, t); }
+  };
+  return apply(c, fn{cxt, e, t});
+}
+
+
+Expr*
+admit_conversion(Context& cxt, Expr& c, Expr& e, Type& t)
+{
+  note("find conversion '{}'", e, t);
+  return admit_conversion(cxt, normalize(cxt, c), e, t);
 }
 
 

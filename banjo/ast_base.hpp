@@ -90,6 +90,7 @@ struct Boolean_conv;
 struct Integer_conv;
 struct Float_conv;
 struct Numeric_conv;
+struct Dependent_conv;
 struct Ellipsis_conv;
 
 struct Init;

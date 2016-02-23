@@ -191,8 +191,8 @@ enum Conversion_comp
 
 Expr&     standard_conversion(Expr const&, Type const&);
 Expr_pair arithmetic_conversion(Expr const&, Expr const&);
-
-Expr& contextual_conversion_to_bool(Context& cxt, Expr&);
+Expr&     contextual_conversion_to_bool(Context& cxt, Expr&);
+Expr&     dependent_conversion(Context& cxt, Expr&, Type&);
 
 Conversion_seq get_conversion_sequence(Expr const&);
 

@@ -148,6 +148,10 @@ struct Basic_req : Req
 // conversion to a given type.
 struct Conversion_req : Req
 {
+  Conversion_req(Expr& e, Type& t)
+    : expr(&e), ty(&t)
+  { }
+
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 

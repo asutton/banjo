@@ -4,6 +4,7 @@
 #include "declaration.hpp"
 #include "ast_type.hpp"
 #include "ast_decl.hpp"
+#include "context.hpp"
 #include "scope.hpp"
 #include "lookup.hpp"
 #include "overload.hpp"
@@ -193,6 +194,14 @@ declare(Context&, Scope& scope, Decl& decl)
     declare(*ovl, decl);
   else
     s.bind(decl);
+}
+
+
+// Try to declare d in the current scope.
+void
+declare(Context& cxt, Decl& d)
+{
+  declare(cxt, cxt.current_scope(), d);
 }
 
 

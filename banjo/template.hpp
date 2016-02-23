@@ -12,6 +12,8 @@
 namespace banjo
 {
 
+Decl_list get_template_parameters(Context&, Expr&);
+
 Type&     synthesize_template_argument(Context&, Type_parm&);
 Expr&     synthesize_template_argument(Context&, Value_parm&);
 Decl&     synthesize_template_argument(Context&, Template_parm&);

@@ -3,7 +3,7 @@
 
 #include "normalization.hpp"
 #include "ast.hpp"
-#include "builder.hpp"
+#include "context.hpp"
 #include "print.hpp"
 
 #include <iostream>
@@ -84,7 +84,6 @@ normalize(Context& cxt, Expr& e)
 // -------------------------------------------------------------------------- //
 // Normalization of requirements
 
-
 Cons&
 normalize_type_req(Context& cxt, Type_req& r)
 {
@@ -97,15 +96,14 @@ normalize_type_req(Context& cxt, Type_req& r)
 Cons&
 normalize_basic_req(Context& cxt, Basic_req& r)
 {
-  Builder build(cxt);
-  return build.get_expression_constraint(r.expression(), r.type());
+  return cxt.get_expression_constraint(r.expression(), r.type());
 }
 
 
 Cons&
 normalize_conv_req(Context& cxt, Conversion_req& r)
 {
-  lingo_unimplemented();
+  return cxt.get_conversion_constraint(r.expression(), r.type());
 }
 
 
@@ -133,13 +131,12 @@ normalize(Context& cxt, Req& r)
 Cons&
 normalize(Context& cxt, Req_list& rs)
 {
-  Builder build(cxt);
   auto iter = rs.begin();
   Cons* c1 = &normalize(cxt, *iter);
   ++iter;
   while (iter != rs.end()) {
     Cons& c2 = normalize(cxt, *iter);
-    c1 = &build.get_conjunction_constraint(*c1, c2);
+    c1 = &cxt.get_conjunction_constraint(*c1, c2);
     ++iter;
   }
   return *c1;

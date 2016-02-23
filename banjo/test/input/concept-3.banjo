@@ -6,9 +6,12 @@ concept Eq<typename T>
   }
 }
 
+
+
 template<typename T>
   requires Eq<T>
-def f(T a, T b) -> bool {
-  a == b;
-  a != b;
+def f(T const x, T y) -> bool
+{
+  // NOTE: This is valid because x == y has type true.
+  x == y && true;
 }

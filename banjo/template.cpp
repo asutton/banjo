@@ -15,6 +15,20 @@ namespace banjo
 {
 
 // -------------------------------------------------------------------------- //
+// Template parameter identification
+
+
+// TODO: Do we extract all template parameters or only those occurring
+// at a particular level. Presumably the latter, although I'm not
+// entirely sure.
+Decl_list
+get_template_parameters(Context& cxt, Expr& e)
+{
+  return {};
+}
+
+
+// -------------------------------------------------------------------------- //
 // Template argument matching
 
 // TODO: Is there anything else to do here?

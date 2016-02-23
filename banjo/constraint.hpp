@@ -18,6 +18,9 @@ Cons const& expand(Context&, Concept_cons const&);
 Expr* admit_expression(Context&, Expr&, Expr&);
 Expr* admit_expression(Context&, Cons&, Expr&);
 
+Expr* admit_conversion(Context&, Expr&, Expr&, Type&);
+Expr* admit_conversion(Context&, Cons&, Expr&, Type&);
+
 } // namespace banjo
 
 

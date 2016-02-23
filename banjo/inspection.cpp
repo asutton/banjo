@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "inspection.hpp"
+#include "ast.hpp"
 #include "print.hpp"
 
 #include <iterator>
@@ -99,7 +100,20 @@ Debug_printer::value(Integer const& n)
 void
 Debug_printer::id(Name const& n)
 {
-  lingo_unimplemented();
+  struct fn
+  {
+    Debug_printer& self;
+    void operator()(Name const& n)      { banjo_unhandled_case(n); }
+    void operator()(Simple_id const& n) { self.simple_id(n); }
+  };
+  apply(n, fn{*this});
+}
+
+
+void
+Debug_printer::simple_id(Simple_id const& n)
+{
+  os << n.symbol().spelling();
 }
 
 
@@ -130,11 +144,13 @@ Debug_printer::expression(Expr const& e)
   struct fn
   {
     Debug_printer& self;
-    void operator()(Expr const& e)               { banjo_unhandled_case(e); }
-    void operator()(Boolean_expr const& e)       { self.literal(e); }
-    void operator()(Integer_expr const& e)       { self.literal(e); }
-    void operator()(Binary_expr const& e)        { self.binary_expression(e); }
-    void operator()(Unary_expr const& e)         { self.unary_expression(e); }
+    void operator()(Expr const& e)           { banjo_unhandled_case(e); }
+    void operator()(Boolean_expr const& e)   { self.literal(e); }
+    void operator()(Integer_expr const& e)   { self.literal(e); }
+    void operator()(Reference_expr const& e) { self.reference_expression(e); }
+    void operator()(Binary_expr const& e)    { self.binary_expression(e); }
+    void operator()(Unary_expr const& e)     { self.unary_expression(e); }
+    void operator()(Bind_init const& e)      { self.initializer(e); }
   };
   apply(e, fn{*this});
 }
@@ -165,6 +181,15 @@ Debug_printer::literal(Integer_expr const& e)
 
 
 void
+Debug_printer::reference_expression(Reference_expr const& e)
+{
+  Sexpr sentinel(*this, e);
+  space();
+  declaration(e.declaration());
+}
+
+
+void
 Debug_printer::unary_expression(Unary_expr const& e)
 {
   Sexpr sentinel(*this, e);
@@ -184,6 +209,15 @@ Debug_printer::binary_expression(Binary_expr const& e)
 }
 
 
+void
+Debug_printer::initializer(Bind_init const& e)
+{
+  Sexpr sentinel(*this, e);
+  space();
+  expression(e.expression());
+}
+
+
 // -------------------------------------------------------------------------- //
 // Statements
 
@@ -200,7 +234,12 @@ Debug_printer::statement(Stmt const& s)
 void
 Debug_printer::declaration(Decl const& d)
 {
-  lingo_unimplemented();
+  Sexpr sentinel(*this, d);
+  space();
+  id(d.name());
+  space();
+  prop("id");
+  os << &d;
 }
 
 

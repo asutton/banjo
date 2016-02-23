@@ -121,6 +121,7 @@ struct Printer
   void postfix_expression(Integer_conv const&);
   void postfix_expression(Float_conv const&);
   void postfix_expression(Numeric_conv const&);
+  void postfix_expression(Dependent_conv const&);
   void postfix_expression(Ellipsis_conv const&);
   void unary_expression(Unary_expr const&, Token_kind);
   void binary_expression(Binary_expr const&, Token_kind);

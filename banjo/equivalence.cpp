@@ -401,12 +401,8 @@ is_equivalent(Decl const& a, Decl const& b)
   struct fn
   {
     Decl const& d2;
-
-    // FIXME: This is only valid for declarations that cannot be
-    // redeclared.
-    bool operator()(Decl const& d1) const { return &d1 == &d2; }
-
-    bool opeator(Type_parm const& d1) const { return is_equivalent(d1, cast<Type_parm>(d2)); }
+    bool operator()(Decl const& d1) const      { return &d1 == &d2; }
+    bool operator()(Type_parm const& d1) const { return is_equivalent(d1, cast<Type_parm>(d2)); }
   };
   return &a == &b;
 }

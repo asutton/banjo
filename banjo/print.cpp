@@ -570,6 +570,8 @@ precedence(Expr const& e)
     int operator()(Requires_expr const& e)  { return 0; }
     int operator()(Conv const& e)           { return precedence(e.source()); }
     int operator()(Init const& e)           { lingo_unreachable(); }
+    int operator()(Bind_init const& e)      { return precedence(e.expression()); }
+    int operator()(Copy_init const& e)      { return precedence(e.expression()); }
   };
   return apply(e, fn{});
 }
@@ -613,6 +615,7 @@ Printer::expression(Expr const& e)
     void operator()(Boolean_conv const& e)       { p.postfix_expression(e); }
     void operator()(Float_conv const& e)         { p.postfix_expression(e); }
     void operator()(Numeric_conv const& e)       { p.postfix_expression(e); }
+    void operator()(Dependent_conv const& e)     { p.postfix_expression(e); }
     void operator()(Ellipsis_conv const& e)      { p.postfix_expression(e); }
     void operator()(Init const& e)               { lingo_unreachable(); }
 
@@ -771,6 +774,18 @@ Printer::postfix_expression(Numeric_conv const& e)
   token("__convert_to_float");
   token(lparen_tok);
   expression(e.source());
+  token(rparen_tok);
+}
+
+
+void
+Printer::postfix_expression(Dependent_conv const& e)
+{
+  token("__dependent_conversion");
+  token(lparen_tok);
+  expression(e.source());
+  token(comma_tok);
+  type(e.type());
   token(rparen_tok);
 }
 
@@ -1513,7 +1528,9 @@ void
 Printer::requirement(Conversion_req const& r)
 {
   expression(r.expression());
+  space();
   token(arrow_tok);
+  space();
   type(r.type());
   token(semicolon_tok);
 }
@@ -1527,9 +1544,6 @@ Printer::requirement(Deduction_req const& r)
   type(r.type());
   token(semicolon_tok);
 }
-
-
-
 
 
 // -------------------------------------------------------------------------- //

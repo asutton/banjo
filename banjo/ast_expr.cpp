@@ -81,4 +81,29 @@ has_union_type(Expr const& e)
   return is_union_type(e.type());
 }
 
+
+// -------------------------------------------------------------------------- //
+// Declared type of an expression
+
+// Returns the declared type of an expression. In general, this
+// turns out to be the type of the expression. However, for
+// id-expressions, we actually use the declared type of the
+// referenced declaration.
+Type&
+declared_type(Expr& e)
+{
+  if (Reference_expr* r = as<Reference_expr>(&e))
+    return declared_type(r->declaration());
+  else
+    return e.type();
+}
+
+
+Type const&
+declared_type(Expr const& e)
+{
+  return declared_type(modify(e));
+}
+
+
 } // namespace banjo
