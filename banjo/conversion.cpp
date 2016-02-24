@@ -659,7 +659,15 @@ contextual_conversion_to_bool(Context& cxt, Expr& e)
 // -------------------------------------------------------------------------- //
 // Dependent conversions
 
-// Search for dependent conversions.
+// Search for dependent conversions. This is done in the case that:
+//
+//    - e has dependent type,
+//    - t is a dependent type,
+//    - or both.
+//
+// A dependent conversion is either a standard, conversion conisisting
+// of a object-to-value conversion and a qualification adjustment, or
+// it is a conversion admitted by a constraint.
 Expr&
 dependent_conversion(Context& cxt, Expr& e, Type& t)
 {
@@ -688,11 +696,11 @@ dependent_conversion(Context& cxt, Expr& e, Type& t)
   // Search for a conversion to t among the listed constraints.
   Expr& cons = *cxt.current_template_constraints();
   if (Expr* c = admit_conversion(cxt, cons, e, t)) {
-    std::cout << "GOT " << *c << '\n';
     return *c;
   }
 
-  error(cxt, "no admissible conversion from '{}' to '{}'", e, t);
+  if (cxt.diagnose_errors())
+    error(cxt, "no admissible conversion from '{}' to '{}'", e, t);
   throw Type_error("dependent conversion");
 }
 

@@ -41,16 +41,20 @@ main(int argc, char* argv[])
   Lexer lex(cxt, cs, ts);
   Parser parse(cxt, ts);
 
-  // Transform characters into tokens.
-  lex();
-  if (error_count())
-    return -1;
+  try {
+    // Transform characters into tokens.
+    lex();
+    if (error_count())
+      return -1;
 
-  // Transform tokens into a syntax tree.
-  Term& unit = parse();
-  if (error_count())
+    // Transform tokens into a syntax tree.
+    Term& unit = parse();
+    if (error_count())
+      return 1;
+    std::cout << unit;
+    return 0;
+  } catch (Compiler_error& err) {
+    std::cerr << err.what();
     return 1;
-
-  std::cout << unit;
-
+  }
 }

@@ -69,11 +69,13 @@ struct Printer
   void token(Symbol const&);
   void token(char const*);
   void token(String const&);
+  void token(int);
 
   // Unresolved names
   void id(Name const&);
   void unqualified_id(Name const&);
   void unqualified_id(Simple_id const&);
+  void unqualified_id(Placeholder_id const&);
   void destructor_id(Destructor_id const&);
   void operator_id(Operator_id const&);
   void conversion_id(Conversion_id const&);

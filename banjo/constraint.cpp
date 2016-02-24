@@ -79,18 +79,10 @@ expand(Context& cxt, Concept_cons const& c)
 // are doing a full recursion over the constraint in order to find
 // a proof of admissibility.
 
-Expr*
-admit_expression(Context& cxt, Expr& c, Expr& e)
-{
-  note("determine admissibility of '{}'", e);
-  return admit_expression(cxt, normalize(cxt, c), e);
-}
-
 
 inline Expr*
-admit_concept(Context& cxt, Concept_cons& c, Expr& e)
+admit_concept_expr(Context& cxt, Concept_cons& c, Expr& e)
 {
-  note("looking in {}", c);
   return admit_expression(cxt, expand(cxt, c), e);
 }
 
@@ -104,7 +96,7 @@ admit_concept(Context& cxt, Concept_cons& c, Expr& e)
 // expression is *not* the destinatio type. It is the expression type.
 template<typename Usage>
 Expr*
-admit_binary(Context& cxt, Usage& c, Binary_expr& e)
+admit_binary_expr(Context& cxt, Usage& c, Binary_expr& e)
 {
   // Determine if the operands can be converted to the
   // declared type of the required expressin.
@@ -112,8 +104,6 @@ admit_binary(Context& cxt, Usage& c, Binary_expr& e)
   Binary_expr& a = cast<Binary_expr>(c.expression());
   Type& t1 = declared_type(a.left());
   Type& t2 = declared_type(a.right());
-  std::cout << e.left() << " ~> " << t1 << '\n';
-  std::cout << e.right() << " ~> " << t2 << '\n';
   try {
     c1 = &copy_initialize(cxt, t1, e.left());
     c2 = &copy_initialize(cxt, t2, e.right());
@@ -123,6 +113,8 @@ admit_binary(Context& cxt, Usage& c, Binary_expr& e)
 
   // Adjust the type of the expression under test to that of
   // the required expression.
+  //
+  // FIXME: See notes
   e.ty = &a.type();
   return &e;
 }
@@ -130,20 +122,17 @@ admit_binary(Context& cxt, Usage& c, Binary_expr& e)
 
 template<typename Usage>
 Expr*
-admit_usage(Context& cxt, Usage& c, Expr& e)
+admit_usage_expr(Context& cxt, Usage& c, Expr& e)
 {
   struct fn
   {
     Context& cxt;
     Usage&   c;
     Expr* operator()(Expr& e)        { banjo_unhandled_case(e); }
-    Expr* operator()(Binary_expr& e) { return admit_binary(cxt, c, e); }
+    Expr* operator()(Binary_expr& e) { return admit_binary_expr(cxt, c, e); }
   };
 
-  note("looking in {}", c);
-
   // An expression of a different kind prove admissibility.
-  std::cout << type_str(c.expression()) << ' ' << type_str(e) << '\n';
   if (typeid(c.expression()) != typeid(e))
     return nullptr;
 
@@ -153,9 +142,8 @@ admit_usage(Context& cxt, Usage& c, Expr& e)
 
 // Just look through to the nested constraint.
 inline Expr*
-admit_parametric(Context& cxt, Parameterized_cons& c, Expr& e)
+admit_parametric_expr(Context& cxt, Parameterized_cons& c, Expr& e)
 {
-  note("looking in {}", c);
   return admit_expression(cxt, c.constraint(), e);
 }
 
@@ -163,9 +151,8 @@ admit_parametric(Context& cxt, Parameterized_cons& c, Expr& e)
 // An expression is admissible for a conjunction of assumptions if
 // support is found in either the left or right operand.
 Expr*
-admit_conjunction(Context& cxt, Conjunction_cons& c, Expr& e)
+admit_conjunction_expr(Context& cxt, Conjunction_cons& c, Expr& e)
 {
-  note("looking in {}", c);
   if (Expr* e1 = admit_expression(cxt, c.left(), e))
     return e1;
   else
@@ -176,13 +163,20 @@ admit_conjunction(Context& cxt, Conjunction_cons& c, Expr& e)
 // An expression is admissible for a disjinction of assumptions if
 // support is found both the left and right operand.
 inline Expr*
-admit_disjunction(Context& cxt, Disjunction_cons& c, Expr& e)
+admit_disjunction_expr(Context& cxt, Disjunction_cons& c, Expr& e)
 {
-  note("looking in {}", c);
   if (Expr* e1 = admit_expression(cxt, c.left(), e)) {
     if (Expr* e2 = admit_expression(cxt, c.right(), e)) {
       if (!is_equivalent(e1->type(), e2->type())) {
-        error(cxt, "multiple types deduced for '{}'", e);
+
+        // FIXME: Is ther e good way of packaging diagnostics with
+        // exceptions so that we can emit them only as needed?
+        //
+        // Note that there is a performance tradeoff. We might be
+        // committing to allocate diagnostics that aren't actually
+        // needed until a particular point in time. 
+        if (cxt.diagnose_errors())
+          error(cxt, "multiple types deduced for '{}'", e);
         throw Translation_error("deduction failed");
       }
       return e1;
@@ -223,14 +217,21 @@ admit_expression(Context& cxt, Cons& c, Expr& e)
     Context& cxt;
     Expr&    e;
     Expr* operator()(Cons& c)               { banjo_unhandled_case(c); }
-    Expr* operator()(Concept_cons& c)       { return admit_concept(cxt, c, e); }
-    Expr* operator()(Expression_cons& c)    { return admit_usage(cxt, c, e); }
-    Expr* operator()(Conversion_cons& c)    { return admit_usage(cxt, c, e); }
-    Expr* operator()(Parameterized_cons& c) { return admit_parametric(cxt, c, e); }
-    Expr* operator()(Conjunction_cons& c)   { return admit_conjunction(cxt, c, e); }
-    Expr* operator()(Disjunction_cons& c)   { return admit_disjunction(cxt, c, e); }
+    Expr* operator()(Concept_cons& c)       { return admit_concept_expr(cxt, c, e); }
+    Expr* operator()(Expression_cons& c)    { return admit_usage_expr(cxt, c, e); }
+    Expr* operator()(Conversion_cons& c)    { return admit_usage_expr(cxt, c, e); }
+    Expr* operator()(Parameterized_cons& c) { return admit_parametric_expr(cxt, c, e); }
+    Expr* operator()(Conjunction_cons& c)   { return admit_conjunction_expr(cxt, c, e); }
+    Expr* operator()(Disjunction_cons& c)   { return admit_disjunction_expr(cxt, c, e); }
   };
   return apply(c, fn{cxt, e});
+}
+
+
+Expr*
+admit_expression(Context& cxt, Expr& c, Expr& e)
+{
+  return admit_expression(cxt, normalize(cxt, c), e);
 }
 
 
@@ -240,7 +241,6 @@ admit_expression(Context& cxt, Cons& c, Expr& e)
 Expr*
 admit_concept_conv(Context& cxt, Concept_cons& c, Expr& e, Type& t)
 {
-  note("search conv in {}", c);
   return admit_expression(cxt, expand(cxt, c), e);
 }
 
@@ -258,11 +258,8 @@ admit_binary_conv(Context& cxt, Conversion_cons& c, Binary_expr& e)
   Binary_expr& a = cast<Binary_expr>(c.expression());
   Type& t1 = declared_type(a.left());
   Type& t2 = declared_type(a.right());
-  std::cout << "TEST\n";
-  std::cout << t1 << " -- " << t2 << '\n';
   try {
     c1 = &copy_initialize(cxt, t1, e.left());
-    std::cout << c1 << '\n';
     c2 = &copy_initialize(cxt, t2, e.right());
   } catch(Translation_error&) {
     return nullptr;
@@ -270,6 +267,19 @@ admit_binary_conv(Context& cxt, Conversion_cons& c, Binary_expr& e)
 
   // Adjust the type of the expression under test to that of
   // the required expression.
+  //
+  // FIXME: It's possible that we need to preserve the original
+  // conversions in order to sort candidates. Consider:
+  //
+  //    requires (T a, T const b) {
+  //      f(a) -> T;        // #1
+  //      f(b) -> T const;  // #2
+  //    }
+  //
+  // In an algorithm that uses a f(x) where x is const, we would
+  // prefer #1. Perhaps we should collect viable conversion
+  // and then sort at the end. Note that this is true for simple
+  // typings also.
   //
   // FIXME: Add constructors to the builder. This is just plain dumb.
   return new Dependent_conv(a.type(), e);
@@ -287,11 +297,8 @@ admit_usage_conv(Context& cxt, Conversion_cons& c, Expr& e, Type& t)
     Expr* operator()(Binary_expr& e) { return admit_binary_conv(cxt, c, e); }
   };
 
-  note("search conv in {}", c);
-
   // An expression of a different kind prove admissibility.
   Expr& e2 = c.expression();
-  std::cout << "TEST: " << e2 << ' ' << e << '\n';
   if (typeid(e2) != typeid(e))
     return nullptr;
 
@@ -307,7 +314,6 @@ admit_usage_conv(Context& cxt, Conversion_cons& c, Expr& e, Type& t)
 Expr*
 admit_parametric_conv(Context& cxt, Parameterized_cons& c, Expr& e, Type& t)
 {
-  note("search conv in {}", c);
   return admit_expression(cxt, c.constraint(), e);
 }
 
@@ -315,7 +321,6 @@ admit_parametric_conv(Context& cxt, Parameterized_cons& c, Expr& e, Type& t)
 Expr*
 admit_conjunction_conv(Context& cxt, Conjunction_cons& c, Expr& e, Type& t)
 {
-  note("search conv in {}", c);
   if (Expr* c1 = admit_conversion(cxt, c.left(), e, t))
     return c1;
   else
@@ -326,7 +331,6 @@ admit_conjunction_conv(Context& cxt, Conjunction_cons& c, Expr& e, Type& t)
 Expr*
 admit_disjunction_conv(Context& cxt, Disjunction_cons& c, Expr& e, Type& t)
 {
-  note("search conv in {}", c);
   // Note that if we find evidence for a conversion in both branches
   // then it is guaranteed that they are equivalent.
   if (Expr* c1 = admit_conversion(cxt, c.left(), e, t)) {
@@ -335,7 +339,6 @@ admit_disjunction_conv(Context& cxt, Disjunction_cons& c, Expr& e, Type& t)
   }
   return nullptr;
 }
-
 
 
 // TODO: Factor out the traversal of constraints in order to avoid
@@ -363,7 +366,6 @@ admit_conversion(Context& cxt, Cons& c, Expr& e, Type& t)
 Expr*
 admit_conversion(Context& cxt, Expr& c, Expr& e, Type& t)
 {
-  note("find conversion '{}'", e, t);
   return admit_conversion(cxt, normalize(cxt, c), e, t);
 }
 

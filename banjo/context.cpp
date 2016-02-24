@@ -15,6 +15,7 @@ namespace banjo
 
 Context::Context()
   : Builder(*this), syms(), id(0), tparms {-1, -1}, pholds {-1, -1}
+  , diags(false)
 {
   // Initialize the color system. This is a process-level
   // configuration. Perhaps we we should only initialize

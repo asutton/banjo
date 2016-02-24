@@ -112,6 +112,7 @@ Printer::token(char const* str)
   prev = identifier_tok;
 }
 
+
 // Print a string as an identifier.
 void
 Printer::token(String const& str)
@@ -119,6 +120,15 @@ Printer::token(String const& str)
   space(identifier_tok);
   os << str;
   prev = identifier_tok;
+}
+
+
+// Print n as an integer token.
+void
+Printer::token(int n)
+{
+  os << n;
+  prev = integer_tok;
 }
 
 
@@ -143,7 +153,7 @@ Printer::unqualified_id(Name const& n)
     Printer& p;
     void operator()(Simple_id const& n)      { p.unqualified_id(n); }
     void operator()(Global_id const& n)      { }
-    void operator()(Placeholder_id const& n) { }
+    void operator()(Placeholder_id const& n) { p.unqualified_id(n); }
     void operator()(Operator_id const& n)    { p.operator_id(n); }
     void operator()(Conversion_id const& n)  { p.conversion_id(n); }
     void operator()(Literal_id const& n)     { p.literal_id(n); }
@@ -160,6 +170,16 @@ void
 Printer::unqualified_id(Simple_id const& n)
 {
   token(n.symbol());
+}
+
+
+void
+Printer::unqualified_id(Placeholder_id const& n)
+{
+  token(lt_tok);
+  token("invented-id-");
+  token(n.number());
+  token(gt_tok);
 }
 
 

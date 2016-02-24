@@ -6,6 +6,7 @@
 
 #include <lingo/assert.hpp>
 #include <lingo/utility.hpp>
+#include <lingo/string.hpp>
 #include <lingo/error.hpp>
 #include <lingo/location.hpp>
 #include <lingo/symbol.hpp>

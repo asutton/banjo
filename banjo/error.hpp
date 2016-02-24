@@ -10,23 +10,52 @@
 namespace banjo
 {
 
-// Represents a translation failure resulting from an internal
-// logic error such as a failed precondition or unhandled case.
-// See the macros below for simplied usage.
-struct Internal_error : std::runtime_error
+// The compiler-error class represents a runtime error that contains
+// a compiler diagnostic. This overrides the what() function to provide
+// a textual represntation of that diagnostic.
+//
+// NOTE: Do not let compiler errors escape main(). The rendering of
+// of a diagnostic message requires that input buffers be in scope,
+// which may not be guaranteed at the point of termination.
+//
+// FIXME: For constructors taking strings, do I need (or want) to
+// give some more specific kind of error (like fatal?).
+struct Compiler_error : std::runtime_error
 {
-  Internal_error(std::string const& s)
-    : std::runtime_error(s)
+  Compiler_error(Diagnostic d)
+    : std::runtime_error(""), diag(d)
   { }
 
-  Internal_error(char const* s)
-    : std::runtime_error(s)
+  Compiler_error(Diagnostic_kind k, String const& s)
+    : Compiler_error(Diagnostic(k, Location(), s))
+  { }
+
+  Compiler_error(String const& s)
+    : Compiler_error(error_diag, s)
+  { }
+
+  Compiler_error(char const* s)
+    : Compiler_error(error_diag, s)
   { }
 
   template<typename... Args>
-  Internal_error(char const* s, Args const&... args)
-    : Internal_error(format(s, args...))
+  Compiler_error(char const* s, Args const&... args)
+    : Compiler_error(error_diag, format(s, args...))
   { }
+
+  virtual const char* what() const noexcept;
+
+  Diagnostic diag;    // The diagnostic
+  mutable String buf; // Guarantees ownership of 'what' text
+};
+
+
+// Represents a translation failure resulting from an internal
+// logic error such as a failed precondition or unhandled case.
+// See the macros below for simplied usage.
+struct Internal_error : Compiler_error
+{
+  using Compiler_error::Compiler_error;
 };
 
 
@@ -44,20 +73,9 @@ struct Internal_error : std::runtime_error
 
 // Represents an error that occurs during translation. Translation
 // errors occurring in certain contexts are recoverable.
-struct Translation_error : std::runtime_error
+struct Translation_error : Compiler_error
 {
-  Translation_error(std::string const& s)
-    : std::runtime_error(s)
-  { }
-
-  Translation_error(char const* s)
-    : std::runtime_error(s)
-  { }
-
-  template<typename... Args>
-  Translation_error(char const* s, Args const&... args)
-    : Translation_error(format(s, args...))
-  { }
+  using Compiler_error::Compiler_error;
 };
 
 

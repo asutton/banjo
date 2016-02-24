@@ -83,6 +83,9 @@ struct Context : Builder
   // Returns true we are in the scope of a requires-expression.
   bool in_requirements() const;
 
+  // Diagnostic state
+  bool diagnose_errors() const { return diags; }
+
   Symbol_table    syms;
   Location        input;  // The input location
   Namespace_decl* global; // The global namespace
@@ -93,8 +96,11 @@ struct Context : Builder
 
   // Store information that can be used to generate template
   // parameter indexes, and unique indexes for placeholders.
-  Index   tparms;  // template parameters
+  Index   tparms; // template parameters
   Index   pholds; // placeholders
+
+  // Diagnostic state
+  bool diags; // True if diagnostics should be emitted.
 };
 
 
@@ -194,6 +200,42 @@ struct Enter_requires_scope : Enter_scope
 using lingo::error;
 using lingo::warning;
 using lingo::note;
+
+
+struct Change_diagnostics
+{
+  Change_diagnostics(Context& cxt, bool b)
+    : cxt(cxt), prev(cxt.diags)
+  {
+    cxt.diags = b;
+  }
+
+  ~Change_diagnostics()
+  {
+    cxt.diags = prev;
+  }
+
+  Context& cxt;
+  bool     prev;
+};
+
+
+// Indicate that diagnostics should be suppressed.
+struct Suppress_diagnostics : Change_diagnostics
+{
+  Suppress_diagnostics(Context& cxt)
+    : Change_diagnostics(cxt, false)
+  { }
+};
+
+
+// Indiate that diagnostics should be emitted
+struct Emit_diagnostics : Change_diagnostics
+{
+  Emit_diagnostics(Context& cxt)
+    : Change_diagnostics(cxt, true)
+  { }
+};
 
 
 // Emit a formatted message at the current input position.
