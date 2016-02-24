@@ -87,6 +87,16 @@ admit_concept_expr(Context& cxt, Concept_cons& c, Expr& e)
 }
 
 
+// This is plain weird. I shouldn't actually get here.
+template<typename Usage>
+Expr*
+admit_reference_expr(Context& cxt, Usage& c, Reference_expr& e)
+{
+  std::cout << "WEIRD: " << e << '\n';
+  return &e;
+}
+
+
 // For both basic and conversion constraints. Determine if the operands
 // of e can be converted to the declared types of the required expression.
 // If so, return e with its result type adjusted to that of the required
@@ -128,8 +138,9 @@ admit_usage_expr(Context& cxt, Usage& c, Expr& e)
   {
     Context& cxt;
     Usage&   c;
-    Expr* operator()(Expr& e)        { banjo_unhandled_case(e); }
-    Expr* operator()(Binary_expr& e) { return admit_binary_expr(cxt, c, e); }
+    Expr* operator()(Expr& e)           { banjo_unhandled_case(e); }
+    Expr* operator()(Reference_expr& e) { return admit_reference_expr(cxt, c, e); }
+    Expr* operator()(Binary_expr& e)    { return admit_binary_expr(cxt, c, e); }
   };
 
   // An expression of a different kind prove admissibility.
@@ -167,18 +178,8 @@ admit_disjunction_expr(Context& cxt, Disjunction_cons& c, Expr& e)
 {
   if (Expr* e1 = admit_expression(cxt, c.left(), e)) {
     if (Expr* e2 = admit_expression(cxt, c.right(), e)) {
-      if (!is_equivalent(e1->type(), e2->type())) {
-
-        // FIXME: Is ther e good way of packaging diagnostics with
-        // exceptions so that we can emit them only as needed?
-        //
-        // Note that there is a performance tradeoff. We might be
-        // committing to allocate diagnostics that aren't actually
-        // needed until a particular point in time. 
-        if (cxt.diagnose_errors())
-          error(cxt, "multiple types deduced for '{}'", e);
-        throw Translation_error("deduction failed");
-      }
+      if (!is_equivalent(e1->type(), e2->type()))
+        throw Translation_error(cxt, "multiple types deduced for '{}'", e);
       return e1;
     }
   }
@@ -224,6 +225,7 @@ admit_expression(Context& cxt, Cons& c, Expr& e)
     Expr* operator()(Conjunction_cons& c)   { return admit_conjunction_expr(cxt, c, e); }
     Expr* operator()(Disjunction_cons& c)   { return admit_disjunction_expr(cxt, c, e); }
   };
+  // note("admit expr '{}' in '{}'", e, c);
   return apply(c, fn{cxt, e});
 }
 
@@ -241,7 +243,7 @@ admit_expression(Context& cxt, Expr& c, Expr& e)
 Expr*
 admit_concept_conv(Context& cxt, Concept_cons& c, Expr& e, Type& t)
 {
-  return admit_expression(cxt, expand(cxt, c), e);
+  return admit_conversion(cxt, expand(cxt, c), e, t);
 }
 
 
@@ -282,7 +284,7 @@ admit_binary_conv(Context& cxt, Conversion_cons& c, Binary_expr& e)
   // typings also.
   //
   // FIXME: Add constructors to the builder. This is just plain dumb.
-  return new Dependent_conv(a.type(), e);
+  return new Dependent_conv(c.type(), e);
 }
 
 
@@ -314,7 +316,7 @@ admit_usage_conv(Context& cxt, Conversion_cons& c, Expr& e, Type& t)
 Expr*
 admit_parametric_conv(Context& cxt, Parameterized_cons& c, Expr& e, Type& t)
 {
-  return admit_expression(cxt, c.constraint(), e);
+  return admit_conversion(cxt, c.constraint(), e, t);
 }
 
 
@@ -359,6 +361,7 @@ admit_conversion(Context& cxt, Cons& c, Expr& e, Type& t)
     Expr* operator()(Conjunction_cons& c)   { return admit_conjunction_conv(cxt, c, e, t); }
     Expr* operator()(Disjunction_cons& c)   { return admit_disjunction_conv(cxt, c, e, t); }
   };
+  // note("admit conv '{}' to '{}' in '{}'", e, t, c);
   return apply(c, fn{cxt, e, t});
 }
 

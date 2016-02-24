@@ -802,10 +802,11 @@ void
 Printer::postfix_expression(Dependent_conv const& e)
 {
   token("__dependent_conversion");
+  token(lt_tok);
+  type(e.type());
+  token(gt_tok);
   token(lparen_tok);
   expression(e.source());
-  token(comma_tok);
-  type(e.type());
   token(rparen_tok);
 }
 
@@ -1254,7 +1255,14 @@ Printer::concept_declaration(Concept_decl const& d)
   template_parameter_list(d.parameters());
   token(gt_tok);
   space();
-  concept_definition(d.definition());
+  if (d.is_defined()) {
+    concept_definition(d.definition());
+  } else {
+    token(eq_tok);
+    space();
+    token(ellipsis_tok);
+    token(semicolon_tok);
+  }
 }
 
 
@@ -1275,6 +1283,8 @@ Printer::concept_definition(Def const& d)
 void
 Printer::concept_definition(Expression_def const& d)
 {
+  token(eq_tok);
+  space();
   expression(d.expression());
   token(semicolon_tok);
 }

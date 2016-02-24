@@ -9,6 +9,21 @@
 namespace banjo
 {
 
+Template_decl const&
+Template_ref::declaration() const
+{
+  return cast<Template_decl>(*decl);
+}
+
+
+Template_decl&
+Template_ref::declaration()
+{
+  return cast<Template_decl>(*decl);
+}
+
+
+
 Concept_decl const&
 Check_expr::declaration() const
 {

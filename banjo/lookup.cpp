@@ -22,7 +22,7 @@ namespace banjo
 // TODO: How should we handle non-simple id's like operator-ids
 // and conversion function ids.
 Decl_list
-unqualified_lookup(Scope& scope, Simple_id const& id)
+unqualified_lookup(Context& cxt, Scope& scope, Simple_id const& id)
 {
   Scope* p = &scope;
   while (p) {
@@ -63,25 +63,25 @@ unqualified_lookup(Scope& scope, Simple_id const& id)
     p = p->enclosing_scope();
   }
 
-  throw Lookup_error("no matching declaration for '{}'", id);
+  throw Lookup_error(cxt, "no matching declaration for '{}'", id);
 }
 
 
 // Simple lookup is a form of unqualified lookup that returns the
 // single declaration associated with the name.
 Decl&
-simple_lookup(Scope& scope, Simple_id const& id)
+simple_lookup(Context& cxt, Scope& scope, Simple_id const& id)
 {
-  Decl_list result = unqualified_lookup(scope, id);
+  Decl_list result = unqualified_lookup(cxt, scope, id);
 
   // FIXME: Can we find names that are *like* id?
   if (result.empty())
-    throw Lookup_error("no matching declaration for '{}'", id);
+    throw Lookup_error(cxt, "no matching declaration for '{}'", id);
 
   // FIXME: Find some way of attaching informative diagnotics
   // to the error (i.e., candidates).
   if (result.size() > 1)
-    throw Lookup_error("lookup of '{}' is ambiguous", id);
+    throw Lookup_error(cxt, "lookup of '{}' is ambiguous", id);
 
   return result.front();
 }

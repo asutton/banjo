@@ -436,6 +436,14 @@ Builder::make_reference(Function_decl& d)
 }
 
 
+Template_ref&
+Builder::make_reference(Template_decl& d)
+{
+  Type& t = declared_type(d);
+  return make<Template_ref>(t, d);
+}
+
+
 Reference_expr&
 Builder::make_reference(Object_parm& d)
 {

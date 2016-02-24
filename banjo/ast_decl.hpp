@@ -403,10 +403,17 @@ struct Concept_decl : Decl
   Decl_list const& parameters() const { return parms; }
   Decl_list&       parameters()       { return parms; }
 
-  // Returns the constraint associated with the template.
-  // This is valid iff is_constrained() is true.
+  // Returns the constraint associated with the template. Behavior
+  // is only defined when the definition has been assigned. This
+  // will generally be the case since every concept declaration
+  // must be defined. There are times during processing where it
+  // may not be true.
   Def const& definition() const  { return *def; }
   Def&       definition()        { return *def; }
+
+  // Returns true when a definition has been associated with a
+  // concept.
+  bool is_defined() const { return def; }
 
   Decl_list parms;
   Def*      def;

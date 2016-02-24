@@ -398,9 +398,7 @@ standard_conversion(Expr& e, Type& t)
   if (is_equivalent(c3.type(), t))
     return c3;
 
-  // FIXME: Emit better diagnostics.
-  error("cannot convert '{}' (type '{}') to '{}'", e, e.type(), t);
-  throw Type_error("conversion error");
+  throw Type_error("cannot convert '{}' (type '{}') to '{}'", e, e.type(), t);
 }
 
 
@@ -440,7 +438,7 @@ convert_to_common_float(Expr& e1, Expr& e2)
     return {convert_integer_to_float(e1, f2), e2};
   }
 
-  throw std::runtime_error("incompatible types");
+  throw Type_error("no floating point conversions for '{}' and '{}'", e1, e2);
 }
 
 Expr_pair
@@ -514,7 +512,7 @@ arithmetic_conversion(Expr& e1, Expr& e2)
     return convert_to_common_int(e1, e2);
 
   // TODO: No conversion from e1 to e2.
-  throw std::runtime_error("incompatible types");
+  throw Type_error("no usual arithmetic conversions for '{}' and '{}'", e1, e2);
 }
 
 
@@ -699,9 +697,7 @@ dependent_conversion(Context& cxt, Expr& e, Type& t)
     return *c;
   }
 
-  if (cxt.diagnose_errors())
-    error(cxt, "no admissible conversion from '{}' to '{}'", e, t);
-  throw Type_error("dependent conversion");
+  throw Type_error(cxt, "no admissible conversion from '{}' to '{}'", e, t);
 }
 
 

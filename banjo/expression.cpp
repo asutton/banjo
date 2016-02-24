@@ -31,17 +31,24 @@ namespace banjo
 Expr&
 make_reference(Context& cxt, Decl& d)
 {
-  Builder build(cxt);
-
   // TODO: What other kinds of objects do we have here...
   //
   // TODO: Dispatch.
   if (Variable_decl* v = as<Variable_decl>(&d))
-    return build.make_reference(*v);
+    return cxt.make_reference(*v);
   if (Object_parm* p = as<Object_parm>(&d))
-    return build.make_reference(*p);
+    return cxt.make_reference(*p);
   if (Function_decl* f = as<Function_decl>(&d))
-    return build.make_reference(*f);
+    return cxt.make_reference(*f);
+
+  // If it's a template name, then it must almost certainly
+  // refer to a function template.
+  if (Template_decl* t = as<Template_decl>(&d)) {
+    Decl& p = t->parameterized_declaration();
+    if (is<Function_decl>(&p))
+      return cxt.make_reference(*t);
+    throw Type_error("'{}' cannot be used as an expression");
+  }
 
   // Here are some things that lookup can find that are not
   // valid expressions.
@@ -60,7 +67,7 @@ make_reference(Context& cxt, Decl& d)
 Expr&
 make_reference(Context& cxt, Simple_id& id)
 {
-  Decl_list decls = unqualified_lookup(cxt.current_scope(), id);
+  Decl_list decls = unqualified_lookup(cxt, cxt.current_scope(), id);
   if (decls.size() == 1)
     return make_reference(cxt, decls.front());
 
@@ -188,7 +195,8 @@ make_logical_expr(Context& cxt, Expr& e, Make make)
     else
       return make_regular_logical_expr(cxt, e, make);
   } catch (Translation_error&) {
-    error(cxt, "no matching operator");
+    // FIXME: Buiild an expression with a poisoned type
+    // so that we can continue diagnosting errors.
     throw;
   }
 }
@@ -270,7 +278,8 @@ make_logical_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
     else
       return make_regular_logical_expr(cxt, e1, e2, make);
   } catch (Translation_error&) {
-    error(cxt, "no matching operator");
+    // FIXME: Buiild an expression with a poisoned type
+    // so that we can continue diagnosting errors.
     throw;
   }
 }
@@ -333,41 +342,34 @@ make_dependent_relational_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
 {
   // Build a dependent expression.
   Type& t = make_fresh_type(cxt);
-  Expr& e = make(t, e1, e2);
+  Expr& f = make(t, e1, e2);
 
   // Don't do dependent lookup.
   if (cxt.in_requirements())
-    return e;
+    return f;
+  if (!cxt.current_template_constraints())
+    return f;
 
   // Inside a constrained template, search the constraints to
   // determine if the expression is admissible.
-  //
-  // TODO: In fully generality, we have to accumulate constraints
-  // in each scope and search that.
-  //
-  // TODO: This would be more lookup-oriented if we were decomposing
-  // constraints on the fly.
-  if (Expr* con = cxt.current_template_constraints()) {
-    // FIXME: Do we need to transform ret or not?
-    if (Expr* ret = admit_expression(cxt, *con, e))
-      return *ret;
-    warning(cxt, "expression '{}' may result in substitution failure", e);
-    return e;
-  }
+  Expr& con = *cxt.current_template_constraints();
+  if (Expr* ret = admit_expression(cxt, con, f))
+    return *ret;
 
-  banjo_unimplemented("unconstrained lookup");
+  // Search for dependent conversions.
+  return make_standard_relational_expr(cxt, e1, e2, make);
 }
 
 
 // Search for an overload of the given operator. The type is determined
 // by overload resolution.
 //
-// FIXME: This doesn't say which operator!
+// FIXME: Try overload resolution.
 template<typename Make>
 static Expr&
-make_overloaded_relational_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
+make_regular_relational_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
 {
-  lingo_unimplemented();
+  return make_standard_relational_expr(cxt, e1, e2, make);
 }
 
 
@@ -381,12 +383,11 @@ make_relational_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
   try {
     if (is_dependent_type(t1) || is_dependent_type(t2))
       return make_dependent_relational_expr(cxt, e1, e2, make);
-    else if (is_maybe_qualified_class_type(t1) || is_maybe_qualified_class_type(t2))
-      return make_overloaded_relational_expr(cxt, e1, e2, make);
     else
-      return make_standard_relational_expr(cxt, e1, e2, make);
+      return make_regular_relational_expr(cxt, e1, e2, make);
   } catch (Translation_error&) {
-    error(cxt, "no matching operator");
+    // FIXME: Diagnose the error, but create an expression
+    // with a poisoned type.
     throw;
   }
 }

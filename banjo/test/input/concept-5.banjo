@@ -1,0 +1,13 @@
+
+concept C<typename T> = true;
+
+template<typename T>
+  requires C<T>
+def f(T) -> void;
+
+
+concept Fish<typename T> {
+  requires (T t) {
+    f(t);
+  }
+}

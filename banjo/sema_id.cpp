@@ -178,7 +178,7 @@ Type&
 Parser::on_type_alias(Token tok)
 {
   Simple_id& id = build.get_id(tok);
-  Decl& decl = simple_lookup(current_scope(), id);
+  Decl& decl = simple_lookup(cxt, current_scope(), id);
 
   if (Type_parm* d = as<Type_parm>(&decl))
     return build.get_typename_type(*d);
@@ -228,7 +228,7 @@ Type&
 Parser::on_type_name(Token tok)
 {
   Simple_id& id = build.get_id(tok);
-  Decl& decl = simple_lookup(current_scope(), id);
+  Decl& decl = simple_lookup(cxt, current_scope(), id);
   if (Type* type = get_type_for_decl(cxt, decl))
     return *type;
   throw Lookup_error("'{}' does not name a type", id);
@@ -277,22 +277,24 @@ Parser::on_namespace_alias(Name&)
 }
 
 
+// FIXME: What if the identifier refers to a set of declarations?
 Decl&
 Parser::on_template_name(Token tok)
 {
   Simple_id& id = build.get_id(tok);
-  Decl& decl = simple_lookup(current_scope(), id);
+  Decl& decl = simple_lookup(cxt, current_scope(), id);
   if (is<Template_decl>(&decl))
     return decl;
   throw Lookup_error("'{}' does not name a template", id);
 }
 
 
+// FIXME: What if the identifier refers to a set of declarations?
 Decl&
 Parser::on_concept_name(Token tok)
 {
   Simple_id& id = build.get_id(tok);
-  Decl& decl = simple_lookup(current_scope(), id);
+  Decl& decl = simple_lookup(cxt, current_scope(), id);
   if (is<Concept_decl>(&decl))
     return decl;
   throw Lookup_error("'{}' does not name a concept", id);

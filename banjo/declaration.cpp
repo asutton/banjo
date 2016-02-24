@@ -139,6 +139,12 @@ can_declare_in(Scope& scope, Decl& decl)
     return false;
   }
 
+  // Nothing can be declared in constrained scope or template scope.
+  if (is<Constrained_scope>(&scope))
+    return false;
+  if (is<Template_scope>(&scope))
+    return false;
+
   return true;
 }
 

@@ -6,7 +6,6 @@
 
 #include "prelude.hpp"
 
-
 namespace banjo
 {
 
@@ -30,12 +29,16 @@ struct Compiler_error : std::runtime_error
     : Compiler_error(Diagnostic(k, Location(), s))
   { }
 
+  Compiler_error(Diagnostic_kind k, Location loc, String const& s)
+    : Compiler_error(Diagnostic(k, loc, s))
+  { }
+
   Compiler_error(String const& s)
-    : Compiler_error(error_diag, s)
+    : Compiler_error(Diagnostic(error_diag, Location(), s))
   { }
 
   Compiler_error(char const* s)
-    : Compiler_error(error_diag, s)
+    : Compiler_error(Diagnostic(error_diag, Location(), s))
   { }
 
   template<typename... Args>
@@ -43,7 +46,26 @@ struct Compiler_error : std::runtime_error
     : Compiler_error(error_diag, format(s, args...))
   { }
 
+  template<typename... Args>
+  Compiler_error(Location loc, char const* s, Args const&... args)
+    : Compiler_error(error_diag, loc, format(s, args...))
+  { }
+
+  template<typename... Args>
+  Compiler_error(Context& cxt, String const& s)
+    : Compiler_error(error_diag, location(cxt), s)
+  { }
+
+  template<typename... Args>
+  Compiler_error(Context& cxt, char const* s, Args const&... args)
+    : Compiler_error(error_diag, location(cxt), format(s, args...))
+  { }
+
   virtual const char* what() const noexcept;
+
+  // Helper functions.
+  Location location(Context const&);
+
 
   Diagnostic diag;    // The diagnostic
   mutable String buf; // Guarantees ownership of 'what' text
@@ -70,6 +92,7 @@ struct Internal_error : Compiler_error
 #define banjo_unimplemented(s) \
   throw banjo::Internal_error("{}:{}: unimplemented: '{}'", __FILE__, __LINE__, s)
 
+# // Fixes syntax highlighting in Atom
 
 // Represents an error that occurs during translation. Translation
 // errors occurring in certain contexts are recoverable.

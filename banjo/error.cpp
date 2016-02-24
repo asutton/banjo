@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "error.hpp"
+#include "context.hpp"
 
 #include <lingo/io.hpp>
 
@@ -12,6 +13,16 @@
 namespace banjo
 {
 
+Location
+Compiler_error::location(Context const& cxt)
+{
+  return cxt.input_location();
+}
+
+
+// FIXME: Any rendering of a diagnostic pontentially counts
+// an an error. We need to update the error count so that
+// drivers can exit correctly.
 char const*
 Compiler_error::what() const noexcept
 {

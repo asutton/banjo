@@ -84,6 +84,7 @@ struct Builder
   Reference_expr& make_reference(Variable_decl&);
   Reference_expr& make_reference(Constant_decl&);
   Reference_expr& make_reference(Function_decl&);
+  Template_ref&   make_reference(Template_decl&);
   Reference_expr& make_reference(Object_parm&);
   Check_expr&     make_check(Concept_decl&, Term_list const&);
 

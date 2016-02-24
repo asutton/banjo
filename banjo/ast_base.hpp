@@ -61,6 +61,7 @@ struct Boolean_expr;
 struct Integer_expr;
 struct Real_expr;
 struct Reference_expr;
+struct Template_ref;
 struct Check_expr;
 struct Add_expr;
 struct Sub_expr;
