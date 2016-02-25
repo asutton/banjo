@@ -2,8 +2,11 @@
 // All rights reserved
 
 #include "substitution.hpp"
+#include "ast.hpp"
+#include "context.hpp"
 #include "expression.hpp"
 #include "declaration.hpp"
+#include "equivalence.hpp"
 #include "print.hpp"
 
 #include <iostream>
@@ -31,6 +34,27 @@ operator<<(std::ostream& os, Substitution const& s)
   }
   os << "}\n";
   return os;
+}
+
+
+// -------------------------------------------------------------------------- //
+// Simple unification
+
+// Update a global (larger) substitution with the results of a
+// local deduction. If a parameter is mapped to different values,
+// unification fails with an exception.
+void
+unify(Context& cxt, Substitution& global, Substitution& local)
+{
+  for (auto& x : local) {
+    Decl& parm = *x.first;
+    Term& value = *x.second;
+    if (Term* prev = global.get_mapping(parm)) {
+      if (!is_equivalent(*prev, value))
+        throw Unification_error(cxt, "'{}' deduced with different values");
+    }
+    global.map_to(parm, value);
+  }
 }
 
 

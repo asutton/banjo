@@ -12,6 +12,7 @@ namespace banjo
 {
 
 bool subsumes(Context&, Cons const&, Cons const&);
+bool subsumes(Context&, Expr const&, Expr const&);
 
 
 } // namespace banjo

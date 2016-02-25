@@ -2,6 +2,8 @@
 // All rights reserved
 
 #include "template.hpp"
+#include "ast.hpp"
+#include "context.hpp"
 #include "initialization.hpp"
 #include "substitution.hpp"
 #include "deduction.hpp"
@@ -115,51 +117,30 @@ initialize_template_parameters(Context& cxt, Decl_list& parms, Term_list& args)
   return ret;
 }
 
+
 // -------------------------------------------------------------------------- //
 // Template specialization
 
 // TODO: This is basically what happens for every single declaration.
 // Find a way of generalizing it.
 Decl&
-specialize_variable(Context& cxt, Template_decl& tmp, Variable_decl& d, Term_list& orig)
+specialize_variable(Context& cxt, Template_decl& tmp, Variable_decl& d, Substitution& sub)
 {
-  Builder build(cxt);
-
-  // Convert parameters.
-  Decl_list& parms = tmp.parameters();
-  Term_list args = initialize_template_parameters(cxt, parms, orig);
-
   // Create the specialization name.
-  Name& n = build.get_template_id(tmp, args);
+  Name& n = cxt.get_template_id(tmp, sub.arguments());
 
   // Substitute into the type.
-  //
-  // TODO: Don't substitute or re-declare if we've already
-  // created a specialization for these arguments.
-  Substitution sub(parms, args);
   Type& t = substitute(cxt, d.type(), sub);
 
-  return build.make_variable(n, t);
+  return cxt.make_variable(n, t);
 }
 
 
 Decl&
-specialize_function(Context& cxt, Template_decl& tmp, Function_decl& d, Term_list& orig)
+specialize_function(Context& cxt, Template_decl& tmp, Function_decl& d, Substitution& sub)
 {
-  Builder build(cxt);
-
-  // Convert parameters.
-  Decl_list& tparms = tmp.parameters();
-  Term_list targs = initialize_template_parameters(cxt, tparms, orig);
-
   // Create the specialization name.
-  Name& n = build.get_template_id(tmp, targs);
-
-  // Substitute into the type.
-  //
-  // TODO: Don't substitute or re-declare if we've already
-  // created a specialization for these arguments.
-  Substitution sub(tparms, targs);
+  Name& n = cxt.get_template_id(tmp, sub.arguments());
 
   // Substitute through parameters.
   //
@@ -176,22 +157,15 @@ specialize_function(Context& cxt, Template_decl& tmp, Function_decl& d, Term_lis
   // Substitute through the return type.
   Type& ret = substitute(cxt, d.return_type(), sub);
 
-  return build.make_function(n, parms, ret);
+  return cxt.make_function(n, parms, ret);
 }
 
 
 Decl&
-specialize_class(Context& cxt, Template_decl& tmp, Class_decl& d, Term_list& orig)
+specialize_class(Context& cxt, Template_decl& tmp, Class_decl& d, Substitution& sub)
 {
-  Builder build(cxt);
-
-  // Convert parameters.
-  Decl_list& parms = tmp.parameters();
-  Term_list args = initialize_template_parameters(cxt, parms, orig);
-
-  Name& n = build.get_template_id(tmp, args);
-
-  return build.make_class(n);
+  Name& n = cxt.get_template_id(tmp, sub.arguments());
+  return cxt.make_class(n);
 }
 
 
@@ -205,20 +179,29 @@ specialize_class(Context& cxt, Template_decl& tmp, Class_decl& d, Term_list& ori
 //
 // TODO: Finish implementing this.
 Decl&
-specialize_declaration(Context& cxt, Template_decl& tmp, Decl& decl, Term_list& args)
+specialize_declaration(Context& cxt, Template_decl& tmp, Decl& decl, Substitution& sub)
 {
   struct fn
   {
     Context&       cxt;
     Template_decl& tmp;
-    Term_list&     args;
+    Substitution&  sub;
     Decl& operator()(Decl& d)           { lingo_unimplemented(); }
-    Decl& operator()(Variable_decl& d)  { return specialize_variable(cxt, tmp, d, args); }
-    Decl& operator()(Function_decl& d)  { return specialize_function(cxt, tmp, d, args); }
-    Decl& operator()(Class_decl& d)     { return specialize_class(cxt, tmp, d, args); }
+    Decl& operator()(Variable_decl& d)  { return specialize_variable(cxt, tmp, d, sub); }
+    Decl& operator()(Function_decl& d)  { return specialize_function(cxt, tmp, d, sub); }
+    Decl& operator()(Class_decl& d)     { return specialize_class(cxt, tmp, d, sub); }
     Decl& operator()(Template_decl& d)  { lingo_unreachable(); }
   };
-  return apply(decl, fn{cxt, tmp, args});
+
+  // TODO: Do something with template constraints.
+
+  // TODO: We can build the specialization name for all templates
+  // here and push that down down into the more specific algorithms.
+
+  // TODO: Search for an existing specialization of the template
+  // having the equivalent template arguments.
+
+  return apply(decl, fn{cxt, tmp, sub});
 }
 
 
@@ -230,8 +213,24 @@ specialize_declaration(Context& cxt, Template_decl& tmp, Decl& decl, Term_list& 
 Decl&
 specialize_template(Context& cxt, Template_decl& tmp, Term_list& args)
 {
+  // Convert parameters and build the substution.
+  Decl_list& parms = tmp.parameters();
+  Term_list conv = initialize_template_parameters(cxt, parms, args);
+  Substitution sub(parms, conv);
+
   Decl& decl = tmp.parameterized_declaration();
-  return specialize_declaration(cxt, tmp, decl, args);
+  return specialize_declaration(cxt, tmp, decl, sub);
+}
+
+
+// Produce an implicit specialization of the template declaration
+// given a deduced substitution. The substitution shall map all
+// template parameters to corresponding values.
+Decl&
+specialize_template(Context& cxt, Template_decl& tmp, Substitution& sub)
+{
+  Decl& decl = tmp.parameterized_declaration();
+  return specialize_declaration(cxt, tmp, decl, sub);
 }
 
 

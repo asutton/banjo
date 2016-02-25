@@ -245,8 +245,6 @@ struct Template_ref : Reference_expr
   // Returns the referenced templaet declaration.
   Template_decl const& declaration() const;
   Template_decl&       declaration();
-
-  Decl* decl;
 };
 
 

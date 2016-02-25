@@ -5,8 +5,8 @@
 #define BANJO_TEMPLATE_HPP
 
 #include "prelude.hpp"
-#include "context.hpp"
-#include "ast.hpp"
+#include "language.hpp"
+#include "substitution.hpp"
 
 
 namespace banjo
@@ -21,6 +21,7 @@ Term&     synthesize_template_argument(Context&, Decl&);
 Term_list synthesize_template_arguments(Context&, Decl_list&);
 
 Decl& specialize_template(Context&, Template_decl&, Term_list&);
+Decl& specialize_template(Context&, Template_decl&, Substitution&);
 
 
 // Encapsulates the results from a partial order.

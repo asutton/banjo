@@ -229,6 +229,9 @@ admit_disjunction_expr(Context& cxt, Disjunction_cons& c, Expr& e)
 // constraint set. Returns a fully typed expression if admissible
 // and nullptr if not.
 //
+// Note that a predicate constraint does not admit any expressions.
+// That will change when we add axioms.
+//
 // FIXME: This needs to be a deduction algorithm. That is, we
 // want find a substitution form `e` to some assumed expression.
 //
@@ -257,6 +260,7 @@ admit_expression(Context& cxt, Cons& c, Expr& e)
     Expr&    e;
     Expr* operator()(Cons& c)               { banjo_unhandled_case(c); }
     Expr* operator()(Concept_cons& c)       { return admit_concept_expr(cxt, c, e); }
+    Expr* operator()(Predicate_cons& c)     { return nullptr; }
     Expr* operator()(Expression_cons& c)    { return admit_usage_expr(cxt, c, e); }
     Expr* operator()(Conversion_cons& c)    { return admit_usage_expr(cxt, c, e); }
     Expr* operator()(Parameterized_cons& c) { return admit_parametric_expr(cxt, c, e); }

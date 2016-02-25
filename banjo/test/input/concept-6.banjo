@@ -1,0 +1,23 @@
+
+concept C<typename T> = true;
+concept D<typename T> = false;
+
+template<typename T>
+def f0(T) -> void;
+
+template<typename T>
+  requires C<T>
+def f1(T) -> void;
+
+template<typename T>
+  requires D<T>
+def f2(T) -> void;
+
+
+template<typename X>
+  requires D<X>
+def g(X x) -> void {
+  f0(x);
+  f1(x);
+  f2(x);
+}

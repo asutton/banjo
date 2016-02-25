@@ -3,11 +3,11 @@
 
 #include "subsumption.hpp"
 #include "ast.hpp"
-#include "builder.hpp"
-#include "substitution.hpp"
+#include "context.hpp"
 #include "constraint.hpp"
+#include "normalization.hpp"
+#include "substitution.hpp"
 #include "hash.hpp"
-#include "equivalence.hpp"
 #include "print.hpp"
 
 #include <list>
@@ -895,6 +895,15 @@ subsumes(Context& cxt, Cons const& a, Cons const& c)
   } while (v == incomplete_proof);
 
   return false;
+}
+
+
+bool
+subsumes(Context& cxt, Expr const& a, Expr const& c)
+{
+  Cons& c1 = normalize(cxt, modify(a));
+  Cons& c2 = normalize(cxt, modify(c));
+  return subsumes(cxt, c1, c2);
 }
 
 

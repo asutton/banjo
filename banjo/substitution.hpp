@@ -5,8 +5,7 @@
 #define BANJO_SUBSTITUTION_HPP
 
 #include "prelude.hpp"
-#include "context.hpp"
-#include "ast.hpp"
+#include "language.hpp"
 
 
 namespace banjo
@@ -29,6 +28,7 @@ struct Substitution : std::unordered_map<Decl*, Term*>
   Substitution(Decl_list&);
   Substitution(Decl_list&, Term_list&);
 
+  void seed_with(Decl& d);
   void map_to(Decl& d, Term& t);
 
   // Returns the mapping for this parameter. Note that the mapping
@@ -39,6 +39,13 @@ struct Substitution : std::unordered_map<Decl*, Term*>
 
   // Returns true if there is a mapping for this parameter.
   bool has_mapping(Decl&) const;
+
+  // Returns true if the mapping is incomplete (i.e., has declarations)
+  // not mapped to values.
+  bool is_incomplete() const;
+
+  Decl_list parameters() const;
+  Term_list arguments() const;
 
   // Contextually convert to true whe the substitution is valid.
   explicit operator bool() const { return ok; }
@@ -57,9 +64,8 @@ Substitution::Substitution()
 { }
 
 
-// Initialize a partial substitution for the purpose of deducing
-// mappings to parameters. Initially map each parameter to a null
-// pointer.
+// Initialize a partial substitution for the purpose of deducing mappings
+// to parameters. Initially map each parameter to a null pointer.
 inline
 Substitution::Substitution(Decl_list& p)
 {
@@ -84,11 +90,20 @@ Substitution::Substitution(Decl_list& p, Term_list& a)
 }
 
 
+// Insert an unmapped declaration into the set.
+//
+// TODO: Verify that any prior seeding is unmapped.
+inline void
+Substitution::seed_with(Decl& d)
+{
+  emplace(&d, nullptr);
+}
+
+
 // Create a substitution that sends each occurrence of `d` to
 // its a corresponding `t`. If t is mapped to nothing (a nullptr),
 // then, re-mapping is allowed (to support deduction). Otherwise,
 // a declaration shall not be re-mapped to a different value.
-//
 inline void
 Substitution::map_to(Decl& d, Term& t)
 {
@@ -109,6 +124,16 @@ Substitution::has_mapping(Decl& d) const
 }
 
 
+inline bool
+Substitution::is_incomplete() const
+{
+  for (auto const& x : *this)
+    if (x.second == nullptr)
+      return true;
+  return false;
+}
+
+
 inline Term const*
 Substitution::get_mapping(Decl& d) const
 {
@@ -123,11 +148,35 @@ Substitution::get_mapping(Decl& d)
 }
 
 
+// Returns the list of parameters in the substitution.
+inline Decl_list
+Substitution::parameters() const
+{
+  Decl_list ds;
+  for (auto const& x : *this)
+    ds.push_back(modify(*x.first));
+  return ds;
+}
+
+
+// Returns the list of arguments in the substitution.
+inline Term_list
+Substitution::arguments() const
+{
+  Term_list ts;
+  for (auto const& x : *this)
+    ts.push_back(modify(*x.second));
+  return ts;
+}
+
+
 std::ostream& operator<<(std::ostream&, Substitution const&);
 
 
 // -------------------------------------------------------------------------- //
 // Operations
+
+void unify(Context&, Substitution&, Substitution&);
 
 Term& substitute(Context&, Term&, Substitution&);
 Type& substitute(Context&, Type&, Substitution&);

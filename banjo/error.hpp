@@ -126,6 +126,29 @@ struct Type_error : Translation_error
 };
 
 
+// Represents an template argument deduction error.
+struct Deduction_error : Translation_error
+{
+  using Translation_error::Translation_error;
+};
+
+
+// Represents an failure to unify multiple deductions of a template
+// parameter. This is a distinct kind of deduction failure.
+struct Unification_error : Deduction_error
+{
+  using Deduction_error::Deduction_error;
+};
+
+
+// Represents an error occcurring in the substitution of template
+// arguments for parameters.
+struct Substitution_error : Translation_error
+{
+  using Translation_error::Translation_error;
+};
+
+
 // Represents an error resulting from the evaluation of a constant
 // expression.
 struct Evaluation_error : Translation_error
