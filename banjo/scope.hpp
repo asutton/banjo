@@ -177,7 +177,7 @@ struct Function_parameter_scope : Scope
 struct Template_scope : Scope
 {
   Template_scope(Scope& s)
-    : Scope(s)
+    : Scope(s), parms(), cons(nullptr)
   { }
 
   // Returns the parameters of the template scope.

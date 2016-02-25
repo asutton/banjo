@@ -4,6 +4,7 @@
 #include "constraint.hpp"
 #include "ast.hpp"
 #include "context.hpp"
+#include "call.hpp"
 #include "initialization.hpp"
 #include "substitution.hpp"
 #include "normalization.hpp"
@@ -87,12 +88,12 @@ admit_concept_expr(Context& cxt, Concept_cons& c, Expr& e)
 }
 
 
-// This is plain weird. I shouldn't actually get here.
+// This is plain weird, and I should probably never be here. When
+// does a reference-expression appear as a constraint?
 template<typename Usage>
 Expr*
 admit_reference_expr(Context& cxt, Usage& c, Reference_expr& e)
 {
-  std::cout << "WEIRD: " << e << '\n';
   return &e;
 }
 
@@ -110,13 +111,12 @@ admit_binary_expr(Context& cxt, Usage& c, Binary_expr& e)
 {
   // Determine if the operands can be converted to the
   // declared type of the required expressin.
-  Expr *c1, *c2;
   Binary_expr& a = cast<Binary_expr>(c.expression());
   Type& t1 = declared_type(a.left());
   Type& t2 = declared_type(a.right());
   try {
-    c1 = &copy_initialize(cxt, t1, e.left());
-    c2 = &copy_initialize(cxt, t2, e.right());
+    copy_initialize(cxt, t1, e.left());
+    copy_initialize(cxt, t2, e.right());
   } catch(Translation_error&) {
     return nullptr;
   }
@@ -124,12 +124,49 @@ admit_binary_expr(Context& cxt, Usage& c, Binary_expr& e)
   // Adjust the type of the expression under test to that of
   // the required expression.
   //
-  // FIXME: See notes
+  // FIXME: See the notes on admit_binary_conv. We may want
+  // to preserve the conversions for the purpose of ordering.
   e.ty = &a.type();
   return &e;
 }
 
 
+// Determine if a basic or conversion constraint admit the call
+// expression e.
+template<typename Usage>
+Expr*
+admit_call_expr(Context& cxt, Usage& c, Call_expr& e)
+{
+  Call_expr& a = cast<Call_expr>(c.expression());
+
+  // Build the list of parameter types from the declared types
+  // of operands in the constraint.
+  Type_list ts {&declared_type(a.function())};
+  for (Expr& e0 : a.arguments())
+    ts.push_back(declared_type(e0));
+
+  // Build the list of arguments from e. Note that the first
+  // argument is actually the function.
+  Expr_list es {&e.function()};
+  for (Expr& e0 : e.arguments())
+    es.push_back(e0);
+
+  // If conversion fails, this is not accessible.
+  try {
+    initialize_parameters(cxt, ts, es);
+  } catch (Translation_error&) {
+    return nullptr;
+  }
+
+  // Adjust the type and admit the expression.
+  e.ty = &a.type();
+  return &e;
+}
+
+
+// For both basic and conversion constraints, determine if the constraints
+// admits the expression. In general, this is the case when the operands
+// of the e are dependently convertible to the types of the expression in c.
 template<typename Usage>
 Expr*
 admit_usage_expr(Context& cxt, Usage& c, Expr& e)
@@ -141,6 +178,7 @@ admit_usage_expr(Context& cxt, Usage& c, Expr& e)
     Expr* operator()(Expr& e)           { banjo_unhandled_case(e); }
     Expr* operator()(Reference_expr& e) { return admit_reference_expr(cxt, c, e); }
     Expr* operator()(Binary_expr& e)    { return admit_binary_expr(cxt, c, e); }
+    Expr* operator()(Call_expr& e)      { return admit_call_expr(cxt, c, e); }
   };
 
   // An expression of a different kind prove admissibility.

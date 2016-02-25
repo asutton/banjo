@@ -116,21 +116,7 @@ Parser::on_rem_expression(Token tok, Expr& e1, Expr& e2)
 Expr&
 Parser::on_call_expression(Expr& e, Expr_list& es)
 {
-  if (Reference_expr* ref = as<Reference_expr>(&e)) {
-    Decl& d = ref->declaration();
-    Type& t = declared_type(d);
-    if (Function_type* f = as<Function_type>(&t))
-      return build.make_call(f->return_type(), e, es);
-
-    // FIXME: Handle lambda expressions. Handle objects of class
-    // type with overloads of '()'.
-
-    throw Translation_error("'{}' is not callable", e);
-  }
-
-  // FIXME: Handle overload sets.
-
-  lingo_unimplemented();
+  return make_call(cxt, e, es);
 }
 
 

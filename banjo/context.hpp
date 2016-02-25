@@ -197,10 +197,6 @@ struct Enter_requires_scope : Enter_scope
 // -------------------------------------------------------------------------- //
 // Diagnostic utilities
 
-using lingo::error;
-using lingo::warning;
-using lingo::note;
-
 
 struct Change_diagnostics
 {
@@ -236,6 +232,11 @@ struct Emit_diagnostics : Change_diagnostics
     : Change_diagnostics(cxt, true)
   { }
 };
+
+
+using lingo::error;
+using lingo::warning;
+using lingo::note;
 
 
 // Emit a formatted message at the current input position.

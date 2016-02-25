@@ -784,8 +784,12 @@ bool has_array_type(Expr const&);
 bool has_class_type(Expr const&);
 bool has_union_type(Expr const&);
 
+bool is_type_dependent(Expr const&);
+bool is_type_dependent(Expr_list const&);
+
 Type const& declared_type(Expr const&);
 Type&       declared_type(Expr&);
+
 
 // -------------------------------------------------------------------------- //
 // Operations on conversions
@@ -861,7 +865,7 @@ struct Generic_expr_visitor : Expr::Visitor, Generic_visitor<F, T>
 
 // Apply a function to the given type.
 template<typename F, typename T = typename std::result_of<F(Boolean_expr const&)>::type>
-inline T
+inline decltype(auto)
 apply(Expr const& e, F fn)
 {
   Generic_expr_visitor<F, T> vis(fn);
@@ -921,7 +925,7 @@ struct Generic_expr_mutator : Expr::Mutator, Generic_mutator<F, T>
 
 // Apply a function to the given type.
 template<typename F, typename T = typename std::result_of<F(Boolean_expr&)>::type>
-inline T
+inline decltype(auto)
 apply(Expr& e, F fn)
 {
   Generic_expr_mutator<F, T> vis(fn);

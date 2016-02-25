@@ -47,6 +47,10 @@ add_library(banjo
   declaration.cpp
   overload.cpp
   expression.cpp
+  expr_id.cpp
+  expr_logical.cpp
+  expr_relational.cpp
+  expr_call.cpp
   conversion.cpp
   initialization.cpp
   call.cpp

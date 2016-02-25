@@ -725,14 +725,12 @@ Printer::postfix_expression(Call_expr const& e)
 {
   grouped_expression(e, e.function());
   token(lparen_tok);
-
-  // Expr_list const& p = e.arguments();
-  // for (auto iter = p.begin(); iter != p.end(); ++iter) {
-  //   expression(*iter);
-  //   if (std::next(iter) != p.end())
-  //     token(comma_tok);
-  // }
-
+  Expr_list const& p = e.arguments();
+  for (auto iter = p.begin(); iter != p.end(); ++iter) {
+    expression(*iter);
+    if (std::next(iter) != p.end())
+      token(comma_tok);
+  }
   token(rparen_tok);
 }
 
