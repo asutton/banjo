@@ -132,37 +132,33 @@ substitute(Context& cxt, Type& t, Substitution& sub)
 Type&
 substitute_type(Context& cxt, Function_type& t, Substitution& sub)
 {
-  Builder build(cxt);
   Type_list ps = substitute(cxt, t.parameter_types(), sub);
   Type& r = substitute(cxt, t.return_type(), sub);
-  return build.get_function_type(ps, r);
+  return cxt.get_function_type(ps, r);
 }
 
 
 Type&
 substitute_type(Context& cxt, Reference_type& t, Substitution& sub)
 {
-  Builder build(cxt);
   Type& s = substitute(cxt, t.type(), sub);
-  return build.get_reference_type(s);
+  return cxt.get_reference_type(s);
 }
 
 
 Type&
 substitute_type(Context& cxt, Qualified_type& t, Substitution& sub)
 {
-  Builder build(cxt);
   Type& s = substitute(cxt, t.type(), sub);
-  return build.get_qualified_type(s, t.qualifier());
+  return cxt.get_qualified_type(s, t.qualifier());
 }
 
 
 Type&
 substitute_type(Context& cxt, Pointer_type& t, Substitution& sub)
 {
-  Builder build(cxt);
   Type& s = substitute(cxt, t.type(), sub);
-  return build.get_pointer_type(s);
+  return cxt.get_pointer_type(s);
 }
 
 
@@ -176,9 +172,8 @@ substitute_type(Context& cxt, Array_type& t, Substitution& sub)
 Type&
 substitute_type(Context& cxt, Sequence_type& t, Substitution& sub)
 {
-  Builder build(cxt);
   Type& s = substitute(cxt, t.type(), sub);
-  return build.get_sequence_type(s);
+  return cxt.get_sequence_type(s);
 }
 
 
@@ -199,11 +194,6 @@ substitute_type(Context& cxt, Typename_type& t, Substitution& sub)
 // -------------------------------------------------------------------------- //
 // Substitution into expressions
 //
-// FIXME: None of this is correct. We actually need to elaborate the
-// result of substitution.
-//
-// FIXME: There's an absolute ton of redundant code here. Much of
-// this might be compacted using lambda expressions.
 
 
 // Substitute into a declaration reference. The result of the
@@ -222,6 +212,10 @@ subst_ref(Context& cxt, Reference_expr& e, Substitution& sub)
 Expr&
 subst_check(Context& cxt, Check_expr& e, Substitution& sub)
 {
+  // FIXME: This needs to check the substituted arguments
+  // against the declared concept, possibly performing some
+  // kind of resolution. In other words, use make_check, whenever
+  // it gets written.
   Builder build(cxt);
   Term_list args = substitute(cxt, e.arguments(), sub);
   return build.make_check(e.declaration(), args);
@@ -231,10 +225,9 @@ subst_check(Context& cxt, Check_expr& e, Substitution& sub)
 Expr&
 subst_call(Context& cxt, Call_expr& e, Substitution& sub)
 {
-  Builder build(cxt);
   Expr& fn = substitute(cxt, e.function(), sub);
   Expr_list args = substitute(cxt, e.arguments(), sub);
-  return build.make_call(build.get_void_type(), fn, args);
+  return make_call(cxt, fn, args);
 }
 
 
@@ -302,7 +295,6 @@ substitute(Context& cxt, Expr& e, Substitution& sub)
 // resolution.
 
 
-// FIXME: Rebuild the variable as if parsed.
 Decl&
 substitute_decl(Context& cxt, Variable_decl& d, Substitution& sub)
 {
@@ -314,8 +306,6 @@ substitute_decl(Context& cxt, Variable_decl& d, Substitution& sub)
 }
 
 
-// FIXME: Rebuild the parameter as if parsed.
-//
 // FIXME: Do we substitute into a default argument? It probably
 // depends on context, but I assume that the general answer is yes.
 Decl&
@@ -378,7 +368,7 @@ subst_usage(Context& cxt, Conversion_cons& c, Substitution& sub)
   Type& t = substitute(cxt, c.type(), sub);
 
   // FIXME: We should be doing a lookup to determine the correct
-  // type of
+  // type of the expression.
 
   return cxt.get_conversion_constraint(e, t);
 }
@@ -429,5 +419,6 @@ substitute(Context& cxt, Cons& c, Substitution& sub)
   };
   return apply(c, fn{cxt, sub});
 }
+
 
 } // namespace banjo
