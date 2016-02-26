@@ -42,6 +42,10 @@ make_dependent_template_call(Context& cxt, Template_ref& e, Expr_list& args)
 
       // If the template is constrained, then ensure that the current
       // constraints subsume those of the declaration.
+      //
+      // Note that an unconstrained template is awlays admissible.
+      //
+      // TODO: Do this here, or in specialize_template?
       if (temp.is_constrained()) {
         Expr& fcons = temp.constraint();
         Expr& ccons = *cxt.current_template_constraints();
@@ -50,10 +54,7 @@ make_dependent_template_call(Context& cxt, Template_ref& e, Expr_list& args)
         // those of the the candidate function.
         if (!subsumes(cxt, ccons, fcons))
           warning(cxt, "call to function template '{}' not covered by constraints", e);
-      } else {
-        warning(cxt, "call to unconstrained function template '{}'", e);
       }
-
       return cxt.make_call(t, e, args);
     } catch (Translation_error& err) {
       // FIXME: Improve diagnostics.
@@ -129,7 +130,6 @@ make_regular_call(Context& cxt, Expr& e, Expr_list& args)
 
   banjo_unhandled_case(e);
 }
-
 
 
 Expr&
