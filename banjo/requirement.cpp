@@ -57,14 +57,29 @@ make_basic_requirement(Context& cxt, Expr& e, Type& t)
 
 
 // Build a requirement that e must be convertible to t. Note that
-// the type of `e` is unspecified.
+// e has been previously typed, possibly with a fresh type variable.
 //
-// TODO: Currently, e has placeholder type. We should perform a lookup
-// to ensure that e acutally has the correct type, so that we can unify
-// expessions and types.
+// If e is the first occurrence of its kind (i.e., lookup fails)
+// then declare e to have that type. In other words, we are transforming
+// this requirement:
+//
+//    e -> t;
+//
+// to these requirements:
+//
+//    e : t0; // t0 is the original type of e
+//    e -> t;
+//
+// TODO: Should we actually generate multiple requiremnts like
+// this? This would affect subsumption in (likely) a positive way.
+//
+// TODO: I'd also like to save the conversion to optimize conversion
+// lookup. We could actually save these in conversion-ids.
 Req&
 make_conversion_requirement(Context& cxt, Expr& e, Type& t)
 {
+  if (!requirement_lookup(cxt, e))
+    declare_required_expression(cxt, e);
   return cxt.make_conversion_requirement(e, t);
 }
 
