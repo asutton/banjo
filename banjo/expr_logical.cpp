@@ -37,20 +37,22 @@ template<typename Make>
 static Expr&
 make_dependent_logical_expr(Context& cxt, Expr& e, Make make)
 {
-  // Build a dependent expression.
+  // Build the initial expression.
   Type& t = make_fresh_type(cxt);
-  Expr& f = make(t, e);
+  Expr& init = make(t, e);
 
-  // Don't do lookup in requirements or unconstrained templates.
+  // Unify with previous expressions.
   if (cxt.in_requirements())
-    return f;
-  if (!cxt.current_template_constraints())
-    return f;
+    return make_required_expression(cxt, init);
+
+  // Don't type unconstrained templates.
+  if (cxt.in_unconstrained_template())
+    return init;
 
   // Inside a constrained template, search the constraints to determine
   // if the expression is admissible.
   Expr& con = *cxt.current_template_constraints();
-  if (Expr* ret = admit_expression(cxt, con, f))
+  if (Expr* ret = admit_expression(cxt, con, init))
     return *ret;
 
   // If no no such expression is admitted by the constraints, then
@@ -117,18 +119,20 @@ make_dependent_logical_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
 {
   // Build a dependent expression.
   Type& t = make_fresh_type(cxt);
-  Expr& f = make(t, e1, e2);
+  Expr& init = make(t, e1, e2);
 
-  // Don't do dependent when parsing requirements.
+  // Unify with previous functions.
   if (cxt.in_requirements())
-    return f;
+    return make_required_expression(cxt, init);
+
+  // Don't check in unconstrained templates.
   if (!cxt.current_template_constraints())
-    return f;
+    return init;
 
   // Inside a constrained template, search the constraints to determine
   // if the expression is admissible.
   Expr& con = *cxt.current_template_constraints();
-  if (Expr* ret = admit_expression(cxt, con, f))
+  if (Expr* ret = admit_expression(cxt, con, init))
     return *ret;
 
   // If no no such expression is admitted by the constraints, then
@@ -163,7 +167,7 @@ make_logical_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
     else
       return make_regular_logical_expr(cxt, e1, e2, make);
   } catch (Translation_error&) {
-    // FIXME: Buiild an expression with a poisoned type
+    // FIXME: Build an expression with a poisoned type
     // so that we can continue diagnosting errors.
     throw;
   }

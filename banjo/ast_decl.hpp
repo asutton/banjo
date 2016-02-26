@@ -328,6 +328,8 @@ struct Namespace_decl : Decl
   Decl_list&       members()       { return decls; }
 
   // Returns the totoal set of declarations within the namespace.
+  //
+  // FIXME: Why doesn't this return a reference?
   Scope const* scope() const { return lookup; }
   Scope*       scope()       { return lookup; }
 

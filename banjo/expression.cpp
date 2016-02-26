@@ -4,10 +4,23 @@
 #include "expression.hpp"
 #include "ast_expr.hpp"
 #include "context.hpp"
+#include "lookup.hpp"
 
 
 namespace banjo
 {
+
+// A helper function for the typing of expressions occurring in a
+// requires-expressions. This performs a lookup of an iniitally
+// constructed expression, and adjusts its type as needed.
+Expr&
+make_required_expression(Context& cxt, Expr& e)
+{
+  if (Expr* prev = requirement_lookup(cxt, e))
+    e.ty = prev->ty;
+  return e;
+}
+
 
 // A requires expression has type bool.
 //

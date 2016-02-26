@@ -41,18 +41,20 @@ make_dependent_relational_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
 {
   // Build a dependent expression.
   Type& t = make_fresh_type(cxt);
-  Expr& f = make(t, e1, e2);
+  Expr& init = make(t, e1, e2);
 
-  // Don't do dependent lookup.
+  // Unify with previous expressions.
   if (cxt.in_requirements())
-    return f;
-  if (!cxt.current_template_constraints())
-    return f;
+    return make_required_expression(cxt, init);
+
+  // Don't check in unconstrained templates.
+  if (cxt.in_unconstrained_template())
+    return init;
 
   // Inside a constrained template, search the constraints to
   // determine if the expression is admissible.
   Expr& con = *cxt.current_template_constraints();
-  if (Expr* ret = admit_expression(cxt, con, f))
+  if (Expr* ret = admit_expression(cxt, con, init))
     return *ret;
 
   // Search for dependent conversions.

@@ -2,8 +2,8 @@
 // All rights reserved
 
 #include "lookup.hpp"
-#include "ast_name.hpp"
-#include "ast_decl.hpp"
+#include "ast.hpp"
+#include "context.hpp"
 #include "scope.hpp"
 #include "print.hpp"
 
@@ -101,6 +101,60 @@ argument_dependent_lookup(Scope&, Expr_list&)
   return nullptr;
 }
 */
+
+
+static Type_list
+get_operand_types(Call_expr& e)
+{
+  Type_list ts;
+  ts.push_back(e.function().type());
+  for (Expr& e : e.arguments())
+    ts.push_back(e.type());
+  return ts;
+}
+
+
+static Type_list
+get_operand_types(Expr& e)
+{
+  struct fn
+  {
+    Type_list operator()(Expr& e)        { banjo_unhandled_case(e); }
+    Type_list operator()(Unary_expr& e)  { return {&e.operand().type()}; }
+    Type_list operator()(Binary_expr& e) { return {&e.left().type(), &e.right().type()}; }
+    Type_list operator()(Call_expr& e)   { return get_operand_types(e); }
+  };
+  return apply(e, fn{});
+}
+
+
+// Lookup the expression in the current requirement scope. This
+// returns the expressions whose operands have equivalent type or
+// nullptr if they no such expression has been declared.
+//
+// FIXME: This is a hack. Lookup should use an operator-id and
+// perform a lookup in a table, and NOT searching through a
+// list of requirements.
+Expr*
+requirement_lookup(Context& cxt, Expr& e)
+{
+  Requires_scope& s = *cxt.current_requires_scope();
+
+  Type_list t1 = get_operand_types(e); // Yuck.
+  for (Expr& e2 : s.exprs) {
+    // Expressions of different kinds are not comparable.
+    if (typeid(e) != typeid(e2))
+      continue;
+
+    // Compare the types of operands.
+    Type_list t2 = get_operand_types(e2);
+    if (is_equivalent(t1, t2)) {
+      return &e;
+    }
+  }
+  return nullptr;
+}
+
 
 
 } // namespace banjo

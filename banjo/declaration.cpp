@@ -211,4 +211,20 @@ declare(Context& cxt, Decl& d)
 }
 
 
+// -------------------------------------------------------------------------- //
+// Declaration of required expressionns
+
+// Save the declaration of a required expression.
+//
+// FIXME: This is a hack. This should be name-based. Otherwise, lookup
+// is going to be very, very slow.
+//
+// FIXME: Who is responsible for guaranteeing non-repetition?
+void
+declare_required_expression(Context& cxt, Expr& e)
+{
+  Requires_scope& s = *cxt.current_requires_scope();
+  s.exprs.push_back(e);
+}
+
 } // namespace banjo

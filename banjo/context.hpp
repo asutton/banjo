@@ -79,6 +79,8 @@ struct Context : Builder
 
   // Returns true if there we are in the scope of a template.
   bool in_template() const;
+  bool in_constrained_template() const;
+  bool in_unconstrained_template() const;
 
   // Returns true we are in the scope of a requires-expression.
   bool in_requirements() const;
@@ -124,6 +126,23 @@ Context::in_template() const
 {
   return modify(this)->current_template_scope();
 }
+
+
+// Returns true if the current context is a constrained template.
+inline bool
+Context::in_constrained_template() const
+{
+  return modify(this)->current_template_constraints();
+}
+
+
+// Returns true if the current context is an unconstrained template.
+inline bool
+Context::in_unconstrained_template() const
+{
+  return !modify(this)->current_template_constraints();
+}
+
 
 // Returns true we are in the scope of a requires-expression.
 inline bool

@@ -245,6 +245,12 @@ struct Block_scope : Scope
 struct Requires_scope : Block_scope
 {
   using Block_scope::Block_scope;
+
+  // This stores the list of expressions and their types, which
+  // ensures that we can match each expression to its type.
+  //
+  // FIXME: This is a hack. Replace it with a scope.
+  Expr_list exprs;
 };
 
 

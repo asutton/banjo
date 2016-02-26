@@ -78,17 +78,19 @@ Expr&
 make_dependent_call(Context& cxt, Expr& e, Expr_list& args)
 {
   Type& t = make_fresh_type(cxt);
-  Expr& f = cxt.make_call(t, e, args);
+  Expr& init = cxt.make_call(t, e, args);
 
-  // Don't do lookup here.
+  // Unify with previous requirements.
   if (cxt.in_requirements())
-    return f;
-  if (!cxt.current_template_constraints())
-    return f;
+    return make_required_expression(cxt, init);
+
+  // Don't check in unconstrained templates.
+  if (cxt.in_unconstrained_template())
+    return init;
 
   // Determine if the constraints explicitly admit this declaration.
   Expr& cons = *cxt.current_template_constraints();
-  if (Expr* ret = admit_expression(cxt, cons, f))
+  if (Expr* ret = admit_expression(cxt, cons, init))
     return *ret;
 
   // Otherwise, e refers to a previous declaration, possibly many.
