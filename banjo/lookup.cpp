@@ -108,8 +108,8 @@ get_operand_types(Call_expr& e)
 {
   Type_list ts;
   ts.push_back(e.function().type());
-  for (Expr& e : e.arguments())
-    ts.push_back(e.type());
+  for (Expr& a : e.arguments())
+    ts.push_back(a.type());
   return ts;
 }
 
