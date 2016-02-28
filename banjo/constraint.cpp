@@ -298,13 +298,12 @@ admit_binary_conv(Context& cxt, Conversion_cons& c, Binary_expr& e)
 {
   // Determine if the operands can be converted to the
   // declared type of the required expressin.
-  Expr *c1, *c2;
   Binary_expr& a = cast<Binary_expr>(c.expression());
   Type& t1 = declared_type(a.left());
   Type& t2 = declared_type(a.right());
   try {
-    c1 = &copy_initialize(cxt, t1, e.left());
-    c2 = &copy_initialize(cxt, t2, e.right());
+    copy_initialize(cxt, t1, e.left());
+    copy_initialize(cxt, t2, e.right());
   } catch(Translation_error&) {
     return nullptr;
   }
