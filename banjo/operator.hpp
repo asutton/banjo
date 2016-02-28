@@ -28,6 +28,9 @@ enum Operator_kind
   gt_op,     // >
   le_op,     // <=
   ge_op,     // >=
+  and_op,    // &&
+  or_op,     // ||
+  not_op,    // !
   call_op,   // ()
   index_op,  // []
   assign_op, // =

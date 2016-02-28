@@ -34,7 +34,9 @@ consume_op(Parser& p, Token_kind tok, Operator_kind op)
 // Match any operator.
 //
 //    operator: one_of
-//      + - * / % == != < > <= >=
+//      + - * / %
+//      == != < > <= >=
+//      && || !
 //      () []
 //      =
 //
@@ -54,6 +56,9 @@ Parser::any_operator()
     case gt_tok: return consume_op(*this, gt_op);
     case lt_eq_tok: return consume_op(*this, le_op);
     case gt_eq_tok: return consume_op(*this, ge_op);
+    case amp_amp_tok: return consume_op(*this, and_op);
+    case bar_bar_tok: return consume_op(*this, or_op);
+    case bang_tok: return consume_op(*this, not_op);
     case eq_tok: return consume_op(*this, assign_op);
     case lparen_tok: return consume_op(*this, rparen_tok, call_op);
     case lbrace_tok: return consume_op(*this, rbrace_tok, index_op);
