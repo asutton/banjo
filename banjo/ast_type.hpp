@@ -200,6 +200,11 @@ struct Declauto_type : Type
 
 
 // A function type.
+//
+// TODO: Consider adding a base class: mapping type. That would allow
+// this class to have a "function value", while mapping types would
+// describe certain things that have no value (e.g., expression
+// declarations).
 struct Function_type : Type
 {
   Function_type(Type_list const& p, Type& r)

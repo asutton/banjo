@@ -2,9 +2,7 @@
 // All rights reserved
 
 #include "expression.hpp"
-#include "ast_type.hpp"
-#include "ast_expr.hpp"
-#include "ast_decl.hpp"
+#include "ast.hpp"
 #include "context.hpp"
 #include "type.hpp"
 #include "template.hpp"
@@ -75,14 +73,14 @@ make_dependent_function_call(Context& cxt, Reference_expr& e, Expr_list& args)
 
 // Make a dependent function call expression.
 Expr&
-make_dependent_call(Context& cxt, Expr& e, Expr_list& args)
+make_dependent_call(Context& cxt, Name& id, Expr& e, Expr_list& args)
 {
   Type& t = make_fresh_type(cxt);
   Expr& init = cxt.make_call(t, e, args);
 
   // Unify with previous requirements.
   if (cxt.in_requirements())
-    return make_required_expression(cxt, init);
+    return make_required_expression(cxt, id, init);
 
   // Don't check in unconstrained templates.
   if (cxt.in_unconstrained_template())
@@ -118,7 +116,7 @@ make_dependent_call(Context& cxt, Expr& e, Expr_list& args)
 // FIXME: If e has user-defined type then we need to look for an
 // overloaded operator.
 Expr&
-make_regular_call(Context& cxt, Expr& e, Expr_list& args)
+make_regular_call(Context& cxt, Name& id, Expr& e, Expr_list& args)
 {
   if (Reference_expr* ref = as<Reference_expr>(&e)) {
     Decl& d = ref->declaration();
@@ -137,10 +135,11 @@ make_regular_call(Context& cxt, Expr& e, Expr_list& args)
 Expr&
 make_call(Context& cxt, Expr& e, Expr_list& args)
 {
+  Name& id = cxt.get_id(call_op);
   if (is_type_dependent(e) || is_type_dependent(args))
-    return make_dependent_call(cxt, e, args);
+    return make_dependent_call(cxt, id, e, args);
   else
-    return make_regular_call(cxt, e, args);
+    return make_regular_call(cxt, id, e, args);
 }
 
 

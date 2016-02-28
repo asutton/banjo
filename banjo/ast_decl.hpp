@@ -69,41 +69,45 @@ struct Decl : Term
 
 struct Decl::Visitor
 {
-  virtual void visit(Variable_decl const&)  { }
-  virtual void visit(Constant_decl const&)  { }
-  virtual void visit(Function_decl const&)  { }
-  virtual void visit(Class_decl const&)     { }
-  virtual void visit(Union_decl const&)     { }
-  virtual void visit(Enum_decl const&)      { }
-  virtual void visit(Namespace_decl const&) { }
-  virtual void visit(Template_decl const&)  { }
-  virtual void visit(Concept_decl const&)   { }
-  virtual void visit(Axiom_decl const&)     { }
-  virtual void visit(Object_parm const&)    { }
-  virtual void visit(Value_parm const&)     { }
-  virtual void visit(Type_parm const&)      { }
-  virtual void visit(Template_parm const&)  { }
-  virtual void visit(Variadic_parm const&)  { }
+  virtual void visit(Variable_decl const&)   { }
+  virtual void visit(Constant_decl const&)   { }
+  virtual void visit(Function_decl const&)   { }
+  virtual void visit(Class_decl const&)      { }
+  virtual void visit(Union_decl const&)      { }
+  virtual void visit(Enum_decl const&)       { }
+  virtual void visit(Namespace_decl const&)  { }
+  virtual void visit(Template_decl const&)   { }
+  virtual void visit(Concept_decl const&)    { }
+  virtual void visit(Axiom_decl const&)      { }
+  virtual void visit(Expression_decl const&) { }
+  virtual void visit(Conversion_decl const&) { }
+  virtual void visit(Object_parm const&)     { }
+  virtual void visit(Value_parm const&)      { }
+  virtual void visit(Type_parm const&)       { }
+  virtual void visit(Template_parm const&)   { }
+  virtual void visit(Variadic_parm const&)   { }
 };
 
 
 struct Decl::Mutator
 {
-  virtual void visit(Variable_decl&)  { }
-  virtual void visit(Constant_decl&)  { }
-  virtual void visit(Function_decl&)  { }
-  virtual void visit(Class_decl&)     { }
-  virtual void visit(Union_decl&)     { }
-  virtual void visit(Enum_decl&)      { }
-  virtual void visit(Namespace_decl&) { }
-  virtual void visit(Template_decl&)  { }
-  virtual void visit(Concept_decl&)   { }
-  virtual void visit(Axiom_decl&)     { }
-  virtual void visit(Object_parm&)    { }
-  virtual void visit(Value_parm&)     { }
-  virtual void visit(Type_parm&)      { }
-  virtual void visit(Template_parm&)  { }
-  virtual void visit(Variadic_parm&)  { }
+  virtual void visit(Variable_decl&)   { }
+  virtual void visit(Constant_decl&)   { }
+  virtual void visit(Function_decl&)   { }
+  virtual void visit(Class_decl&)      { }
+  virtual void visit(Union_decl&)      { }
+  virtual void visit(Enum_decl&)       { }
+  virtual void visit(Namespace_decl&)  { }
+  virtual void visit(Template_decl&)   { }
+  virtual void visit(Concept_decl&)    { }
+  virtual void visit(Axiom_decl&)      { }
+  virtual void visit(Expression_decl&) { }
+  virtual void visit(Conversion_decl&) { }
+  virtual void visit(Object_parm&)     { }
+  virtual void visit(Value_parm&)      { }
+  virtual void visit(Type_parm&)       { }
+  virtual void visit(Template_parm&)   { }
+  virtual void visit(Variadic_parm&)   { }
 };
 
 
@@ -446,6 +450,62 @@ struct Axiom_decl : Decl
 };
 
 
+// Represents a declaraiton corresponding to a basic requirement.
+// This is represented a name with function type. The declaration
+// has no definition.
+struct Expression_decl : Decl
+{
+  Expression_decl(Name& n, Type& t)
+    : Decl(n), ty(&t)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the (function) type of the declaration.
+  Function_type const& type() const;
+  Function_type&       type();
+
+  // Returns the operand types of the expression.
+  Type_list const& operand_types() const;
+  Type_list&       operand_types();
+
+  // Returns the result type of the expression.
+  Type const& result_type() const;
+  Type&       result_type();
+
+  Type* ty;
+};
+
+
+// Represents a declaraiton corresponding to a conversion requirement.
+// This is represented a name with function type. The declaration
+// has no definition.
+struct Conversion_decl : Decl
+{
+  Conversion_decl(Name& n, Type& t)
+    : Decl(n), ty(&t)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the (function) type of the declaration.
+  Function_type const& type() const;
+  Function_type&       type();
+
+  // Returns the operand types of the expression.
+  Type_list const& operand_types() const;
+  Type_list&       operand_types();
+
+  // Returns the destination type of the expression.
+  Type const& destination_type() const;
+  Type&       destination_type();
+
+  Type* ty;
+};
+
+
 // The base class of all parameters. This provides deriviation from
 // T. Note that the constructor of this clas
 template<typename T>
@@ -649,27 +709,29 @@ struct Generic_decl_visitor : Decl::Visitor, Generic_visitor<F, T>
     : Generic_visitor<F, T>(f)
   { }
 
-  void visit(Variable_decl const& d)  { this->invoke(d); }
-  void visit(Constant_decl const& d)  { this->invoke(d); }
-  void visit(Function_decl const& d)  { this->invoke(d); }
-  void visit(Class_decl const& d)     { this->invoke(d); }
-  void visit(Union_decl const& d)     { this->invoke(d); }
-  void visit(Enum_decl const& d)      { this->invoke(d); }
-  void visit(Namespace_decl const& d) { this->invoke(d); }
-  void visit(Template_decl const& d)  { this->invoke(d); }
-  void visit(Concept_decl const& d)   { this->invoke(d); }
-  void visit(Axiom_decl const& d)     { this->invoke(d); }
-  void visit(Object_parm const& d)    { this->invoke(d); }
-  void visit(Value_parm const& d)     { this->invoke(d); }
-  void visit(Type_parm const& d)      { this->invoke(d); }
-  void visit(Template_parm const& d)  { this->invoke(d); }
-  void visit(Variadic_parm const& d)  { this->invoke(d); }
+  void visit(Variable_decl const& d)   { this->invoke(d); }
+  void visit(Constant_decl const& d)   { this->invoke(d); }
+  void visit(Function_decl const& d)   { this->invoke(d); }
+  void visit(Class_decl const& d)      { this->invoke(d); }
+  void visit(Union_decl const& d)      { this->invoke(d); }
+  void visit(Enum_decl const& d)       { this->invoke(d); }
+  void visit(Namespace_decl const& d)  { this->invoke(d); }
+  void visit(Template_decl const& d)   { this->invoke(d); }
+  void visit(Concept_decl const& d)    { this->invoke(d); }
+  void visit(Axiom_decl const& d)      { this->invoke(d); }
+  void visit(Expression_decl const& d) { this->invoke(d); }
+  void visit(Conversion_decl const& d) { this->invoke(d); }
+  void visit(Object_parm const& d)     { this->invoke(d); }
+  void visit(Value_parm const& d)      { this->invoke(d); }
+  void visit(Type_parm const& d)       { this->invoke(d); }
+  void visit(Template_parm const& d)   { this->invoke(d); }
+  void visit(Variadic_parm const& d)   { this->invoke(d); }
 };
 
 
 // Apply a function to the given declaration.
 template<typename F, typename T = typename std::result_of<F(Variable_decl const&)>::type>
-inline decltype(auto)
+__attribute__((always_inline)) decltype(auto)
 apply(Decl const& d, F fn)
 {
   Generic_decl_visitor<F, T> vis(fn);
@@ -685,27 +747,29 @@ struct Generic_decl_mutator : Decl::Mutator, Generic_mutator<F, T>
     : Generic_mutator<F, T>(f)
   { }
 
-  void visit(Variable_decl& d)  { this->invoke(d); }
-  void visit(Constant_decl& d)  { this->invoke(d); }
-  void visit(Function_decl& d)  { this->invoke(d); }
-  void visit(Class_decl& d)     { this->invoke(d); }
-  void visit(Union_decl& d)     { this->invoke(d); }
-  void visit(Enum_decl& d)      { this->invoke(d); }
-  void visit(Namespace_decl& d) { this->invoke(d); }
-  void visit(Template_decl& d)  { this->invoke(d); }
-  void visit(Concept_decl& d)   { this->invoke(d); }
-  void visit(Axiom_decl& d)     { this->invoke(d); }
-  void visit(Object_parm& d)    { this->invoke(d); }
-  void visit(Value_parm& d)     { this->invoke(d); }
-  void visit(Type_parm& d)      { this->invoke(d); }
-  void visit(Template_parm& d)  { this->invoke(d); }
-  void visit(Variadic_parm& d)  { this->invoke(d); }
+  void visit(Variable_decl& d)   { this->invoke(d); }
+  void visit(Constant_decl& d)   { this->invoke(d); }
+  void visit(Function_decl& d)   { this->invoke(d); }
+  void visit(Class_decl& d)      { this->invoke(d); }
+  void visit(Union_decl& d)      { this->invoke(d); }
+  void visit(Enum_decl& d)       { this->invoke(d); }
+  void visit(Namespace_decl& d)  { this->invoke(d); }
+  void visit(Template_decl& d)   { this->invoke(d); }
+  void visit(Concept_decl& d)    { this->invoke(d); }
+  void visit(Axiom_decl& d)      { this->invoke(d); }
+  void visit(Expression_decl& d) { this->invoke(d); }
+  void visit(Conversion_decl& d) { this->invoke(d); }
+  void visit(Object_parm& d)     { this->invoke(d); }
+  void visit(Value_parm& d)      { this->invoke(d); }
+  void visit(Type_parm& d)       { this->invoke(d); }
+  void visit(Template_parm& d)   { this->invoke(d); }
+  void visit(Variadic_parm& d)   { this->invoke(d); }
 };
 
 
 // Apply a function to the given declaration.
 template<typename F, typename T = typename std::result_of<F(Variable_decl&)>::type>
-inline decltype(auto)
+__attribute__((always_inline)) decltype(auto)
 apply(Decl& d, F fn)
 {
   Generic_decl_mutator<F, T> vis(fn);

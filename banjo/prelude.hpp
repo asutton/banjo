@@ -11,6 +11,7 @@
 #include <lingo/location.hpp>
 #include <lingo/symbol.hpp>
 
+
 namespace banjo
 {
 

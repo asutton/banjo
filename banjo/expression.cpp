@@ -14,7 +14,7 @@ namespace banjo
 // requires-expressions. This performs a lookup of an iniitally
 // constructed expression, and adjusts its type as needed.
 Expr&
-make_required_expression(Context& cxt, Expr& e)
+make_required_expression(Context& cxt, Name& n, Expr& e)
 {
   if (Expr* prev = requirement_lookup(cxt, e))
     e.ty = prev->ty;

@@ -116,6 +116,90 @@ Namespace_decl::is_anonymous() const
 }
 
 
+Function_type const&
+Expression_decl::type() const
+{
+  return cast<Function_type>(*ty);
+}
+
+
+Function_type&
+Expression_decl::type()
+{
+  return cast<Function_type>(*ty);
+}
+
+
+Type_list const&
+Expression_decl::operand_types() const
+{
+  return type().parameter_types();
+}
+
+
+Type_list&
+Expression_decl::operand_types()
+{
+  return type().parameter_types();
+}
+
+
+Type const&
+Expression_decl::result_type() const
+{
+  return type().return_type();
+}
+
+
+Type&
+Expression_decl::result_type()
+{
+  return type().return_type();
+}
+
+
+Function_type const&
+Conversion_decl::type() const
+{
+  return cast<Function_type>(*ty);
+}
+
+
+Function_type&
+Conversion_decl::type()
+{
+  return cast<Function_type>(*ty);
+}
+
+
+Type_list const&
+Conversion_decl::operand_types() const
+{
+  return type().parameter_types();
+}
+
+
+Type_list&
+Conversion_decl::operand_types()
+{
+  return type().parameter_types();
+}
+
+
+Type const&
+Conversion_decl::destination_type() const
+{
+  return type().return_type();
+}
+
+
+Type&
+Conversion_decl::destination_type()
+{
+  return type().return_type();
+}
+
+
 // -------------------------------------------------------------------------- //
 // Declared type
 
@@ -129,9 +213,11 @@ declared_type(Decl& decl)
 {
   struct fn
   {
-    Type& operator()(Decl& d)          { banjo_unhandled_case(d); }
-    Type& operator()(Object_decl& d)   { return d.type(); }
-    Type& operator()(Function_decl& d) { return d.type(); }
+    Type& operator()(Decl& d)            { banjo_unhandled_case(d); }
+    Type& operator()(Object_decl& d)     { return d.type(); }
+    Type& operator()(Function_decl& d)   { return d.type(); }
+    Type& operator()(Expression_decl& d) { return d.type(); }
+    Type& operator()(Conversion_decl& d) { return d.type(); }
   };
   Decl& d = decl.parameterized_declaration();
   return apply(d, fn{});

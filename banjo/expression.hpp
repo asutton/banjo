@@ -13,7 +13,7 @@ namespace banjo
 
 struct Context;
 
-Expr& make_required_expression(Context&, Expr&);
+Expr& make_required_expression(Context&, Name&, Expr&);
 
 Expr& make_logical_and(Context&, Expr&, Expr&);
 Expr& make_logical_or(Context&, Expr&, Expr&);

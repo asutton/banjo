@@ -35,7 +35,7 @@ make_standard_logical_expr(Context& cxt, Expr& e, Make make)
 // binary overload for details.
 template<typename Make>
 static Expr&
-make_dependent_logical_expr(Context& cxt, Expr& e, Make make)
+make_dependent_logical_expr(Context& cxt, Name& id, Expr& e, Make make)
 {
   // Build the initial expression.
   Type& t = make_fresh_type(cxt);
@@ -43,7 +43,7 @@ make_dependent_logical_expr(Context& cxt, Expr& e, Make make)
 
   // Unify with previous expressions.
   if (cxt.in_requirements())
-    return make_required_expression(cxt, init);
+    return make_required_expression(cxt, id, init);
 
   // Don't type unconstrained templates.
   if (cxt.in_unconstrained_template())
@@ -62,10 +62,13 @@ make_dependent_logical_expr(Context& cxt, Expr& e, Make make)
 }
 
 
+// FIXME: Search for overloads.
 template<typename Make>
 static Expr&
-make_regular_logical_expr(Context& cxt, Expr& e, Make make)
+make_regular_logical_expr(Context& cxt, Name& id, Expr& e, Make make)
 {
+  // If the operand has class type, search for overloads.
+
   return make_standard_logical_expr(cxt, e, make);
 }
 
@@ -73,14 +76,14 @@ make_regular_logical_expr(Context& cxt, Expr& e, Make make)
 // Determine the result type of logical expression.
 template<typename Make>
 static Expr&
-make_logical_expr(Context& cxt, Expr& e, Make make)
+make_logical_expr(Context& cxt, Name& id, Expr& e, Make make)
 {
   Type& t = e.type();
   try {
     if (is_dependent_type(t))
-      return make_dependent_logical_expr(cxt, e, make);
+      return make_dependent_logical_expr(cxt, id, e, make);
     else
-      return make_regular_logical_expr(cxt, e, make);
+      return make_regular_logical_expr(cxt, id, e, make);
   } catch (Translation_error&) {
     // FIXME: Buiild an expression with a poisoned type
     // so that we can continue diagnosting errors.
@@ -115,7 +118,7 @@ make_standard_logical_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
 // do that.
 template<typename Make>
 static Expr&
-make_dependent_logical_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
+make_dependent_logical_expr(Context& cxt, Name& id, Expr& e1, Expr& e2, Make make)
 {
   // Build a dependent expression.
   Type& t = make_fresh_type(cxt);
@@ -123,7 +126,7 @@ make_dependent_logical_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
 
   // Unify with previous functions.
   if (cxt.in_requirements())
-    return make_required_expression(cxt, init);
+    return make_required_expression(cxt, id, init);
 
   // Don't check in unconstrained templates.
   if (!cxt.current_template_constraints())
@@ -147,7 +150,7 @@ make_dependent_logical_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
 // a user-defined type, then this may find an overloaded operator.
 template<typename Make>
 static Expr&
-make_regular_logical_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
+make_regular_logical_expr(Context& cxt, Name& id, Expr& e1, Expr& e2, Make make)
 {
   // FIXME: search for overloaded operators.
   return make_standard_logical_expr(cxt, e1, e2, make);
@@ -157,15 +160,15 @@ make_regular_logical_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
 // Determine the result type of logical expression.
 template<typename Make>
 static Expr&
-make_logical_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
+make_logical_expr(Context& cxt, Name& id, Expr& e1, Expr& e2, Make make)
 {
   Type& t1 = e1.type();
   Type& t2 = e2.type();
   try {
     if (is_dependent_type(t1) || is_dependent_type(t2))
-      return make_dependent_logical_expr(cxt, e1, e2, make);
+      return make_dependent_logical_expr(cxt, id, e1, e2, make);
     else
-      return make_regular_logical_expr(cxt, e1, e2, make);
+      return make_regular_logical_expr(cxt, id, e1, e2, make);
   } catch (Translation_error&) {
     // FIXME: Build an expression with a poisoned type
     // so that we can continue diagnosting errors.
@@ -177,30 +180,33 @@ make_logical_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
 Expr&
 make_logical_and(Context& cxt, Expr& e1, Expr& e2)
 {
+  Name& id = cxt.get_id(and_op);
   auto make = [&cxt](Type& t, Expr& e1, Expr& e2) -> Expr& {
     return cxt.make_and(t, e1, e2);
   };
-  return make_logical_expr(cxt, e1, e2, make);
+  return make_logical_expr(cxt, id, e1, e2, make);
 }
 
 
 Expr&
 make_logical_or(Context& cxt, Expr& e1, Expr& e2)
 {
+  Name& id = cxt.get_id(or_op);
   auto make = [&cxt](Type& t, Expr& e1, Expr& e2) -> Expr& {
     return cxt.make_or(t, e1, e2);
   };
-  return make_logical_expr(cxt, e1, e2, make);
+  return make_logical_expr(cxt, id, e1, e2, make);
 }
 
 
 Expr&
 make_logical_not(Context& cxt, Expr& e)
 {
-  Builder build(cxt);
-  Expr& c = contextual_conversion_to_bool(cxt, e);
-  Type& t = c.type();
-  return build.make_not(t, c);
+  Name& id = cxt.get_id(not_op);
+  auto make = [&cxt](Type& t, Expr& e) -> Expr& {
+    return cxt.make_not(t, e);
+  };
+  return make_logical_expr(cxt, id, e, make);
 }
 
 

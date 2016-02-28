@@ -14,6 +14,13 @@ namespace banjo
 {
 
 
+Decl_list
+unqualified_lookup(Context& cxt, Name const& id)
+{
+  return unqualified_lookup(cxt, cxt.current_scope(), id);
+}
+
+
 // Returns the non-empty set of declarations for give (unqualified) id.
 // Throws an exception if no matching declarations are found.
 //
@@ -22,7 +29,7 @@ namespace banjo
 // TODO: How should we handle non-simple id's like operator-ids
 // and conversion function ids.
 Decl_list
-unqualified_lookup(Context& cxt, Scope& scope, Simple_id const& id)
+unqualified_lookup(Context& cxt, Scope& scope, Name const& id)
 {
   Scope* p = &scope;
   while (p) {
@@ -70,7 +77,7 @@ unqualified_lookup(Context& cxt, Scope& scope, Simple_id const& id)
 // Simple lookup is a form of unqualified lookup that returns the
 // single declaration associated with the name.
 Decl&
-simple_lookup(Context& cxt, Scope& scope, Simple_id const& id)
+simple_lookup(Context& cxt, Scope& scope, Name const& id)
 {
   Decl_list result = unqualified_lookup(cxt, scope, id);
 
@@ -155,6 +162,24 @@ requirement_lookup(Context& cxt, Expr& e)
   return nullptr;
 }
 
+
+// Search for a declaration of a required expression in the current
+// requirement scope. The resulting list is empty if no prior
+// requirements have been encountered.
+Decl_list
+required_expression_lookup(Context& cxt, Name const& id)
+{
+  Decl_list ds;
+  Scope& s = *cxt.current_requires_scope();
+  if (Overload_set* ovl = s.lookup(id)) {
+    // Filter the overload set for expression declarations.
+    for (Decl& d : *ovl) {
+      if (is<Expression_decl>(&d))
+        ds.push_back(d);
+    }
+  }
+  return ds;
+}
 
 
 } // namespace banjo

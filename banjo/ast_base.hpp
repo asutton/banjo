@@ -127,6 +127,8 @@ struct Namespace_decl;
 struct Template_decl;
 struct Concept_decl;
 struct Axiom_decl;
+struct Expression_decl;
+struct Conversion_decl;
 struct Object_parm;
 struct Value_parm;
 struct Type_parm;
