@@ -169,6 +169,16 @@ hash_float(Float_type const& t)
 }
 
 
+template<typename T>
+inline std::size_t
+hash_composite(T const& t)
+{
+  std::size_t h = hash_type(t);
+  boost::hash_combine(h, t.type());
+  return h;
+}
+
+
 inline std::size_t
 hash_value(Auto_type const& t)
 {
@@ -224,16 +234,16 @@ hash_value(Type const& t)
     std::size_t operator()(Decltype_type const& t) const  { return hash_value(t); }
     std::size_t operator()(Declauto_type const& t) const  { return hash_value(t); }
     std::size_t operator()(Function_type const& t) const  { return hash_value(t); }
-    std::size_t operator()(Qualified_type const& t) const { banjo_unhandled_case(t); }
-    std::size_t operator()(Pointer_type const& t) const   { banjo_unhandled_case(t); }
-    std::size_t operator()(Reference_type const& t) const { banjo_unhandled_case(t); }
-    std::size_t operator()(Array_type const& t) const     { banjo_unhandled_case(t); }
-    std::size_t operator()(Sequence_type const& t) const  { banjo_unhandled_case(t); }
+    std::size_t operator()(Qualified_type const& t) const { return hash_composite(t); }
+    std::size_t operator()(Pointer_type const& t) const   { return hash_composite(t); }
+    std::size_t operator()(Reference_type const& t) const { return hash_composite(t); }
+    std::size_t operator()(Array_type const& t) const     { return hash_composite(t); }
+    std::size_t operator()(Sequence_type const& t) const  { return hash_composite(t); }
     std::size_t operator()(Class_type const& t) const     { return hash_udt(t); }
     std::size_t operator()(Union_type const& t) const     { return hash_udt(t); }
     std::size_t operator()(Enum_type const& t) const      { return hash_udt(t); }
     std::size_t operator()(Typename_type const& t) const  { return hash_udt(t); }
-    std::size_t operator()(Synthetic_type const& t) const { banjo_unhandled_case(t); }
+    std::size_t operator()(Synthetic_type const& t) const { return hash_udt(t); }
   };
   return apply(t, fn{});
 }

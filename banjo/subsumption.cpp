@@ -860,7 +860,7 @@ subsumes(Context& cxt, Cons const& a, Cons const& c)
   // Alas... no quick check. We have to prove the implication.
   Goal_list goals(Sequent(a, c));
   Proof p(cxt, goals);
-  // std::cout << "INIT: " << p.sequent() << '\n';
+  std::cout << "INIT: " << p.sequent() << '\n';
 
   // Continue manipulating the proof state until we know that
   // the implication is valid or not.
@@ -869,8 +869,8 @@ subsumes(Context& cxt, Cons const& a, Cons const& c)
   do {
     // Opportunistically flatten sequents in each goal.
     flatten(p);
-    // std::cout << "------------\n";
-    // std::cout << "STEP " << n << ": " << p.sequent() << '\n';
+    std::cout << "------------\n";
+    std::cout << "STEP " << n << ": " << p.sequent() << '\n';
 
     // Having done that, determine if the proof is valid (or not).
     // In either case, we can stop.
