@@ -14,7 +14,8 @@ namespace banjo
 {
 
 Context::Context()
-  : syms()
+  : Builder(*this), syms(), id(0), tparms {-1, -1}, pholds {-1, -1}
+  , diags(false)
 {
   // Initialize the color system. This is a process-level
   // configuration. Perhaps we we should only initialize
@@ -26,8 +27,7 @@ Context::Context()
   init_tokens(syms);
 
   // Initialize the global namepace.
-  Builder build(*this);
-  global = &build.get_global_namespace();
+  global = &get_global_namespace();
 }
 
 
@@ -48,7 +48,7 @@ Context::set_scope(Scope& s)
 
 
 // Create a new initializer scopee.
-Scope&
+Initializer_scope&
 Context::make_initializer_scope(Decl& d)
 {
   return *new Initializer_scope(current_scope(), d);
@@ -56,7 +56,7 @@ Context::make_initializer_scope(Decl& d)
 
 
 // Create a new function scope.
-Scope&
+Function_scope&
 Context::make_function_scope(Decl& d)
 {
   return *new Function_scope(current_scope(), d);
@@ -64,18 +64,57 @@ Context::make_function_scope(Decl& d)
 
 
 // Create a new function parameter scope.
-Scope&
+Function_parameter_scope&
 Context::make_function_parameter_scope()
 {
   return *new Function_parameter_scope(current_scope());
 }
 
 
+Template_scope&
+Context::make_template_scope()
+{
+  return *new Template_scope(current_scope());
+}
+
+
 // Create a new template parameter scope.
-Scope&
+Template_parameter_scope&
 Context::make_template_parameter_scope()
 {
   return *new Template_parameter_scope(current_scope());
+}
+
+
+// Create a new block scope.
+Block_scope&
+Context::make_block_scope()
+{
+  return *new Block_scope(current_scope());
+}
+
+
+// Create a new requires scope.
+Requires_scope&
+Context::make_requires_scope()
+{
+  return *new Requires_scope(current_scope());
+}
+
+
+// Create a new concept scope.
+Concept_scope&
+Context::make_concept_scope(Decl& d)
+{
+  return *new Concept_scope(current_scope(), d);
+}
+
+
+// Create a new constrained scope.
+Constrained_scope&
+Context::make_constrained_scope(Expr& e)
+{
+  return *new Constrained_scope(current_scope(), e);
 }
 
 
@@ -87,8 +126,64 @@ Context::current_scope()
 }
 
 
+// Returns the current template scope or nullptr if not
+// currntly in the declaration of a template.
+Template_scope*
+Context::current_template_scope()
+{
+  Scope* p = scope;
+  while (p) {
+    if (Template_scope* t = as<Template_scope>(p))
+      return t;
+    p = p->enclosing_scope();
+  }
+  return nullptr;
+}
+
+
+// Returns the current template parameters, or nullptr if not
+// in a current template. The resulting is empty only if the template
+// parameters have not been established (e.g., parsed).
+Decl_list*
+Context::current_template_parameters()
+{
+  if (Template_scope* t = current_template_scope())
+    return &t->parms;
+  else
+    return nullptr;
+}
+
+
+// Returns the current template constraints, or nullptr if the
+// current template if no constraint is yet associated.
+Expr*
+Context::current_template_constraints()
+{
+  if (Template_scope* t = current_template_scope())
+    return t->cons;
+  else
+    return nullptr;
+}
+
+
+// Returns the current template scope or nullptr if not
+// currntly in the declaration of a template.
+Requires_scope*
+Context::current_requires_scope()
+{
+  Scope* p = scope;
+  while (p) {
+    if (Requires_scope* t = as<Requires_scope>(p))
+      return t;
+    p = p->enclosing_scope();
+  }
+  return nullptr;
+}
+
 // Find the innermost declaration context. This is the first
-// scope associatd with a declaration.
+// scope associatd with a declaration. Note that we are guaranteed
+// to have a current context since the outermost scope is the
+// global namespace.
 Decl&
 Context::current_context()
 {
@@ -97,6 +192,38 @@ Context::current_context()
     p = p->enclosing_scope();
   return *p->context();
 }
+
+
+// Returns the current template declaration, or nullptr if not
+// in a template declaration.
+//
+// NOTE: As it currently stands, the "current template" is not
+// fully established until its declaration is actually declared.
+// Consider:
+//
+//    template<typename T>
+//    def f() -> int { ... }
+//                  ^
+// The point of declaration for f is indicated by the caret. This
+// is when when the current template is valid. The following functions
+// can provide information about templat parameters and constraints
+// prior to the point of declaration:
+//
+// - current_template_scope
+// - current_template_parameters
+// - current_template_constraints
+Template_decl*
+Context::current_template()
+{
+  Scope* p = &current_scope();
+  while (!p->context()) {
+    if (Template_decl* t = as<Template_decl>(p->context()))
+      return t;
+    p = p->enclosing_scope();
+  }
+  return nullptr;
+}
+
 
 
 // -------------------------------------------------------------------------- //

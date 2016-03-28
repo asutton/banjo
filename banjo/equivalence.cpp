@@ -10,16 +10,6 @@
 namespace banjo
 {
 
-template<typename T>
-inline bool
-is_equivalent(List<T> const& a, List<T> const& b)
-{
-  auto cmp = [](T const& a, T const& b) {
-    return is_equivalent(a, b);
-  };
-  return std::equal(a.begin(), a.end(), b.begin(), b.end(), cmp);
-}
-
 
 // -------------------------------------------------------------------------- //
 // Terms
@@ -43,7 +33,7 @@ is_equivalent(Term const& x1, Term const& x2)
     return is_equivalent(*t1, cast<Expr>(x2));
   if (Decl const* t1 = as<Decl>(&x1))
     return is_equivalent(*t1, cast<Decl>(x2));
-  lingo_unreachable();
+  banjo_unhandled_case(x1);
 }
 
 
@@ -70,14 +60,14 @@ is_equivalent(Global_id const& n1, Global_id const& n2)
 inline bool
 is_equivalent(Placeholder_id const& n1, Placeholder_id const& n2)
 {
-  lingo_unimplemented();
+  return n1.number() == n2.number();
 }
 
 // they are operator-function-ids formed with the same operator
 inline bool
 is_equivalent(Operator_id const& n1, Operator_id const& n2)
 {
-  lingo_unimplemented();
+  return n1.kind() == n2.kind();
 }
 
 
@@ -362,7 +352,7 @@ is_equivalent(Expr const& e1, Expr const& e2)
   struct fn
   {
     Expr const& e2;
-    bool operator()(Expr const&) const              { lingo_unimplemented(); }
+    bool operator()(Expr const& e) const            { banjo_unhandled_case(e); }
     bool operator()(Boolean_expr const& e1) const   { return is_equivalent(e1, cast<Boolean_expr>(e2)); }
     bool operator()(Integer_expr const& e1) const   { return is_equivalent(e1, cast<Integer_expr>(e2)); }
     bool operator()(Reference_expr const& e1) const { return is_equivalent(e1, cast<Reference_expr>(e2)); }
@@ -417,12 +407,8 @@ is_equivalent(Decl const& a, Decl const& b)
   struct fn
   {
     Decl const& d2;
-
-    // FIXME: This is only valid for declarations that cannot be
-    // redeclared.
-    bool operator()(Decl const& d1) const { return &d1 == &d2; }
-
-    bool opeator(Type_parm const& d1) const { return is_equivalent(d1, cast<Type_parm>(d2)); }
+    bool operator()(Decl const& d1) const      { return &d1 == &d2; }
+    bool operator()(Type_parm const& d1) const { return is_equivalent(d1, cast<Type_parm>(d2)); }
   };
   return &a == &b;
 }
@@ -448,6 +434,24 @@ is_equivalent(Predicate_cons const& c1, Predicate_cons const& c2)
 }
 
 
+template<typename T>
+bool
+is_eq_usage(T const& c1, T const& c2)
+{
+  return is_equivalent(c1.expression(), c2.expression())
+      && is_equivalent(c1.type(), c2.type());
+}
+
+
+// FIXME: Also compare template parameters?
+bool
+is_eq_parm(Parameterized_cons const& c1, Parameterized_cons const& c2)
+{
+  return is_equivalent(c1.variables(), c2.variables())
+      && is_equivalent(c1.constraint(), c2.constraint());
+}
+
+
 bool
 is_equivalent(Binary_cons const& c1, Binary_cons const& c2)
 {
@@ -456,17 +460,19 @@ is_equivalent(Binary_cons const& c1, Binary_cons const& c2)
 }
 
 
-
 bool
 is_equivalent(Cons const& c1, Cons const& c2)
 {
   struct fn
   {
     Cons const& c2;
-    bool operator()(Cons const& c1) const           { lingo_unimplemented(); }
-    bool operator()(Concept_cons const& c1) const   { return is_equivalent(c1, cast<Concept_cons>(c2)); }
-    bool operator()(Predicate_cons const& c1) const { return is_equivalent(c1, cast<Predicate_cons>(c2)); }
-    bool operator()(Binary_cons const& c1) const    { return is_equivalent(c1, cast<Binary_cons>(c2)); }
+    bool operator()(Cons const& c1) const               { banjo_unhandled_case(c1); }
+    bool operator()(Concept_cons const& c1) const       { return is_equivalent(c1, cast<Concept_cons>(c2)); }
+    bool operator()(Predicate_cons const& c1) const     { return is_equivalent(c1, cast<Predicate_cons>(c2)); }
+    bool operator()(Expression_cons const& c1) const    { return is_eq_usage(c1, cast<Expression_cons>(c2)); }
+    bool operator()(Conversion_cons const& c1) const    { return is_eq_usage(c1, cast<Conversion_cons>(c2)); }
+    bool operator()(Parameterized_cons const& c1) const { return is_eq_parm(c1, cast<Parameterized_cons>(c2)); }
+    bool operator()(Binary_cons const& c1) const        { return is_equivalent(c1, cast<Binary_cons>(c2)); }
   };
 
   // The same objects represent the same types.

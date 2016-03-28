@@ -1,0 +1,17 @@
+
+concept Eq<typename T>
+{
+  requires (T a, T b) {
+    a == b : bool;
+  }
+}
+
+
+
+template<typename T>
+  requires Eq<T>
+def f(T const x, T y) -> bool
+{
+  // NOTE: This is valid because x == y has type true.
+  x == y && true;
+}

@@ -62,6 +62,7 @@ struct Boolean_expr;
 struct Integer_expr;
 struct Real_expr;
 struct Reference_expr;
+struct Template_ref;
 struct Check_expr;
 struct Add_expr;
 struct Sub_expr;
@@ -91,6 +92,7 @@ struct Boolean_conv;
 struct Integer_conv;
 struct Float_conv;
 struct Numeric_conv;
+struct Dependent_conv;
 struct Ellipsis_conv;
 
 struct Init;
@@ -105,7 +107,7 @@ struct Type_req;
 struct Syntactic_req;
 struct Semantic_req;
 struct Expression_req;
-struct Simple_req;
+struct Basic_req;
 struct Conversion_req;
 struct Deduction_req;
 
@@ -162,9 +164,24 @@ using lingo::Integer;
 // Terms
 
 // The base class of all terms in the language.
+//
+// Each term has an associated source code location. However, this
+// is not meaningful for all terms. In particular, canonicalized
+// terms must not include a valid source code location.
 struct Term
 {
   virtual ~Term() { }
+
+  // Returns the source code location of the term. this
+  // may be an invalid position.
+  Location location() const { return loc; }
+
+  // Returns the region of text over which the term is written.
+  // By default, this is is the empty region, which starts
+  // and ends at the term's location.
+  virtual Region region() const { return {loc, loc}; }
+
+  Location loc;
 };
 
 
@@ -193,7 +210,7 @@ struct List_iterator
   pointer  operator->() const { return *iter; }
 
   List_iterator& operator++()    { ++iter; return *this; }
-  List_iterator& operator++(int) { List_iterator x = *this; ++iter; return x; }
+  List_iterator  operator++(int) { List_iterator x = *this; ++iter; return x; }
 
   bool operator==(List_iterator i) const { return iter == i.iter; }
   bool operator!=(List_iterator i) const { return iter != i.iter; }
@@ -226,7 +243,7 @@ struct List_iterator<T const>
   pointer  operator->() const { return *iter; }
 
   List_iterator& operator++()    { ++iter; return *this; }
-  List_iterator& operator++(int) { List_iterator x = *this; ++iter; return x; }
+  List_iterator  operator++(int) { List_iterator x = *this; ++iter; return x; }
 
   bool operator==(List_iterator i) const { return iter == i.iter; }
   bool operator!=(List_iterator i) const { return iter != i.iter; }
@@ -312,6 +329,16 @@ using Cons_iter = Cons_list::iterator;
 
 // Pairs and tuples
 using Expr_pair = std::pair<Expr&, Expr&>;
+
+
+// An index records the depth and offset of a parameter.
+struct Index : std::pair<int, int>
+{
+  using std::pair<int, int>::pair;
+
+  int depth() const  { return first; }
+  int offset() const { return second; }
+};
 
 
 } // namesapce banjo

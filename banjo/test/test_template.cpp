@@ -16,22 +16,31 @@ test_basics(Context& cxt)
 
   Builder build(cxt);
   {
+    Enter_template_parameter_scope scope(cxt);
+    lingo_assert(cxt.current_template_level() == 0);
+    lingo_assert(cxt.current_template_index() == -1);
+
     Type_parm& p1 = build.make_type_parameter("T");
+    lingo_assert(cxt.current_template_index() == 0);
+
     Type_parm& p2 = build.make_type_parameter("U");
+    lingo_assert(cxt.current_template_index() == 1);
+
     Value_parm& p3 = build.make_value_parm("N", build.get_int_type());
+    lingo_assert(cxt.current_template_index() == 2);
 
     Decl& var = build.make_variable("v1", build.get_typename_type(p1));
     Decl& tmp = build.make_template({&p1, &p2, &p3}, var);
     std::cout << tmp << '\n';
   }
 
-  {
-    Type_parm& p = build.make_type_parameter("T");
-    Decl& var = build.make_variable("v2", build.get_typename_type(p));
-    Template_decl& tmp = build.make_template({&p}, var);
-    tmp.constrain(build.get_true());
-    std::cout << tmp << '\n';
-  }
+  // {
+  //   Type_parm& p = build.make_type_parameter("T");
+  //   Decl& var = build.make_variable("v2", build.get_typename_type(p));
+  //   Template_decl& tmp = build.make_template({&p}, var);
+  //   tmp.constrain(build.get_true());
+  //   std::cout << tmp << '\n';
+  // }
 }
 
 

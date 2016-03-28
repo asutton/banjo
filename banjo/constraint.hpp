@@ -5,17 +5,21 @@
 #define BANJO_CONSTRAINT_HPP
 
 #include "prelude.hpp"
+#include "language.hpp"
+#include "scope.hpp"
+
 
 namespace banjo
 {
 
-struct Cons;
-struct Concept_cons;
-struct Context;
-
-
 Cons&       expand(Context&, Concept_cons&);
 Cons const& expand(Context&, Concept_cons const&);
+
+Expr* admit_expression(Context&, Expr&, Expr&);
+Expr* admit_expression(Context&, Cons&, Expr&);
+
+Expr* admit_conversion(Context&, Expr&, Expr&, Type&);
+Expr* admit_conversion(Context&, Cons&, Expr&, Type&);
 
 } // namespace banjo
 

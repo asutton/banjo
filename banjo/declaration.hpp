@@ -5,6 +5,7 @@
 #define BANJO_DECLARATION_HPP
 
 #include "prelude.hpp"
+#include "language.hpp"
 
 
 namespace banjo
@@ -15,8 +16,10 @@ struct Decl;
 struct Scope;
 
 
-Decl* declare(Context&, Scope&, Decl&);
+void declare(Context&, Decl&);
+void declare(Context&, Scope&, Decl&);
 
+void declare_required_expression(Context&, Expr&);
 
 } // namespace banjo
 

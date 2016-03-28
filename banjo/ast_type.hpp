@@ -422,20 +422,12 @@ struct Typename_type : User_defined_type
 //
 // TODO: Do we always need a declaration, or can we just synthesize
 // types from thin air?
-struct Synthetic_type : Type
+struct Synthetic_type : User_defined_type
 {
-  Synthetic_type(Decl& d)
-    : decl(&d)
-  { }
+  using User_defined_type::User_defined_type;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the declaration from which this type was synthesized.
-  Decl const& declaration() const { return *decl; }
-  Decl&       declaration()       { return *decl; }
-
-  Decl* decl;
 };
 
 

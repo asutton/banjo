@@ -7,7 +7,6 @@
 #include "prelude.hpp"
 #include "language.hpp"
 #include "hash.hpp"
-#include "equivalence.hpp"
 #include "overload.hpp"
 
 
@@ -17,21 +16,9 @@ namespace banjo
 // -------------------------------------------------------------------------- //
 // Scope definitions
 
-// An assumption set stores information about an expression occurring
-// within a template definition (or concept).
-struct Result_set
-{
-  Type*     ty;
-  Type_list conv;
-};
-
 
 // Maps names to overload sets.
 using Name_map = std::unordered_map<Name const*, Overload_set, Name_hash, Name_eq>;
-
-
-// Maps expressions to information about their types and conversions.
-using Expr_map = std::unordered_map<Expr const*, Result_set, Expr_hash, Expr_eq>;
 
 
 // A scope defines a maximal lexical region of text where an
@@ -42,7 +29,7 @@ using Expr_map = std::unordered_map<Expr const*, Result_set, Expr_hash, Expr_eq>
 // expression may occur.
 struct Scope
 {
-  using Name_binding = Name_map::value_type;
+  using Binding = Name_map::value_type;
 
   // Construct a new scope with the given parent. This is
   // used to create scopes that are not affiliated with a
@@ -83,8 +70,8 @@ struct Scope
   // is undefined if a name binding already exists.
   //
   // TODO: Assert that `n` is a form of simple id.
-  Name_binding& bind(Decl& d);
-  Name_binding& bind(Name const&, Decl&);
+  Binding& bind(Decl& d);
+  Binding& bind(Name const&, Decl&);
 
   // Return the binding for the given symbol, or nullptr
   // if no such binding exists.
@@ -97,7 +84,6 @@ struct Scope
   Scope*   parent;
   Decl*    decl;
   Name_map names;
-  Expr_map exprs;
 };
 
 
@@ -105,11 +91,11 @@ struct Scope
 //
 // Note that the addition of declarations to an overload set
 // must be handled by semantic rules.
-inline Scope::Name_binding&
+inline Scope::Binding&
 Scope::bind(Name const& n, Decl& d)
 {
   lingo_assert(count(n) == 0);
-  auto ins = names.insert({&n, {&d}});
+  auto ins = names.insert({&n, {d}});
   return *ins.first;
 }
 
@@ -135,6 +121,10 @@ Scope::lookup(Name const& n)
   else
     return nullptr;
 }
+
+
+// A list of scopes.
+using Scope_list = std::vector<Scope*>;
 
 
 
@@ -173,6 +163,33 @@ struct Function_parameter_scope : Scope
   Function_parameter_scope(Scope& s)
     : Scope(s)
   { }
+};
+
+
+// Represents the pseudo-scope of a template declaration. This
+// is primarily used to save the current template parameters and
+// the current constraints.
+//
+// This object does not contain name bindings.
+//
+// A template scope maintains information about its level, since
+// template scopes can be nested. When combined
+struct Template_scope : Scope
+{
+  Template_scope(Scope& s)
+    : Scope(s), parms(), cons(nullptr)
+  { }
+
+  // Returns the parameters of the template scope.
+  Decl_list const& parameters() const { return parms; }
+  Decl_list&       parameters()       { return parms; }
+
+  // Returns the constraint associated with the template scope.
+  Expr const& constraint() const { return *cons; }
+  Expr&       constraint()       { return *cons; }
+
+  Decl_list  parms;
+  Expr*      cons;
 };
 
 
@@ -215,6 +232,57 @@ struct Initializer_scope : Scope
 // Represents a block scope.
 struct Block_scope : Scope
 {
+  Block_scope(Scope& s)
+    : Scope(s)
+  { }
+};
+
+
+// A requires scope is the block scope of a requires-expression.
+// We differentiate the two because lookup of expressions within
+// the this context is different than lookup in a regular block
+// scope. Otherwise, there is no difference.
+struct Requires_scope : Block_scope
+{
+  using Block_scope::Block_scope;
+
+  // This stores the list of expressions and their types, which
+  // ensures that we can match each expression to its type.
+  //
+  // FIXME: This is a hack. Replace it with a scope.
+  Expr_list exprs;
+};
+
+
+// Represents the scope of entities declared (or assumed) within a
+// concept definition.
+struct Concept_scope : Scope
+{
+  using Scope::Scope;
+
+  // Returns the function declaration associated with the scope.
+  Concept_decl const& declaration() const;
+  Concept_decl&       declaration();
+};
+
+
+// Represents the scope of assumed declarations in a template.
+//
+// This object does not directly contain name bindings.
+//
+// TODO: This may ultimately host nested sub-scopes based on
+// a decomposition of constraints.
+struct Constrained_scope : Scope
+{
+  Constrained_scope(Scope& s, Expr& e)
+    : Scope(s), expr(&e)
+  { }
+
+  // Returns the constraint expression associated with the scope.
+  Expr const& associated_constraints() const { return *expr; }
+  Expr&       associated_constraints()       { return *expr; }
+
+  Expr* expr;
 };
 
 

@@ -69,11 +69,6 @@ Parser::on_variable_declaration(Token, Name& n, Type& t)
 // -------------------------------------------------------------------------- //
 // Functions
 
-
-// FIXME: Move these into a new module, sema_def.cpp, Or put
-// them in sema_init?
-
-
 // A helper function that hides the ugliness of assinging the
 // function definition.
 static inline Def&
@@ -97,8 +92,6 @@ define_entity(Decl& decl, Def& def)
     return *(c->def = &def);
   lingo_unreachable();
 }
-
-
 
 
 Decl&
@@ -232,10 +225,9 @@ Parser::on_concept_definition(Decl& decl, Expr& e)
 Def&
 Parser::on_concept_definition(Decl& decl, Req_list& ds)
 {
-  lingo_unimplemented();
-  // Def& def = build.make_concept_definition(ds);
-  // define_concept(decl, def);
-  // return def;
+  Def& def = build.make_concept_definition(ds);
+  define_concept(decl, def);
+  return def;
 }
 
 

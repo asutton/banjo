@@ -4,36 +4,44 @@
 #ifndef BANJO_OVERLOAD_HPP
 #define BANJO_OVERLOAD_HPP
 
-#include "prelude.hpp"
+#include "language.hpp"
+#include "hash.hpp"
+
+#include <unordered_set>
 
 
 namespace banjo
 {
 
-struct Name;
-struct Decl;
-
-
-// Represents a set of overloaded declarations. All declarations have 
-// the same name, scope, and kind, but may differ in their different 
+// Represents a set of overloaded declarations. All declarations have
+// the same name, scope, and kind, but may differ in their different
 // types and constraints.
 //
 // Note that an overload set is never empty.
-struct Overload_set : std::vector<Decl*>
+struct Overload_set : Decl_list
 {
-  using std::vector<Decl*>::vector;
+  using iterator       = Decl_list::iterator;
+  using const_iterator = Decl_list::const_iterator;
 
-  // Returns the underlying list of declarations.
-  std::vector<Decl*> const& base() const { return *this; }
-  std::vector<Decl*>&       base()       { return *this; }
+  // Initialize the overload set with a single element.
+  Overload_set(Decl& d)
+    : Decl_list {&d}
+  { }
 
   // Returns the name of the overloaded declaratin.
   Name const& name() const;
   Name&       name();
+
+  // Inserts a new declaration into the overload set. The declaration
+  // shall be overloadable with all previous elements of the set.
+  void insert(Decl& d) { push_back(d); }
 };
 
 
-bool can_overload(Decl&, Decl&);
+void  declare_overload(Overload_set&, Decl&);
+
+
+std::ostream& operator<<(std::ostream&, Overload_set const&);
 
 
 } // namespace banjo

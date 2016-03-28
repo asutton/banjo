@@ -5,16 +5,14 @@
 #define BANJO_SUBSUMPTION_HPP
 
 #include "prelude.hpp"
+#include "language.hpp"
 
 
 namespace banjo
 {
 
-struct Cons;
-struct Context;
-
-
 bool subsumes(Context&, Cons const&, Cons const&);
+bool subsumes(Context&, Expr const&, Expr const&);
 
 
 } // namespace banjo

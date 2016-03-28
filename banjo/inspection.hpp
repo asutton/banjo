@@ -5,7 +5,7 @@
 #define BANJO_INSPECTION_HPP
 
 #include "token.hpp"
-#include "ast.hpp"
+#include "language.hpp"
 
 #include <iosfwd>
 
@@ -44,6 +44,7 @@ struct Debug_printer
 
   // Unresolved names
   void id(Name const&);
+  void simple_id(Simple_id const&);
 
   // Types
   void type(Type const&);
@@ -54,8 +55,11 @@ struct Debug_printer
   void expression(Expr const&);
   void literal(Boolean_expr const&);
   void literal(Integer_expr const&);
+  void reference_expression(Reference_expr const&);
   void unary_expression(Unary_expr const&);
   void binary_expression(Binary_expr const&);
+
+  void initializer(Bind_init const&);
 
   // Statements
   void statement(Stmt const&);

@@ -273,7 +273,6 @@ Parser::primary_expression()
       return on_boolean_literal(accept(), false);
     case integer_tok:
       return on_integer_literal(accept());
-
     case identifier_tok:
       return id_expression();
     case requires_tok:
@@ -327,8 +326,8 @@ Parser::requires_expression()
     match(gt_tok);
   }
 
-  // FIXME: Lay down a scope so these parameters aren't visible
-  // outside of the expression.
+  // Parse parameters in a new block scope.
+  Enter_scope scope(cxt, cxt.make_requires_scope());
   Decl_list parms;
   if (match_if(lparen_tok)) {
     parms = parameter_list();

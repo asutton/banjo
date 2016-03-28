@@ -8,7 +8,7 @@
 #include "token.hpp"
 #include "scope.hpp"
 #include "language.hpp"
-#include "builder.hpp"
+#include "context.hpp"
 
 
 namespace banjo
@@ -24,6 +24,9 @@ struct Parser
   { }
 
   Term& operator()();
+
+  // Syntactic forms
+  Operator_kind any_operator();
 
   // Syntax
   // Unresolved names
@@ -162,7 +165,7 @@ struct Parser
   // Identifiers
   Name& on_simple_id(Token);
   Name& on_destructor_id(Token, Type&);
-  Name& on_operator_id();
+  Name& on_operator_id(Token, Operator_kind);
   Name& on_conversion_id();
   Name& on_literal_id();
   Name& on_template_id(Token, Decl&, Term_list const&);
@@ -265,7 +268,8 @@ struct Parser
   Req& on_syntactic_requirement(Expr&);
   Req& on_semantic_requirement(Decl&);
   Req& on_expression_requirement(Expr&);
-  Req& on_simple_requirement(Expr&);
+  Req& on_basic_requirement(Expr&);
+  Req& on_basic_requirement(Expr&, Type&);
   Req& on_conversion_requirement(Expr&, Type&);
   Req& on_deduction_requirement(Expr&, Type&);
 
@@ -347,10 +351,13 @@ struct Parser::Assume_template
 
 // An RAII helper that manages parsing state related to the parsing
 // of a declaration nested within a template.
+//
+// TODO: This can probably be removed and templatize_declaration could
+// be implemented in terms of the template scope.
 struct Parser::Parsing_template
 {
-  Parsing_template(Parser&, Decl_list&s);
-  Parsing_template(Parser&, Decl_list&s, Expr&);
+  Parsing_template(Parser&, Decl_list*);
+  Parsing_template(Parser&, Decl_list*, Expr*);
   ~Parsing_template();
 
   Parser&    parser;
@@ -360,24 +367,24 @@ struct Parser::Parsing_template
 
 
 inline
-Parser::Parsing_template::Parsing_template(Parser& p, Decl_list& ps)
+Parser::Parsing_template::Parsing_template(Parser& p, Decl_list* ps)
   : parser(p)
   , saved_parms(p.state.template_parms)
   , saved_cons(p.state.template_cons)
 {
-  parser.state.template_parms = &ps;
+  parser.state.template_parms = ps;
   parser.state.template_cons = nullptr;
 }
 
 
 inline
-Parser::Parsing_template::Parsing_template(Parser& p, Decl_list& ps, Expr& c)
+Parser::Parsing_template::Parsing_template(Parser& p, Decl_list* ps, Expr* c)
   : parser(p)
   , saved_parms(p.state.template_parms)
   , saved_cons(p.state.template_cons)
 {
-  parser.state.template_parms = &ps;
-  parser.state.template_cons = &c;
+  parser.state.template_parms = ps;
+  parser.state.template_cons = c;
 }
 
 

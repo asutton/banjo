@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "parser.hpp"
+#include "ast.hpp"
 #include "lookup.hpp"
 #include "template.hpp"
 #include "print.hpp"
@@ -30,9 +31,9 @@ Parser::on_destructor_id(Token, Type& t)
 
 
 Name&
-Parser::on_operator_id()
+Parser::on_operator_id(Token tok, Operator_kind op)
 {
-  lingo_unimplemented();
+  return build.get_id(op);
 }
 
 
@@ -50,6 +51,9 @@ Parser::on_literal_id()
 }
 
 
+// FIXME: Actally match template arguments? Or do that when we
+// require the id to be resolved (e.g., as a type-name or an
+// id-expression)?
 Name&
 Parser::on_template_id(Token, Decl& d, Term_list const& a)
 {
@@ -57,6 +61,8 @@ Parser::on_template_id(Token, Decl& d, Term_list const& a)
 }
 
 
+// FIXME: Actually match the template arguments? Or do that when
+// we require the id to be resolved (i.e., as a check expression).
 Name&
 Parser::on_concept_id(Decl& d, Term_list const& a)
 {
@@ -173,7 +179,7 @@ Type&
 Parser::on_type_alias(Token tok)
 {
   Simple_id& id = build.get_id(tok);
-  Decl& decl = simple_lookup(current_scope(), id);
+  Decl& decl = simple_lookup(cxt, current_scope(), id);
 
   if (Type_parm* d = as<Type_parm>(&decl))
     return build.get_typename_type(*d);
@@ -223,7 +229,7 @@ Type&
 Parser::on_type_name(Token tok)
 {
   Simple_id& id = build.get_id(tok);
-  Decl& decl = simple_lookup(current_scope(), id);
+  Decl& decl = simple_lookup(cxt, current_scope(), id);
   if (Type* type = get_type_for_decl(cxt, decl))
     return *type;
   throw Lookup_error("'{}' does not name a type", id);
@@ -272,22 +278,24 @@ Parser::on_namespace_alias(Name&)
 }
 
 
+// FIXME: What if the identifier refers to a set of declarations?
 Decl&
 Parser::on_template_name(Token tok)
 {
   Simple_id& id = build.get_id(tok);
-  Decl& decl = simple_lookup(current_scope(), id);
+  Decl& decl = simple_lookup(cxt, current_scope(), id);
   if (is<Template_decl>(&decl))
     return decl;
   throw Lookup_error("'{}' does not name a template", id);
 }
 
 
+// FIXME: What if the identifier refers to a set of declarations?
 Decl&
 Parser::on_concept_name(Token tok)
 {
   Simple_id& id = build.get_id(tok);
-  Decl& decl = simple_lookup(current_scope(), id);
+  Decl& decl = simple_lookup(cxt, current_scope(), id);
   if (is<Concept_decl>(&decl))
     return decl;
   throw Lookup_error("'{}' does not name a concept", id);

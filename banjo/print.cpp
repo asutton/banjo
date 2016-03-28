@@ -112,6 +112,7 @@ Printer::token(char const* str)
   prev = identifier_tok;
 }
 
+
 // Print a string as an identifier.
 void
 Printer::token(String const& str)
@@ -119,6 +120,15 @@ Printer::token(String const& str)
   space(identifier_tok);
   os << str;
   prev = identifier_tok;
+}
+
+
+// Print n as an integer token.
+void
+Printer::token(int n)
+{
+  os << n;
+  prev = integer_tok;
 }
 
 
@@ -143,12 +153,13 @@ Printer::unqualified_id(Name const& n)
     Printer& p;
     void operator()(Simple_id const& n)      { p.unqualified_id(n); }
     void operator()(Global_id const& n)      { }
-    void operator()(Placeholder_id const& n) { }
+    void operator()(Placeholder_id const& n) { p.unqualified_id(n); }
     void operator()(Operator_id const& n)    { p.operator_id(n); }
     void operator()(Conversion_id const& n)  { p.conversion_id(n); }
     void operator()(Literal_id const& n)     { p.literal_id(n); }
     void operator()(Destructor_id const& n)  { p.destructor_id(n); }
     void operator()(Template_id const& n)    { p.template_id(n); }
+    void operator()(Concept_id const& n)     { p.concept_id(n); }
     void operator()(Qualified_id const& n)   { lingo_unreachable(); }
   };
   apply(n, fn{*this});
@@ -163,6 +174,16 @@ Printer::unqualified_id(Simple_id const& n)
 
 
 void
+Printer::unqualified_id(Placeholder_id const& n)
+{
+  token(lt_tok);
+  token("invented-id-");
+  token(n.number());
+  token(gt_tok);
+}
+
+
+void
 Printer::destructor_id(Destructor_id const& n)
 {
   token(tilde_tok);
@@ -170,11 +191,36 @@ Printer::destructor_id(Destructor_id const& n)
 }
 
 
-// TODO: Implement me.
 void
-Printer::operator_id(Operator_id const&)
+Printer::operator_id(Operator_id const& n)
 {
   token("operator");
+  switch (n.kind()) {
+    case add_op: token(plus_tok); break;
+    case sub_op: token(minus_tok); break;
+    case mul_op: token(star_tok); break;
+    case div_op: token(slash_tok); break;
+    case rem_op: token(percent_tok); break;
+    case eq_op: token(eq_eq_tok); break;
+    case ne_op: token(bang_eq_tok); break;
+    case lt_op: token(lt_tok); break;
+    case gt_op: token(gt_tok); break;
+    case le_op: token(lt_eq_tok); break;
+    case ge_op: token(gt_eq_tok); break;
+    case and_op: token(amp_amp_tok); break;
+    case or_op: token(bar_bar_tok); break;
+    case not_op: token(bang_tok); break;
+    case call_op:
+      token(lparen_tok);
+      token(rparen_tok);
+      break;
+    case index_op:
+      token(lbracket_tok);
+      token(rbracket_tok);
+      break;
+    case assign_op: token(eq_tok); break;
+    default: lingo_unreachable();
+  }
 }
 
 
@@ -201,6 +247,17 @@ Printer::template_id(Template_id const& n)
   id(n.declaration().name());
 
   // FIXME: Don't insert spaces after the template name.
+  token(lt_tok);
+  template_argument_list(n.arguments());
+  token(gt_tok);
+}
+
+
+void
+Printer::concept_id(Concept_id const& n)
+{
+  // FIXME: Use a concept-name production?
+  id(n.declaration().name());
   token(lt_tok);
   template_argument_list(n.arguments());
   token(gt_tok);
@@ -518,6 +575,8 @@ precedence(Expr const& e)
     int operator()(Requires_expr const& e)  { return 0; }
     int operator()(Conv const& e)           { return precedence(e.source()); }
     int operator()(Init const& e)           { lingo_unreachable(); }
+    int operator()(Bind_init const& e)      { return precedence(e.expression()); }
+    int operator()(Copy_init const& e)      { return precedence(e.expression()); }
   };
   return apply(e, fn{});
 }
@@ -561,6 +620,7 @@ Printer::expression(Expr const& e)
     void operator()(Boolean_conv const& e)       { p.postfix_expression(e); }
     void operator()(Float_conv const& e)         { p.postfix_expression(e); }
     void operator()(Numeric_conv const& e)       { p.postfix_expression(e); }
+    void operator()(Dependent_conv const& e)     { p.postfix_expression(e); }
     void operator()(Ellipsis_conv const& e)      { p.postfix_expression(e); }
     void operator()(Init const& e)               { lingo_unreachable(); }
 
@@ -650,14 +710,12 @@ Printer::postfix_expression(Call_expr const& e)
 {
   grouped_expression(e, e.function());
   token(lparen_tok);
-
-  // Expr_list const& p = e.arguments();
-  // for (auto iter = p.begin(); iter != p.end(); ++iter) {
-  //   expression(*iter);
-  //   if (std::next(iter) != p.end())
-  //     token(comma_tok);
-  // }
-
+  Expr_list const& p = e.arguments();
+  for (auto iter = p.begin(); iter != p.end(); ++iter) {
+    expression(*iter);
+    if (std::next(iter) != p.end())
+      token(comma_tok);
+  }
   token(rparen_tok);
 }
 
@@ -724,6 +782,19 @@ Printer::postfix_expression(Numeric_conv const& e)
 
 
 void
+Printer::postfix_expression(Dependent_conv const& e)
+{
+  token("__dependent_conversion");
+  token(lt_tok);
+  type(e.type());
+  token(gt_tok);
+  token(lparen_tok);
+  expression(e.source());
+  token(rparen_tok);
+}
+
+
+void
 Printer::postfix_expression(Ellipsis_conv const& e)
 {
   token("__convert_to_ellipsis");
@@ -765,7 +836,12 @@ Printer::requires_expression(Requires_expr const& e)
     token(rparen_tok);
     space();
   }
+
+  token(lbrace_tok);
+  newline_and_indent();
   usage_seq(e.requirements());
+  newline_and_undent();
+  token(rbrace_tok);
 }
 
 
@@ -1162,7 +1238,14 @@ Printer::concept_declaration(Concept_decl const& d)
   template_parameter_list(d.parameters());
   token(gt_tok);
   space();
-  concept_definition(d.definition());
+  if (d.is_defined()) {
+    concept_definition(d.definition());
+  } else {
+    token(eq_tok);
+    space();
+    token(ellipsis_tok);
+    token(semicolon_tok);
+  }
 }
 
 
@@ -1183,6 +1266,8 @@ Printer::concept_definition(Def const& d)
 void
 Printer::concept_definition(Expression_def const& d)
 {
+  token(eq_tok);
+  space();
   expression(d.expression());
   token(semicolon_tok);
 }
@@ -1193,9 +1278,68 @@ Printer::concept_definition(Concept_def const& d)
 {
   token(lbrace_tok);
   newline_and_indent();
-  // statement_seq(d.requirements());
+  concept_member_seq(d.requirements());
   newline_and_undent();
   token(rbrace_tok);
+}
+
+
+void
+Printer::concept_member_seq(Req_list const& rs)
+{
+  for (auto iter = rs.begin(); iter != rs.end(); ++iter) {
+    concept_member(*iter);
+    if (std::next(iter) != rs.end())
+      newline();
+  }
+}
+
+
+void
+Printer::concept_member(Req const& r)
+{
+  struct fn
+  {
+    Printer& p;
+    void operator()(Req const& r)            { lingo_unreachable(); }
+    void operator()(Syntactic_req const& r)  { p.concept_member(r); }
+    void operator()(Semantic_req const& r)   { p.concept_member(r); }
+    void operator()(Type_req const& r)       { p.concept_member(r); }
+    void operator()(Expression_req const& r) { p.concept_member(r); }
+  };
+  apply(r, fn{*this});
+}
+
+
+void
+Printer::concept_member(Syntactic_req const& r)
+{
+  expression(r.expression());
+}
+
+
+void
+Printer::concept_member(Semantic_req const& r)
+{
+  declaration(r.declaration());
+}
+
+
+void
+Printer::concept_member(Type_req const& r)
+{
+  token(typename_tok);
+  space();
+  type(r.type());
+  token(semicolon_tok);
+}
+
+
+void
+Printer::concept_member(Expression_req const& r)
+{
+  expression(r.expression());
+  token(semicolon_tok);
 }
 
 
@@ -1358,9 +1502,10 @@ Printer::template_argument_list(Term_list const& ts)
 void
 Printer::usage_seq(Req_list const& rs)
 {
-  for (Req const& r : rs) {
-    usage_requirement(r);
-    newline();
+  for (auto iter = rs.begin(); iter != rs.end(); ++iter) {
+    usage_requirement(*iter);
+    if (std::next(iter) != rs.end())
+      newline();
   }
 }
 
@@ -1371,19 +1516,23 @@ Printer::usage_requirement(Req const& r)
   struct fn
   {
     Printer& p;
-    void operator()(Req const& r) { banjo_unhandled_case(r); }
-    void operator()(Simple_req const& r) { p.requirement(r); }
+    void operator()(Req const& r)            { banjo_unhandled_case(r); }
+    void operator()(Basic_req const& r)      { p.requirement(r); }
     void operator()(Conversion_req const& r) { p.requirement(r); }
-    void operator()(Deduction_req const& r) { p.requirement(r); }
+    void operator()(Deduction_req const& r)  { p.requirement(r); }
   };
   apply(r, fn{*this});
 }
 
 
 void
-Printer::requirement(Simple_req const& r)
+Printer::requirement(Basic_req const& r)
 {
   expression(r.expression());
+  space();
+  token(colon_tok);
+  space();
+  type(r.type());
   token(semicolon_tok);
 }
 
@@ -1392,7 +1541,9 @@ void
 Printer::requirement(Conversion_req const& r)
 {
   expression(r.expression());
+  space();
   token(arrow_tok);
+  space();
   type(r.type());
   token(semicolon_tok);
 }
@@ -1408,9 +1559,6 @@ Printer::requirement(Deduction_req const& r)
 }
 
 
-
-
-
 // -------------------------------------------------------------------------- //
 // Constraints
 
@@ -1420,11 +1568,14 @@ Printer::constraint(Cons const& c)
   struct fn
   {
     Printer& p;
-    void operator()(Cons const& c)             { lingo_unimplemented(); }
-    void operator()(Concept_cons const& c)     { p.constraint(c); }
-    void operator()(Predicate_cons const& c)   { p.constraint(c); }
-    void operator()(Conjunction_cons const& c) { p.constraint(c); }
-    void operator()(Disjunction_cons const& c) { p.constraint(c); }
+    void operator()(Cons const& c)               { banjo_unhandled_case(c); }
+    void operator()(Concept_cons const& c)       { p.constraint(c); }
+    void operator()(Predicate_cons const& c)     { p.constraint(c); }
+    void operator()(Expression_cons const& c)    { p.constraint(c); }
+    void operator()(Conversion_cons const& c)    { p.constraint(c); }
+    void operator()(Parameterized_cons const& c) { p.constraint(c); }
+    void operator()(Conjunction_cons const& c)   { p.constraint(c); }
+    void operator()(Disjunction_cons const& c)   { p.constraint(c); }
   };
   apply(c, fn{*this});
 }
@@ -1447,6 +1598,46 @@ Printer::constraint(Predicate_cons const& c)
   token(lbracket_tok);
   expression(c.expression());
   token(rbracket_tok);
+}
+
+
+// Write this as |e : t|
+void
+Printer::constraint(Expression_cons const& c)
+{
+  token(bar_tok);
+  expression(c.expression());
+  space();
+  token(colon_tok);
+  space();
+  type(c.type());
+  token(bar_tok);
+}
+
+
+// Write this as |e -> t|
+void
+Printer::constraint(Conversion_cons const& c)
+{
+  token(bar_tok);
+  expression(c.expression());
+  space();
+  token(arrow_tok);
+  space();
+  type(c.type());
+  token(bar_tok);
+}
+
+
+void
+Printer::constraint(Parameterized_cons const& c)
+{
+  token("\\");
+  token(lparen_tok);
+  parameter_list(c.variables());
+  token(rparen_tok);
+  space();
+  constraint(c.constraint());
 }
 
 

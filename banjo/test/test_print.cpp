@@ -3,6 +3,8 @@
 
 #include "test.hpp"
 
+#include <banjo/operator.hpp>
+
 #include <iostream>
 
 
@@ -27,7 +29,10 @@ test_names(Context& cxt)
   Name& qn2 = build.get_qualified_id(ns1, n2);
   std::cout << qn2 << '\n'; // ::N1::N2
 
-  // Name& n = build.get_qualified_id(ns1, n1);
+  std::cout << build.get_id(add_op) << '\n'; // operator+
+  std::cout << build.get_id(sub_op) << '\n'; // operator-
+  std::cout << build.get_id(eq_op) << '\n'; // operator==
+  std::cout << build.get_id(lt_op) << '\n'; // operator<
 }
 
 

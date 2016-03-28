@@ -2,6 +2,8 @@
 // All rights reserved
 
 #include "deduction.hpp"
+#include "ast.hpp"
+#include "context.hpp"
 #include "template.hpp"
 #include "equivalence.hpp"
 #include "print.hpp"
@@ -67,8 +69,7 @@ deduce_from_type(Sequence_type& p, Type& a, Substitution& sub)
 // and different assignment was deduced for T, template argument
 // deduction fails.
 //
-// FIXME: Save information to better indicate the reason for
-// failure.
+// FIXME: This is totally incorrect. We can only match T against T.
 bool
 deduce_from_type(Typename_type& p, Type& a, Substitution& sub)
 {
@@ -145,6 +146,99 @@ deduce_from_types(Type_list& ps, Type_list& as, Substitution& sub)
     lingo_unreachable();
 
   return true;
+}
+
+
+// -------------------------------------------------------------------------- //
+// Deducing template arguments from a function call
+
+
+// If t is in the initial set, then it must be deduced locally.
+void
+select_template_parameter(Typename_type& t, Substitution& init, Substitution& ret)
+{
+  Decl& d = t.declaration();
+  if (init.has_mapping(d))
+    ret.seed_with(d);
+}
+
+
+// Returns a substitution containing the subset of the original
+// substitution s that appear in t. Note that this may be the empty set.
+void
+select_template_parameters(Type& t, Substitution& init, Substitution& ret)
+{
+  struct fn {
+    Substitution& init;
+    Substitution& ret;
+    void operator()(Type& t)           { }
+    void operator()(Function_type& t)  { lingo_unimplemented(); }
+    void operator()(Reference_type& t) { select_template_parameters(t.type(), init, ret); }
+    void operator()(Qualified_type& t) { select_template_parameters(t.type(), init, ret); }
+    void operator()(Pointer_type& t)   { select_template_parameters(t.type(), init, ret); }
+    void operator()(Array_type& t)     { select_template_parameters(t.type(), init, ret); }
+    void operator()(Sequence_type& t)  { select_template_parameters(t.type(), init, ret); }
+    void operator()(Typename_type& t)  { select_template_parameter(t, init, ret); }
+  };
+  apply(t, fn{init, ret});
+}
+
+
+// Returns a substitution containing the subset of the original
+// substitution s that appear in the declared type of d. Note
+// that this may be the empty set.
+Substitution
+select_template_parameters(Decl& d, Substitution& init)
+{
+  Substitution ret;
+  select_template_parameters(declared_type(d), init, ret);
+  return ret;
+}
+
+
+void
+deduce_from_call(Context& cxt, Decl_list& parms, Expr_list& args, Substitution& sub)
+{
+  auto pi = parms.begin();
+  auto ai = args.begin();
+  while (pi != parms.end() && ai != args.end()) {
+    Decl& p = *pi;
+    Expr& a = *ai;
+
+    // Get the set of template parameters used by the function
+    // parameter. Function parameters not using template parameters
+    // do not participate in deduction.
+    Substitution local = select_template_parameters(p, sub);
+    if (!local.empty()) {
+      // FIXME: Make adjustments on the parameter and argument type
+      // as needed to make stuff work. Be sure to handle deduction with
+      // parameter packs in the future.
+
+      // Actually attempt deduction.
+      //
+      // FIXME: Improve the diagnostic.
+      if (!deduce_from_type(declared_type(p), a.type(), local))
+        throw Deduction_error(cxt, "deduction failed for '{}'", p.name());
+
+      // Unify the deduction with the global state.
+      unify(cxt, sub, local);
+    }
+
+    ++pi;
+    ++ai;
+  }
+
+  // If everything matched up, then we need to check that
+  // all template arguments have been deduced.
+  if (pi == parms.end()) {
+    if (ai == args.end()) {
+      if (sub.is_incomplete())
+        throw Deduction_error(cxt, "failed to deduce all arguments");
+      return;
+    }
+    throw Deduction_error(cxt, "too many arguments");
+  }
+  throw Deduction_error(cxt, "too few arguments");
 }
 
 

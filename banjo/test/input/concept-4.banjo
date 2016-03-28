@@ -1,0 +1,13 @@
+
+concept Ord<typename T>
+{
+  requires (T a, T b) {
+    a < b -> bool;
+  }
+}
+
+template<typename T>
+  requires Ord<T>
+def g(T const x, T y) -> bool {
+  x < y && true;
+}

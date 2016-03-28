@@ -56,7 +56,7 @@ struct Cons::Mutator
 // in subsumption algorithms.
 struct Concept_cons : Cons
 {
-  Concept_cons(Decl& d, Term_list& ts)
+  Concept_cons(Decl& d, Term_list const& ts)
     : decl(&d), args(ts)
   { }
 
@@ -97,7 +97,21 @@ struct Predicate_cons : Cons
 // FIXME: Implement me.
 struct Expression_cons : Cons
 {
-  using Cons::Cons;
+  Expression_cons(Expr& e, Type& t)
+    : expr(&e), ty(&t)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  Expr const& expression() const { return *expr; }
+  Expr&       expression()       { return *expr; }
+
+  Type const& type() const { return *ty; }
+  Type&       type()       { return *ty; }
+
+  Expr* expr;
+  Type* ty;
 };
 
 
@@ -105,13 +119,30 @@ struct Expression_cons : Cons
 struct Type_cons : Cons
 {
   using Cons::Cons;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
 // FIXME: Implement me.
 struct Conversion_cons : Cons
 {
-  using Cons::Cons;
+  Conversion_cons(Expr& e, Type& t)
+    : expr(&e), ty(&t)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  Expr const& expression() const { return *expr; }
+  Expr&       expression()       { return *expr; }
+
+  Type const& type() const { return *ty; }
+  Type&       type()       { return *ty; }
+
+  Expr* expr;
+  Type* ty;
 };
 
 
@@ -119,6 +150,9 @@ struct Conversion_cons : Cons
 struct Deduction_cons : Cons
 {
   using Cons::Cons;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -127,9 +161,12 @@ struct Deduction_cons : Cons
 // Once resolved by lookup, they are essentially meaningless.
 struct Parameterized_cons : Cons
 {
-  Parameterized_cons(Decl_list const& ps, Cons* c)
-    : vars(ps), cons(c)
+  Parameterized_cons(Decl_list const& ps, Cons& c)
+    : vars(ps), cons(&c)
   { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
   Decl_list const& variables() const { return vars; }
   Decl_list&       variables()       { return vars; }
@@ -204,7 +241,7 @@ struct Generic_cons_visitor : Cons::Visitor, Generic_visitor<F, T>
 
 // Apply a function to the given constraint.
 template<typename F, typename T = typename std::result_of<F(Concept_cons const&)>::type>
-inline T
+inline decltype(auto)
 apply(Cons const& c, F fn)
 {
   Generic_cons_visitor<F, T> vis(fn);
@@ -234,7 +271,7 @@ struct Generic_cons_mutator : Cons::Mutator, Generic_mutator<F, T>
 
 // Apply a function to the given name.
 template<typename F, typename T = typename std::result_of<F(Concept_cons&)>::type>
-inline T
+inline decltype(auto)
 apply(Cons& c, F fn)
 {
   Generic_cons_mutator<F, T> vis(fn);

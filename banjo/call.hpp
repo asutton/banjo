@@ -38,6 +38,10 @@ struct Function_candidate
 };
 
 
+// TODO: Rename this to argument_initialize and move
+// it into the initialization module.
+Expr_list initialize_parameters(Context&, Type_list&, Expr_list&);
+
 Expr& build_function_call(Context&, Function_decl&, Expr_list&);
 
 

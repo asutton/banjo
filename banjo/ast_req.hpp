@@ -11,7 +11,16 @@ namespace banjo
 {
 
 // Represents the syntactic form of requirements in concept
-// definitions, requires-expressions, and axioms.
+// definitions, requires-expressions, and axioms. There are two
+// subsets of requirements:
+//
+//    - those that can appear in a concept definition,
+//    - and those that can appear in a requires-expression.
+//
+// Each kind is clearly documented.
+//
+// TODO: Is there a third set for requirements appearing within
+// an axiom? Those probably have special meaning.
 struct Req : Term
 {
   struct Visitor;
@@ -28,7 +37,7 @@ struct Req::Visitor
   virtual void visit(Syntactic_req const&)   { }
   virtual void visit(Semantic_req const&)    { }
   virtual void visit(Expression_req const&)  { }
-  virtual void visit(Simple_req const&)      { }
+  virtual void visit(Basic_req const&)       { }
   virtual void visit(Conversion_req const&)  { }
   virtual void visit(Deduction_req const&)   { }
 };
@@ -40,24 +49,40 @@ struct Req::Mutator
   virtual void visit(Syntactic_req&)   { }
   virtual void visit(Semantic_req&)    { }
   virtual void visit(Expression_req&)  { }
-  virtual void visit(Simple_req&)      { }
+  virtual void visit(Basic_req&)       { }
   virtual void visit(Conversion_req&)  { }
   virtual void visit(Deduction_req&)   { }
 };
 
 
-// Represents the requirement for an associated type.
+// Represents the requirement for an associated type. A type requirement
+// can appear either within a concept definition or a requires-expression.
 struct Type_req : Req
 {
+  Type_req(Type& t)
+    : ty(&t)
+  { }
+
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the form of the type required.
+  Type const& type() const { return *ty; }
+  Type&       type()       { return *ty; }
+
+  Type* ty;
 };
 
 
-// Represents the requirement for a sequence of usage requirements.
-// This wraps a requires-expression.
+// Represents the requirement for a sequence of usage requirements. A
+// syntactic requirement appears only in a concept definition and simply
+// wraps a requires-expression.
 struct Syntactic_req : Req
 {
+  Syntactic_req(Expr& e)
+    : req(&e)
+  { }
+
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
@@ -68,18 +93,23 @@ struct Syntactic_req : Req
 };
 
 
-// Represents the requiremnt for a sequence of semantic requirements.
-// This wraps an axiom-declaration.
+// Represents the requiremnt for a sequence of semantic requirements. A
+// semantic requirement appears only in a concept definition and wraps an
+// axiom declaration.
 struct Semantic_req : Req
 {
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
-  Decl* sema;
+  Decl const& declaration() const { return *decl; }
+  Decl&       declaration()       { return *decl; }
+
+  Decl* decl;
 };
 
 
-// Represents the requirement for an expression to be satsified.
+// Represents the requirement for an expression to be satsified. This
+// can appear only in a concept definition.
 struct Expression_req : Req
 {
   void accept(Visitor& v) const { v.visit(*this); }
@@ -92,30 +122,36 @@ struct Expression_req : Req
 };
 
 
-// A requirement for a valid expression. The result of the
-// expression is represented by a unique invented type.
-struct Simple_req : Req
+// A requirement for a valid expression having some type.
+struct Basic_req : Req
 {
+  Basic_req(Expr& e, Type& t)
+    : expr(&e), ty(&t)
+  { }
+
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
+  // Returns the required expression.
   Expr const& expression() const { return *expr; }
   Expr&       expression()       { return *expr; }
 
+  Type const& type() const { return *ty; }
+  Type&       type()       { return *ty; }
+
   Expr* expr;
+  Type* ty;
 };
 
 
 // Represents the requirement for a valid expression and its
 // conversion to a given type.
-//
-//    e -> t
-//
-// Here, e must have type t. Note that t cannot contain existentials,
-// but may include template parameters. These must be instantiated
-// prior to determining conversion.
 struct Conversion_req : Req
 {
+  Conversion_req(Expr& e, Type& t)
+    : expr(&e), ty(&t)
+  { }
+
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
@@ -166,7 +202,7 @@ struct Generic_req_visitor : Req::Visitor, Generic_visitor<F, T>
   void visit(Syntactic_req const& r)   { this->invoke(r); }
   void visit(Semantic_req const& r)    { this->invoke(r); }
   void visit(Expression_req const& r)  { this->invoke(r); }
-  void visit(Simple_req const& r)      { this->invoke(r); }
+  void visit(Basic_req const& r)       { this->invoke(r); }
   void visit(Conversion_req const& r)  { this->invoke(r); }
   void visit(Deduction_req const& r)   { this->invoke(r); }
 };
@@ -194,7 +230,7 @@ struct Generic_req_mutator : Req::Mutator, Generic_mutator<F, T>
   void visit(Syntactic_req& r)   { this->invoke(r); }
   void visit(Semantic_req& r)    { this->invoke(r); }
   void visit(Expression_req& r)  { this->invoke(r); }
-  void visit(Simple_req& r)      { this->invoke(r); }
+  void visit(Basic_req& r)       { this->invoke(r); }
   void visit(Conversion_req& r)  { this->invoke(r); }
   void visit(Deduction_req& r)   { this->invoke(r); }
 };

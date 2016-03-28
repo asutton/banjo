@@ -2,7 +2,11 @@
 // All rights reserved
 
 #include "substitution.hpp"
-#include "builder.hpp"
+#include "ast.hpp"
+#include "context.hpp"
+#include "expression.hpp"
+#include "declaration.hpp"
+#include "equivalence.hpp"
 #include "print.hpp"
 
 #include <iostream>
@@ -30,6 +34,27 @@ operator<<(std::ostream& os, Substitution const& s)
   }
   os << "}\n";
   return os;
+}
+
+
+// -------------------------------------------------------------------------- //
+// Simple unification
+
+// Update a global (larger) substitution with the results of a
+// local deduction. If a parameter is mapped to different values,
+// unification fails with an exception.
+void
+unify(Context& cxt, Substitution& global, Substitution& local)
+{
+  for (auto& x : local) {
+    Decl& parm = *x.first;
+    Term& value = *x.second;
+    if (Term* prev = global.get_mapping(parm)) {
+      if (!is_equivalent(*prev, value))
+        throw Unification_error(cxt, "'{}' deduced with different values");
+    }
+    global.map_to(parm, value);
+  }
 }
 
 
@@ -62,7 +87,6 @@ substitute(Context& cxt, Term& x, Substitution& sub)
     return substitute(cxt, *d, sub);
   lingo_unreachable();
 }
-
 
 
 // -------------------------------------------------------------------------- //
@@ -108,37 +132,33 @@ substitute(Context& cxt, Type& t, Substitution& sub)
 Type&
 substitute_type(Context& cxt, Function_type& t, Substitution& sub)
 {
-  Builder build(cxt);
   Type_list ps = substitute(cxt, t.parameter_types(), sub);
   Type& r = substitute(cxt, t.return_type(), sub);
-  return build.get_function_type(ps, r);
+  return cxt.get_function_type(ps, r);
 }
 
 
 Type&
 substitute_type(Context& cxt, Reference_type& t, Substitution& sub)
 {
-  Builder build(cxt);
   Type& s = substitute(cxt, t.type(), sub);
-  return build.get_reference_type(s);
+  return cxt.get_reference_type(s);
 }
 
 
 Type&
 substitute_type(Context& cxt, Qualified_type& t, Substitution& sub)
 {
-  Builder build(cxt);
   Type& s = substitute(cxt, t.type(), sub);
-  return build.get_qualified_type(s, t.qualifier());
+  return cxt.get_qualified_type(s, t.qualifier());
 }
 
 
 Type&
 substitute_type(Context& cxt, Pointer_type& t, Substitution& sub)
 {
-  Builder build(cxt);
   Type& s = substitute(cxt, t.type(), sub);
-  return build.get_pointer_type(s);
+  return cxt.get_pointer_type(s);
 }
 
 
@@ -152,9 +172,8 @@ substitute_type(Context& cxt, Array_type& t, Substitution& sub)
 Type&
 substitute_type(Context& cxt, Sequence_type& t, Substitution& sub)
 {
-  Builder build(cxt);
   Type& s = substitute(cxt, t.type(), sub);
-  return build.get_sequence_type(s);
+  return cxt.get_sequence_type(s);
 }
 
 
@@ -175,22 +194,28 @@ substitute_type(Context& cxt, Typename_type& t, Substitution& sub)
 // -------------------------------------------------------------------------- //
 // Substitution into expressions
 //
-// FIXME: None of this is correct. We actually need to elaborate the
-// result of substitution.
 
 
-// FIXME: This isn't right... we probably need to re-bind references,
-// especially when they refer to parameters or local variables.
+// Substitute into a declaration reference. The result of the
+// substitution depends on whether the name refers to a member
+// of the current instantation. If so, then we need to rebind
+// the identfier to the locally instantiated declaration.
+//
+// FIXME: This is almost certainly incorrect.
 Expr&
 subst_ref(Context& cxt, Reference_expr& e, Substitution& sub)
 {
-  return e;
+  return make_reference(cxt, e.declaration().name());
 }
 
 
 Expr&
 subst_check(Context& cxt, Check_expr& e, Substitution& sub)
 {
+  // FIXME: This needs to check the substituted arguments
+  // against the declared concept, possibly performing some
+  // kind of resolution. In other words, use make_check, whenever
+  // it gets written.
   Builder build(cxt);
   Term_list args = substitute(cxt, e.arguments(), sub);
   return build.make_check(e.declaration(), args);
@@ -200,39 +225,28 @@ subst_check(Context& cxt, Check_expr& e, Substitution& sub)
 Expr&
 subst_call(Context& cxt, Call_expr& e, Substitution& sub)
 {
-  Builder build(cxt);
   Expr& fn = substitute(cxt, e.function(), sub);
   Expr_list args = substitute(cxt, e.arguments(), sub);
-  return build.make_call(build.get_void_type(), fn, args);
+  return make_call(cxt, fn, args);
 }
 
 
+template<typename T, typename Make>
 Expr&
-subst_expr(Context& cxt, And_expr& e, Substitution& sub)
+subst_unary(Context& cxt, T& e, Substitution& sub, Make make)
 {
-  Builder build(cxt);
+  Expr& e0 = substitute(cxt, e.operand(), sub);
+  return make(cxt, e0);
+}
+
+
+template<typename T, typename Make>
+Expr&
+subst_binary(Context& cxt, T& e, Substitution& sub, Make make)
+{
   Expr& e1 = substitute(cxt, e.left(), sub);
   Expr& e2 = substitute(cxt, e.right(), sub);
-  return build.make_and(e.type(), e1, e2);
-}
-
-
-Expr&
-subst_expr(Context& cxt, Or_expr& e, Substitution& sub)
-{
-  Builder build(cxt);
-  Expr& e1 = substitute(cxt, e.left(), sub);
-  Expr& e2 = substitute(cxt, e.right(), sub);
-  return build.make_or(e.type(), e1, e2);
-}
-
-
-Expr&
-subst_expr(Context& cxt, Not_expr& e, Substitution& sub)
-{
-  Builder build(cxt);
-  Expr& e1 = substitute(cxt, e.operand(), sub);
-  return build.make_not(e.type(), e1);
+  return make(cxt, e1, e2);
 }
 
 
@@ -244,11 +258,7 @@ substitute(Context& cxt, Expr& e, Substitution& sub)
     Context&      cxt;
     Substitution& sub;
 
-    Expr& operator()(Expr& e)
-    {
-      std::cout << type_str(e) << '\n';
-      lingo_unimplemented();
-    }
+    Expr& operator()(Expr& e) { banjo_unhandled_case(e); }
 
     Expr& operator()(Boolean_expr& e)   { return e; }
     Expr& operator()(Integer_expr& e)   { return e; }
@@ -256,9 +266,15 @@ substitute(Context& cxt, Expr& e, Substitution& sub)
     Expr& operator()(Check_expr& e)     { return subst_check(cxt, e, sub); }
     Expr& operator()(Call_expr& e)      { return subst_call(cxt, e, sub); }
 
-    Expr& operator()(And_expr& e) { return subst_expr(cxt, e, sub); }
-    Expr& operator()(Or_expr& e)  { return subst_expr(cxt, e, sub); }
-    Expr& operator()(Not_expr& e) { return subst_expr(cxt, e, sub); }
+    Expr& operator()(Eq_expr& e)  { return subst_binary(cxt, e, sub, make_eq); }
+    Expr& operator()(Ne_expr& e)  { return subst_binary(cxt, e, sub, make_ne); }
+    Expr& operator()(Lt_expr& e)  { return subst_binary(cxt, e, sub, make_lt); }
+    Expr& operator()(Gt_expr& e)  { return subst_binary(cxt, e, sub, make_gt); }
+    Expr& operator()(Le_expr& e)  { return subst_binary(cxt, e, sub, make_le); }
+    Expr& operator()(Ge_expr& e)  { return subst_binary(cxt, e, sub, make_ge); }
+    Expr& operator()(And_expr& e) { return subst_binary(cxt, e, sub, make_logical_and); }
+    Expr& operator()(Or_expr& e)  { return subst_binary(cxt, e, sub, make_logical_or); }
+    Expr& operator()(Not_expr& e) { return subst_unary(cxt, e, sub, make_logical_not); }
 
   };
   return apply(e, fn{cxt, sub});
@@ -279,20 +295,17 @@ substitute(Context& cxt, Expr& e, Substitution& sub)
 // resolution.
 
 
-// FIXME: Rebuild the variable as if parsed.
 Decl&
 substitute_decl(Context& cxt, Variable_decl& d, Substitution& sub)
 {
   Name& n = d.name();
   Type& t = substitute(cxt, d.type(), sub);
-
-  Builder build(cxt);
-  return build.make_variable(n, t);
+  Decl& var = cxt.make_variable(n, t);
+  declare(cxt, var);
+  return var;
 }
 
 
-// FIXME: Rebuild the parameter as if parsed.
-//
 // FIXME: Do we substitute into a default argument? It probably
 // depends on context, but I assume that the general answer is yes.
 Decl&
@@ -300,9 +313,9 @@ substitute_decl(Context& cxt, Object_parm& d, Substitution& sub)
 {
   Name& n = d.name();
   Type& t = substitute(cxt, d.type(), sub);
-
-  Builder build(cxt);
-  return build.make_object_parm(n, t);
+  Decl& parm = cxt.make_object_parm(n, t);
+  declare(cxt, parm);
+  return parm;
 }
 
 
@@ -323,6 +336,70 @@ substitute(Context& cxt, Decl& d, Substitution& sub)
 
 // -------------------------------------------------------------------------- //
 // Substitution into constraints
+//
+// TODO: Substitution through constraints should almost never
+// result in outright failure.
+
+Cons&
+subst_predicate(Context& cxt, Predicate_cons& c, Substitution& sub)
+{
+  Expr& e = substitute(cxt, c.expression(), sub);
+  return cxt.get_predicate_constraint(e);
+}
+
+
+Cons&
+subst_usage(Context& cxt, Expression_cons& c, Substitution& sub)
+{
+  Expr& e = substitute(cxt, c.expression(), sub);
+  Type& t = substitute(cxt, c.type(), sub);
+
+  // Ensure that e has type t: that's what's been assumed.
+  e.ty = &t;
+
+  return cxt.get_expression_constraint(e, t);
+}
+
+
+Cons&
+subst_usage(Context& cxt, Conversion_cons& c, Substitution& sub)
+{
+  Expr& e = substitute(cxt, c.expression(), sub);
+  Type& t = substitute(cxt, c.type(), sub);
+
+  // FIXME: We should be doing a lookup to determine the correct
+  // type of the expression.
+
+  return cxt.get_conversion_constraint(e, t);
+}
+
+
+Cons&
+subst_parametric(Context& cxt, Parameterized_cons& c, Substitution& sub)
+{
+  Enter_requires_scope rscope(cxt);
+  Decl_list parms = substitute(cxt, c.variables(), sub);
+  Cons& cons = substitute(cxt, c.constraint(), sub);
+  return cxt.get_parameterized_constraint(parms, cons);
+}
+
+
+Cons&
+subst_conjunction(Context& cxt, Conjunction_cons& c, Substitution& sub)
+{
+  Cons& c1 = substitute(cxt, c.left(), sub);
+  Cons& c2 = substitute(cxt, c.right(), sub);
+  return cxt.get_conjunction_constraint(c1, c2);
+}
+
+
+Cons&
+subst_disjunction(Context& cxt, Disjunction_cons& c, Substitution& sub)
+{
+  Cons& c1 = substitute(cxt, c.left(), sub);
+  Cons& c2 = substitute(cxt, c.right(), sub);
+  return cxt.get_disjunction_constraint(c1, c2);
+}
 
 
 Cons&
@@ -332,9 +409,16 @@ substitute(Context& cxt, Cons& c, Substitution& sub)
   {
     Context&      cxt;
     Substitution& sub;
-    Cons& operator()(Cons& c)           { banjo_unhandled_case(c); }
+    Cons& operator()(Cons& c)               { banjo_unhandled_case(c); }
+    Cons& operator()(Predicate_cons& c)     { return subst_predicate(cxt, c, sub); }
+    Cons& operator()(Expression_cons& c)    { return subst_usage(cxt, c, sub); }
+    Cons& operator()(Conversion_cons& c)    { return subst_usage(cxt, c, sub); }
+    Cons& operator()(Parameterized_cons& c) { return subst_parametric(cxt, c, sub); }
+    Cons& operator()(Conjunction_cons& c)   { return subst_conjunction(cxt, c, sub); }
+    Cons& operator()(Disjunction_cons& c)   { return subst_disjunction(cxt, c, sub); }
   };
   return apply(c, fn{cxt, sub});
 }
+
 
 } // namespace banjo

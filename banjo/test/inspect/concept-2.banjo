@@ -31,9 +31,6 @@ concept C6<typename T> = C5<T> && true;
 concept R1<typename T> = C4<T> && C5<T> && C6<T>;
 concept R2<typename T> = true;
 
-// order.concept R1 R2;
-// order.concept R2 R1;
-
-satisfy R2<int>;
-satisfy false;
-evaluate true && false;
+order.concept R1 R2;
+order.concept R2 R1;
+// order.concept R1 R1;

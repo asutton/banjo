@@ -5,6 +5,7 @@
 #define BANJO_AST_NAME_HPP
 
 #include "ast_base.hpp"
+#include "operator.hpp"
 
 
 namespace banjo
@@ -86,13 +87,22 @@ struct Global_id : Name
 };
 
 
-// An placeholder for a name.
+// An placeholder for a name. Each placeholder is assigned a unique
+// identifier (number), making it distinct from all others.
 //
 // FIXME: This is not a good name for this class.
 struct Placeholder_id : Name
 {
+  Placeholder_id(int n)
+    : num(n)
+  { }
+
   void accept(Visitor& v) const { v.visit(*this); };
   void accept(Mutator& v)       { v.visit(*this); };
+
+  int number() const { return num; }
+
+  int num;
 };
 
 
@@ -101,8 +111,17 @@ struct Placeholder_id : Name
 // TODO: Implement me.
 struct Operator_id : Name
 {
+  Operator_id(Operator_kind k)
+    : op(k)
+  { }
+
   void accept(Visitor& v) const { v.visit(*this); };
   void accept(Mutator& v)       { v.visit(*this); };
+
+  // Returns the operator kind.
+  Operator_kind kind() const { return op; }
+
+  Operator_kind op;
 };
 
 
@@ -246,6 +265,7 @@ struct Generic_name_visitor : Name::Visitor, Generic_visitor<F, T>
   void visit(Literal_id const& n)     { this->invoke(n); }
   void visit(Destructor_id const& n)  { this->invoke(n); }
   void visit(Template_id const& n)    { this->invoke(n); }
+  void visit(Concept_id const& n)     { this->invoke(n); }
   void visit(Qualified_id const& n)   { this->invoke(n); }
 };
 
@@ -276,6 +296,7 @@ struct Generic_name_mutator : Name::Mutator, Generic_mutator<F, T>
   void visit(Literal_id& n)     { this->invoke(n); }
   void visit(Destructor_id& n)  { this->invoke(n); }
   void visit(Template_id& n)    { this->invoke(n); }
+  void visit(Concept_id& n)     { this->invoke(n); }
   void visit(Qualified_id& n)   { this->invoke(n); }
 };
 

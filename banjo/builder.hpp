@@ -6,7 +6,6 @@
 #define BANJO_BUILDER_HPP
 
 #include "prelude.hpp"
-#include "context.hpp"
 #include "token.hpp"
 #include "language.hpp"
 
@@ -39,7 +38,7 @@ struct Builder
   Simple_id&      get_id(Symbol const*);
   Simple_id&      get_id(Token tok);
   Placeholder_id& get_id();
-  // Operator_id&    get_id();
+  Operator_id&    get_id(Operator_kind);
   // Conversion_id&  get_id();
   // Literal_id&     get_id();
   Destructor_id&  get_destructor_id(Type const&);
@@ -85,6 +84,7 @@ struct Builder
   Reference_expr& make_reference(Variable_decl&);
   Reference_expr& make_reference(Constant_decl&);
   Reference_expr& make_reference(Function_decl&);
+  Template_ref&   make_reference(Template_decl&);
   Reference_expr& make_reference(Object_parm&);
   Check_expr&     make_check(Concept_decl&, Term_list const&);
 
@@ -141,6 +141,7 @@ struct Builder
   Concept_decl&   make_concept(char const*, Decl_list const&, Def&);
   Concept_decl&   make_concept(char const*, Decl_list const&, Expr&);
 
+  // Parameters
   Object_parm& make_object_parm(Name&, Type&);
   Object_parm& make_object_parm(char const*, Type&);
   Value_parm&  make_value_parm(Name&, Type&);
@@ -150,18 +151,29 @@ struct Builder
   Type_parm&   make_type_parameter(Name&, Type&);
   Type_parm&   make_type_parameter(char const*, Type&);
 
+  // Placeholders
+  // A placeholder is essentially a type parameter whose declaration
+  // is implied by its use. Note, use the get_placeholder_type()
+  Typename_type& make_placeholder_type();
+
   // Requirements
+  Basic_req&      make_basic_requirement(Expr&, Type&);
+  Conversion_req& make_conversion_requirement(Expr&, Type&);
+  Syntactic_req&  make_syntactic_requirement(Expr&);
 
   // Constraints
   // Note that constraints are canonicalized in order
   // ensure efficient hashingn and equivalence comparison.
-  Concept_cons&     get_concept_constraint(Decl&, Term_list&);
-  Predicate_cons&   get_predicate_constraint(Expr&);
-  Conjunction_cons& get_conjunction_constraint(Cons&, Cons&);
-  Disjunction_cons& get_disjunction_constraint(Cons&, Cons&);
+  Concept_cons&       get_concept_constraint(Decl&, Term_list const&);
+  Predicate_cons&     get_predicate_constraint(Expr&);
+  Expression_cons&    get_expression_constraint(Expr&, Type&);
+  Conversion_cons&    get_conversion_constraint(Expr&, Type&);
+  Parameterized_cons& get_parameterized_constraint(Decl_list const&, Cons&);
+  Conjunction_cons&   get_conjunction_constraint(Cons&, Cons&);
+  Disjunction_cons&   get_disjunction_constraint(Cons&, Cons&);
 
   // Resources
-  Symbol_table& symbols() { return cxt.symbols(); }
+  Symbol_table& symbols();
 
   // Allocate an objet of the given type.
   //

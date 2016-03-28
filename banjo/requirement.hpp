@@ -13,9 +13,11 @@ namespace banjo
 
 struct Context;
 
-Req& make_simple_requirement(Context&, Expr&);
+Req& make_basic_requirement(Context&, Expr&);
+Req& make_basic_requirement(Context&, Expr&, Type&);
 Req& make_conversion_requirement(Context&, Expr&, Type&);
 Req& make_deduction_requirement(Context&, Expr&, Type&);
+Req& make_syntactic_requirement(Context&, Expr&);
 
 } // namespace banjo
 

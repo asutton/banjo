@@ -48,6 +48,9 @@ Parser::statement()
 Stmt&
 Parser::compound_statement()
 {
+  // A compound statement defines a new scope.
+  Enter_scope(cxt, cxt.make_block_scope());
+
   Stmt_list ss;
   match(lbrace_tok);
   if (lookahead() != rbrace_tok)

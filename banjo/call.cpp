@@ -17,9 +17,9 @@ namespace banjo
 Expr&
 initialize_parameter(Context& cxt,
                      Type_iter p0,
-                     Type_iter pi,
+                     Type_iter& pi,
                      Expr_iter a0,
-                     Expr_iter ai)
+                     Expr_iter& ai)
 {
   // TODO: Trap errors and use these to explain failures. If
   // we do get errors, what should we return?

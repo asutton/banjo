@@ -189,6 +189,7 @@ Parser::function_declaration()
   return fn;
 }
 
+
 // Parse a parameter list.
 //
 //    parameter-list:
@@ -399,36 +400,37 @@ Parser::namespace_declaration()
 //
 // FIXME: Support explicit template instantations in one way or
 // another.
-//
-// TODO: Make the requires-clause a where-clause so that we can have
-// top-level sets of named requirements.
 Decl&
 Parser::template_declaration()
 {
   require(template_tok);
 
+  // Build a psuedo-scope.
+  //
+  // FIXME: Merge this with template parameter scope. I don't think
+  // that it's serving a very useful purpose.
+  Template_scope& tmp = cxt.make_template_scope();
+  Enter_scope tscope(cxt, tmp);
+
   // TODO: Allow >> to close the template parameter list in the
   // case of default template arguments.
-  Enter_scope scope(cxt, cxt.make_template_parameter_scope());
+  Enter_template_parameter_scope pscope(cxt);
   match(lt_tok);
-  Decl_list ps = template_parameter_list();
+  tmp.parms = template_parameter_list();
   match(gt_tok);
 
-  // Parse the optional requires clause, followed by the
-  // definition.
-  //
-  // The definition is parsed in different branches in case I may,
-  // in the future, want to establish a new scope for constrained
-  // declarations (i.e., separate checking).
+  // Parse the optional requires clause, followed by the parameterized
+  // declaration.
   if (next_token_is(requires_tok)) {
-    Expr& c = requires_clause();
-    Parsing_template save(*this, ps, c);
+    // TODO: How are dependent names resolved in a requires clause?
+    tmp.cons = &requires_clause();
+    Enter_scope cscope(cxt, cxt.make_constrained_scope(*tmp.cons));
+    Parsing_template save(*this, &tmp.parms, tmp.cons);
     return declaration();
   } else {
-    Parsing_template save(*this, ps);
+    Parsing_template save(*this, &tmp.parms);
     return declaration();
   }
-
 }
 
 
@@ -563,17 +565,16 @@ Parser::concept_declaration()
   Token tok = require(concept_tok);
   Name& n = declarator();
 
-  Enter_scope pscope(cxt, cxt.make_template_parameter_scope());
+  Enter_template_parameter_scope pscope(cxt);
   match(lt_tok);
   Decl_list ps = template_parameter_list();
   match(gt_tok);
 
-  // Point of declaration.
+  // Point of declaration. Enter the associated context prior
+  // to defininging the concept.
   Decl& con = on_concept_declaration(tok, n, ps);
-
-  // Match the '=' form.
+  Enter_scope cscope(cxt, cxt.make_concept_scope(con));
   concept_definition(con);
-
   return con;
 }
 

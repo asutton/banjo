@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "builder.hpp"
+#include "context.hpp"
 #include "ast.hpp"
 #include "equivalence.hpp"
 #include "hash.hpp"
@@ -63,6 +64,13 @@ using Factory = Hashed_unique_factory<T, Hash<T>, Eq<T>>;
 
 
 // -------------------------------------------------------------------------- //
+// Builder definition
+
+Symbol_table&
+Builder::symbols() { return cxt.symbols(); }
+
+
+// -------------------------------------------------------------------------- //
 // Names
 
 // Returns a simple identifier with the given spelling.
@@ -116,7 +124,14 @@ Builder::get_id(Token tok)
 Placeholder_id&
 Builder::get_id()
 {
-  return make<Placeholder_id>();
+  return make<Placeholder_id>(cxt.get_unique_id());
+}
+
+
+Operator_id&
+Builder::get_id(Operator_kind k)
+{
+  return make<Operator_id>(k);
 }
 
 
@@ -418,6 +433,14 @@ Reference_expr&
 Builder::make_reference(Function_decl& d)
 {
   return make<Reference_expr>(get_reference_type(d.type()), d);
+}
+
+
+Template_ref&
+Builder::make_reference(Template_decl& d)
+{
+  Type& t = declared_type(d);
+  return make<Template_ref>(t, d);
 }
 
 
@@ -787,10 +810,26 @@ Builder::make_object_parm(char const* s, Type& t)
 }
 
 
+Value_parm&
+Builder::make_value_parm(Name& n, Type& t)
+{
+  Index x = cxt.make_template_parameter_index();
+  return make<Value_parm>(x, n, t);
+}
+
+
+Value_parm&
+Builder::make_value_parm(char const* s, Type& t)
+{
+  return make_value_parm(get_id(s), t);
+}
+
+
 Type_parm&
 Builder::make_type_parameter(Name& n)
 {
-  return make<Type_parm>(n);
+  Index x = cxt.make_template_parameter_index();
+  return make<Type_parm>(x, n);
 }
 
 
@@ -805,7 +844,8 @@ Builder::make_type_parameter(char const* n)
 Type_parm&
 Builder::make_type_parameter(Name& n, Type& t)
 {
-  return make<Type_parm>(n, t);
+  Index x = cxt.make_template_parameter_index();
+  return make<Type_parm>(x, n, t);
 }
 
 
@@ -817,17 +857,39 @@ Builder::make_type_parameter(char const* n, Type& t)
 }
 
 
-Value_parm&
-Builder::make_value_parm(Name& n, Type& t)
+// Create a new placeholder type. This creates a new, uniqe type
+// parameter and returns its associated type.
+Typename_type&
+Builder::make_placeholder_type()
 {
-  return make<Value_parm>(n, t);
+  Name& n = get_id();
+  Index x = cxt.make_placeholder_index();
+  Decl& d = make<Type_parm>(x, n);
+  return get_typename_type(d);
 }
 
 
-Value_parm&
-Builder::make_value_parm(char const* s, Type& t)
+// -------------------------------------------------------------------------- //
+// Requirements
+
+Basic_req&
+Builder::make_basic_requirement(Expr& e, Type& t)
 {
-  return make_value_parm(get_id(s), t);
+  return make<Basic_req>(e, t);
+}
+
+
+Conversion_req&
+Builder::make_conversion_requirement(Expr& e, Type& t)
+{
+  return make<Conversion_req>(e, t);
+}
+
+
+Syntactic_req&
+Builder::make_syntactic_requirement(Expr& e)
+{
+  return make<Syntactic_req>(e);
 }
 
 
@@ -837,7 +899,7 @@ Builder::make_value_parm(char const* s, Type& t)
 // FIXME: Save all uniqued terms in the context, not as global variables.
 
 Concept_cons&
-Builder::get_concept_constraint(Decl& d, Term_list& ts)
+Builder::get_concept_constraint(Decl& d, Term_list const& ts)
 {
   static Factory<Concept_cons> f;
   return f.make(d, ts);
@@ -849,6 +911,31 @@ Builder::get_predicate_constraint(Expr& e)
 {
   static Factory<Predicate_cons> f;
   return f.make(e);
+}
+
+
+Expression_cons&
+Builder::get_expression_constraint(Expr& e, Type& t)
+{
+  static Factory<Expression_cons> f;
+  return f.make(e, t);
+}
+
+
+Conversion_cons&
+Builder::get_conversion_constraint(Expr& e, Type& t)
+{
+  static Factory<Conversion_cons> f;
+  return f.make(e, t);
+
+}
+
+
+Parameterized_cons&
+Builder::get_parameterized_constraint(Decl_list const& ds, Cons& c)
+{
+  static Factory<Parameterized_cons> f;
+  return f.make(ds, c);
 }
 
 

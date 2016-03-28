@@ -107,8 +107,7 @@ Parser::match(Token_kind k)
   String msg = format("expected '{}' but got '{}'",
                       get_spelling(k),
                       token_spelling(tokens));
-  error(tokens.location(), msg);
-  throw Syntax_error("match");
+  throw Syntax_error(cxt, msg);
 }
 
 
@@ -152,7 +151,9 @@ Parser::require(char const* s)
 Token
 Parser::accept()
 {
-  return tokens.get();
+  Token tok = tokens.get();
+  cxt.input_location(tok.location());
+  return tok;
 }
 
 

@@ -3,7 +3,8 @@
 
 #include "conversion.hpp"
 #include "ast.hpp"
-#include "builder.hpp"
+#include "context.hpp"
+#include "constraint.hpp"
 #include "equivalence.hpp"
 #include "initialization.hpp"
 #include "print.hpp"
@@ -188,6 +189,13 @@ bool is_similar(Type const&, Type const&);
 
 
 bool
+is_similar(Reference_type const& a, Reference_type const& b)
+{
+  return is_similar(a.type(), b.type());
+}
+
+
+bool
 is_similar(Pointer_type const& a, Pointer_type const& b)
 {
   return is_similar(a.type(), b.type());
@@ -229,7 +237,7 @@ is_similar(Type const& a, Type const& b)
     bool operator()(Decltype_type const& a)  { return is_equivalent(a, cast<Decltype_type>(b)); }
     bool operator()(Declauto_type const& a)  { return is_equivalent(a, cast<Declauto_type>(b)); }
     bool operator()(Function_type const& a)  { return is_equivalent(a, cast<Function_type>(b)); }
-    bool operator()(Reference_type const& a) { return is_equivalent(a, cast<Reference_type>(b)); }
+    bool operator()(Reference_type const& a) { return is_similar(a, cast<Reference_type>(b)); }
     bool operator()(Qualified_type const&)   { lingo_unreachable(); }
     bool operator()(Pointer_type const& a)   { return is_similar(a, cast<Pointer_type>(b)); }
     bool operator()(Array_type const& a)     { return is_similar(a, cast<Array_type>(b)); }
@@ -238,17 +246,17 @@ is_similar(Type const& a, Type const& b)
     bool operator()(Class_type const& a)     { return is_equivalent(a, cast<Class_type>(b)); }
     bool operator()(Union_type const& a)     { return is_equivalent(a, cast<Union_type>(b)); }
     bool operator()(Enum_type const& a)      { return is_equivalent(a, cast<Enum_type>(b)); }
-    bool operator()(Typename_type const& a)  { return is_equivalent(a, cast<Typename_type>(b)); }
+    bool operator()(Typename_type const& a) { return is_equivalent(a, cast<Typename_type>(b)); }
     bool operator()(Synthetic_type const& a) { return is_equivalent(a, cast<Synthetic_type>(b)); }
   };
 
   Type const& ua = a.unqualified_type();
   Type const& ub = b.unqualified_type();
-  std::type_index t1 = typeid(ua);
-  std::type_index t2 = typeid(ub);
-  if (t1 != t2)
+
+  if (typeid(ua) != typeid(ub))
     return false;
-  return apply(ua, fn{ub});
+  else
+    return apply(ua, fn{ub});
 }
 
 
@@ -397,8 +405,7 @@ standard_conversion(Expr& e, Type& t)
   if (is_equivalent(c3.type(), t))
     return c3;
 
-  // FIXME: Emit better diagnostics.
-  throw std::runtime_error("conversion error");
+  throw Type_error("cannot convert '{}' (type '{}') to '{}'", e, e.type(), t);
 }
 
 
@@ -438,7 +445,7 @@ convert_to_common_float(Expr& e1, Expr& e2)
     return {convert_integer_to_float(e1, f2), e2};
   }
 
-  throw std::runtime_error("incompatible types");
+  throw Type_error("no floating point conversions for '{}' and '{}'", e1, e2);
 }
 
 Expr_pair
@@ -512,7 +519,7 @@ arithmetic_conversion(Expr& e1, Expr& e2)
     return convert_to_common_int(e1, e2);
 
   // TODO: No conversion from e1 to e2.
-  throw std::runtime_error("incompatible types");
+  throw Type_error("no usual arithmetic conversions for '{}' and '{}'", e1, e2);
 }
 
 
@@ -637,14 +644,12 @@ compare(Conversion_seq const& a, Conversion_seq const& b)
 Expr&
 contextual_conversion_to_bool(Context& cxt, Expr& e)
 {
-  Builder b(cxt);
-
   // Contextual conversion to bool tries to do this:
   //
   //    bool b(e);
   //
   // so we preform direct initialization.
-  Expr& init = direct_initialize(cxt, b.get_bool_type(), e);
+  Expr& init = direct_initialize(cxt, cxt.get_bool_type(), e);
 
   // Based on the initializer selected, we can either
   // 1. return the converted value directly
@@ -652,10 +657,55 @@ contextual_conversion_to_bool(Context& cxt, Expr& e)
   // 3. invoke a user-defined conversion
   if (Copy_init* i = as<Copy_init>(&init))
     return i->expression();
-
   banjo_unhandled_case(init);
 }
 
+
+// -------------------------------------------------------------------------- //
+// Dependent conversions
+
+// Search for dependent conversions. This is done in the case that:
+//
+//    - e has dependent type,
+//    - t is a dependent type,
+//    - or both.
+//
+// A dependent conversion is either a standard, conversion conisisting
+// of a object-to-value conversion and a qualification adjustment, or
+// it is a conversion admitted by a constraint.
+Expr&
+dependent_conversion(Context& cxt, Expr& e, Type& t)
+{
+  // In certain contexts, no conversions are applied.
+  if (cxt.in_requirements())
+    return e;
+  if (!cxt.current_template_constraints())
+    return e;
+
+  // Determine if we can reach the destination type by a
+  // standard set of conversions on the dependent source
+  // expression. Discard that conversion and replace it with
+  // a dependent conversion.
+  try {
+    // FIXME: If an object-to-value conversion is applied, then
+    // we need to also ensure that the type is copy constructible.
+    // Note that copy constructible would also entail move
+    // constructible.
+    Expr& c = standard_conversion(e, t);
+    (void)c;
+    return *new Dependent_conv(t, e);
+  } catch (Translation_error&) {
+    // Fall through...
+  }
+
+  // Search for a conversion to t among the listed constraints.
+  Expr& cons = *cxt.current_template_constraints();
+  if (Expr* c = admit_conversion(cxt, cons, e, t)) {
+    return *c;
+  }
+
+  throw Type_error(cxt, "no admissible conversion from '{}' to '{}'", e, t);
+}
 
 
 } // namespace banjo

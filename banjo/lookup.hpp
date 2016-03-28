@@ -12,12 +12,13 @@ namespace banjo
 {
 
 
-Decl&     simple_lookup(Scope&, Simple_id const&);
-Decl_list unqualified_lookup(Scope&, Simple_id const&);
+Decl&     simple_lookup(Context&, Scope&, Simple_id const&);
+Decl_list unqualified_lookup(Context&, Scope&, Simple_id const&);
 
 // Decl_list qualified_lookup(Scope&, Symbol const&);
 // Decl_list argument_dependent_lookup(Scope&, Expr_list&);
 
+Expr* requirement_lookup(Context& cxt, Expr&);
 
 } // namespace banjo
 

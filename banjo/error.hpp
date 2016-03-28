@@ -6,27 +6,78 @@
 
 #include "prelude.hpp"
 
-
 namespace banjo
 {
+
+// The compiler-error class represents a runtime error that contains
+// a compiler diagnostic. This overrides the what() function to provide
+// a textual represntation of that diagnostic.
+//
+// NOTE: Do not let compiler errors escape main(). The rendering of
+// of a diagnostic message requires that input buffers be in scope,
+// which may not be guaranteed at the point of termination.
+//
+// FIXME: For constructors taking strings, do I need (or want) to
+// give some more specific kind of error (like fatal?).
+struct Compiler_error : std::runtime_error
+{
+  Compiler_error(Diagnostic d)
+    : std::runtime_error(""), diag(d)
+  { }
+
+  Compiler_error(Diagnostic_kind k, String const& s)
+    : Compiler_error(Diagnostic(k, Location(), s))
+  { }
+
+  Compiler_error(Diagnostic_kind k, Location loc, String const& s)
+    : Compiler_error(Diagnostic(k, loc, s))
+  { }
+
+  Compiler_error(String const& s)
+    : Compiler_error(Diagnostic(error_diag, Location(), s))
+  { }
+
+  Compiler_error(char const* s)
+    : Compiler_error(Diagnostic(error_diag, Location(), s))
+  { }
+
+  template<typename... Args>
+  Compiler_error(char const* s, Args const&... args)
+    : Compiler_error(error_diag, format(s, args...))
+  { }
+
+  template<typename... Args>
+  Compiler_error(Location loc, char const* s, Args const&... args)
+    : Compiler_error(error_diag, loc, format(s, args...))
+  { }
+
+  template<typename... Args>
+  Compiler_error(Context& cxt, String const& s)
+    : Compiler_error(error_diag, location(cxt), s)
+  { }
+
+  template<typename... Args>
+  Compiler_error(Context& cxt, char const* s, Args const&... args)
+    : Compiler_error(error_diag, location(cxt), format(s, args...))
+  { }
+
+  virtual const char* what() const noexcept;
+
+  // Helper functions.
+  Location location(Context const&);
+
+
+  Diagnostic diag;    // The diagnostic
+  mutable String buf; // Guarantees ownership of 'what' text
+};
+
 
 // Represents a translation failure resulting from an internal
 // logic error such as a failed precondition or unhandled case.
 // See the macros below for simplied usage.
-struct Internal_error : std::runtime_error
+struct Internal_error : Compiler_error
 {
-  Internal_error(std::string const& s)
-    : std::runtime_error(s)
-  { }
-
-  Internal_error(char const* s)
-    : std::runtime_error(s)
-  { }
-
-  template<typename... Args>
-  Internal_error(char const* s, Args const&... args)
-    : Internal_error(format(s, args...))
-  { }
+  using Compiler_error::Compiler_error;
 };
 
 
@@ -41,23 +92,13 @@ struct Internal_error : std::runtime_error
 #define banjo_unimplemented(s) \
   throw banjo::Internal_error("{}:{}: unimplemented: '{}'", __FILE__, __LINE__, s)
 
+# // Fixes syntax highlighting in Atom
 
 // Represents an error that occurs during translation. Translation
 // errors occurring in certain contexts are recoverable.
-struct Translation_error : std::runtime_error
+struct Translation_error : Compiler_error
 {
-  Translation_error(std::string const& s)
-    : std::runtime_error(s)
-  { }
-
-  Translation_error(char const* s)
-    : std::runtime_error(s)
-  { }
-
-  template<typename... Args>
-  Translation_error(char const* s, Args const&... args)
-    : Translation_error(format(s, args...))
-  { }
+  using Compiler_error::Compiler_error;
 };
 
 
@@ -80,6 +121,29 @@ struct Lookup_error : Translation_error
 // Represets a type error. Type errors occur when one type (or kind
 // of type) is expected, but another type is given.
 struct Type_error : Translation_error
+{
+  using Translation_error::Translation_error;
+};
+
+
+// Represents an template argument deduction error.
+struct Deduction_error : Translation_error
+{
+  using Translation_error::Translation_error;
+};
+
+
+// Represents an failure to unify multiple deductions of a template
+// parameter. This is a distinct kind of deduction failure.
+struct Unification_error : Deduction_error
+{
+  using Deduction_error::Deduction_error;
+};
+
+
+// Represents an error occcurring in the substitution of template
+// arguments for parameters.
+struct Substitution_error : Translation_error
 {
   using Translation_error::Translation_error;
 };

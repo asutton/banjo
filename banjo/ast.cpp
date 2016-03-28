@@ -2,25 +2,10 @@
 // All rights reserved
 
 #include "ast.hpp"
-#include "scope.hpp"
-#include "equivalence.hpp"
 
 
 namespace banjo
 {
-
-// Create a namespace with its own scope.
-Namespace_decl::Namespace_decl(Name& n)
-  : Decl(n), decls(), lookup(new Namespace_scope(*this))
-{ }
-
-
-// TODO: Manage the memory for the scope?
-Namespace_decl::Namespace_decl(Decl& cxt, Name& n)
-  : Decl(cxt, n)
-  , decls()
-  , lookup(new Namespace_scope(cxt, *this))
-{ }
 
 
 // Returns true if `t` is an object type. That is, any type
@@ -64,31 +49,6 @@ is_value_type(Type const& t)
     bool operator()(Typename_type const&)    { lingo_unreachable(); }
   };
   return apply(t, fn{});
-}
-
-// Return the type of a declaration. A type describes objects,
-// references, and functions.
-//
-// FIXME: This is kind of dumb. We should have a base class that
-// contributes a type to the declaration hiearchy (Typed_decl).
-Type&
-declared_type(Decl& decl)
-{
-  struct fn
-  {
-    Type& operator()(Decl&)            { lingo_unreachable(); }
-    Type& operator()(Object_decl& d)   { return d.type(); }
-    Type& operator()(Function_decl& d) { return d.type(); }
-  };
-  Decl& d = decl.parameterized_declaration();
-  return apply(d, fn{});
-}
-
-
-Type const&
-declared_type(Decl const& d)
-{
-  return declared_type(const_cast<Decl&>(d));
 }
 
 

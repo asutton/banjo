@@ -41,6 +41,7 @@ struct Expr::Visitor
   virtual void visit(Integer_expr const&) { }
   virtual void visit(Real_expr const&) { }
   virtual void visit(Reference_expr const&) { }
+  virtual void visit(Template_ref const&) { }
   virtual void visit(Check_expr const&) { }
   virtual void visit(Add_expr const&) { }
   virtual void visit(Sub_expr const&) { }
@@ -68,6 +69,7 @@ struct Expr::Visitor
   virtual void visit(Integer_conv const&) { }
   virtual void visit(Float_conv const&) { }
   virtual void visit(Numeric_conv const&) { }
+  virtual void visit(Dependent_conv const&) { }
   virtual void visit(Ellipsis_conv const&) { }
   virtual void visit(Trivial_init const&) { }
   virtual void visit(Copy_init const&) { }
@@ -82,6 +84,7 @@ struct Expr::Mutator
   virtual void visit(Integer_expr&) { }
   virtual void visit(Real_expr&) { }
   virtual void visit(Reference_expr&) { }
+  virtual void visit(Template_ref&) { }
   virtual void visit(Check_expr&) { }
   virtual void visit(Add_expr&) { }
   virtual void visit(Sub_expr&) { }
@@ -109,6 +112,7 @@ struct Expr::Mutator
   virtual void visit(Integer_conv&) { }
   virtual void visit(Float_conv&) { }
   virtual void visit(Numeric_conv&) { }
+  virtual void visit(Dependent_conv&) { }
   virtual void visit(Ellipsis_conv&) { }
   virtual void visit(Trivial_init&) { }
   virtual void visit(Copy_init&) { }
@@ -220,6 +224,27 @@ struct Reference_expr : Expr
   Decl&       declaration()       { return *decl; }
 
   Decl* decl;
+};
+
+
+// Represents an id-expression that refers to a template declaration.
+// These primarily occur in call expresssions:
+//
+//    template<typename T> def f(T) -> void;
+//
+//    f(0);
+//
+// In the call f(0), f is a template reference.
+struct Template_ref : Reference_expr
+{
+  using Reference_expr::Reference_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the referenced templaet declaration.
+  Template_decl const& declaration() const;
+  Template_decl&       declaration();
 };
 
 
@@ -608,6 +633,18 @@ struct Numeric_conv : Standard_conv
 };
 
 
+// A conversion from a type-dependent expression to some
+// other type. When instantiated, an implicit conversion must
+// be applied.
+struct Dependent_conv : Conv
+{
+  using Conv::Conv;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
 // Represents the conversion of an argument type the ellipsis
 // parameter.
 struct Ellipsis_conv : Conv
@@ -745,6 +782,12 @@ bool has_array_type(Expr const&);
 bool has_class_type(Expr const&);
 bool has_union_type(Expr const&);
 
+bool is_type_dependent(Expr const&);
+bool is_type_dependent(Expr_list const&);
+
+Type const& declared_type(Expr const&);
+Type&       declared_type(Expr&);
+
 
 // -------------------------------------------------------------------------- //
 // Operations on conversions
@@ -780,6 +823,7 @@ struct Generic_expr_visitor : Expr::Visitor, Generic_visitor<F, T>
   void visit(Integer_expr const& e)       { this->invoke(e); }
   void visit(Real_expr const& e)          { this->invoke(e); }
   void visit(Reference_expr const& e)     { this->invoke(e); }
+  void visit(Template_ref const& e)       { this->invoke(e); }
   void visit(Check_expr const& e)         { this->invoke(e); }
   void visit(Add_expr const& e)           { this->invoke(e); }
   void visit(Sub_expr const& e)           { this->invoke(e); }
@@ -807,6 +851,7 @@ struct Generic_expr_visitor : Expr::Visitor, Generic_visitor<F, T>
   void visit(Integer_conv const& e)       { this->invoke(e); }
   void visit(Float_conv const& e)         { this->invoke(e); }
   void visit(Numeric_conv const& e)       { this->invoke(e); }
+  void visit(Dependent_conv const& e)     { this->invoke(e); }
   void visit(Ellipsis_conv const& e)      { this->invoke(e); }
   void visit(Trivial_init const& e)       { this->invoke(e); }
   void visit(Copy_init const& e)          { this->invoke(e); }
@@ -818,7 +863,7 @@ struct Generic_expr_visitor : Expr::Visitor, Generic_visitor<F, T>
 
 // Apply a function to the given type.
 template<typename F, typename T = typename std::result_of<F(Boolean_expr const&)>::type>
-inline T
+inline decltype(auto)
 apply(Expr const& e, F fn)
 {
   Generic_expr_visitor<F, T> vis(fn);
@@ -838,6 +883,7 @@ struct Generic_expr_mutator : Expr::Mutator, Generic_mutator<F, T>
   void visit(Integer_expr& e)       { this->invoke(e); }
   void visit(Real_expr& e)          { this->invoke(e); }
   void visit(Reference_expr& e)     { this->invoke(e); }
+  void visit(Template_ref& e)       { this->invoke(e); }
   void visit(Check_expr& e)         { this->invoke(e); }
   void visit(Add_expr& e)           { this->invoke(e); }
   void visit(Sub_expr& e)           { this->invoke(e); }
@@ -865,6 +911,7 @@ struct Generic_expr_mutator : Expr::Mutator, Generic_mutator<F, T>
   void visit(Integer_conv& e)       { this->invoke(e); }
   void visit(Float_conv& e)         { this->invoke(e); }
   void visit(Numeric_conv& e)       { this->invoke(e); }
+  void visit(Dependent_conv& e)     { this->invoke(e); }
   void visit(Ellipsis_conv& e)      { this->invoke(e); }
   void visit(Trivial_init& e)       { this->invoke(e); }
   void visit(Copy_init& e)          { this->invoke(e); }
@@ -876,7 +923,7 @@ struct Generic_expr_mutator : Expr::Mutator, Generic_mutator<F, T>
 
 // Apply a function to the given type.
 template<typename F, typename T = typename std::result_of<F(Boolean_expr&)>::type>
-inline T
+inline decltype(auto)
 apply(Expr& e, F fn)
 {
   Generic_expr_mutator<F, T> vis(fn);

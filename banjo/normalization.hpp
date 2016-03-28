@@ -5,17 +5,15 @@
 #define BANJO_NORMALIZATION_HPP
 
 #include "prelude.hpp"
+#include "language.hpp"
 
 
 namespace banjo
 {
 
-struct Expr;
-struct Cons;
-struct Context;
-
-
 Cons& normalize(Context&, Expr&);
+Cons& normalize(Context&, Req&);
+Cons& normalize(Context&, Concept_def&);
 
 
 } // namespace banjo
