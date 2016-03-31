@@ -2,9 +2,9 @@
 // All rights reserved
 
 #include "overload.hpp"
-#include "ast_name.hpp"
-#include "ast_type.hpp"
-#include "ast_decl.hpp"
+#include "ast-name.hpp"
+#include "ast-type.hpp"
+#include "ast-decl.hpp"
 #include "print.hpp"
 
 #include <iostream>

@@ -315,6 +315,7 @@ precedence(Type const& t)
     int operator()(Void_type const& t)      { return 0; }
     int operator()(Boolean_type const& t)   { return 0; }
     int operator()(Integer_type const& t)   { return 0; }
+    int operator()(Byte_type const& t)      { return 0; }
     int operator()(Float_type const& t)     { return 0; }
     int operator()(Auto_type const& t)      { return 0; }
     int operator()(Decltype_type const& t)  { return 0; }
@@ -345,6 +346,7 @@ Printer::type(Type const& t)
     void operator()(Type const& t)           { lingo_unimplemented(); }
     void operator()(Void_type const& t)      { p.simple_type(t); }
     void operator()(Boolean_type const& t)   { p.simple_type(t); }
+    void operator()(Byte_type const& t)      { p.simple_type(t); }
     void operator()(Integer_type const& t)   { p.simple_type(t); }
     void operator()(Float_type const& t)     { p.simple_type(t); }
     void operator()(Auto_type const& t)      { p.simple_type(t); }
@@ -378,6 +380,13 @@ void
 Printer::simple_type(Boolean_type const& t)
 {
   token(bool_tok);
+}
+
+
+void
+Printer::simple_type(Byte_type const& t)
+{
+  token(byte_tok);
 }
 
 

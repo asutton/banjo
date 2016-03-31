@@ -11,6 +11,15 @@ namespace banjo
 {
 
 
+// Returns true.  
+template<typename T>
+bool
+always_equal(T const& t1, T const& t2)
+{
+  return true;
+}
+
+
 // -------------------------------------------------------------------------- //
 // Terms
 
@@ -145,20 +154,9 @@ is_equivalent(Name const& n1, Name const& n2)
   return apply(n1, fn{n2});
 }
 
+
 // -------------------------------------------------------------------------- //
 // Types
-bool
-is_equivalent(Void_type const&, Void_type const&)
-{
-  return true;
-}
-
-
-bool
-is_equivalent(Boolean_type const&, Boolean_type const&)
-{
-  return true;
-}
 
 
 bool
@@ -272,8 +270,9 @@ is_equivalent(Type const& t1, Type const& t2)
   struct fn
   {
     Type const& t2;
-    bool operator()(Void_type const& t1) const         { return is_equivalent(t1, cast<Void_type>(t2)); }
-    bool operator()(Boolean_type const& t1) const      { return is_equivalent(t1, cast<Boolean_type>(t2)); }
+    bool operator()(Void_type const& t1) const         { return always_equal(t1, cast<Void_type>(t2)); }
+    bool operator()(Boolean_type const& t1) const      { return always_equal(t1, cast<Boolean_type>(t2)); }
+    bool operator()(Byte_type const& t1) const         { return always_equal(t1, cast<Byte_type>(t2)); }
     bool operator()(Integer_type const& t1) const      { return is_equivalent(t1, cast<Integer_type>(t2)); }
     bool operator()(Float_type const& t1) const        { return is_equivalent(t1, cast<Float_type>(t2)); }
     bool operator()(Auto_type const& t1) const         { return is_equivalent(t1, cast<Auto_type>(t2)); }

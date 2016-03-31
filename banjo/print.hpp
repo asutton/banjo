@@ -90,6 +90,7 @@ struct Printer
   void simple_type(Type const&);
   void simple_type(Void_type const&);
   void simple_type(Boolean_type const&);
+  void simple_type(Byte_type const&);
   void simple_type(Integer_type const&);
   void simple_type(Float_type const&);
   void simple_type(Auto_type const&);

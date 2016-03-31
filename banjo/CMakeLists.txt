@@ -6,39 +6,43 @@ add_library(banjo
   prelude.cpp
   error.cpp
   context.cpp
+
   # Lexical components
   token.cpp
   lexer.cpp
+
   # Syntactic components
-  ast.cpp
-  ast_base.cpp
-  ast_name.cpp
-  ast_type.cpp
-  ast_expr.cpp
-  ast_stmt.cpp
-  ast_decl.cpp
-  ast_def.cpp
-  ast_req.cpp
-  operator.cpp
-  qualifier.cpp
-  specifier.cpp
+  # TODO: Factor this out to support multiple front ends.
   value.cpp
   builder.cpp
   parser.cpp
-  parse_id.cpp
-  parse_type.cpp
-  parse_expr.cpp
-  parse_stmt.cpp
-  parse_decl.cpp
-  parse_req.cpp
-  sema_id.cpp
-  sema_type.cpp
-  sema_expr.cpp
-  sema_init.cpp
-  sema_stmt.cpp
-  sema_decl.cpp
-  sema_req.cpp
+  parse-id.cpp
+  parse-type.cpp
+  parse-expr.cpp
+  parse-stmt.cpp
+  parse-decl.cpp
+  parse-req.cpp
+  sema-id.cpp
+  sema-type.cpp
+  sema-expr.cpp
+  sema-init.cpp
+  sema-stmt.cpp
+  sema-decl.cpp
+  sema-req.cpp
+
   # Semantics
+  ast.cpp
+  ast-base.cpp
+  ast-name.cpp
+  ast-type.cpp
+  ast-expr.cpp
+  ast-stmt.cpp
+  ast-decl.cpp
+  ast-def.cpp
+  ast-req.cpp
+  operator.cpp
+  qualifier.cpp
+  specifier.cpp
   hash.cpp
   equivalence.cpp
   scope.cpp
@@ -47,10 +51,10 @@ add_library(banjo
   declaration.cpp
   overload.cpp
   expression.cpp
-  expr_id.cpp
-  expr_logical.cpp
-  expr_relational.cpp
-  expr_call.cpp
+  expr-id.cpp
+  expr-logical.cpp
+  expr-relational.cpp
+  expr-call.cpp
   conversion.cpp
   initialization.cpp
   call.cpp

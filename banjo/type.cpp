@@ -2,7 +2,7 @@
 // All rights reserved
 
 #include "expression.hpp"
-#include "ast_type.hpp"
+#include "ast-type.hpp"
 #include "context.hpp"
 
 #include <iostream>

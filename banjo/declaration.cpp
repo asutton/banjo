@@ -2,8 +2,8 @@
 // All rights reserved
 
 #include "declaration.hpp"
-#include "ast_type.hpp"
-#include "ast_decl.hpp"
+#include "ast-type.hpp"
+#include "ast-decl.hpp"
 #include "context.hpp"
 #include "scope.hpp"
 #include "lookup.hpp"

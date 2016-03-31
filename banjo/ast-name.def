@@ -1,0 +1,13 @@
+// Copyright (c) 2015-2016 Andrew Sutton
+// All rights reserved
+
+define_node(Simple_id)
+define_node(Global_id)
+define_node(Placeholder_id)
+define_node(Operator_id)
+define_node(Conversion_id)
+define_node(Literal_id)
+define_node(Destructor_id)
+define_node(Template_id)
+define_node(Concept_id)
+define_node(Qualified_id)

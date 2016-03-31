@@ -137,15 +137,9 @@ hash_value(Name const& n)
 // -------------------------------------------------------------------------- //
 // Types
 
+template<typename T>
 inline std::size_t
-hash_void(Void_type const& t)
-{
-  return hash_type(t);
-}
-
-
-inline std::size_t
-hash_boolean(Boolean_type const& t)
+hash_nullary_type(T const& t)
 {
   return hash_type(t);
 }
@@ -216,8 +210,9 @@ hash_value(Type const& t)
 {
   struct fn
   {
-    std::size_t operator()(Void_type const& t) const      { return hash_void(t); }
-    std::size_t operator()(Boolean_type const& t) const   { return hash_boolean(t); }
+    std::size_t operator()(Void_type const& t) const      { return hash_nullary_type(t); }
+    std::size_t operator()(Boolean_type const& t) const   { return hash_nullary_type(t); }
+    std::size_t operator()(Byte_type const& t) const      { return hash_nullary_type(t); }
     std::size_t operator()(Integer_type const& t) const   { return hash_integer(t); }
     std::size_t operator()(Float_type const& t) const     { return hash_float(t); }
     std::size_t operator()(Auto_type const& t) const      { return hash_value(t); }

@@ -2,8 +2,8 @@
 // All rights reserved
 
 #include "initialization.hpp"
-#include "ast_type.hpp"
-#include "ast_expr.hpp"
+#include "ast-type.hpp"
+#include "ast-expr.hpp"
 #include "conversion.hpp"
 #include "inheritance.hpp"
 #include "equivalence.hpp"
