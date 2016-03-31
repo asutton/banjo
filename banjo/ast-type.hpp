@@ -38,49 +38,17 @@ struct Type : Term
 
 struct Type::Visitor
 {
-  virtual void visit(Void_type const&)      { }
-  virtual void visit(Boolean_type const&)   { }
-  virtual void visit(Byte_type const&)      { }
-  virtual void visit(Integer_type const&)   { }
-  virtual void visit(Float_type const&)     { }
-  virtual void visit(Auto_type const&)      { }
-  virtual void visit(Decltype_type const&)  { }
-  virtual void visit(Declauto_type const&)  { }
-  virtual void visit(Function_type const&)  { }
-  virtual void visit(Qualified_type const&) { }
-  virtual void visit(Pointer_type const&)   { }
-  virtual void visit(Reference_type const&) { }
-  virtual void visit(Array_type const&)     { }
-  virtual void visit(Sequence_type const&)  { }
-  virtual void visit(Class_type const&)     { }
-  virtual void visit(Union_type const&)     { }
-  virtual void visit(Enum_type const&)      { }
-  virtual void visit(Typename_type const&)  { }
-  virtual void visit(Synthetic_type const&) { }
+#define define_node(Node) virtual void visit(Node const&) = 0;
+#include "ast-type.def"
+#undef define_node
 };
 
 
 struct Type::Mutator
 {
-  virtual void visit(Void_type&)      { }
-  virtual void visit(Boolean_type&)   { }
-  virtual void visit(Byte_type&)      { }
-  virtual void visit(Integer_type&)   { }
-  virtual void visit(Float_type&)     { }
-  virtual void visit(Auto_type&)      { }
-  virtual void visit(Decltype_type&)  { }
-  virtual void visit(Declauto_type&)  { }
-  virtual void visit(Function_type&)  { }
-  virtual void visit(Qualified_type&) { }
-  virtual void visit(Pointer_type&)   { }
-  virtual void visit(Reference_type&) { }
-  virtual void visit(Array_type&)     { }
-  virtual void visit(Sequence_type&)  { }
-  virtual void visit(Class_type&)     { }
-  virtual void visit(Union_type&)     { }
-  virtual void visit(Enum_type&)      { }
-  virtual void visit(Typename_type&)  { }
-  virtual void visit(Synthetic_type&) { }
+#define define_node(Node) virtual void visit(Node&) = 0;
+#include "ast-type.def"
+#undef define_node
 };
 
 
@@ -547,24 +515,23 @@ struct Generic_type_visitor : Type::Visitor, Generic_visitor<F, T>
     : Generic_visitor<F, T>(f)
   { }
 
-  void visit(Void_type const& t)      { this->invoke(t); }
-  void visit(Boolean_type const& t)   { this->invoke(t); }
-  void visit(Integer_type const& t)   { this->invoke(t); }
-  void visit(Float_type const& t)     { this->invoke(t); }
-  void visit(Auto_type const& t)      { this->invoke(t); }
-  void visit(Decltype_type const& t)  { this->invoke(t); }
-  void visit(Declauto_type const& t)  { this->invoke(t); }
-  void visit(Function_type const& t)  { this->invoke(t); }
-  void visit(Qualified_type const& t) { this->invoke(t); }
-  void visit(Pointer_type const& t)   { this->invoke(t); }
-  void visit(Reference_type const& t) { this->invoke(t); }
-  void visit(Array_type const& t)     { this->invoke(t); }
-  void visit(Sequence_type const& t)  { this->invoke(t); }
-  void visit(Class_type const& t)     { this->invoke(t); }
-  void visit(Union_type const& t)     { this->invoke(t); }
-  void visit(Enum_type const& t)      { this->invoke(t); }
-  void visit(Typename_type const& t)  { this->invoke(t); }
-  void visit(Synthetic_type const& t) { this->invoke(t); }
+#define define_node(Node) void visit(Node const& t) { this->invoke(t); }
+#include "ast-type.def"
+#undef define_node
+};
+
+
+// A generic mutator for types.
+template<typename F, typename T>
+struct Generic_type_mutator : Type::Mutator, Generic_mutator<F, T>
+{
+  Generic_type_mutator(F f)
+    : Generic_mutator<F, T>(f)
+  { }
+
+#define define_node(Node) void visit(Node& t) { this->invoke(t); }
+#include "ast-type.def"
+#undef define_node
 };
 
 
@@ -576,35 +543,6 @@ apply(Type const& t, F fn)
   Generic_type_visitor<F, T> vis(fn);
   return accept(t, vis);
 }
-
-
-// A generic mutator for types.
-template<typename F, typename T>
-struct Generic_type_mutator : Type::Mutator, Generic_mutator<F, T>
-{
-  Generic_type_mutator(F f)
-    : Generic_mutator<F, T>(f)
-  { }
-
-  void visit(Void_type& t)      { this->invoke(t); }
-  void visit(Boolean_type& t)   { this->invoke(t); }
-  void visit(Integer_type& t)   { this->invoke(t); }
-  void visit(Float_type& t)     { this->invoke(t); }
-  void visit(Auto_type& t)      { this->invoke(t); }
-  void visit(Decltype_type& t)  { this->invoke(t); }
-  void visit(Declauto_type& t)  { this->invoke(t); }
-  void visit(Function_type& t)  { this->invoke(t); }
-  void visit(Qualified_type& t) { this->invoke(t); }
-  void visit(Pointer_type& t)   { this->invoke(t); }
-  void visit(Reference_type& t) { this->invoke(t); }
-  void visit(Array_type& t)     { this->invoke(t); }
-  void visit(Sequence_type& t)  { this->invoke(t); }
-  void visit(Class_type& t)     { this->invoke(t); }
-  void visit(Union_type& t)     { this->invoke(t); }
-  void visit(Enum_type& t)      { this->invoke(t); }
-  void visit(Typename_type& t)  { this->invoke(t); }
-  void visit(Synthetic_type& t) { this->invoke(t); }
-};
 
 
 // Apply a function to the given type.
