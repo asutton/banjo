@@ -22,137 +22,30 @@ namespace banjo
 struct Term;
 
 struct Name;
-struct Simple_id;
-struct Global_id;
-struct Placeholder_id;
-struct Operator_id;
-struct Conversion_id;
-struct Literal_id;
-struct Destructor_id;
-struct Template_id;
-struct Concept_id;
-struct Qualified_id;
-
 struct Type;
-struct Void_type;
-struct Boolean_type;
-struct Byte_type;
-struct Integer_type;
-struct Float_type;
-struct Auto_type;
-struct Decltype_type;
-struct Declauto_type;
-struct Function_type;
-struct Qualified_type;
-struct Pointer_type;
-struct Reference_type;
-struct Array_type;
-struct Sequence_type;
-struct Class_type;
-struct Union_type;
-struct Enum_type;
-struct Typename_type;
-struct Synthetic_type;
-
 struct Expr;
 struct Unary_expr;
 struct Binary_expr;
-struct Boolean_expr;
-struct Integer_expr;
-struct Real_expr;
-struct Reference_expr;
-struct Template_ref;
-struct Check_expr;
-struct Add_expr;
-struct Sub_expr;
-struct Mul_expr;
-struct Div_expr;
-struct Rem_expr;
-struct Neg_expr;
-struct Pos_expr;
-struct Eq_expr;
-struct Ne_expr;
-struct Lt_expr;
-struct Gt_expr;
-struct Le_expr;
-struct Ge_expr;
-struct And_expr;
-struct Or_expr;
-struct Not_expr;
-struct Call_expr;
-struct Assign_expr;
-struct Requires_expr;
-struct Synthetic_expr;
-
 struct Conv;
-struct Value_conv;
-struct Qualification_conv;
-struct Boolean_conv;
-struct Integer_conv;
-struct Float_conv;
-struct Numeric_conv;
-struct Dependent_conv;
-struct Ellipsis_conv;
-
 struct Init;
-struct Trivial_init;
-struct Copy_init;
-struct Bind_init;
-struct Direct_init;
-struct Aggregate_init;
-
 struct Req;
-struct Type_req;
-struct Syntactic_req;
-struct Semantic_req;
-struct Expression_req;
-struct Basic_req;
-struct Conversion_req;
-struct Deduction_req;
-
 struct Stmt;
-struct Compound_stmt;
-struct Expression_stmt;
-struct Declaration_stmt;
-struct Return_stmt;
-
 struct Decl;
-struct Variable_decl;
-struct Constant_decl;
-struct Function_decl;
-struct Class_decl;
-struct Union_decl;
-struct Enum_decl;
-struct Namespace_decl;
-struct Template_decl;
-struct Concept_decl;
-struct Axiom_decl;
-struct Object_parm;
-struct Value_parm;
-struct Type_parm;
-struct Template_parm;
-struct Variadic_parm;
-
 struct Def;
-struct Defaulted_def;
-struct Deleted_def;
-struct Expression_def;
-struct Function_def;
-struct Class_def;
-struct Union_def;
-struct Enum_def;
-struct Concept_def;
-
 struct Cons;
-struct Concept_cons;
-struct Expression_cons;
-struct Type_cons;
-struct Predicate_cons;
-struct Conversion_cons;
-struct Deduction_cons;
-struct Conjunction_cons;
-struct Disjunction_cons;
-struct Parameterized_cons;
+
+#define define_node(Node) struct Node;
+#include "ast-name.def"
+#include "ast-type.def"
+#include "ast-expr.def"
+#include "ast-req.def"
+#include "ast-stmt.def"
+#include "ast-decl.def"
+#include "ast-def.def"
+#include "ast-cons.def"
+#undef define_node
+
+
 
 struct Scope;
 
