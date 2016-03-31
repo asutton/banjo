@@ -4,7 +4,7 @@
 #ifndef BANJO_AST_CONS_HPP
 #define BANJO_AST_CONS_HPP
 
-#include "ast_base.hpp"
+#include "ast-base.hpp"
 
 
 namespace banjo

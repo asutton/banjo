@@ -1,8 +1,8 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#include "ast_type.hpp"
-#include "ast_decl.hpp"
+#include "ast-type.hpp"
+#include "ast-decl.hpp"
 
 
 namespace banjo

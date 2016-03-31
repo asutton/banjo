@@ -2,9 +2,9 @@
 // All rights reserved
 
 #include "expression.hpp"
-#include "ast_type.hpp"
-#include "ast_expr.hpp"
-#include "ast_decl.hpp"
+#include "ast-type.hpp"
+#include "ast-expr.hpp"
+#include "ast-decl.hpp"
 #include "context.hpp"
 #include "type.hpp"
 #include "template.hpp"

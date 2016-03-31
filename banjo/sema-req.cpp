@@ -3,10 +3,6 @@
 // All rights reserved
 
 #include "parser.hpp"
-#include "ast_type.hpp"
-#include "ast_expr.hpp"
-#include "ast_decl.hpp"
-#include "ast_req.hpp"
 #include "requirement.hpp"
 #include "print.hpp"
 

@@ -4,15 +4,15 @@
 #ifndef BANJO_AST_HPP
 #define BANJO_AST_HPP
 
-#include "ast_base.hpp"
-#include "ast_name.hpp"
-#include "ast_type.hpp"
-#include "ast_expr.hpp"
-#include "ast_stmt.hpp"
-#include "ast_decl.hpp"
-#include "ast_def.hpp"
-#include "ast_req.hpp"
-#include "ast_cons.hpp"
+#include "ast-base.hpp"
+#include "ast-name.hpp"
+#include "ast-type.hpp"
+#include "ast-expr.hpp"
+#include "ast-stmt.hpp"
+#include "ast-decl.hpp"
+#include "ast-def.hpp"
+#include "ast-req.hpp"
+#include "ast-cons.hpp"
 
 
 namespace banjo

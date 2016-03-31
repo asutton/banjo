@@ -2,7 +2,7 @@
 // All rights reserved
 
 #include "parser.hpp"
-#include "ast_type.hpp"
+#include "ast-type.hpp"
 
 #include <iostream>
 

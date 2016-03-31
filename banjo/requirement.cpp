@@ -2,8 +2,8 @@
 // All rights reserved
 
 #include "requirement.hpp"
-#include "ast_expr.hpp"
-#include "ast_req.hpp"
+#include "ast-expr.hpp"
+#include "ast-req.hpp"
 #include "context.hpp"
 #include "type.hpp"
 #include "lookup.hpp"

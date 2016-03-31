@@ -5,7 +5,7 @@
 #define BANJO_HASH_HPP
 
 #include "prelude.hpp"
-#include "ast_base.hpp"
+#include "language.hpp"
 #include "equivalence.hpp"
 
 #include <boost/functional/hash.hpp>

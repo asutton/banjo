@@ -46,7 +46,6 @@ struct Cons;
 #undef define_node
 
 
-
 struct Scope;
 
 using lingo::Integer;

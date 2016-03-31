@@ -1,10 +1,10 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#include "ast_decl.hpp"
-#include "ast_name.hpp"
-#include "ast_type.hpp"
-#include "ast_def.hpp"
+#include "ast-decl.hpp"
+#include "ast-name.hpp"
+#include "ast-type.hpp"
+#include "ast-def.hpp"
 #include "scope.hpp"
 
 

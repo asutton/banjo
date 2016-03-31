@@ -4,7 +4,7 @@
 #ifndef BANJO_AST_NAME_HPP
 #define BANJO_AST_NAME_HPP
 
-#include "ast_base.hpp"
+#include "ast-base.hpp"
 #include "operator.hpp"
 
 
