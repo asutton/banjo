@@ -5,7 +5,7 @@
 #define BANJO_CALL_HPP
 
 #include "prelude.hpp"
-#include "ast_base.hpp"
+#include "language.hpp"
 
 
 namespace banjo

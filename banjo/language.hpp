@@ -10,7 +10,7 @@
 //
 // Include ast.hpp to pull all definitions.
 
-#include "ast_base.hpp"
+#include "ast-base.hpp"
 #include "operator.hpp"
 #include "qualifier.hpp"
 #include "specifier.hpp"
