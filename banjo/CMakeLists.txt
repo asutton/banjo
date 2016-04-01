@@ -70,6 +70,9 @@ add_library(banjo
   evaluation.cpp
   print.cpp
   inspection.cpp
+
+  # Code generation
+  gen/cxx/generator.cpp
 )
 target_compile_definitions(banjo PUBLIC ${LLVM_DEFINITIONS})
 target_include_directories(banjo
