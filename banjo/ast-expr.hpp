@@ -37,88 +37,16 @@ struct Expr : Term
 // The visitor for expressions.
 struct Expr::Visitor
 {
-  virtual void visit(Boolean_expr const&) { }
-  virtual void visit(Integer_expr const&) { }
-  virtual void visit(Real_expr const&) { }
-  virtual void visit(Reference_expr const&) { }
-  virtual void visit(Template_ref const&) { }
-  virtual void visit(Check_expr const&) { }
-  virtual void visit(Add_expr const&) { }
-  virtual void visit(Sub_expr const&) { }
-  virtual void visit(Mul_expr const&) { }
-  virtual void visit(Div_expr const&) { }
-  virtual void visit(Rem_expr const&) { }
-  virtual void visit(Neg_expr const&) { }
-  virtual void visit(Pos_expr const&) { }
-  virtual void visit(Eq_expr const&) { }
-  virtual void visit(Ne_expr const&) { }
-  virtual void visit(Lt_expr const&) { }
-  virtual void visit(Gt_expr const&) { }
-  virtual void visit(Le_expr const&) { }
-  virtual void visit(Ge_expr const&) { }
-  virtual void visit(And_expr const&) { }
-  virtual void visit(Or_expr const&) { }
-  virtual void visit(Not_expr const&) { }
-  virtual void visit(Call_expr const&) { }
-  virtual void visit(Assign_expr const&) { }
-  virtual void visit(Requires_expr const&) { }
-  virtual void visit(Synthetic_expr const&) { }
-  virtual void visit(Value_conv const&) { }
-  virtual void visit(Qualification_conv const&) { }
-  virtual void visit(Boolean_conv const&) { }
-  virtual void visit(Integer_conv const&) { }
-  virtual void visit(Float_conv const&) { }
-  virtual void visit(Numeric_conv const&) { }
-  virtual void visit(Dependent_conv const&) { }
-  virtual void visit(Ellipsis_conv const&) { }
-  virtual void visit(Trivial_init const&) { }
-  virtual void visit(Copy_init const&) { }
-  virtual void visit(Bind_init const&) { }
-  virtual void visit(Direct_init const&) { }
-  virtual void visit(Aggregate_init const&) { }
+#define define_node(Node) virtual void visit(Node const&) = 0;
+#include "ast-expr.def"
+#undef define_node
 };
 
 struct Expr::Mutator
 {
-  virtual void visit(Boolean_expr&) { }
-  virtual void visit(Integer_expr&) { }
-  virtual void visit(Real_expr&) { }
-  virtual void visit(Reference_expr&) { }
-  virtual void visit(Template_ref&) { }
-  virtual void visit(Check_expr&) { }
-  virtual void visit(Add_expr&) { }
-  virtual void visit(Sub_expr&) { }
-  virtual void visit(Mul_expr&) { }
-  virtual void visit(Div_expr&) { }
-  virtual void visit(Rem_expr&) { }
-  virtual void visit(Neg_expr&) { }
-  virtual void visit(Pos_expr&) { }
-  virtual void visit(Eq_expr&) { }
-  virtual void visit(Ne_expr&) { }
-  virtual void visit(Lt_expr&) { }
-  virtual void visit(Gt_expr&) { }
-  virtual void visit(Le_expr&) { }
-  virtual void visit(Ge_expr&) { }
-  virtual void visit(And_expr&) { }
-  virtual void visit(Or_expr&) { }
-  virtual void visit(Not_expr&) { }
-  virtual void visit(Call_expr&) { }
-  virtual void visit(Assign_expr&) { }
-  virtual void visit(Requires_expr&) { }
-  virtual void visit(Synthetic_expr&) { }
-  virtual void visit(Value_conv&) { }
-  virtual void visit(Qualification_conv&) { }
-  virtual void visit(Boolean_conv&) { }
-  virtual void visit(Integer_conv&) { }
-  virtual void visit(Float_conv&) { }
-  virtual void visit(Numeric_conv&) { }
-  virtual void visit(Dependent_conv&) { }
-  virtual void visit(Ellipsis_conv&) { }
-  virtual void visit(Trivial_init&) { }
-  virtual void visit(Copy_init&) { }
-  virtual void visit(Bind_init&) { }
-  virtual void visit(Direct_init&) { }
-  virtual void visit(Aggregate_init&) { }
+#define define_node(Node) virtual void visit(Node&) = 0;
+#include "ast-expr.def"
+#undef define_node
 };
 
 
@@ -819,45 +747,23 @@ struct Generic_expr_visitor : Expr::Visitor, Generic_visitor<F, T>
     : Generic_visitor<F, T>(f)
   { }
 
-  void visit(Boolean_expr const& e)       { this->invoke(e); }
-  void visit(Integer_expr const& e)       { this->invoke(e); }
-  void visit(Real_expr const& e)          { this->invoke(e); }
-  void visit(Reference_expr const& e)     { this->invoke(e); }
-  void visit(Template_ref const& e)       { this->invoke(e); }
-  void visit(Check_expr const& e)         { this->invoke(e); }
-  void visit(Add_expr const& e)           { this->invoke(e); }
-  void visit(Sub_expr const& e)           { this->invoke(e); }
-  void visit(Mul_expr const& e)           { this->invoke(e); }
-  void visit(Div_expr const& e)           { this->invoke(e); }
-  void visit(Rem_expr const& e)           { this->invoke(e); }
-  void visit(Neg_expr const& e)           { this->invoke(e); }
-  void visit(Pos_expr const& e)           { this->invoke(e); }
-  void visit(Eq_expr const& e)            { this->invoke(e); }
-  void visit(Ne_expr const& e)            { this->invoke(e); }
-  void visit(Lt_expr const& e)            { this->invoke(e); }
-  void visit(Gt_expr const& e)            { this->invoke(e); }
-  void visit(Le_expr const& e)            { this->invoke(e); }
-  void visit(Ge_expr const& e)            { this->invoke(e); }
-  void visit(And_expr const& e)           { this->invoke(e); }
-  void visit(Or_expr const& e)            { this->invoke(e); }
-  void visit(Not_expr const& e)           { this->invoke(e); }
-  void visit(Call_expr const& e)          { this->invoke(e); }
-  void visit(Assign_expr const& e)        { this->invoke(e); }
-  void visit(Requires_expr const& e)      { this->invoke(e); }
-  void visit(Synthetic_expr const& e)     { this->invoke(e); }
-  void visit(Value_conv const& e)         { this->invoke(e); }
-  void visit(Qualification_conv const& e) { this->invoke(e); }
-  void visit(Boolean_conv const& e)       { this->invoke(e); }
-  void visit(Integer_conv const& e)       { this->invoke(e); }
-  void visit(Float_conv const& e)         { this->invoke(e); }
-  void visit(Numeric_conv const& e)       { this->invoke(e); }
-  void visit(Dependent_conv const& e)     { this->invoke(e); }
-  void visit(Ellipsis_conv const& e)      { this->invoke(e); }
-  void visit(Trivial_init const& e)       { this->invoke(e); }
-  void visit(Copy_init const& e)          { this->invoke(e); }
-  void visit(Bind_init const& e)          { this->invoke(e); }
-  void visit(Direct_init const& e)        { this->invoke(e); }
-  void visit(Aggregate_init const& e)     { this->invoke(e); }
+#define define_node(Node) void visit(Node const& t) { this->invoke(t); }
+#include "ast-expr.def"
+#undef define_node
+};
+
+
+// A generic mutator for expressions.
+template<typename F, typename T>
+struct Generic_expr_mutator : Expr::Mutator, Generic_mutator<F, T>
+{
+  Generic_expr_mutator(F f)
+    : Generic_mutator<F, T>(f)
+  { }
+
+#define define_node(Node) void visit(Node& t) { this->invoke(t); }
+#include "ast-expr.def"
+#undef define_node
 };
 
 
@@ -869,56 +775,6 @@ apply(Expr const& e, F fn)
   Generic_expr_visitor<F, T> vis(fn);
   return accept(e, vis);
 }
-
-
-// A generic mutator for expressions.
-template<typename F, typename T>
-struct Generic_expr_mutator : Expr::Mutator, Generic_mutator<F, T>
-{
-  Generic_expr_mutator(F f)
-    : Generic_mutator<F, T>(f)
-  { }
-
-  void visit(Boolean_expr& e)       { this->invoke(e); }
-  void visit(Integer_expr& e)       { this->invoke(e); }
-  void visit(Real_expr& e)          { this->invoke(e); }
-  void visit(Reference_expr& e)     { this->invoke(e); }
-  void visit(Template_ref& e)       { this->invoke(e); }
-  void visit(Check_expr& e)         { this->invoke(e); }
-  void visit(Add_expr& e)           { this->invoke(e); }
-  void visit(Sub_expr& e)           { this->invoke(e); }
-  void visit(Mul_expr& e)           { this->invoke(e); }
-  void visit(Div_expr& e)           { this->invoke(e); }
-  void visit(Rem_expr& e)           { this->invoke(e); }
-  void visit(Neg_expr& e)           { this->invoke(e); }
-  void visit(Pos_expr& e)           { this->invoke(e); }
-  void visit(Eq_expr& e)            { this->invoke(e); }
-  void visit(Ne_expr& e)            { this->invoke(e); }
-  void visit(Lt_expr& e)            { this->invoke(e); }
-  void visit(Gt_expr& e)            { this->invoke(e); }
-  void visit(Le_expr& e)            { this->invoke(e); }
-  void visit(Ge_expr& e)            { this->invoke(e); }
-  void visit(And_expr& e)           { this->invoke(e); }
-  void visit(Or_expr& e)            { this->invoke(e); }
-  void visit(Not_expr& e)           { this->invoke(e); }
-  void visit(Call_expr& e)          { this->invoke(e); }
-  void visit(Assign_expr& e)        { this->invoke(e); }
-  void visit(Requires_expr& e)      { this->invoke(e); }
-  void visit(Synthetic_expr& e)     { this->invoke(e); }
-  void visit(Value_conv& e)         { this->invoke(e); }
-  void visit(Qualification_conv& e) { this->invoke(e); }
-  void visit(Boolean_conv& e)       { this->invoke(e); }
-  void visit(Integer_conv& e)       { this->invoke(e); }
-  void visit(Float_conv& e)         { this->invoke(e); }
-  void visit(Numeric_conv& e)       { this->invoke(e); }
-  void visit(Dependent_conv& e)     { this->invoke(e); }
-  void visit(Ellipsis_conv& e)      { this->invoke(e); }
-  void visit(Trivial_init& e)       { this->invoke(e); }
-  void visit(Copy_init& e)          { this->invoke(e); }
-  void visit(Bind_init& e)          { this->invoke(e); }
-  void visit(Direct_init& e)        { this->invoke(e); }
-  void visit(Aggregate_init& e)     { this->invoke(e); }
-};
 
 
 // Apply a function to the given type.

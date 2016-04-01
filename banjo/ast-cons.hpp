@@ -25,29 +25,17 @@ struct Cons : Term
 
 struct Cons::Visitor
 {
-  virtual void visit(Concept_cons const&)       { }
-  virtual void visit(Expression_cons const&)    { }
-  virtual void visit(Type_cons const&)          { }
-  virtual void visit(Predicate_cons const&)     { }
-  virtual void visit(Conversion_cons const&)    { }
-  virtual void visit(Deduction_cons const&)     { }
-  virtual void visit(Conjunction_cons const&)   { }
-  virtual void visit(Disjunction_cons const&)   { }
-  virtual void visit(Parameterized_cons const&) { }
+#define define_node(Node) virtual void visit(Node const&) = 0;
+#include "ast-cons.def"
+#undef define_node
 };
 
 
 struct Cons::Mutator
 {
-  virtual void visit(Concept_cons&)       { }
-  virtual void visit(Expression_cons&)    { }
-  virtual void visit(Type_cons&)          { }
-  virtual void visit(Predicate_cons&)     { }
-  virtual void visit(Conversion_cons&)    { }
-  virtual void visit(Deduction_cons&)     { }
-  virtual void visit(Conjunction_cons&)   { }
-  virtual void visit(Disjunction_cons&)   { }
-  virtual void visit(Parameterized_cons&) { }
+#define define_node(Node) virtual void visit(Node&) = 0;
+#include "ast-cons.def"
+#undef define_node
 };
 
 
@@ -219,6 +207,9 @@ struct Disjunction_cons : Binary_cons
 };
 
 
+// -------------------------------------------------------------------------- //
+// Visitors
+
 // A generic visitor for constraints.
 template<typename F, typename T>
 struct Generic_cons_visitor : Cons::Visitor, Generic_visitor<F, T>
@@ -227,15 +218,23 @@ struct Generic_cons_visitor : Cons::Visitor, Generic_visitor<F, T>
     : Generic_visitor<F, T>(f)
   { }
 
-  void visit(Concept_cons const& c)       { this->invoke(c); }
-  void visit(Expression_cons const& c)    { this->invoke(c); }
-  void visit(Type_cons const& c)          { this->invoke(c); }
-  void visit(Predicate_cons const& c)     { this->invoke(c); }
-  void visit(Conversion_cons const& c)    { this->invoke(c); }
-  void visit(Deduction_cons const& c)     { this->invoke(c); }
-  void visit(Conjunction_cons const& c)   { this->invoke(c); }
-  void visit(Disjunction_cons const& c)   { this->invoke(c); }
-  void visit(Parameterized_cons const& c) { this->invoke(c); }
+#define define_node(Node) void visit(Node const& t) { this->invoke(t); }
+#include "ast-cons.def"
+#undef define_node
+};
+
+
+// A generic mutator for constraints.
+template<typename F, typename T>
+struct Generic_cons_mutator : Cons::Mutator, Generic_mutator<F, T>
+{
+  Generic_cons_mutator(F f)
+    : Generic_mutator<F, T>(f)
+  { }
+
+#define define_node(Node) void visit(Node& t) { this->invoke(t); }
+#include "ast-cons.def"
+#undef define_node
 };
 
 
@@ -247,26 +246,6 @@ apply(Cons const& c, F fn)
   Generic_cons_visitor<F, T> vis(fn);
   return accept(c, vis);
 }
-
-
-// A generic mutator for names.
-template<typename F, typename T>
-struct Generic_cons_mutator : Cons::Mutator, Generic_mutator<F, T>
-{
-  Generic_cons_mutator(F f)
-    : Generic_mutator<F, T>(f)
-  { }
-
-  void visit(Concept_cons& c)       { this->invoke(c); }
-  void visit(Expression_cons& c)    { this->invoke(c); }
-  void visit(Type_cons& c)          { this->invoke(c); }
-  void visit(Predicate_cons& c)     { this->invoke(c); }
-  void visit(Conversion_cons& c)    { this->invoke(c); }
-  void visit(Deduction_cons& c)     { this->invoke(c); }
-  void visit(Conjunction_cons& c)   { this->invoke(c); }
-  void visit(Disjunction_cons& c)   { this->invoke(c); }
-  void visit(Parameterized_cons& c) { this->invoke(c); }
-};
 
 
 // Apply a function to the given name.
