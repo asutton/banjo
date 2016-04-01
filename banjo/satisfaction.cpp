@@ -6,7 +6,7 @@
 #include "normalization.hpp"
 #include "evaluation.hpp"
 #include "builder.hpp"
-#include "print.hpp"
+#include "printer.hpp"
 
 #include <iostream>
 

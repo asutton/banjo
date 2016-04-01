@@ -3,7 +3,7 @@
 
 #include "inspection.hpp"
 #include "ast.hpp"
-#include "print.hpp"
+#include "printer.hpp"
 
 #include <iterator>
 #include <iostream>

@@ -5,7 +5,7 @@
 #include "ast.hpp"
 #include "context.hpp"
 #include "scope.hpp"
-#include "print.hpp"
+#include "printer.hpp"
 
 #include <iostream>
 

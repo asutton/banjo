@@ -8,7 +8,7 @@
 #include "type.hpp"
 #include "lookup.hpp"
 #include "declaration.hpp"
-#include "print.hpp"
+#include "printer.hpp"
 
 #include <iostream>
 

@@ -7,7 +7,7 @@
 #include "expression.hpp"
 #include "declaration.hpp"
 #include "equivalence.hpp"
-#include "print.hpp"
+#include "printer.hpp"
 
 #include <iostream>
 

@@ -2,8 +2,8 @@
 // All rights reserved
 
 #include "parser.hpp"
+#include "printer.hpp"
 #include "ast-req.hpp"
-#include "print.hpp"
 
 #include <iostream>
 

@@ -12,7 +12,7 @@
 #include "lookup.hpp"
 #include "deduction.hpp"
 #include "subsumption.hpp"
-#include "print.hpp"
+#include "printer.hpp"
 
 #include <iostream>
 

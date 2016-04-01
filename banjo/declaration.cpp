@@ -8,7 +8,7 @@
 #include "scope.hpp"
 #include "lookup.hpp"
 #include "overload.hpp"
-#include "print.hpp"
+#include "printer.hpp"
 
 #include <iostream>
 

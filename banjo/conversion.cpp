@@ -7,7 +7,7 @@
 #include "constraint.hpp"
 #include "equivalence.hpp"
 #include "initialization.hpp"
-#include "print.hpp"
+#include "printer.hpp"
 
 #include <typeindex>
 #include <iostream>

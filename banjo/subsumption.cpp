@@ -8,7 +8,7 @@
 #include "normalization.hpp"
 #include "substitution.hpp"
 #include "hash.hpp"
-#include "print.hpp"
+#include "printer.hpp"
 
 #include <list>
 #include <unordered_set>

@@ -2,10 +2,10 @@
 // All rights reserved
 
 #include "parser.hpp"
+#include "printer.hpp"
 #include "ast.hpp"
 #include "lookup.hpp"
 #include "template.hpp"
-#include "print.hpp"
 
 #include <iostream>
 

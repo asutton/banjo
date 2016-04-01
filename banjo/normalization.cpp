@@ -4,7 +4,7 @@
 #include "normalization.hpp"
 #include "ast.hpp"
 #include "context.hpp"
-#include "print.hpp"
+#include "printer.hpp"
 
 #include <iostream>
 

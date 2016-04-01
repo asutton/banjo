@@ -4,7 +4,7 @@
 #include "parser.hpp"
 #include "ast-name.hpp"
 #include "ast-decl.hpp"
-#include "print.hpp"
+#include "printer.hpp"
 
 #include <iostream>
 

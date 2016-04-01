@@ -29,6 +29,7 @@ add_library(banjo
   sema-stmt.cpp
   sema-decl.cpp
   sema-req.cpp
+  printer.cpp
 
   # Semantics
   ast.cpp
@@ -68,7 +69,6 @@ add_library(banjo
   satisfaction.cpp
   subsumption.cpp
   evaluation.cpp
-  print.cpp
   inspection.cpp
 
   # Code generation
