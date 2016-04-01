@@ -36,6 +36,48 @@ Parser::on_logical_not_expression(Token tok, Expr& e)
 
 
 Expr&
+Parser::on_ior_expression(Token tok, Expr& e1, Expr& e2)
+{
+  banjo_unimplemented("inclusive or expression");
+}
+
+
+Expr&
+Parser::on_xor_expression(Token tok, Expr& e1, Expr& e2)
+{
+  banjo_unimplemented("exclusive or expression");
+}
+
+
+Expr&
+Parser::on_and_expression(Token tok, Expr& e1, Expr& e2)
+{
+  banjo_unimplemented("and expression");
+}
+
+
+Expr&
+Parser::on_lsh_expression(Token tok, Expr& e1, Expr& e2)
+{
+  banjo_unimplemented("left-shift expression");
+}
+
+
+Expr&
+Parser::on_rsh_expression(Token tok, Expr& e1, Expr& e2)
+{
+  banjo_unimplemented("right-shift expression");
+}
+
+
+Expr&
+Parser::on_compl_expression(Token tok, Expr& e)
+{
+  banjo_unimplemented("one's complement expression");
+}
+
+
+Expr&
 Parser::on_eq_expression(Token tok, Expr& e1, Expr& e2)
 {
   return make_eq(cxt, e1, e2);
@@ -78,6 +120,13 @@ Parser::on_ge_expression(Token tok, Expr& e1, Expr& e2)
 
 
 Expr&
+Parser::on_cmp_expression(Token tok, Expr& e1, Expr& e2)
+{
+  return make_ge(cxt, e1, e2);
+}
+
+
+Expr&
 Parser::on_add_expression(Token tok, Expr& e1, Expr& e2)
 {
   lingo_unimplemented();
@@ -108,7 +157,21 @@ Parser::on_div_expression(Token tok, Expr& e1, Expr& e2)
 Expr&
 Parser::on_rem_expression(Token tok, Expr& e1, Expr& e2)
 {
-  lingo_unimplemented();
+  banjo_unimplemented("remainder expression");
+}
+
+
+Expr&
+Parser::on_neg_expression(Token tok, Expr& e)
+{
+  banjo_unimplemented("negation expression");
+}
+
+
+Expr&
+Parser::on_pos_expression(Token tok, Expr& e)
+{
+  banjo_unimplemented("identity expression");
 }
 
 

@@ -85,6 +85,7 @@ init_tokens(Symbol_table& syms)
   init_token(syms, gt_tok, ">");
   init_token(syms, lt_eq_tok, "<=");
   init_token(syms, gt_eq_tok, ">=");
+  init_token(syms, lt_eq_gt_tok, "<=>");
   init_token(syms, lt_lt_tok, "<<");
   init_token(syms, gt_gt_tok, ">>");
   init_token(syms, amp_amp_tok, "&&");
@@ -92,6 +93,7 @@ init_tokens(Symbol_table& syms)
   init_token(syms, bang_tok, "!");
   init_token(syms, arrow_tok, "->");
   init_token(syms, question_tok, "?");
+  init_token(syms, dollar_tok, "$");
 
   // Keywords
   init_token(syms, abstract_tok, "abstract");

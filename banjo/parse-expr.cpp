@@ -11,6 +11,9 @@ namespace banjo
 
 
 // Parse an expression.
+//
+//    expression:
+//      logical-or-expression -- FIXME: Probably wrong
 Expr&
 Parser::expression()
 {
@@ -18,10 +21,10 @@ Parser::expression()
 }
 
 
-// Parse a logical or-expression.
+// Parse a logical-or expression.
 //
 //    logical-or-expression:
-//      logical-and-expression:
+//      logical-and-expression
 //      logical-or-expression '||' logical-and-expression
 Expr&
 Parser::logical_or_expression()
@@ -39,20 +42,19 @@ Parser::logical_or_expression()
 }
 
 
-// Parser a logical and-expression.
+// Parse a logical-and expression.
 //
 //    logical-and-expression:
-//      equality-expression:
-//      logical-and-expression '&&' equality-expression
+//      inclusive-or-expression
+//      logical-and-expression '&&' inclusive-or-expression
 //
-// FIXME: This skips the bitwise expressions.
 Expr&
 Parser::logical_and_expression()
 {
-  Expr* e1 = &equality_expression();
+  Expr* e1 = &inclusive_or_expression();
   while (true) {
     if (Token tok = match_if(amp_amp_tok)) {
-      Expr& e2 = equality_expression();
+      Expr& e2 = inclusive_or_expression();
       e1 = &on_logical_and_expression(tok, *e1, e2);
     } else {
       break;
@@ -62,7 +64,74 @@ Parser::logical_and_expression()
 }
 
 
-// Parser an equality expression.
+// Parse a bitwise inclusive-or expression.
+//
+//    inclusive-or-expression:
+//      exclusive-or-expression
+//      inclusive-or-expression '|' exclusive-or-expression
+//
+// FIXME: This skips the bitwise expressions.
+Expr&
+Parser::inclusive_or_expression()
+{
+  Expr* e1 = &exclusive_or_expression();
+  while (true) {
+    if (Token tok = match_if(bar_tok)) {
+      Expr& e2 = exclusive_or_expression();
+      e1 = &on_ior_expression(tok, *e1, e2);
+    } else {
+      break;
+    }
+  }
+  return *e1;
+}
+
+
+// Parse a bitwise exclusive-or expression.
+//
+//    exclusive-or-expression:
+//      and-expression
+//      exclusive-or-expression '^' and-expression
+//
+Expr&
+Parser::exclusive_or_expression()
+{
+  Expr* e1 = &and_expression();
+  while (true) {
+    if (Token tok = match_if(caret_tok)) {
+      Expr& e2 = and_expression();
+      e1 = &on_xor_expression(tok, *e1, e2);
+    } else {
+      break;
+    }
+  }
+  return *e1;
+}
+
+
+// Parse a bitwise and expression.
+//
+//    exclusive-or-expression:
+//      equality-expression
+//      exclusive-or-expression '&' equality-expression
+//
+Expr&
+Parser::and_expression()
+{
+  Expr* e1 = &equality_expression();
+  while (true) {
+    if (Token tok = match_if(amp_tok)) {
+      Expr& e2 = equality_expression();
+      e1 = &on_and_expression(tok, *e1, e2);
+    } else {
+      break;
+    }
+  }
+  return *e1;
+}
+
+
+// Parse an equality expression.
 //
 //    equality-expression:
 //      relational-expression:
@@ -90,29 +159,58 @@ Parser::equality_expression()
 // Parse a relational expression.
 //
 //    relational-expression:
-//      unary-expression:
-//      relational-expression '<' unary-expression
-//      relational-expression '>' unary-expression
-//      relational-expression '<=' unary-expression
-//      relational-expression '>=' unary-expression
+//      shift-expression:
+//      relational-expression '<' shift-expression
+//      relational-expression '>' shift-expression
+//      relational-expression '<=' shift-expression
+//      relational-expression '>=' shift-expression
+//      relational-expression '<=>' shift-expression
 Expr&
 Parser::relational_expression()
 {
-  Expr* e1 = &unary_expression();
+  Expr* e1 = &shift_expression();
   while (true) {
-    // Use a switch?
     if (Token tok = match_if(lt_tok)) {
-      Expr& e2 = unary_expression();
+      Expr& e2 = shift_expression();
       e1 = &on_lt_expression(tok, *e1, e2);
     } else if (Token tok = match_if(gt_tok)) {
-      Expr& e2 = unary_expression();
+      Expr& e2 = shift_expression();
       e1 = &on_gt_expression(tok, *e1, e2);
     } else if (Token tok = match_if(lt_eq_tok)) {
-      Expr& e2 = unary_expression();
+      Expr& e2 = shift_expression();
       e1 = &on_le_expression(tok, *e1, e2);
     } else if (Token tok = match_if(gt_eq_tok)) {
-      Expr& e2 = unary_expression();
+      Expr& e2 = shift_expression();
       e1 = &on_ge_expression(tok, *e1, e2);
+    } else if (Token tok = match_if(lt_eq_gt_tok)) {
+      Expr& e2 = shift_expression();
+      e1 = &on_cmp_expression(tok, *e1, e2);
+    } else {
+      break;
+    }
+  }
+  return *e1;
+}
+
+
+// Parse a shift expression.
+//
+//    shift-expression:
+//      additive_expression:
+//      shift-expression '<<' additive_expression
+//      shift-expression '>>' additive_expression
+//
+Expr&
+Parser::shift_expression()
+{
+  Expr* e1 = &additive_expression();
+  while (true) {
+    if (Token tok = match_if(lt_lt_tok)) {
+      Expr& e2 = additive_expression();
+      e1 = &on_lsh_expression(tok, *e1, e2);
+    } else if (Token tok = match_if(gt_gt_tok)) {
+      Expr& e2 = additive_expression();
+      e1 = &on_rsh_expression(tok, *e1, e2);
     } else {
       break;
     }
@@ -132,7 +230,6 @@ Parser::additive_expression()
 {
   Expr* e1 = &multiplicative_expression();
   while (true) {
-    // Use a switch?
     if (Token tok = match_if(plus_tok)) {
       Expr& e2 = multiplicative_expression();
       e1 = &on_add_expression(tok, *e1, e2);
@@ -182,17 +279,25 @@ Parser::multiplicative_expression()
 //    unary-expression:
 //      postfix-expression
 //      '!' unary-expression
+//      '-' unary-expression
+//      '+' unary-expression
+//      '~' unary-expression
 //
-// TODO: This omits the arithmetic, bitwise, and object unary operators.
-//
-// TODO: The recursive part might include cast epxressions.
 Expr&
 Parser::unary_expression()
 {
-  // Use a switch?
   if (Token tok = match_if(bang_tok)) {
     Expr& e = unary_expression();
     return on_logical_not_expression(tok, e);
+  } else if (Token tok = match_if(minus_tok)) {
+    Expr& e = unary_expression();
+    return on_neg_expression(tok, e);
+  } else if (Token tok = match_if(plus_tok)) {
+    Expr& e = unary_expression();
+    return on_pos_expression(tok, e);
+  } else if (Token tok = match_if(caret_tok)) {
+    Expr& e = unary_expression();
+    return on_compl_expression(tok, e);
   } else {
     return postfix_expression();
   }

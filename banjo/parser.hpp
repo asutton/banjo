@@ -79,10 +79,14 @@ struct Parser
   Expr& expression();
   Expr& logical_or_expression();
   Expr& logical_and_expression();
+  Expr& inclusive_or_expression();
+  Expr& exclusive_or_expression();
+  Expr& and_expression();
   Expr& equality_expression();
   Expr& relational_expression();
-  Expr& multiplicative_expression();
+  Expr& shift_expression();
   Expr& additive_expression();
+  Expr& multiplicative_expression();
   Expr& unary_expression();
   Expr& postfix_expression();
   Expr& call_expression(Expr&);
@@ -160,7 +164,7 @@ struct Parser
   // Modules
   Term& translation_unit();
 
-  // Semantics
+  // Semantics actions
 
   // Identifiers
   Name& on_simple_id(Token);
@@ -214,17 +218,30 @@ struct Parser
   Expr& on_logical_and_expression(Token, Expr&, Expr&);
   Expr& on_logical_or_expression(Token, Expr&, Expr&);
   Expr& on_logical_not_expression(Token, Expr&);
+
+  Expr& on_ior_expression(Token, Expr&, Expr&);
+  Expr& on_xor_expression(Token, Expr&, Expr&);
+  Expr& on_and_expression(Token, Expr&, Expr&);
+  Expr& on_lsh_expression(Token, Expr&, Expr&);
+  Expr& on_rsh_expression(Token, Expr&, Expr&);
+  Expr& on_compl_expression(Token, Expr&);
+
   Expr& on_eq_expression(Token, Expr&, Expr&);
   Expr& on_ne_expression(Token, Expr&, Expr&);
   Expr& on_lt_expression(Token, Expr&, Expr&);
   Expr& on_gt_expression(Token, Expr&, Expr&);
   Expr& on_le_expression(Token, Expr&, Expr&);
   Expr& on_ge_expression(Token, Expr&, Expr&);
+  Expr& on_cmp_expression(Token, Expr&, Expr&);
+
   Expr& on_add_expression(Token, Expr&, Expr&);
   Expr& on_sub_expression(Token, Expr&, Expr&);
   Expr& on_mul_expression(Token, Expr&, Expr&);
   Expr& on_div_expression(Token, Expr&, Expr&);
   Expr& on_rem_expression(Token, Expr&, Expr&);
+  Expr& on_neg_expression(Token, Expr&);
+  Expr& on_pos_expression(Token, Expr&);
+
   Expr& on_call_expression(Expr&, Expr_list&);
   Expr& on_id_expression(Name&);
   Expr& on_boolean_literal(Token, bool);
