@@ -13,42 +13,10 @@
 namespace banjo
 {
 
-// A categorization of tokens based on use.
-enum Token_use
-{
-  general_use,
-  unary_op_use,
-  binary_op_use,
-};
-
-
-// A structure that contains semantic information about the
-// use of a token in some context.
-struct Token_info
-{
-  Token_info(Token_kind k, Token_use u = general_use)
-    : kind(k), use(u)
-  { }
-
-  explicit operator bool() const { return kind != error_tok; }
-  operator Token_kind() const    { return kind; }
-  operator Token_use() const     { return use; }
-
-  void clear()
-  {
-    kind = error_tok;
-    use = general_use;
-  }
-
-  Token_kind kind;
-  Token_use  use;
-};
-
-
 struct Printer
 {
   Printer(std::ostream& os)
-    : os(os), indent(0), prev(error_tok)
+    : os(os), indent(0)
   { }
 
   void operator()(Name const& n) { id(n); }
@@ -59,17 +27,19 @@ struct Printer
   void operator()(Cons const& c) { constraint(c); }
 
   // Lexical terms.
-  void space(Token_info);
   void space();
   void newline();
   void newline_and_indent();
   void newline_and_undent();
   void token(Token_kind);
-  void token(Token_kind, Token_use);
+  void token(Token);
   void token(Symbol const&);
   void token(char const*);
   void token(String const&);
   void token(int);
+  void token(Integer const&);
+
+  void binary_operator(Token_kind);
 
   // Unresolved names
   void id(Name const&);
@@ -110,13 +80,18 @@ struct Printer
 
   // Expressions
   void expression(Expr const&);
-  void literal(Boolean_expr const&);
-  void literal(Integer_expr const&);
-  void literal(Real_expr const&);
-  void id_expression(Reference_expr const&);
-  void id_expression(Check_expr const&);
-  void id_expression(Synthetic_expr const&);
-  void grouped_expression(Expr const&, Expr const&);
+  void logical_or_expression(Expr const&);
+  void logical_and_expression(Expr const&);
+  void inclusive_or_expression(Expr const&);
+  void exclusive_or_expression(Expr const&);
+  void and_expression(Expr const&);
+  void equality_expression(Expr const&);
+  void relational_expression(Expr const&);
+  void shift_expression(Expr const&);
+  void additive_expression(Expr const&);
+  void multiplicative_expression(Expr const&);
+  void unary_expression(Expr const&);
+  void postfix_expression(Expr const&);
   void postfix_expression(Call_expr const&);
   void postfix_expression(Value_conv const&);
   void postfix_expression(Qualification_conv const&);
@@ -126,9 +101,23 @@ struct Printer
   void postfix_expression(Numeric_conv const&);
   void postfix_expression(Dependent_conv const&);
   void postfix_expression(Ellipsis_conv const&);
-  void unary_expression(Unary_expr const&, Token_kind);
-  void binary_expression(Binary_expr const&, Token_kind);
+  void subscript_expression(Expr const&);
+  void primary_expression(Expr const&);
+  void grouped_expression(Expr const&);
+
+  void literal(Boolean_expr const&);
+  void literal(Integer_expr const&);
+  void literal(Real_expr const&);
+
+  void id_expression(Reference_expr const&);
+  void id_expression(Check_expr const&);
+  void id_expression(Synthetic_expr const&);
+
   void requires_expression(Requires_expr const&);
+
+  Expr_list expression_list();
+
+
 
   // Statements
   void statement(Stmt const&);
@@ -217,10 +206,8 @@ struct Printer
   void constraint(Disjunction_cons const&);
   void grouped_constraint(Cons const&);
 
-  std::ostream& os;
+  std::ostream& os;     // Output stream
   int           indent; // The current indentation
-  Token_info    prev;   // The previous token printed
-
 };
 
 

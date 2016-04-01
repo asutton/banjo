@@ -14,45 +14,19 @@ namespace banjo
 // -------------------------------------------------------------------------- //
 // Lexical items
 
-
-// Conditionally print whitespace based on this and the
-// previous token.
-void
-Printer::space(Token_info info)
-{
-  if (prev) {
-    // Always put space after a comma.
-    if (prev == comma_tok)
-      space();
-
-    // Insert a space between all words.
-    else if (is_word(prev) && is_word(info))
-      space();
-
-    // Guarantee spaces around binary operators.
-    else if (prev == binary_op_use || info == binary_op_use)
-      space();
-
-    // FIXME: Finish all the spacing rules.
-  }
-}
-
-
 // Unconditionally print whitespace. Clear the previous token.
 void
 Printer::space()
 {
   os << ' ';
-  prev.clear();
 }
 
 
-// Print a new line and indent. Clear the previous token.
+// Print a new line and indent to the current depth. Clear the previous token.
 void
 Printer::newline()
 {
   os << '\n' << std::string(2 * indent, ' ');
-  prev.clear();
 }
 
 
@@ -61,7 +35,6 @@ void
 Printer::newline_and_indent()
 {
   ++indent;
-  newline();
 }
 
 
@@ -70,36 +43,30 @@ void
 Printer::newline_and_undent()
 {
   --indent;
-  newline();
 }
 
 
-// Print the token. Print an extra space after keywords
-// and commas.
+// Print the token.
 void
 Printer::token(Token_kind k)
 {
-  token(k, general_use);
-}
-
-
-void
-Printer::token(Token_kind k, Token_use u)
-{
-  Token_info info(k, u);
-  space(info);
   os << get_spelling(k);
-  prev = info;
 }
 
 
+// Print the given token.
+void
+Printer::token(Token k)
+{
+  os << k.spelling();
+}
+
+
+// Print the text of the given symbol.
 void
 Printer::token(Symbol const& sym)
 {
-  Token_kind k = (Token_kind)sym.token();
-  space(k);
-  os << sym;
-  prev = k;
+  os << sym.spelling();
 }
 
 
@@ -107,9 +74,7 @@ Printer::token(Symbol const& sym)
 void
 Printer::token(char const* str)
 {
-  space(identifier_tok);
   os << str;
-  prev = identifier_tok;
 }
 
 
@@ -117,9 +82,7 @@ Printer::token(char const* str)
 void
 Printer::token(String const& str)
 {
-  space(identifier_tok);
   os << str;
-  prev = identifier_tok;
 }
 
 
@@ -128,7 +91,26 @@ void
 Printer::token(int n)
 {
   os << n;
-  prev = integer_tok;
+}
+
+
+void
+Printer::token(Integer const& n)
+{
+  os << n;
+}
+
+
+// -------------------------------------------------------------------------- //
+// Helper functions
+
+// Print the token with space around it.
+void
+Printer::binary_operator(Token_kind k)
+{
+  space();
+  token(k);
+  space();
 }
 
 
@@ -535,7 +517,9 @@ Printer::reference_type(Reference_type const& t)
 void
 Printer::return_type(Type const& t)
 {
-  token(arrow_tok, binary_op_use);
+  space();
+  token(arrow_tok);
+  space();
   type(t);
 }
 
@@ -584,133 +568,250 @@ precedence(Expr const& e)
 }
 
 
+// Print an expression.
+//
+//    expression:
+//      logical-or-expression -- FIXME: Wrong!
 void
 Printer::expression(Expr const& e)
+{
+  logical_or_expression(e);
+}
+
+
+void
+Printer::logical_or_expression(Expr const& e)
+{
+  if (Or_expr const* expr = as<Or_expr>(&e)) {
+    logical_or_expression(expr->left());
+    space();
+    token(bar_bar_tok);
+    space();
+    logical_and_expression(expr->right());
+  } else {
+    logical_and_expression(e);
+  }
+}
+
+
+void
+Printer::logical_and_expression(Expr const& e)
+{
+  if (And_expr const* expr = as<And_expr>(&e)) {
+    logical_and_expression(expr->left());
+    space();
+    token(amp_amp_tok);
+    space();
+    inclusive_or_expression(expr->right());
+  } else {
+    inclusive_or_expression(e);
+  }
+}
+
+
+void
+Printer::inclusive_or_expression(Expr const& e)
+{
+  if (Bit_or_expr const* expr = as<Bit_or_expr>(&e)) {
+    inclusive_or_expression(expr->left());
+    space();
+    token(amp_amp_tok);
+    space();
+    exclusive_or_expression(expr->right());
+  } else {
+    exclusive_or_expression(e);
+  }
+}
+
+
+void
+Printer::exclusive_or_expression(Expr const& e)
+{
+  if (Bit_xor_expr const* expr = as<Bit_xor_expr>(&e)) {
+    exclusive_or_expression(expr->left());
+    space();
+    token(amp_amp_tok);
+    space();
+    and_expression(expr->right());
+  } else {
+    and_expression(e);
+  }
+}
+
+
+void
+Printer::and_expression(Expr const& e)
+{
+  if (Bit_and_expr const* expr = as<Bit_and_expr>(&e)) {
+    and_expression(expr->left());
+    space();
+    token(amp_amp_tok);
+    space();
+    equality_expression(expr->right());
+  } else {
+    equality_expression(e);
+  }
+}
+
+
+void
+Printer::equality_expression(Expr const& e)
 {
   struct fn
   {
     Printer& p;
-    void operator()(Expr const& e)               { lingo_unimplemented(); }
-    void operator()(Boolean_expr const& e)       { p.literal(e); }
-    void operator()(Integer_expr const& e)       { p.literal(e); }
-    void operator()(Real_expr const& e)          { p.literal(e); }
-    void operator()(Reference_expr const& e)     { p.id_expression(e); }
-    void operator()(Check_expr const& e)         { p.id_expression(e); }
-    void operator()(Add_expr const& e)           { p.binary_expression(e, plus_tok); }
-    void operator()(Sub_expr const& e)           { p.binary_expression(e, minus_tok); }
-    void operator()(Mul_expr const& e)           { p.binary_expression(e, star_tok); }
-    void operator()(Div_expr const& e)           { p.binary_expression(e, slash_tok); }
-    void operator()(Rem_expr const& e)           { p.binary_expression(e, percent_tok); }
-    void operator()(Neg_expr const& e)           { p.unary_expression(e, minus_tok); }
-    void operator()(Pos_expr const& e)           { p.unary_expression(e, plus_tok); }
-    void operator()(Eq_expr const& e)            { p.binary_expression(e, eq_eq_tok); }
-    void operator()(Ne_expr const& e)            { p.binary_expression(e, bang_eq_tok); }
-    void operator()(Lt_expr const& e)            { p.binary_expression(e, lt_tok); }
-    void operator()(Gt_expr const& e)            { p.binary_expression(e, gt_tok); }
-    void operator()(Le_expr const& e)            { p.binary_expression(e, lt_eq_tok); }
-    void operator()(Ge_expr const& e)            { p.binary_expression(e, gt_eq_tok); }
-    void operator()(And_expr const& e)           { p.binary_expression(e, amp_amp_tok); }
-    void operator()(Or_expr const& e)            { p.binary_expression(e, bar_bar_tok); }
-    void operator()(Not_expr const& e)           { p.unary_expression(e, bang_tok); }
-    void operator()(Call_expr const& e)          { p.postfix_expression(e); }
-    void operator()(Assign_expr const& e)        { p.binary_expression(e, eq_tok); }
-    void operator()(Requires_expr const& e)      { p.requires_expression(e); }
-    void operator()(Synthetic_expr const& e)     { p.id_expression(e); }
-    void operator()(Value_conv const& e)         { p.postfix_expression(e); }
-    void operator()(Qualification_conv const& e) { p.postfix_expression(e); }
-    void operator()(Integer_conv const& e)       { p.postfix_expression(e); }
-    void operator()(Boolean_conv const& e)       { p.postfix_expression(e); }
-    void operator()(Float_conv const& e)         { p.postfix_expression(e); }
-    void operator()(Numeric_conv const& e)       { p.postfix_expression(e); }
-    void operator()(Dependent_conv const& e)     { p.postfix_expression(e); }
-    void operator()(Ellipsis_conv const& e)      { p.postfix_expression(e); }
-    void operator()(Init const& e)               { lingo_unreachable(); }
+    void operator()(Expr const& e) { p.relational_expression(e); }
+    void operator()(Eq_expr const& e) { print(e, eq_eq_tok); }
+    void operator()(Ne_expr const& e) { print(e, bang_eq_tok); }
 
-    // TODO: Certain forms of initialization are transparent.
-    // Do we need to support direct and aggregate initialization
-    // as expressions also? Presumably not.
-    void operator()(Copy_init const& e)          { p.expression(e.expression()); }
-    void operator()(Bind_init const& e)          { p.expression(e.expression()); }
-};
+    void print(Binary_expr const& e, Token_kind k)
+    {
+      p.equality_expression(e.left());
+      p.binary_operator(k);
+      p.relational_expression(e.right());
+    }
+  };
   apply(e, fn{*this});
 }
 
 
-// TODO: All of the literal expressions can be unified into
-// a single function.
 void
-Printer::literal(Boolean_expr const& e)
+Printer::relational_expression(Expr const& e)
 {
-  if (e.value())
-    token(true_tok);
-  else
-    token(false_tok);
+  struct fn
+  {
+    Printer& p;
+    void operator()(Expr const& e)     { p.shift_expression(e); }
+    void operator()(Lt_expr const& e)  { print(e, lt_tok); }
+    void operator()(Gt_expr const& e)  { print(e, gt_tok); }
+    void operator()(Le_expr const& e)  { print(e, gt_eq_tok); }
+    void operator()(Ge_expr const& e)  { print(e, gt_eq_tok); }
+    void operator()(Cmp_expr const& e) { print(e, lt_eq_gt_tok); }
+
+    void print(Binary_expr const& e, Token_kind k)
+    {
+      p.relational_expression(e.left());
+      p.binary_operator(k);
+      p.shift_expression(e.right());
+    }
+  };
+  apply(e, fn{*this});
 }
 
 
 void
-Printer::literal(Integer_expr const& e)
+Printer::shift_expression(Expr const& e)
 {
-  // FIXME: Provide a to_string for the Integer class. Also, it might be
-  // nice to track radixes as part of the type so we don't have to print
-  // everything in base 10.
-  Integer_type const& t = cast<Integer_type>(e.type());
-  Integer const& n = e.value();
-  String const& s = n.impl().toString(10, t.is_signed());
-  token(s);
+  struct fn
+  {
+    Printer& p;
+    void operator()(Expr const& e) { p.additive_expression(e); }
+    void operator()(Lsh_expr const& e) { print(e, lt_lt_tok); }
+    void operator()(Rsh_expr const& e) { print(e, gt_gt_tok); }
+
+    void print(Binary_expr const& e, Token_kind k)
+    {
+      p.shift_expression(e.left());
+      p.binary_operator(k);
+      p.additive_expression(e.right());
+    }
+  };
+  apply(e, fn{*this});
 }
 
 
 void
-Printer::literal(Real_expr const& e)
+Printer::additive_expression(Expr const& e)
 {
-  token("<real>");
+  struct fn
+  {
+    Printer& p;
+    void operator()(Expr const& e) { p.multiplicative_expression(e); }
+    void operator()(Add_expr const& e) { print(e, plus_tok); }
+    void operator()(Sub_expr const& e) { print(e, minus_tok); }
+
+    void print(Binary_expr const& e, Token_kind k)
+    {
+      p.additive_expression(e.left());
+      p.binary_operator(k);
+      p.multiplicative_expression(e.right());
+    }
+  };
+  apply(e, fn{*this});
 }
 
 
 void
-Printer::id_expression(Reference_expr const& e)
+Printer::multiplicative_expression(Expr const& e)
 {
-  id(e.declaration().name());
+  struct fn
+  {
+    Printer& p;
+    void operator()(Expr const& e) { p.unary_expression(e); }
+    void operator()(Mul_expr const& e) { print(e, star_tok); }
+    void operator()(Div_expr const& e) { print(e, slash_tok); }
+    void operator()(Rem_expr const& e) { print(e, percent_tok); }
+
+    void print(Binary_expr const& e, Token_kind k)
+    {
+      p.multiplicative_expression(e.left());
+      p.binary_operator(k);
+      p.unary_expression(e.right());
+    }
+  };
+  apply(e, fn{*this});
 }
 
 
 void
-Printer::id_expression(Check_expr const& e)
+Printer::unary_expression(Expr const& e)
 {
-  id(e.declaration().name());
-  token(lt_tok);
-  template_argument_list(e.arguments());
-  token(gt_tok);
+  struct fn
+  {
+    Printer& p;
+    void operator()(Expr const& e)         { p.postfix_expression(e); }
+    void operator()(Not_expr const& e)     { print(e, bang_tok); }
+    void operator()(Bit_not_expr const& e) { print(e, tilde_tok); }
+    void operator()(Neg_expr const& e)     { print(e, minus_tok); }
+    void operator()(Pos_expr const& e)     { print(e, plus_tok); }
+
+    void print(Unary_expr const& e, Token_kind k)
+    {
+      p.token(k);
+      p.space();  // Print +(+x) as "+ + x" and not "++x".
+      p.unary_expression(e.operand());
+    }
+  };
+  apply(e, fn{*this});
 }
 
 
 void
-Printer::id_expression(Synthetic_expr const& e)
+Printer::postfix_expression(Expr const& e)
 {
-  id(e.declaration().name());
-}
+  struct fn
+  {
+    Printer& p;
 
-
-// Possibly print a grouped expression s as a subexpression
-// of e.
-void
-Printer::grouped_expression(Expr const& e, Expr const& s)
-{
-  if (precedence(e) <= precedence(s)) {
-    token(lparen_tok);
-    expression(s);
-    token(rparen_tok);
-  } else {
-    expression(s);
-  }
+    void operator()(Expr const& e)         { p.primary_expression(e); }
+    void operator()(Call_expr& e)          { p.postfix_expression(e); }
+    void operator()(Value_conv& e)         { p.postfix_expression(e); }
+    void operator()(Qualification_conv& e) { p.postfix_expression(e); }
+    void operator()(Boolean_conv& e)       { p.postfix_expression(e); }
+    void operator()(Integer_conv& e)       { p.postfix_expression(e); }
+    void operator()(Float_conv& e)         { p.postfix_expression(e); }
+    void operator()(Numeric_conv& e)       { p.postfix_expression(e); }
+    void operator()(Dependent_conv& e)     { p.postfix_expression(e); }
+    void operator()(Ellipsis_conv& e)      { p.postfix_expression(e); }
+  };
+  apply(e, fn{*this});
 }
 
 
 void
 Printer::postfix_expression(Call_expr const& e)
 {
-  grouped_expression(e, e.function());
+  postfix_expression(e.function());
   token(lparen_tok);
   Expr_list const& p = e.arguments();
   for (auto iter = p.begin(); iter != p.end(); ++iter) {
@@ -807,19 +908,85 @@ Printer::postfix_expression(Ellipsis_conv const& e)
 
 
 void
-Printer::unary_expression(Unary_expr const& e, Token_kind k)
+Printer::primary_expression(Expr const& e)
 {
-  token(k, unary_op_use);
-  grouped_expression(e, e.operand());
+  struct fn
+  {
+    Printer& p;
+
+    void operator()(Expr const& e)      { p.grouped_expression(e); }
+    void operator()(Boolean_expr& e)    { p.literal(e); }
+    void operator()(Integer_expr& e)    { p.literal(e); }
+    void operator()(Real_expr& e)       { p.literal(e); }
+    void operator()(Reference_expr& e)  { p.id_expression(e); }
+    void operator()(Check_expr& e)      { p.id_expression(e); }
+    void operator()(Synthetic_expr& e)  { p.id_expression(e); }
+    void operator()(Requires_expr& e)   { p.requires_expression(e); }
+  };
+  apply(e, fn{*this});
 }
 
 
 void
-Printer::binary_expression(Binary_expr const& e, Token_kind k)
+Printer::grouped_expression(Expr const& e)
 {
-  grouped_expression(e, e.left());
-  token(k, binary_op_use);
-  grouped_expression(e, e.right());
+  token(lparen_tok);
+  expression(e);
+  token(rparen_tok);
+}
+
+
+void
+Printer::literal(Boolean_expr const& e)
+{
+  if (e.value())
+    token(true_tok);
+  else
+    token(false_tok);
+}
+
+
+void
+Printer::literal(Integer_expr const& e)
+{
+  // FIXME: Provide a to_string for the Integer class. Also, it might be
+  // nice to track radixes as part of the type so we don't have to print
+  // everything in base 10.
+  Integer_type const& t = cast<Integer_type>(e.type());
+  Integer const& n = e.value();
+  String const& s = n.impl().toString(10, t.is_signed());
+  token(s);
+}
+
+
+void
+Printer::literal(Real_expr const& e)
+{
+  token("<real>");
+}
+
+
+void
+Printer::id_expression(Reference_expr const& e)
+{
+  id(e.declaration().name());
+}
+
+
+void
+Printer::id_expression(Check_expr const& e)
+{
+  id(e.declaration().name());
+  token(lt_tok);
+  template_argument_list(e.arguments());
+  token(gt_tok);
+}
+
+
+void
+Printer::id_expression(Synthetic_expr const& e)
+{
+  id(e.declaration().name());
 }
 
 
