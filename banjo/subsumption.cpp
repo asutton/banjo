@@ -89,38 +89,28 @@ struct Prop_list
   // value indicating successful insertion. If b is true, then i
   // i is the position of the inserted constraint. Otherise, i the
   // iterator past the original replaced element.
-  std::pair<iterator, bool> replace(iterator pos, Cons const& c)
+  iterator replace(iterator pos, Cons const& c)
   {
     pos = erase(pos);
     auto x = insert(pos, c);
     if (x.second)
-      return x;
-    return {pos, false};
+      return x.first;
+    return pos;
   }
 
   // Replace the term in the list with c1 folowed by c2. Note that
   // no replacements may be made if c1 and c2 are already in the list.
-  //
-  // Returns a pair (i, b) where i is an iterator and b a boolean
-  // value indicating successful insertion. If b is true, then i
-  // i is the position of the first inserted constraint. Otherwise,
-  // i is the iterator past the original replaced element.
-  std::pair<iterator, bool> replace(iterator pos, Cons const& c1, Cons const& c2)
+  iterator replace(iterator pos, Cons const& c1, Cons const& c2)
   {
     pos = erase(pos);
     auto x1 = insert(pos, c1);
     auto x2 = insert(pos, c2);
     if (x1.second)
-      return x1;
+      return x1.first;
     if (x2.second)
-      return x2;
-    return {pos, false};
+      return x2.first;
+    return pos;
   }
-
-  // Iterators
-  iterator start()   { return (cur = seq.begin()); }
-  iterator advance() { return ++cur; }
-  iterator current() { return cur; }
 
   iterator begin() { return seq.begin(); }
   iterator end()   { return seq.end(); }
@@ -130,7 +120,6 @@ struct Prop_list
 
   Map      map;
   Seq      seq;
-  iterator cur;
 };
 
 
@@ -156,14 +145,6 @@ using Prop_const_iter = Prop_list::const_iterator;
 // follow from the antecedents).
 struct Sequent
 {
-
-  // Create a sequent having the antecedent a and the consequent c.
-  Sequent(Cons const& a, Cons const& c)
-  {
-    ants.insert(a);
-    cons.insert(c);
-  }
-
   // Returns the list of antecedents.
   Prop_list const& antecedents() const { return ants; }
   Prop_list&       antecedents()       { return ants; }
@@ -184,36 +165,8 @@ operator<<(std::ostream& os, Sequent const& seq)
 }
 
 
-// The goal list stores the current set of goals in the syntactic
-// proof of a sequent. Proof tactics manipulate the goal list.
-//
-// Proof strategies must attempt to minimize the creation of
-// sub-goals in the proof.
-struct Goal_list : std::list<Sequent>
-{
-  using iterator       = std::list<Sequent>::iterator;
-  using const_iterator = std::list<Sequent>::const_iterator;
-
-  // Initalize with a single sequent s.
-  Goal_list(Sequent&& s)
-    : std::list<Sequent>{std::move(s)}
-  { }
-
-  // Generate a new proof obligation as a copy of s, returning
-  // an iterator referring to the sequent.
-  iterator generate(Sequent const& s)
-  {
-    return insert(end(), s);
-  }
-
-  // Discharge the proof obligation referred to by i.
-  iterator discharge(iterator i)
-  {
-    return erase(i);
-  }
-};
-
-
+// A goal list is a list of sequents to be satisfied.
+using Goal_list = std::list<Sequent>;
 using Goal_iter = Goal_list::iterator;
 
 
@@ -221,43 +174,52 @@ using Goal_iter = Goal_list::iterator;
 // sequent. New work proof tasks can be created with the branch function.
 struct Proof
 {
-  Proof(Context& c, Goal_list& g)
-    : cxt(c), gs(g), iter(g.begin())
-  { }
+  using iterator       = Goal_list::iterator;
+  using const_iterator = Goal_list::const_iterator;
 
-  Proof(Context& c, Goal_list& g, Goal_iter i)
-    : cxt(c), gs(g), iter(i)
-  { }
+  // Initialize a proof state with a single, empty goal.
+  Proof(Context& c)
+    : cxt(c)
+  {
+    gs.push_back({});
+  }
 
   Context& context() { return cxt; }
+
+  // Returns true when the goal is empty.
+  bool empty() const { return gs.empty(); }
+
+  // Returns size of the proof.
+  std::size_t size() const { return gs.size(); }
+
+  // Returns first sequent in the front.
+  Sequent const& front() const { return gs.front(); }
+  Sequent&       front()       { return gs.front(); }
 
   // Returns the list of goals for this proof.
   Goal_list const& goals() const { return gs; }
   Goal_list&       goals()       { return gs; }
 
-  // Return the current goal (sequent).
-  Sequent& sequent() { return *iter; }
-
-  // Return the antecedents or consequents of the current sequent.
-  Prop_list& antecedents() { return sequent().antecedents(); }
-  Prop_list& consequents() { return sequent().consequents(); }
-
-  // Insert a new sequent into the goals et, and return that.
-  //
-  // NOTE: If we can branch, can we ever join (i.e. discharge) a
-  // proof obligation.
-  Proof branch()
+  // Insert a copy of the given goal after its position.
+  iterator branch(iterator i)
   {
-    // Create a *copy* of the current sequence.
-    auto iter = gs.insert(gs.end(), sequent());
-
-    // And yield a new proof object.
-    return Proof(cxt, gs, iter);
+    return gs.insert(std::next(i), *i);
   }
 
-  Context&   cxt;  // The global context
-  Goal_list& gs;   // Global list of goals
-  Goal_iter  iter; // The current goal
+  // Discharge the proof obligation referred to by i.
+  iterator discharge(iterator i)
+  {
+    return gs.erase(i);
+  }
+
+  iterator begin() { return gs.begin(); }
+  iterator end()   { return gs.end(); }
+
+  const_iterator begin() const { return gs.begin(); }
+  const_iterator end() const   { return gs.end(); }
+
+  Context&  cxt;  // The global context
+  Goal_list gs;   // Global list of goals
 };
 
 
@@ -339,12 +301,16 @@ is_memoized(Context& cxt, Cons const& a, Cons const& b)
 //
 // TODO: Experiment with memoization!
 
+
 enum Validation
 {
   valid_proof,
   invalid_proof,
   incomplete_proof,
 };
+
+
+Validation check_term(Proof&, Prop_list&, Cons const&);
 
 
 std::ostream&
@@ -359,11 +325,6 @@ operator<<(std::ostream& os, Validation v)
 }
 
 
-Validation  validate(Context&, Cons const&, Cons const&);
-Validation  validate(Context&, Prop_list&, Cons const&);
-Validation  match(Context&, Prop_list&, Cons const&);
-
-
 // Given a sequent of the form A |- C, where A and C differ
 // syntactically, try to find support for a proof of C by A.
 // This essentially means that we're going to consult a list of
@@ -371,7 +332,7 @@ Validation  match(Context&, Prop_list&, Cons const&);
 //
 // TODO: Add extra rules here.
 Validation
-find_support(Context& cxt, Cons const& a, Cons const& c)
+consult_rules(Proof& p, Cons const& a, Cons const& c)
 {
   return invalid_proof;
 }
@@ -386,12 +347,12 @@ find_support(Context& cxt, Cons const& a, Cons const& c)
 // by validate(cxt, ants, c)). Therefore, we must delegate to case
 // analysis to determine if there are other rules that prove C.
 Validation
-find_support(Context& cxt, Prop_list& ants, Cons const& c)
+find_atomic_support(Proof& p, Prop_list& ants, Cons const& c)
 {
   // std::cout << "SUPPORT: " << c << '\n';
   Validation r = invalid_proof;
   for (Cons const* a : ants) {
-    Validation v = find_support(cxt, *a, c);
+    Validation v = consult_rules(p, *a, c);
     if (v == valid_proof)
       return v;
     if (v == incomplete_proof)
@@ -403,17 +364,17 @@ find_support(Context& cxt, Prop_list& ants, Cons const& c)
 
 // Validate against the expansion of C.
 Validation
-derive(Context& cxt, Prop_list& ants, Concept_cons const& c)
+find_concept_support(Proof& p, Prop_list& ants, Concept_cons const& c)
 {
-  return validate(cxt, ants, expand(cxt, c));
+  return check_term(p, ants, expand(p.context(), c));
 }
 
 
 // Validate against the constraint of C.
 Validation
-derive(Context& cxt, Prop_list& ants, Parameterized_cons const& c)
+find_parametric_support(Proof& p, Prop_list& ants, Parameterized_cons const& c)
 {
-  return validate(cxt, ants, c.constraint());
+  return check_term(p, ants, c.constraint());
 }
 
 
@@ -422,12 +383,12 @@ derive(Context& cxt, Prop_list& ants, Parameterized_cons const& c)
 // TODO: Validate the easier branch first. But what is an "easier"
 // branch?
 Validation
-derive(Context& cxt, Prop_list& ants, Conjunction_cons const& c)
+find_logical_support(Proof& p, Prop_list& ants, Conjunction_cons const& c)
 {
-  Validation v = validate(cxt, ants, c.left());
+  Validation v = check_term(p, ants, c.left());
   if (v == invalid_proof || v == incomplete_proof)
     return v;
-  return validate(cxt, ants, c.right());
+  return check_term(p, ants, c.right());
 }
 
 
@@ -436,12 +397,12 @@ derive(Context& cxt, Prop_list& ants, Conjunction_cons const& c)
 // TODO: Validate the easier branch first. But what is an "easier"
 // branch?
 Validation
-derive(Context& cxt, Prop_list& ants, Disjunction_cons const& c)
+find_logical_support(Proof& p, Prop_list& ants, Disjunction_cons const& c)
 {
-  Validation v = validate(cxt, ants, c.left());
+  Validation v = check_term(p, ants, c.left());
   if (v == valid_proof || v == incomplete_proof)
     return v;
-  return validate(cxt, ants, c.right());
+  return check_term(p, ants, c.right());
 }
 
 
@@ -452,22 +413,24 @@ derive(Context& cxt, Prop_list& ants, Disjunction_cons const& c)
 // Note that C does not occur (syntactically) in the list of
 // antecedents, so we must decopose C to search for a proof.
 Validation
-derive(Context& cxt, Prop_list& ants, Cons const& c)
+find_support(Proof& p, Prop_list& ants, Cons const& c)
 {
   struct fn
   {
-    Context&   cxt;
+    Proof&     p;
     Prop_list& ants;
-    Validation operator()(Cons const& c) const               { return find_support(cxt, ants, c); }
-    Validation operator()(Concept_cons const& c) const       { return derive(cxt, ants, c); }
-    Validation operator()(Parameterized_cons const& c) const { return derive(cxt, ants, c); }
-    Validation operator()(Conjunction_cons const& c) const   { return derive(cxt, ants, c); }
-    Validation operator()(Disjunction_cons const& c) const   { return derive(cxt, ants, c); }
+    Validation operator()(Cons const& c) const               { return find_atomic_support(p, ants, c); }
+    Validation operator()(Concept_cons const& c) const       { return find_concept_support(p, ants, c); }
+    Validation operator()(Parameterized_cons const& c) const { return find_parametric_support(p, ants, c); }
+    Validation operator()(Conjunction_cons const& c) const   { return find_logical_support(p, ants, c); }
+    Validation operator()(Disjunction_cons const& c) const   { return find_logical_support(p, ants, c); }
   };
   // std::cout << "DERIVE: " << c << '\n';
-  return apply(c, fn{cxt, ants});
+  return apply(c, fn{p, ants});
 }
 
+// -------------------------------------------------------------------------- //
+// Proof checking
 
 // Determine if a sequent of this form:
 //
@@ -484,24 +447,19 @@ derive(Context& cxt, Prop_list& ants, Cons const& c)
 // (potentially) exponential invocations of derive(), but it would
 // also likely lead to more aggressive creation of goals.
 Validation
-validate(Context& cxt, Prop_list& ants, Cons const& c)
+check_term(Proof& p, Prop_list& ants, Cons const& c)
 {
   // If antecedent set (syntacically) contains C, then the
   // proof is valid.
   if (ants.contains(c))
     return valid_proof;
 
-  // If we had previously memoized the proof, then use that
-  // result.
-  for (Cons const* a : ants) {
-    if (is_memoized(cxt, *a, c))
-      return valid_proof;
-  }
+  // FIXME: Memoization?
 
   // Actually derive a proof of C from AS. If the result
   // is invalid, by the thre are incomplete terms, then
   // the result is incomplete.
-  Validation v = derive(cxt, ants, c);
+  Validation v = find_support(p, ants, c);
   if (v == invalid_proof) {
     if (!is_reduced(ants))
       return incomplete_proof;
@@ -518,14 +476,13 @@ validate(Context& cxt, Prop_list& ants, Cons const& c)
 // is invalid only when all Ai provie no Ci. The proof is incomplete
 // when it is invalid, but some Ai is a non-atomic proposition.
 Validation
-validate(Context& cxt, Sequent& s)
+check_goal(Proof& p, Sequent& s)
 {
   Prop_list& as = s.antecedents();
   Prop_list& cs = s.consequents();
-
   Validation r = invalid_proof;
   for (Cons const* c : cs) {
-    Validation v = validate(cxt, as, *c);
+    Validation v = check_term(p, as, *c);
     if (v == valid_proof)
       return v;
     if (v == incomplete_proof)
@@ -540,66 +497,34 @@ validate(Context& cxt, Sequent& s)
 // goal is determined to be invalid. A proof is incomplete if any
 // subgoaol is incomplete.
 Validation
-validate(Proof& p)
+check_proof(Proof& p)
 {
-  Context& cxt = p.cxt;
   Goal_list& goals = p.goals();
-
   auto iter = goals.begin();
-  while (iter != goals.end()) {
-    Validation v = validate(cxt, *iter);
+  while (!goals.empty()) {
+    Validation v = check_goal(p, *iter);
     if (v == valid_proof)
-      iter = goals.discharge(iter);
+      iter = p.discharge(iter);
     else if (v == invalid_proof || v == incomplete_proof)
       return v;
     ++iter;
   }
-  if (goals.empty())
-    return valid_proof;
-  else
-    return incomplete_proof;
+  return valid_proof;
 }
 
 
 // -------------------------------------------------------------------------- //
-// Flattening
+// Sequent loading
 //
 // These operations try to move as many propositions as possible into
 // the constraint sets on the left and right of a sequent. This will
 // never produce sub-goals.
 
-Prop_iter flatten_left(Proof, Cons const&);
-Prop_iter flatten_right(Proof, Cons const&);
-
-
-inline Prop_iter
-advance(Prop_list& ps)
-{
-  return ps.advance();
-}
-
-
-inline Prop_iter
-replace(Prop_list& ps, Cons const& c)
-{
-  auto x = ps.replace(ps.current(), c);
-  return x.first;
-}
-
-
-inline Prop_iter
-replace(Prop_list& ps, Cons const& c1, Cons const& c2)
-{
-  auto x = ps.replace(ps.current(), c1, c2);
-  return x.first;
-}
-
-
-// Do nothing for atomic constraints.
 Prop_iter
-flatten_left_atom(Proof p, Cons const& c)
+load_concept(Proof& p, Prop_list& props, Prop_iter iter, Concept_cons const& c)
 {
-  return advance(p.sequent().antecedents());
+  Cons const& c1 = expand(p.context(), c);
+  return props.replace(iter, c1);
 }
 
 
@@ -607,223 +532,140 @@ flatten_left_atom(Proof p, Cons const& c)
 // Parameterized constraints are essentially transparent, so
 // they can be reduced immediately.
 Prop_iter
-flatten_left_lambda(Proof p, Parameterized_cons const& c)
+load_parameteric(Proof& p, Prop_list& props, Prop_iter iter, Parameterized_cons const& c)
 {
   Cons const& c1 = c.constraint();
-  return replace(p.sequent().antecedents(), c1);
+  return props.replace(iter, c1);
 }
 
 
 // Replace the current antecedent with its operands (maybe).
+template<typename T>
 Prop_iter
-flatten_left_conjunction(Proof p, Conjunction_cons const& c)
+load_logical(Proof& p, Prop_list& props, Prop_iter iter, T const& c)
 {
   Cons const& c1 = c.left();
   Cons const& c2 = c.right();
-  return replace(p.sequent().antecedents(), c1, c2);
+  return props.replace(iter, c1, c2);
 }
 
 
-// Advance to the next term so we don't produce subgoals.
-Prop_iter
-flatten_left_disjunction(Proof p, Disjunction_cons const& c)
-{
-  return advance(p.sequent().antecedents());
-}
-
+// -------------------------------------------------------------------------- //
+// Antecedent loading
 
 // Select an appropriate action for the current proposition.
 Prop_iter
-flatten_left(Proof p, Cons const& c)
+load_antecedent(Proof& p, Prop_list& props, Prop_iter iter)
 {
   struct fn
   {
-    Proof p;
-    Prop_iter operator()(Cons const& c)               { return flatten_left_atom(p, c); }
-    Prop_iter operator()(Parameterized_cons const& c) { return flatten_left_lambda(p, c); }
-    Prop_iter operator()(Conjunction_cons const& c)   { return flatten_left_conjunction(p, c); }
-    Prop_iter operator()(Disjunction_cons const& c)   { return flatten_left_disjunction(p, c); }
+    Proof&     p;
+    Prop_list& props;
+    Prop_iter  iter;
+    Prop_iter operator()(Cons const& c)               { return ++iter; }
+    Prop_iter operator()(Concept_cons const& c)       { return load_concept(p, props, iter, c); }
+    Prop_iter operator()(Parameterized_cons const& c) { return load_parameteric(p, props, iter, c); }
+    Prop_iter operator()(Conjunction_cons const& c)   { return load_logical(p, props, iter, c); }
   };
-  return apply(c, fn{p});
+  return apply(**iter, fn{p, props, iter});
 }
 
 
 // Flatten all propositions in the antecedents.
 void
-flatten_left(Proof p, Sequent& s)
+load_antecedents(Proof& p, Sequent& s)
 {
   Prop_list& as = s.antecedents();
-  auto ai = as.start();
-  while (ai != as.end())
-    ai = flatten_left(p, **ai);
+  for (auto iter = as.begin(); iter != as.end(); ++iter)
+    iter = load_antecedent(p, as, iter);
 }
 
 
-// Advance to the next goal.
-Prop_iter
-flatten_right_atom(Proof p, Cons const& c)
+void
+load_antecedents(Proof& p)
 {
-  return advance(p.sequent().consequents());
+  for (auto iter = p.begin(); iter != p.end(); ++iter)
+    load_antecedents(p, *iter);
 }
 
 
-// Replace the current consequent with its operand (maybe).
-// Parameterized constraints are essentially transparent, so
-// they can be reduced immediately.
-Prop_iter
-flatten_right_lambda(Proof p, Parameterized_cons const& c)
-{
-  Cons const& c1 = c.constraint();
-  return replace(p.sequent().consequents(), c1);
-}
-
-
-// Advance to the next term so we don't produce subgoals.
-Prop_iter
-flatten_right_conjunction(Proof p, Conjunction_cons const& c)
-{
-  return advance(p.sequent().consequents());
-}
-
-
-// Replace the current antecedent with its operands (maybe).
-Prop_iter
-flatten_right_disjunction(Proof p, Disjunction_cons const& c)
-{
-  Cons const& c1 = c.left();
-  Cons const& c2 = c.right();
-  return replace(p.sequent().consequents(), c1, c2);
-}
-
+// -------------------------------------------------------------------------- //
+// Consequent loading
 
 // Select an appropriate action for the current proposition.
 Prop_iter
-flatten_right(Proof p, Cons const& c)
+load_consequent(Proof& p, Prop_list& props, Prop_iter iter)
 {
   struct fn
   {
-    Proof p;
-    Prop_iter operator()(Cons const& c)               { return flatten_right_atom(p, c); }
-    Prop_iter operator()(Parameterized_cons const& c) { return flatten_right_lambda(p, c); }
-    Prop_iter operator()(Conjunction_cons const& c)   { return flatten_right_conjunction(p, c); }
-    Prop_iter operator()(Disjunction_cons const& c)   { return flatten_right_disjunction(p, c); }
+    Proof&     p;
+    Prop_list& props;
+    Prop_iter  iter;
+    Prop_iter operator()(Cons const& c)               { return ++iter; }
+    Prop_iter operator()(Concept_cons const& c)       { return load_concept(p, props, iter, c); }
+    Prop_iter operator()(Parameterized_cons const& c) { return load_parameteric(p, props, iter, c); }
+    Prop_iter operator()(Disjunction_cons const& c)   { return load_logical(p, props, iter, c); }
   };
-  return apply(c, fn{p});
+  return apply(**iter, fn{p, props, iter});
 }
 
 
-// Flatten all terms in the consequents.
+// Flatten all propositions in the consequents.
 void
-flatten_right(Proof p, Sequent& s)
+load_consequents(Proof& p, Sequent& s)
 {
   Prop_list& cs = s.consequents();
-  auto ci = cs.start();
-  while (ci != cs.end())
-    ci = flatten_right(p, **ci);
+  for (auto iter = cs.begin(); iter != cs.end(); ++iter)
+    iter = load_consequent(p, cs, iter);
 }
 
 
-// Flatten each sequent in the proof.
-//
-// FIXME: Cache the "flatness" of each constraint set so that we
-// can avoid redundant computations.
-//
-// Note that we never expand terms on the right hand side after the
-// first pass. This is because we expect that most concept are defined
-// using conjunctions, and expanding on the right could consume a
-// lot of memory (instead of just time).
 void
-flatten(Proof p)
+load_consequents(Proof& p)
 {
-  for (Sequent& s : p.goals()) {
-    flatten_left(p, s);
-    flatten_right(p, s);
-  }
+  for (auto iter = p.begin(); iter != p.end(); ++iter)
+    load_consequents(p, *iter);
 }
+
 
 // -------------------------------------------------------------------------- //
-// Expansion
+// Proof expansion
 //
-// This tries to select an antecedent to expand. In general, we prefer
-// to expand concepts before disjunctions unless the concept containts
-// disjunctions.
-//
-// TODO: We need to cache properties of concepts so that we can quickly
-// determine the relative cost of expanding those terms.
+// In a single sequent in a proof, select a disjunction for expansion.
 
 
-// Returns true if a is a better choice for expansion than b. In general,
-// we always prefer to expand a concept before a disjunction UNLESS
-//
-// - the concept contains nested disjunction
-// - the disjunction is relatively shallow
-//
-// Note that a and b can be atomic. We never prefer to constrain
-// an atomic expression. In other words, a concept is better
-// than anything except a concept. A disjunction is only better
-// than atomic constraint.
-//
-// TODO: Implement ordering heuristics.
-inline bool
-is_better_expansion(Cons const* a, Cons const* b)
+bool
+expand_antecedent(Proof& p, Goal_iter gi, Prop_iter i)
 {
-  // A concept is better than anything other than another concept.
-  if (is<Concept_cons>(a)) {
-    if (is<Concept_cons>(b))
-      return false;
+  if (Disjunction_cons const* d = as<Disjunction_cons>(&**i)) {
+    Cons const& c1 = d->left();
+    Cons const& c2 = d->right();
+
+    Sequent& s1 = *gi;
+    Sequent& s2 = *p.branch(gi);
+    Prop_list& as1 = s1.antecedents();
+    Prop_list& as2 = s2.antecedents();
+
+    Prop_iter j = std::next(as2.begin(), std::distance(as1.begin(), i));
+
+    as1.replace(i, c1);
+    as2.replace(j, c2);
     return true;
   }
-
-  // A disjunction is better than atomic constraints.
-  if (is<Disjunction_cons>(a))
-    return is_atomic(*b);
-
   return false;
 }
 
 
-// Select a term in the sequent to expand. Collect all non-atomic
-// terms and select the best term to expand.
-//
-// NOTE: We should never have conjunctions or parameterized constraints
-// as non-atomic propositions in the list of antecedents. Those must
-// have been flattened during the previous pass on the proof state.
-//
-// TODO: If we cache the "flattness" state, then we could skip the
-// ordering step since no non-atomic constraint would be expanded.
-void
-expand_left(Proof& p, Sequent& s)
+bool
+expand_antecedents(Proof& p, Goal_iter pi)
 {
-  Prop_list& ps = s.antecedents();
-
-  // Select the best candidate to expand. Only expand if
-  // the selected element is non-atomic.
-  auto best = std::min_element(ps.begin(), ps.end(), is_better_expansion);
-  if (Concept_cons const* c = as<Concept_cons>(*best))
-    ps.replace(best, expand(p.context(), *c));
-  else if (Disjunction_cons const* d = as<Disjunction_cons>(*best))
-    ps.replace(best, d->left(), d->right());
-}
-
-
-// Find a concept on the right hand side, and expand it.
-//
-// FIXME: This only really works if a concept appears in the
-// consequents of the goal. Any degree of conunjunctive nesting
-// will ensure that this does not happen.
-void
-expand_right(Proof& p, Sequent& s)
-{
-  Prop_list& ps = s.consequents();
-
-  // Replace the first concept.
-  auto cmp = [](Cons const* c) { return is<Concept_cons>(c); };
-  auto iter = std::find_if(ps.begin(), ps.end(), cmp);
-  if (iter != ps.end()) {
-    // std::cout << "RIGHT: " << **iter << '\n';
-    Concept_cons const& c = cast<Concept_cons>(**iter);
-    ps.replace(iter, expand(p.context(), c));
+  Sequent& s = *pi;
+  Prop_list& as = s.antecedents();
+  for (auto ai = as.begin(); ai != as.end(); ++ai) {
+    if (expand_antecedent(p, pi, ai))
+      return true;
   }
+  return false;
 }
 
 
@@ -832,11 +674,11 @@ expand_right(Proof& p, Sequent& s)
 // TODO: There are other interesting strategies. For example,
 // we might choose to expand all concepts first.
 void
-expand(Proof p)
+expand_proof(Proof& p)
 {
-  for (Sequent& s : p.goals()) {
-    expand_left(p, s);
-    // expand_right(p, s);
+  for (auto pi = p.begin(); pi != p.end(); ++pi) {
+    if (expand_antecedents(p, pi))
+      return;
   }
 }
 
@@ -858,37 +700,45 @@ subsumes(Context& cxt, Cons const& a, Cons const& c)
     return true;
 
   // Alas... no quick check. We have to prove the implication.
-  Goal_list goals(Sequent(a, c));
-  Proof p(cxt, goals);
-  std::cout << "INIT: " << p.sequent() << '\n';
+  Proof p(cxt);
+  Sequent& s = p.front();
+  s.antecedents().insert(a);
+  s.consequents().insert(c);
+  std::cout << "INIT: " << s << '\n';
+
+  // NOTE: I wonder if the current load implementation is
+  // too aggressive when expanding concepts.
+
+  // Initially load consquents.
+  load_consequents(p);
 
   // Continue manipulating the proof state until we know that
   // the implication is valid or not.
   int n = 1;
-  Validation v;
+  Validation v = valid_proof;
   do {
-    // Opportunistically flatten sequents in each goal.
-    flatten(p);
-    std::cout << "------------\n";
-    std::cout << "STEP " << n << ": " << p.sequent() << '\n';
+    // Load a round of antecedents.
+    load_antecedents(p);
+
+    std::cout << "STEP " << n << ": " << p.front() << '\n';
 
     // Having done that, determine if the proof is valid (or not).
     // In either case, we can stop.
-    v = validate(p);
-    // std::cout << "VALID? " << v << '\n';
+    v = check_proof(p);
+    std::cout << "VALID? " << v << '\n';
     if (v == valid_proof)
       return true;
     if (v == invalid_proof)
       return false;
 
     // Otherwise, select a term in each goal to expand.
-    expand(p);
+    expand_proof(p);
     ++n;
 
     // TODO: Actually diagnose implementation limits. Note that the
     // real limiting factor is going to be the goal size, not
     // the step count.
-    if (goals.size() > 32)
+    if (p.size() > 32)
       throw Limitation_error("exceeded proof subgoal limit");
     if (n > 1024)
       throw Limitation_error("exceeded proof step limit");

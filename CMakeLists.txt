@@ -53,7 +53,7 @@ set(BANJO_NATIVE_COMPILER ${CMAKE_C_COMPILER})
 set(BANJO_NATIVE_ARCHIVER ${CMAKE_AR})
 
 # Compiler configuration
-set(CMAKE_CXX_FLAGS "-Wall -std=c++14")
+set(CMAKE_CXX_FLAGS "-Wall -std=c++14 -fsanitize=address")
 
 if(NOT TARGET check)
   add_custom_target(check COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target test)

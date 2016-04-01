@@ -341,6 +341,14 @@ is_equivalent(Call_expr const& e1, Call_expr const& e2)
 
 
 bool
+is_equivalent(Conv const& e1, Conv const& e2)
+{
+  return is_equivalent(e1.destination(), e2.destination())
+      && is_equivalent(e1.source(), e2.source());
+}
+
+
+bool
 is_equivalent(Expr const& e1, Expr const& e2)
 {
   struct fn
@@ -353,6 +361,8 @@ is_equivalent(Expr const& e1, Expr const& e2)
     bool operator()(Unary_expr const& e1) const     { return is_equivalent(e1, cast<Unary_expr>(e2)); }
     bool operator()(Binary_expr const& e1) const    { return is_equivalent(e1, cast<Binary_expr>(e2)); }
     bool operator()(Call_expr const& e1) const      { return is_equivalent(e1, cast<Call_expr>(e2)); }
+
+    bool operator()(Conv const& e1) const           { return is_equivalent(e1, cast<Conv>(e2)); }
   };
 
   // The same objects represent the same types.

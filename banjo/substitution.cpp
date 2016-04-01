@@ -250,6 +250,16 @@ subst_binary(Context& cxt, T& e, Substitution& sub, Make make)
 }
 
 
+// FIXME: Generalize to all conversions.
+Expr&
+subst_conv(Context& cxt, Boolean_conv& e, Substitution& sub)
+{
+  Expr& e1 = substitute(cxt, e.source(), sub);
+  Type& t1 = substitute(cxt, e.destination(), sub);
+  return *new Boolean_conv(t1, e1);
+}
+
+
 Expr&
 substitute(Context& cxt, Expr& e, Substitution& sub)
 {
@@ -275,6 +285,8 @@ substitute(Context& cxt, Expr& e, Substitution& sub)
     Expr& operator()(And_expr& e) { return subst_binary(cxt, e, sub, make_logical_and); }
     Expr& operator()(Or_expr& e)  { return subst_binary(cxt, e, sub, make_logical_or); }
     Expr& operator()(Not_expr& e) { return subst_unary(cxt, e, sub, make_logical_not); }
+
+    Expr& operator()(Boolean_conv& e) { return subst_conv(cxt, e, sub); }
 
   };
   return apply(e, fn{cxt, sub});
