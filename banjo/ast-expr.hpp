@@ -269,6 +269,66 @@ struct Pos_expr : Unary_expr
 };
 
 
+struct Bit_or_expr : Binary_expr
+{
+    using Binary_expr::Binary_expr;
+
+    void accept(Visitor& v) const { return v.visit(*this); }
+    void accept(Mutator& v)       { return v.visit(*this); }
+
+};
+
+
+struct Bit_xor_expr : Binary_expr
+{
+    using Binary_expr::Binary_expr;
+
+    void accept(Visitor& v) const { return v.visit(*this); }
+    void accept(Mutator& v)       { return v.visit(*this); }
+
+};
+
+
+struct Bit_and_expr : Binary_expr
+{
+    using Binary_expr::Binary_expr;
+
+    void accept(Visitor& v) const { return v.visit(*this); }
+    void accept(Mutator& v)       { return v.visit(*this); }
+
+};
+
+
+struct Bit_not_expr : Unary_expr
+{
+    using Unary_expr::Unary_expr;
+
+    void accept(Visitor& v) const { return v.visit(*this); }
+    void accept(Mutator& v)       { return v.visit(*this); }
+
+};
+
+
+struct Lsh_expr : Binary_expr
+{
+    using Binary_expr::Binary_expr;
+
+    void accept(Visitor& v) const { return v.visit(*this); }
+    void accept(Mutator& v)       { return v.visit(*this); }
+
+};
+
+
+struct Rsh_expr : Binary_expr
+{
+    using Binary_expr::Binary_expr;
+
+    void accept(Visitor& v) const { return v.visit(*this); }
+    void accept(Mutator& v)       { return v.visit(*this); }
+
+};
+
+
 // An equality expression.
 struct Eq_expr : Binary_expr
 {
@@ -321,6 +381,16 @@ struct Le_expr : Binary_expr
 
 // A greater-equal expression.
 struct Ge_expr : Binary_expr
+{
+  using Binary_expr::Binary_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// A 3-way comparison expression.
+struct Cmp_expr : Binary_expr
 {
   using Binary_expr::Binary_expr;
 
