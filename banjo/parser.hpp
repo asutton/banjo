@@ -14,6 +14,40 @@
 namespace banjo
 {
 
+// A descriptor of the current nesting levels. This is used to ensure
+// that
+struct Nesting
+{
+  int parens;
+  int braces;
+  int brackets;
+};
+
+
+inline bool
+operator==(Nesting const& a, Nesting const& b)
+{
+  return a.parens == b.parens && a.braces == b.braces && a.brackets == b.brackets;
+}
+
+
+inline bool
+operator!=(Nesting const& a, Nesting const& b)
+{
+  return !(a == b);
+}
+
+
+// Maintains stacks of enclosing tokens to support improved diagnostics.
+// This is essen
+struct Enclosure : Token_seq
+{
+  void enter(Token tok) { push_back(tok); }
+  void leave()          { pop_back(); }
+};
+
+
+
 // The parser is responsible for transforming a stream of tokens
 // into nodes. The parser owns a reference to the buffer for its
 // tokens. This supports the resolution of source code locations.
@@ -321,11 +355,13 @@ struct Parser
   // Declarations
   Decl& templatize_declaration(Decl&);
 
-  // Maintains the current parse state. This is used to provide
-  // context for various parsing routines, and is used by the
-  // trial parser for caching parse state.
+  // Maintains the current parse state. This is used to provide context for
+  // various parsing routines, and is used by the trial parser for caching
+  // and restoring parse state.
   struct State
   {
+    Enclosure  enc; // Enclosing tokens.
+
     Decl_list* template_parms = nullptr; // The current (innermost) template parameters
     Expr*      template_cons = nullptr;  // The current (innermost) template constraints
 
