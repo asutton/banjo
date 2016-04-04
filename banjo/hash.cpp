@@ -75,42 +75,42 @@ hash_value(Operator_id const& n)
 inline std::size_t
 hash_value(Conversion_id const&)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
 inline std::size_t
 hash_value(Literal_id const&)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
 inline std::size_t
 hash_value(Destructor_id const&)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
 inline std::size_t
 hash_value(Template_id const&)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
 inline std::size_t
 hash_value(Concept_id const&)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
 inline std::size_t
 hash_value(Qualified_id const&)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 

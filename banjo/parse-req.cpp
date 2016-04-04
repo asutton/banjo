@@ -23,7 +23,7 @@ Parser::type_requirement()
 {
   require(typename_tok);
 
-  lingo_unimplemented();
+  lingo_unimplemented("parse type-requirement");
 }
 
 

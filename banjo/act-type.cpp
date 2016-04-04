@@ -40,7 +40,7 @@ Parser::on_byte_type(Token)
 Type&
 Parser::on_decltype_type(Token, Expr&)
 {
-  lingo_unimplemented();
+  lingo_unimplemented("on decltype-type");
 }
 
 

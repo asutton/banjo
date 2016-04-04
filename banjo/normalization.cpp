@@ -87,7 +87,7 @@ normalize(Context& cxt, Expr& e)
 Cons&
 normalize_type_req(Context& cxt, Type_req& r)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 

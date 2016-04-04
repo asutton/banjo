@@ -224,7 +224,7 @@ Debug_printer::initializer(Bind_init const& e)
 void
 Debug_printer::statement(Stmt const& s)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
@@ -249,7 +249,7 @@ Debug_printer::declaration(Decl const& d)
 void
 Debug_printer::constraint(Cons const& c)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 

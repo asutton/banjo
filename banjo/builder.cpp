@@ -139,7 +139,7 @@ Builder::get_id(Operator_kind k)
 Destructor_id&
 Builder::get_destructor_id(Type const& t)
 {
-  lingo_unimplemented();
+  lingo_unimplemented("destructor-id");
 }
 
 
@@ -238,7 +238,7 @@ Builder::get_auto_type()
 Decltype_type&
 Builder::get_decltype_type(Expr&)
 {
-  lingo_unimplemented();
+  lingo_unimplemented("decltype-type");
 }
 
 
@@ -313,7 +313,7 @@ Builder::get_reference_type(Type& t)
 Array_type&
 Builder::get_array_type(Type&, Expr&)
 {
-  lingo_unimplemented();
+  lingo_unimplemented("array-type");
 }
 
 
@@ -335,14 +335,14 @@ Builder::get_class_type(Decl& d)
 Union_type&
 Builder::get_union_type(Decl& d)
 {
-  lingo_unimplemented();
+  lingo_unimplemented("union-type");
 }
 
 
 Enum_type&
 Builder::get_enum_type(Decl& d)
 {
-  lingo_unimplemented();
+  lingo_unimplemented("enum-type");
 }
 
 

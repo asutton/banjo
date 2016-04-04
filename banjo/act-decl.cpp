@@ -77,7 +77,7 @@ define_function(Decl& decl, Def& def)
   Decl* d = &decl.parameterized_declaration();
   if (Function_decl* f = as<Function_decl>(d))
     return *(f->def = &def);
-  lingo_unreachable();
+  lingo_unhandled(*d);
 }
 
 
@@ -90,7 +90,7 @@ define_entity(Decl& decl, Def& def)
     return *(f->def = &def);
   if (Class_decl* c = as<Class_decl>(d))
     return *(c->def = &def);
-  lingo_unreachable();
+  lingo_unhandled(*d);
 }
 
 
@@ -168,7 +168,7 @@ Parser::on_class_definition(Decl& d, Decl_list& ds)
 Decl&
 Parser::on_namespace_declaration(Token, Name&, Decl_list&)
 {
-  lingo_unimplemented();
+  lingo_unimplemented("on namespace-decl");
 }
 
 
