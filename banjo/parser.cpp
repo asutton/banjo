@@ -37,6 +37,14 @@ Parser::symbols()
 }
 
 
+// Returns true if at the end of input.
+bool
+Parser::is_eof() const
+{
+  return !peek();
+}
+
+
 // Returns the current token.
 Token
 Parser::peek() const
@@ -261,30 +269,22 @@ Parser::current_context()
 
 // Parse a translation unit.
 //
-//    translation-unit:
-//      [declaration-seq]
+//    input:
+//      [statement-list]
 //
-// FIXME: This currently returns the global namespace, but I'm not
-// entirely sure that this is what I want to do. Should we have
-Term&
-Parser::translation_unit()
+// FIXME: This should return a single node, not a sequence.
+Stmt_list
+Parser::input()
 {
   Enter_scope scope(cxt, cxt.global_namespace());
-  Decl_list ds;
-
-  // NOTE: We match against identifier so that we don't try to
-  // parse inspect scripts as real programs. Perhaps we should
-  // have a very explicit end-of-program token (e.g., --?).
-  if (peek() && lookahead() != identifier_tok)
-    ds = declaration_seq();
-  return on_translation_unit(ds);
+  return statement_seq();
 }
 
 
-Term&
+Stmt_list
 Parser::operator()()
 {
-  return translation_unit();
+  return input();
 }
 
 

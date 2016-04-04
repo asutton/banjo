@@ -122,5 +122,5 @@ add_unit_test(test_deduce      test/test_deduce.cpp)
 add_unit_test(test_constraint  test/test_constraint.cpp)
 
 # Testing tools
-add_test_program(test_parse   test/test_parse.cpp)
-add_test_program(test_inspect test/test_inspect.cpp)
+# add_test_program(test_parse   test/test_parse.cpp)
+# add_test_program(test_inspect test/test_inspect.cpp)

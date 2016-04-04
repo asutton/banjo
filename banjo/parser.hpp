@@ -32,7 +32,7 @@ struct Parser
     : cxt(cxt), build(cxt), tokens(ts), state()
   { }
 
-  Term& operator()();
+  Stmt_list operator()();
 
   // Syntactic forms
   Operator_kind any_operator();
@@ -178,7 +178,7 @@ struct Parser
   Req_list usage_seq();
 
   // Modules
-  Term& translation_unit();
+  Stmt_list input();
 
   // Semantics actions
 
@@ -318,6 +318,7 @@ struct Parser
   Token      peek() const;
   Token_kind lookahead() const;
   Token_kind lookahead(int) const;
+  bool       is_eof() const;
   bool       next_token_is(Token_kind);
   bool       next_token_is(char const*);
   bool       next_token_is_not(Token_kind);

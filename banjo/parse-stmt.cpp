@@ -99,11 +99,21 @@ Stmt_list
 Parser::statement_seq()
 {
   Stmt_list ss;
+
+  // First pass: initial parsing of the statement list.
   do {
-    // FIXME: Catch exceptions here.
     Stmt& s = statement();
     ss.push_back(s);
-  } while (peek() && lookahead() != rbrace_tok);
+  } while (!is_eof() && next_token_is_not(rbrace_tok));
+
+  // Second pass. Resolve declared types.
+  // for (Stmt* s : ss)
+  //   elaborate_declaration (cxt, *s);
+
+  // Thrid pass. Elaborate definitions.
+  // for (Stmt* s : ss)
+  //   elaborate_definition (cxt, *s);
+
   return ss;
 }
 
