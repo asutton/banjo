@@ -205,14 +205,14 @@ Parser::leave_enclosure(Token tok)
   Enclosure& enc = state.enc;
   if (enc.empty()) {
     error(cxt, "unmatched brace '{}'", tok);
-    throw Syntax_error("");
+    throw Syntax_error("mismatched brace");
   }
 
   Token top = enc.back();
   if (is_mismatched_brace(top, tok)) {
     // FIXME: show the location of the matching brace.
     error(cxt, "unbalanced brace '{}'", tok);
-    throw Syntax_error("");
+    throw Syntax_error("unbalanced brace");
   }
 
   enc.leave();

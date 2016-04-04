@@ -21,19 +21,16 @@ Stmt&
 Parser::statement()
 {
   switch (lookahead()) {
+    case var_tok:
+    case def_tok:
+    case typename_tok:
+    case concept_tok:
+      return declaration_statement();
+
     case lbrace_tok:
       return compound_statement();
     case return_tok:
       return return_statement();
-
-    case var_tok:
-    case def_tok:
-    case struct_tok:
-    case class_tok:
-    case enum_tok:
-    case namespace_tok:
-    case template_tok:
-      return declaration_statement();
 
     default:
       return expression_statement();

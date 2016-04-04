@@ -24,19 +24,10 @@ Parser::declaration()
       return variable_declaration();
     case def_tok:
       return function_declaration();
-    case struct_tok:
-    case class_tok:
-      return class_declaration();
-    case enum_tok:
-      lingo_unimplemented("parse enum-declaration");
-    case namespace_tok:
-      return namespace_declaration();
-    case template_tok:
-      return template_declaration();
+    case typename_tok:
+      lingo_unreachable();
     case concept_tok:
-      return concept_declaration();
-    case axiom_tok:
-      return axiom_declaration();
+      lingo_unreachable();
     default:
       break;
   }
@@ -50,28 +41,38 @@ Parser::declaration()
 // Parse a variable declaration.
 //
 //    variable-declaration:
-//      'var' type declarator [initializer] ';'
+//      'var' identifier ':' type ';'
+//      'var' identifier ':' type '=' initializer ';'
 Decl&
 Parser::variable_declaration()
 {
-  Token tok = require(var_tok);
-  Type& t = type();
-  Name& n = declarator();
+  require(var_tok);
+  Name& id = identifier();
+  match(colon_tok);
 
-  // Point of declaration.
-  Decl& d = on_variable_declaration(tok, n, t);
-  Enter_scope s(cxt, cxt.make_initializer_scope(d));
+  // Token_seq toks;
+  // while (next_unenclosed_token_is_not(semicolon_tok, eq_tok))
+  //   toks.push_back(accept());
 
-  // Initialization
-  if (lookahead() == semicolon_tok) {
-    on_default_initialization(d);
-    match(semicolon_tok);
-  } else {
-    initializer(d);
-    match(semicolon_tok);
-  }
+  lingo_unreachable();
 
-  return d;
+  // Type& t = type();
+  // Name& n = declarator();
+  //
+  // // Point of declaration.
+  // Decl& d = on_variable_declaration(tok, n, t);
+  // Enter_scope s(cxt, cxt.make_initializer_scope(d));
+  //
+  // // Initialization
+  // if (lookahead() == semicolon_tok) {
+  //   on_default_initialization(d);
+  //   match(semicolon_tok);
+  // } else {
+  //   initializer(d);
+  //   match(semicolon_tok);
+  // }
+  //
+  // return d;
 }
 
 

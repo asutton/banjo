@@ -38,6 +38,10 @@ struct Parser
   Operator_kind any_operator();
 
   // Syntax
+
+  // Declaration names
+  Name& identifier();
+
   // Unresolved names
   Name& id();
   Name& unqualified_id();
