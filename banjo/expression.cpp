@@ -17,7 +17,7 @@ Expr&
 make_required_expression(Context& cxt, Expr& e)
 {
   if (Expr* prev = requirement_lookup(cxt, e))
-    e.ty = prev->ty;
+    e.type_ = prev->type_;
   return e;
 }
 

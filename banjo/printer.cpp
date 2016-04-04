@@ -101,6 +101,17 @@ Printer::token(Integer const& n)
 }
 
 
+void
+Printer::tokens(Token_seq const& toks)
+{
+  for (auto iter = toks.begin(); iter != toks.end(); ++iter) {
+    token(*iter);
+    if (std::next(iter) != toks.end())
+      space();
+  }
+}
+
+
 // -------------------------------------------------------------------------- //
 // Helper functions
 
@@ -116,6 +127,13 @@ Printer::binary_operator(Token_kind k)
 
 // -------------------------------------------------------------------------- //
 // Names
+
+void
+Printer::identifier(Decl const& d)
+{
+  unqualified_id(d.name());
+}
+
 
 void
 Printer::id(Name const& n)
@@ -283,86 +301,69 @@ Printer::nested_name_specifier(Decl const& d)
 // -------------------------------------------------------------------------- //
 // Printing of types
 
-// Returns the precedence of a type. Note that the precedence of
-// function types is poisoned so that it always requires parens
-// when writing it out.
+// Print a type.
 //
-// Maybe this indicates that function types should be the lowest
-// precedence parse. Err... function types are annoying.
-int
-precedence(Type const& t)
+//    type:
+//      primary-type
+//      unparsed-type
+//
+// FIXME: Actually implement the type grammar.
+void
+Printer::type(Type const& t)
 {
-  struct fn
-  {
-    int operator()(Void_type const& t)      { return 0; }
-    int operator()(Boolean_type const& t)   { return 0; }
-    int operator()(Integer_type const& t)   { return 0; }
-    int operator()(Byte_type const& t)      { return 0; }
-    int operator()(Float_type const& t)     { return 0; }
-    int operator()(Auto_type const& t)      { return 0; }
-    int operator()(Decltype_type const& t)  { return 0; }
-    int operator()(Declauto_type const& t)  { return 0; }
-    int operator()(Function_type const& t)  { return 99; }
-    int operator()(Qualified_type const& t) { return 1; }
-    int operator()(Pointer_type const& t)   { return 1; }
-    int operator()(Reference_type const& t) { return 3; }
-    int operator()(Array_type const& t)     { return 1; }
-    int operator()(Sequence_type const& t)  { return 2; }
-    int operator()(Class_type const& t)     { return 0; }
-    int operator()(Union_type const& t)     { return 0; }
-    int operator()(Enum_type const& t)      { return 0; }
-    int operator()(Typename_type const& t)  { return 0; }
-    int operator()(Synthetic_type const& t) { return 0; }
-  };
-  return apply(t, fn{});
+  if (Unparsed_type const* t1 = as<Unparsed_type>(&t))
+    return type(*t1);
+  return primary_type(t);
 }
 
 
 void
-Printer::type(Type const& t)
+Printer::type(Unparsed_type const& t)
+{
+  token(lt_tok);
+  token(bar_tok);
+  tokens(t.tokens());
+  token(bar_tok);
+  token(gt_tok);
+}
+
+
+void
+Printer::primary_type(Type const& t)
 {
   struct fn
   {
     Printer& p;
     void operator()(Type const& t)           { lingo_unhandled(t); }
-    void operator()(Void_type const& t)      { p.simple_type(t); }
-    void operator()(Boolean_type const& t)   { p.simple_type(t); }
-    void operator()(Byte_type const& t)      { p.simple_type(t); }
-    void operator()(Integer_type const& t)   { p.simple_type(t); }
-    void operator()(Float_type const& t)     { p.simple_type(t); }
-    void operator()(Auto_type const& t)      { p.simple_type(t); }
-    void operator()(Decltype_type const& t)  { p.simple_type(t); }
-    void operator()(Declauto_type const& t)  { p.simple_type(t); }
-    void operator()(Function_type const& t)  { p.simple_type(t); }
-    void operator()(Qualified_type const& t) { p.postfix_type(t); }
-    void operator()(Pointer_type const& t)   { p.postfix_type(t); }
-    void operator()(Reference_type const& t) { p.reference_type(t); }
-    void operator()(Array_type const& t)     { p.postfix_type(t); }
-    void operator()(Sequence_type const& t)  { p.sequence_type(t); }
-    void operator()(Class_type const& t)     { p.simple_type(t); }
-    void operator()(Typename_type const& t)  { p.simple_type(t); }
-    void operator()(Synthetic_type const& t) { p.simple_type(t); }
+    void operator()(Void_type const& t)      { p.primary_type(t); }
+    void operator()(Boolean_type const& t)   { p.primary_type(t); }
+    void operator()(Byte_type const& t)      { p.primary_type(t); }
+    void operator()(Integer_type const& t)   { p.primary_type(t); }
+    void operator()(Float_type const& t)     { p.primary_type(t); }
+    void operator()(Auto_type const& t)      { p.primary_type(t); }
+    void operator()(Function_type const& t)  { p.primary_type(t); }
+    void operator()(Unparsed_type const& t)  { p.primary_type(t); }
   };
   apply(t, fn{*this});
 }
 
 
 void
-Printer::simple_type(Void_type const& t)
+Printer::primary_type(Void_type const& t)
 {
   token(void_tok);
 }
 
 
 void
-Printer::simple_type(Boolean_type const& t)
+Printer::primary_type(Boolean_type const& t)
 {
   token(bool_tok);
 }
 
 
 void
-Printer::simple_type(Byte_type const& t)
+Printer::primary_type(Byte_type const& t)
 {
   token(byte_tok);
 }
@@ -370,53 +371,29 @@ Printer::simple_type(Byte_type const& t)
 
 // FIXME: Map this back to a token.
 void
-Printer::simple_type(Integer_type const& t)
+Printer::primary_type(Integer_type const& t)
 {
-  std::stringstream ss;
-  if (t.is_unsigned())
-    ss << 'u';
-  ss << "int" << t.precision();
-  token(ss.str().c_str());
+  token(int_tok);
 }
 
 
 // FIXME: Map this back to a token.
 void
-Printer::simple_type(Float_type const& t)
+Printer::primary_type(Float_type const& t)
 {
-  std::stringstream ss;
-  ss << "float" << t.precision();
-  token(ss.str().c_str());
+  token(float_tok);
 }
 
 
 void
-Printer::simple_type(Auto_type const& t)
+Printer::primary_type(Auto_type const& t)
 {
   token(auto_tok);
 }
 
 
-// TODO: Implement me.
 void
-Printer::simple_type(Decltype_type const& t)
-{
-  lingo_unreachable();
-}
-
-
-void
-Printer::simple_type(Declauto_type const& t)
-{
-  token(decltype_tok);
-  token(lparen_tok);
-  token(auto_tok);
-  token(rparen_tok);
-}
-
-
-void
-Printer::simple_type(Function_type const& t)
+Printer::primary_type(Function_type const& t)
 {
   token(lparen_tok);
   Type_list const& p = t.parameter_types();
@@ -426,95 +403,6 @@ Printer::simple_type(Function_type const& t)
       token(comma_tok);
   }
   token(rparen_tok);
-  return_type(t.return_type());
-}
-
-
-// FIXME: Print a qualification of the name that uniquely
-// identifiers the type, given the current context. Naturally,
-// this means we need to track scopes...
-void
-Printer::simple_type(Class_type const& t)
-{
-  id(t.declaration().name());
-}
-
-
-// FIXME: Print the qualified id? Print a qualification that
-// guarantees unique naming?
-void
-Printer::simple_type(Typename_type const& t)
-{
-  id(t.declaration().name());
-}
-
-
-void
-Printer::simple_type(Synthetic_type const& t)
-{
-  id(t.declaration().name());
-}
-
-
-void
-Printer::grouped_type(Type const& t, Type const& s)
-{
-  if (precedence(t) < precedence(s)) {
-    token(lparen_tok);
-    type(s);
-    token(rparen_tok);
-  } else {
-    type(s);
-  }
-}
-
-
-void
-Printer::postfix_type(Pointer_type const& t)
-{
-  grouped_type(t, t.type());
-  token(star_tok);
-}
-
-
-void
-Printer::postfix_type(Qualified_type const& t)
-{
-  grouped_type(t, t.type());
-  if (t.is_const())
-    token(const_tok);
-  if (t.is_volatile())
-    token(volatile_tok);
-}
-
-
-void
-Printer::postfix_type(Array_type const& t)
-{
-  lingo_unhandled(t);
-}
-
-
-void
-Printer::sequence_type(Sequence_type const& t)
-{
-  grouped_type(t, t.type());
-  token(lbracket_tok);
-  token(rbracket_tok);
-}
-
-
-void
-Printer::reference_type(Reference_type const& t)
-{
-  grouped_type(t, t.type());
-  token(amp_tok);
-}
-
-
-void
-Printer::return_type(Type const& t)
-{
   space();
   token(arrow_tok);
   space();
@@ -529,10 +417,25 @@ Printer::return_type(Type const& t)
 //
 //    expression:
 //      logical-or-expression -- FIXME: Wrong!
+//      unparsed-expression
 void
 Printer::expression(Expr const& e)
 {
-  logical_or_expression(e);
+  if (Unparsed_expr const* e1 = as<Unparsed_expr>(&e))
+    expression(*e1);
+  else
+    logical_or_expression(e);
+}
+
+
+void
+Printer::expression(Unparsed_expr const& e)
+{
+  token(lt_tok);
+  token(bar_tok);
+  tokens(e.tokens());
+  token(bar_tok);
+  token(gt_tok);
 }
 
 
@@ -1039,68 +942,13 @@ Printer::declaration_statement(Declaration_stmt const& s)
 
 // -------------------------------------------------------------------------- //
 // Initializers
-//
-// Select a canonical form of initialization based on the semantics
-// selected by initialization.
 
+
+// FIXME: handle brace forms of the initializer.
 void
 Printer::initializer(Expr const& e)
 {
-  if (is<Init>(&e))
-    initializer(cast<Init>(e));
-  else
-    lingo_unreachable();
-}
-
-
-void
-Printer::initializer(Init const& i)
-{
-  struct fn
-  {
-    Printer& p;
-    void operator()(Expr const&)             { lingo_unreachable(); }
-    void operator()(Trivial_init const& i)   { }
-    void operator()(Copy_init const& i)      { p.equal_initializer(i); }
-    void operator()(Bind_init const& i)      { p.equal_initializer(i); }
-    void operator()(Direct_init const& i)    { p.paren_initializer(i); }
-    void operator()(Aggregate_init const& i) { p.brace_initializer(i); }
-  };
-  apply(i, fn{*this});
-}
-
-
-void
-Printer::equal_initializer(Copy_init const& i)
-{
-  token(eq_tok);
-  space();
-  expression(i.expression());
-}
-
-
-void
-Printer::equal_initializer(Bind_init const& i)
-{
-  token(eq_tok);
-  space();
-  expression(i.expression());
-}
-
-
-// TODO: Implement me.
-void
-Printer::paren_initializer(Direct_init const& i)
-{
-  token("(...)");
-}
-
-
-// TODO: Implement me.
-void
-Printer::brace_initializer(Aggregate_init const&)
-{
-  token("{...}");
+  expression(e);
 }
 
 
@@ -1251,11 +1099,15 @@ void
 Printer::variable_declaration(Variable_decl const& d)
 {
   token(var_tok);
+  space();
+  identifier(d);
+  space();
+  token(colon_tok);
+  space();
   type(d.type());
   space();
-  id(d.name());
   if (d.has_initializer()) {
-    // FIXME: This is printing a space for trivial initializers.
+    token(eq_tok);
     space();
     initializer(d.initializer());
   }
@@ -1283,7 +1135,10 @@ Printer::function_declaration(Function_decl const& d)
   token(lparen_tok);
   parameter_list(d.parameters());
   token(rparen_tok);
-  return_type(d.return_type());
+  space();
+  token(arrow_tok);
+  space();
+  type(d.return_type());
   if (d.is_definition())
     function_definition(d.definition());
   else

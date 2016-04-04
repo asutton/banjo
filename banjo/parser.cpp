@@ -162,13 +162,13 @@ Parser::accept()
     case lparen_tok:
     case lbrace_tok:
     case lbracket_tok:
-      enter_enclosure(tok);
+      open_brace(tok);
       break;
 
     case rparen_tok:
     case rbrace_tok:
     case rbracket_tok:
-      leave_enclosure(tok);
+      close_brace(tok);
       break;
   }
 
@@ -177,45 +177,62 @@ Parser::accept()
 
 
 void
-Parser::enter_enclosure(Token tok)
+Parser::open_brace(Token tok)
 {
-  Enclosure& enc = state.enc;
-  enc.enter(tok);
+  Braces& braces = state.braces;
+  braces.open(tok);
 }
+
+
+// Return the the kind of closing brace that would match the closing
+// token.
+static inline Token_kind
+get_closing_brace(Token tok)
+{
+  switch (tok.kind()) {
+    case lparen_tok: return rparen_tok;
+    case lbrace_tok: return rbrace_tok;
+    case lbracket_tok: return rbracket_tok;
+    default: lingo_unreachable();
+  }
+}
+
 
 
 // TODO: It might be nice to have a function that returns the opener
 // for a closer.
 static inline bool
-is_mismatched_brace(Token left, Token right)
+is_matching_brace(Token left, Token right)
 {
-  if (left.kind() == lparen_tok)
-    return right.kind() != rparen_tok;
-  if (left.kind() == lbrace_tok)
-    return right.kind() != rbrace_tok;
-  if (left.kind() == lbracket_tok)
-    return right.kind() != rbracket_tok;
-  return false;
+  return get_closing_brace(left) == right.kind();
 }
 
 
 void
-Parser::leave_enclosure(Token tok)
+Parser::close_brace(Token tok)
 {
-  Enclosure& enc = state.enc;
-  if (enc.empty()) {
+  Braces& braces = state.braces;
+
+  if (braces.empty()) {
     error(cxt, "unmatched brace '{}'", tok);
     throw Syntax_error("mismatched brace");
   }
 
-  Token top = enc.back();
-  if (is_mismatched_brace(top, tok)) {
+  Token prev = braces.back();
+  if (!is_matching_brace(prev, tok)) {
     // FIXME: show the location of the matching brace.
     error(cxt, "unbalanced brace '{}'", tok);
     throw Syntax_error("unbalanced brace");
   }
 
-  enc.leave();
+  braces.close();
+}
+
+
+bool
+Parser::in_braces() const
+{
+  return !state.braces.empty();
 }
 
 

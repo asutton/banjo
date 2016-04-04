@@ -106,4 +106,12 @@ Parser::on_sequence_type(Type& t)
 }
 
 
+Type&
+Parser::on_unparsed_type(Token_seq&& toks)
+{
+  // FIXME: Use a factory method.
+  return *new Unparsed_type(std::move(toks));
+}
+
+
 } // namespace banjo

@@ -11,6 +11,7 @@
 
 #include <lingo/integer.hpp>
 #include <lingo/real.hpp>
+#include <lingo/token.hpp>
 
 #include <vector>
 #include <utility>

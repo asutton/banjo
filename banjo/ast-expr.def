@@ -44,6 +44,7 @@ define_node(Call_expr)
 define_node(Assign_expr)
 define_node(Requires_expr)
 define_node(Synthetic_expr)
+define_node(Unparsed_expr)
 
 // Conversions
 // TODO: Factor these into a single conversion expression.

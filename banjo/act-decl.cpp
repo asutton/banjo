@@ -55,11 +55,20 @@ Parser::on_declarator(Name& n)
 // -------------------------------------------------------------------------- //
 // Variables
 
-
 Decl&
-Parser::on_variable_declaration(Token, Name& n, Type& t)
+Parser::on_variable_declaration(Name& n, Type& t)
 {
   Decl& d1 = build.make_variable(n, t);
+  Decl& d2 = templatize_declaration(d1);
+  declare(cxt, current_scope(), d2);
+  return d2;
+}
+
+
+Decl&
+Parser::on_variable_declaration(Name& n, Type& t, Expr& e)
+{
+  Decl& d1 = build.make_variable(n, t, e);
   Decl& d2 = templatize_declaration(d1);
   declare(cxt, current_scope(), d2);
   return d2;

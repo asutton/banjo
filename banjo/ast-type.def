@@ -20,3 +20,5 @@ define_node(Union_type)
 define_node(Enum_type)
 define_node(Typename_type)
 define_node(Synthetic_type)
+
+define_node(Unparsed_type)

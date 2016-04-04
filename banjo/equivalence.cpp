@@ -265,6 +265,7 @@ is_equivalent(Type const& t1, Type const& t2)
   struct fn
   {
     Type const& t2;
+    bool operator()(Type const& t1) const              { lingo_unhandled(t1); }
     bool operator()(Void_type const& t1) const         { return always_equal(t1, cast<Void_type>(t2)); }
     bool operator()(Boolean_type const& t1) const      { return always_equal(t1, cast<Boolean_type>(t2)); }
     bool operator()(Byte_type const& t1) const         { return always_equal(t1, cast<Byte_type>(t2)); }

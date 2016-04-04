@@ -14,12 +14,12 @@
 namespace banjo
 {
 
-// Maintains stacks of enclosing tokens to support improved diagnostics.
-// This is essen
-struct Enclosure : Token_seq
+// Maintains a stack of braces. Note that "braces" is meant to imply
+// any kind of bracketing characters.
+struct Braces : Token_seq
 {
-  void enter(Token tok) { push_back(tok); }
-  void leave()          { pop_back(); }
+  void open(Token tok) { push_back(tok); }
+  void close()         { pop_back(); }
 };
 
 
@@ -131,6 +131,9 @@ struct Parser
 
   // Initializers
   Decl& variable_declaration();
+  Type& unparsed_variable_type();
+  Expr& unparsed_variable_initializer();
+
   Expr& initializer(Decl&);
   Expr& equal_initializer(Decl&);
   Expr& paren_initializer(Decl&);
@@ -226,6 +229,7 @@ struct Parser
   Type& on_volatile_type(Token, Type&);
   Type& on_sequence_type(Type&);
   Type& on_reference_type(Token, Type&);
+  Type& on_unparsed_type(Token_seq&&);
 
   // Expressions
   Expr& on_logical_and_expression(Token, Expr&, Expr&);
@@ -261,6 +265,8 @@ struct Parser
   Expr& on_integer_literal(Token);
   Expr& on_requires_expression(Token, Decl_list&, Decl_list&, Req_list&);
 
+  Expr& on_unparsed_expression(Token_seq&&);
+
   // Statements
   Compound_stmt& on_compound_statement(Stmt_list const&);
   Return_stmt& on_return_statement(Token, Expr&);
@@ -268,7 +274,9 @@ struct Parser
   Expression_stmt& on_expression_statement(Expr&);
 
   // Declarations
-  Decl& on_variable_declaration(Token, Name&, Type&);
+  Decl& on_variable_declaration(Name&, Type&);
+  Decl& on_variable_declaration(Name&, Type&, Expr&);
+
   Decl& on_function_declaration(Token, Name&, Decl_list&, Type&);
   Decl& on_class_declaration(Token, Name&);
   Decl& on_namespace_declaration(Token, Name&, Decl_list&);
@@ -320,9 +328,15 @@ struct Parser
   Token      require(char const*);
   Token      accept();
 
+  template<typename... Kinds>
+  bool next_token_is_one_of(Token_kind, Kinds...);
+
+  bool next_token_is_one_of();
+
   // Enclosures
-  void enter_enclosure(Token);
-  void leave_enclosure(Token);
+  void open_brace(Token);
+  void close_brace(Token);
+  bool in_braces() const;
 
   // Tree matching.
   template<typename T> T* match_if(T& (Parser::* p)());
@@ -343,7 +357,7 @@ struct Parser
   // and restoring parse state.
   struct State
   {
-    Enclosure  enc; // Enclosing tokens.
+    Braces  braces;
 
     Decl_list* template_parms = nullptr; // The current (innermost) template parameters
     Expr*      template_cons = nullptr;  // The current (innermost) template constraints
@@ -362,6 +376,26 @@ struct Parser
   Token_stream& tokens;
   State         state;
 };
+
+
+template<typename... Kinds>
+inline bool
+Parser::next_token_is_one_of(Token_kind k, Kinds... ks)
+{
+  if (next_token_is(k))
+    return true;
+  else
+    return next_token_is_one_of(ks...);
+}
+
+
+inline bool
+Parser::next_token_is_one_of()
+{
+  return false;
+}
+
+
 
 
 // An RAII helper that sets or clears the flag controlling

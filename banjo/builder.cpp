@@ -684,10 +684,9 @@ Builder::make_variable(char const* s, Type& t)
 
 
 Variable_decl&
-Builder::make_variable(Name& n, Type& t, Expr& i)
+Builder::make_variable(Name& n, Type& t, Expr& e)
 {
-  lingo_assert(is<Init>(&i));
-  return make<Variable_decl>(n, t, i);
+  return make<Variable_decl>(n, t, e);
 }
 
 

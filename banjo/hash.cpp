@@ -220,6 +220,7 @@ hash_value(Type const& t)
 {
   struct fn
   {
+    std::size_t operator()(Type const& t) const           { lingo_unhandled(t); }
     std::size_t operator()(Void_type const& t) const      { return hash_nullary_type(t); }
     std::size_t operator()(Boolean_type const& t) const   { return hash_nullary_type(t); }
     std::size_t operator()(Byte_type const& t) const      { return hash_nullary_type(t); }

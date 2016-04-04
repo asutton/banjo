@@ -4,6 +4,7 @@
 #include "context.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
+#include "printer.hpp"
 
 #include <lingo/file.hpp>
 #include <lingo/io.hpp>
@@ -22,7 +23,7 @@ main(int argc, char* argv[])
   Context cxt;
 
   if (argc != 2) {
-    std::cerr << "usage: banjo-compile <input-file>\n";
+    std::cerr << "usage: test_parse <input-file>\n";
     return -1;
   }
 
@@ -32,15 +33,21 @@ main(int argc, char* argv[])
   Lexer lex(cxt, cs, ts);
   Parser parse(cxt, ts);
 
-  // Transform characters into tokens.
-  lex();
-  if (error_count())
-    return -1;
+  try {
+    // Transform characters into tokens.
+    lex();
+    if (error_count())
+      return -1;
 
-  // Transform tokens into a syntax tree.
-  Term& unit = parse();
+    // Transform tokens into a syntax tree.
+    Term& unit = parse();
+    if (error_count())
+      return 1;
+    std::cout << unit;
+    return 0;
+  } catch (Compiler_error& err) {
+    std::cerr << err.what();
+    return 1;
+  }
 
-  // if (error_count())
-  //   return 1;
-  // (void)unit;
 }

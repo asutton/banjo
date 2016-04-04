@@ -38,10 +38,11 @@ struct Printer
   void token(String const&);
   void token(int);
   void token(Integer const&);
+  void tokens(Token_seq const&);
 
   void binary_operator(Token_kind);
 
-  // Unresolved names
+  void identifier(Decl const&);
   void id(Name const&);
   void unqualified_id(Name const&);
   void unqualified_id(Simple_id const&);
@@ -57,29 +58,19 @@ struct Printer
 
   // Types
   void type(Type const&);
-  void simple_type(Type const&);
-  void simple_type(Void_type const&);
-  void simple_type(Boolean_type const&);
-  void simple_type(Byte_type const&);
-  void simple_type(Integer_type const&);
-  void simple_type(Float_type const&);
-  void simple_type(Auto_type const&);
-  void simple_type(Decltype_type const&);
-  void simple_type(Declauto_type const&);
-  void simple_type(Function_type const&);
-  void simple_type(Class_type const&);
-  void simple_type(Typename_type const&);
-  void simple_type(Synthetic_type const&);
-  void grouped_type(Type const&, Type const&);
-  void postfix_type(Pointer_type const&);
-  void postfix_type(Qualified_type const&);
-  void postfix_type(Array_type const&);
-  void sequence_type(Sequence_type const&);
-  void reference_type(Reference_type const&);
-  void return_type(Type const&);
+  void type(Unparsed_type const&);
+  void primary_type(Type const&);
+  void primary_type(Void_type const&);
+  void primary_type(Boolean_type const&);
+  void primary_type(Byte_type const&);
+  void primary_type(Integer_type const&);
+  void primary_type(Float_type const&);
+  void primary_type(Auto_type const&);
+  void primary_type(Function_type const&);
 
   // Expressions
   void expression(Expr const&);
+  void expression(Unparsed_expr const&);
   void logical_or_expression(Expr const&);
   void logical_and_expression(Expr const&);
   void inclusive_or_expression(Expr const&);

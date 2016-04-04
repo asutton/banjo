@@ -3,6 +3,7 @@
 
 #include "parser.hpp"
 #include "ast-name.hpp"
+#include "ast-type.hpp"
 #include "ast-decl.hpp"
 #include "printer.hpp"
 
@@ -43,44 +44,75 @@ Parser::declaration()
 //    variable-declaration:
 //      'var' identifier ':' type ';'
 //      'var' identifier ':' type '=' initializer ';'
+//      'var' identifier ':' '=' initializer ';'
+//
+// TODO: Are there other forms of variable declaration?
 Decl&
 Parser::variable_declaration()
 {
   require(var_tok);
-  Name& id = identifier();
+  Name& name = identifier();
   match(colon_tok);
 
-  // Token_seq toks;
-  // while (next_unenclosed_token_is_not(semicolon_tok, eq_tok))
-  //   toks.push_back(accept());
+  // Match the ":=" form.
+  if (match_if(eq_tok)) {
+    Type& type = cxt.get_auto_type();
+    Expr& init = unparsed_variable_initializer();
+    match(semicolon_tok);
+    return on_variable_declaration(name, type, init);
+  }
 
-  lingo_unreachable();
+  // Match the type.
+  Type& type = unparsed_variable_type();
 
-  // Type& t = type();
-  // Name& n = declarator();
-  //
-  // // Point of declaration.
-  // Decl& d = on_variable_declaration(tok, n, t);
-  // Enter_scope s(cxt, cxt.make_initializer_scope(d));
-  //
-  // // Initialization
-  // if (lookahead() == semicolon_tok) {
-  //   on_default_initialization(d);
-  //   match(semicolon_tok);
-  // } else {
-  //   initializer(d);
-  //   match(semicolon_tok);
-  // }
-  //
-  // return d;
+  // Match the "name : type =" form.
+  if (match_if(eq_tok)) {
+    Expr& init = unparsed_variable_initializer();
+    match(semicolon_tok);
+    return on_variable_declaration(name, type, init);
+  }
+
+  // Otherwise, match the "name : type ;" form.
+  match(semicolon_tok);
+  return on_variable_declaration(name, type);
 }
+
+
+// Return an unparsed type for the variable's type specification.
+Type&
+Parser::unparsed_variable_type()
+{
+  Token_seq toks;
+  while (true) {
+    if (next_token_is_one_of(semicolon_tok, eq_tok) && !in_braces())
+      break;
+    toks.push_back(accept());
+  }
+  return on_unparsed_type(std::move(toks));
+}
+
+
+// Returns an unparsed variable initializer.
+Expr&
+Parser::unparsed_variable_initializer()
+{
+  Token_seq toks;
+  while (true) {
+    if (next_token_is(semicolon_tok) && !in_braces())
+      break;
+    toks.push_back(accept());
+  }
+  return on_unparsed_expression(std::move(toks));
+}
+
+
+// Return an anparsed variable definition.
 
 
 // Parse a variable initializer.
 //
 //    initializer:
-//      equal-initializer
-//      paren-initializer
+//      value-initializer
 //      brace-initializer
 //
 // Note that C++ refers to the equal-initializer form of initialization

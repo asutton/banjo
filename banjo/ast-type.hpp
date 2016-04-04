@@ -383,6 +383,23 @@ struct Synthetic_type : User_defined_type
 };
 
 
+// Represents an unparsed type.
+struct Unparsed_type : Type
+{
+  Unparsed_type(Token_seq&& toks)
+    : toks(std::move(toks))
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  Token_seq const& tokens() const { return toks; }
+  Token_seq&       tokens()       { return toks; }
+
+  Token_seq toks;
+};
+
+
 // -------------------------------------------------------------------------- //
 // Queries on types
 //
@@ -505,7 +522,6 @@ bool is_dependent_type(Type const&);
 
 // -------------------------------------------------------------------------- //
 // Visitors
-
 
 // A generic visitor for types.
 template<typename F, typename T>
