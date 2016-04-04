@@ -14,30 +14,6 @@
 namespace banjo
 {
 
-// A descriptor of the current nesting levels. This is used to ensure
-// that
-struct Nesting
-{
-  int parens;
-  int braces;
-  int brackets;
-};
-
-
-inline bool
-operator==(Nesting const& a, Nesting const& b)
-{
-  return a.parens == b.parens && a.braces == b.braces && a.brackets == b.brackets;
-}
-
-
-inline bool
-operator!=(Nesting const& a, Nesting const& b)
-{
-  return !(a == b);
-}
-
-
 // Maintains stacks of enclosing tokens to support improved diagnostics.
 // This is essen
 struct Enclosure : Token_seq
@@ -45,7 +21,6 @@ struct Enclosure : Token_seq
   void enter(Token tok) { push_back(tok); }
   void leave()          { pop_back(); }
 };
-
 
 
 // The parser is responsible for transforming a stream of tokens
@@ -340,6 +315,10 @@ struct Parser
   Token      require(Token_kind);
   Token      require(char const*);
   Token      accept();
+
+  // Enclosures
+  void enter_enclosure(Token);
+  void leave_enclosure(Token);
 
   // Tree matching.
   template<typename T> T* match_if(T& (Parser::* p)());

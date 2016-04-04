@@ -152,14 +152,75 @@ Token
 Parser::accept()
 {
   Token tok = tokens.get();
+
+  // Update the global input location.
   cxt.input_location(tok.location());
+
+  // If the token is a brace, then record that for the purpose of
+  // brace matching and diagnostics.
+  switch (tok.kind()) {
+    case lparen_tok:
+    case lbrace_tok:
+    case lbracket_tok:
+      enter_enclosure(tok);
+      break;
+
+    case rparen_tok:
+    case rbrace_tok:
+    case rbracket_tok:
+      leave_enclosure(tok);
+      break;
+  }
+
   return tok;
+}
+
+
+void
+Parser::enter_enclosure(Token tok)
+{
+  Enclosure& enc = state.enc;
+  enc.enter(tok);
+}
+
+
+// TODO: It might be nice to have a function that returns the opener
+// for a closer.
+static inline bool
+is_mismatched_brace(Token left, Token right)
+{
+  if (left.kind() == lparen_tok)
+    return right.kind() != rparen_tok;
+  if (left.kind() == lbrace_tok)
+    return right.kind() != rbrace_tok;
+  if (left.kind() == lbracket_tok)
+    return right.kind() != rbracket_tok;
+  return false;
+}
+
+
+void
+Parser::leave_enclosure(Token tok)
+{
+  Enclosure& enc = state.enc;
+  if (enc.empty()) {
+    error(cxt, "unmatched brace '{}'", tok);
+    throw Syntax_error("");
+  }
+
+  Token top = enc.back();
+  if (is_mismatched_brace(top, tok)) {
+    // FIXME: show the location of the matching brace.
+    error(cxt, "unbalanced brace '{}'", tok);
+    throw Syntax_error("");
+  }
+
+  enc.leave();
 }
 
 
 // -------------------------------------------------------------------------- //
 // Scope management
-
 
 // Returns the current scope.
 Scope&
