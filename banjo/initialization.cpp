@@ -45,17 +45,17 @@ zero_initialize(Context& cxt, Type& t)
 
   // Zero initialize each sub-object in turn.
   if (is_array_type(t))
-    lingo_unimplemented();
+    lingo_unreachable();
 
   Type& u = t.unqualified_type();
 
   // Zero each sub-object in turn.
   if (is_class_type(u))
-    lingo_unimplemented();
+    lingo_unreachable();
 
   // Zero initialize the first sub-object.
   if (is_union_type(u))
-    lingo_unimplemented();
+    lingo_unreachable();
 
   // FIXME: Determine the kind of zero that best matches the
   // type (i.e., produce an appropriate literal).
@@ -85,7 +85,7 @@ default_initialize(Context& cxt, Type& t)
 
   // Select a default initializer for each sub-object.
   if (is_array_type(t))
-    lingo_unimplemented();
+    lingo_unreachable();
 
   // Select a (possibly synthesized) default constructor for u.
   //
@@ -96,7 +96,7 @@ default_initialize(Context& cxt, Type& t)
 
   // Select a (possibly synthesized) default constructor for u.
   if (is_maybe_qualified_union_type(t))
-    lingo_unimplemented();
+    lingo_unreachable();
 
   // Otherwise, no initialization is performed.
   return build.make_trivial_init(t);
@@ -114,12 +114,12 @@ value_initialize(Context& cxt, Type& t)
 
   // FIXME: Can you value initialize a T[]?
   if (is_array_type(t))
-    lingo_unimplemented();
+    lingo_unreachable();
 
   // Either zero-initialize or default-initialize based on
   // the presence of user-defined constructors.
   if (is_maybe_qualified_class_type(t) || is_maybe_qualified_union_type(t))
-    lingo_unimplemented();
+    lingo_unreachable();
 
   // Are we sure that there are no other categories of types?
   return zero_initialize(cxt, t);
@@ -234,7 +234,7 @@ direct_initialize(Context& cxt, Type& t, Expr_list& es)
 
   // Find a constructor taking the given arguments.
   if (is_maybe_qualified_class_type(t) || is_maybe_qualified_union_type(t))
-    lingo_unimplemented();
+    lingo_unreachable();
 
   // If the initializer has a source type, then try to find a
   // user-defined conversion from s to the destination type, which
@@ -252,7 +252,7 @@ direct_initialize(Context& cxt, Type& t, Expr_list& es)
 
   // Search for user-defined conversion from the source expression.
   if (is_maybe_qualified_class_type(s))
-    lingo_unimplemented();
+    lingo_unreachable();
 
   // If all else fails, try a a standard conversion. This should be
   // the case that we have a non-class, fundamental type.
@@ -292,7 +292,7 @@ direct_initialize(Context& cxt, Type& t, Expr& e)
 Expr&
 list_initialize(Context& cxt, Type& t, Expr_list& es)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
@@ -386,7 +386,7 @@ reference_initialize(Context& cxt, Reference_type& t1, Expr& e)
 Expr&
 aggregate_initialize(Context& cxt, Type& t, Expr_list& i)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 

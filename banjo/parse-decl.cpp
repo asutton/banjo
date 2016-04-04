@@ -28,7 +28,7 @@ Parser::declaration()
     case class_tok:
       return class_declaration();
     case enum_tok:
-      lingo_unimplemented();
+      lingo_unimplemented("parse enum-declaration");
     case namespace_tok:
       return namespace_declaration();
     case template_tok:
@@ -124,7 +124,7 @@ Parser::equal_initializer(Decl& d)
 Expr&
 Parser::paren_initializer(Decl&)
 {
-  lingo_unimplemented();
+  lingo_unimplemented("parse paren-initializer");
 }
 
 
@@ -135,7 +135,7 @@ Parser::paren_initializer(Decl&)
 Expr&
 Parser::brace_initializer(Decl&)
 {
-  lingo_unimplemented();
+  lingo_unimplemented("parse brace-initializer");
 }
 
 
@@ -226,7 +226,7 @@ Parser::parameter_declaration()
   // parameter.
   Type* t;
   if (match_if(ellipsis_tok))
-    lingo_unimplemented();
+    lingo_unimplemented("parse ellipsis");
   else
     t = &type();
 
@@ -382,7 +382,7 @@ Parser::member_declaration()
 Decl&
 Parser::namespace_declaration()
 {
-  lingo_unimplemented();
+  lingo_unimplemented("parse namespace");
   // Token tok = require(namespace_tok);
   // Name& n = declarator();
   // declaration_seq();
@@ -467,7 +467,7 @@ Parser::template_parameter()
 
     default:
       // FIXME: Concepts!
-      lingo_unimplemented();
+      lingo_unimplemented("parse constrained-parameter");
   }
 }
 
@@ -514,14 +514,14 @@ Parser::type_template_parameter()
 Decl&
 Parser::value_template_parameter()
 {
-  lingo_unimplemented();
+  lingo_unimplemented("parse value-template-parameter");
 }
 
 
 Decl&
 Parser::template_template_parameter()
 {
-  lingo_unimplemented();
+  lingo_unimplemented("parse template-template-parameter");
 }
 
 
@@ -663,7 +663,7 @@ Parser::concept_member()
 Decl&
 Parser::axiom_declaration()
 {
-  lingo_unimplemented();
+  lingo_unimplemented("parse axiom-declaration");
 }
 
 

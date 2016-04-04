@@ -52,7 +52,7 @@ main(int argc, char* argv[])
 
   File input(argv[1]);
   Character_stream cs(input);
-  Token_stream ts(input);
+  Token_stream ts;
   Lexer lex(cxt, cs, ts);
   Parser parse(cxt, ts);
 
@@ -139,7 +139,7 @@ resolve_directive(Parser& p)
   std::cout << e << '\n';
 
   // TODO: Actually show which function was resolved.
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 void
@@ -148,7 +148,7 @@ instantiate_directive(Parser& p)
   p.require("instantiate");
   // Name& n = p.template_id();
   // Actually show the instantated definition.
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
@@ -227,7 +227,7 @@ order_template_directive(Parser& p)
 
   // TODO: Resolve the function templates referred to by these
   // ids and determine which is more specialized.
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 

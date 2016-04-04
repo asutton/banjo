@@ -11,7 +11,7 @@ namespace banjo
 {
 
 
-// Returns true.  
+// Returns true.
 template<typename T>
 bool
 always_equal(T const& t1, T const& t2)
@@ -62,7 +62,7 @@ is_equivalent(Simple_id const& n1, Simple_id const& n2)
 inline bool
 is_equivalent(Global_id const& n1, Global_id const& n2)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
@@ -83,42 +83,42 @@ is_equivalent(Operator_id const& n1, Operator_id const& n2)
 inline bool
 is_equivalent(Conversion_id const& n1, Conversion_id const& n2)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
 inline bool
 is_equivalent(Literal_id const& n1, Literal_id const& n2)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
 inline bool
 is_equivalent(Destructor_id const& n1, Destructor_id const& n2)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
 inline bool
 is_equivalent(Template_id const& n1, Template_id const& n2)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
 inline bool
 is_equivalent(Concept_id const& n1, Concept_id const& n2)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
 inline bool
 is_equivalent(Qualified_id const& n1, Qualified_id const& n2)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
@@ -184,7 +184,7 @@ is_equivalent(Auto_type const&, Auto_type const&)
 bool
 is_equivalent(Decltype_type const& a, Decltype_type const& b)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
@@ -229,7 +229,7 @@ is_equivalent(Pointer_type const& t1, Pointer_type const& t2)
 bool
 is_equivalent(Array_type const&, Array_type const&)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 

@@ -106,14 +106,14 @@ deduce_from_type(Type& p, Type& a, Substitution& sub)
     // We can't deduce from most type patterns.
     bool operator()(Type& p)           { return true; }
 
-    bool operator()(Auto_type& p)      { lingo_unimplemented(); }
-    bool operator()(Decltype_type& p)  { lingo_unimplemented(); }
-    bool operator()(Declauto_type& p)  { lingo_unimplemented(); }
-    bool operator()(Function_type& p)  { lingo_unimplemented(); }
+    bool operator()(Auto_type& p)      { lingo_unreachable(); }
+    bool operator()(Decltype_type& p)  { lingo_unreachable(); }
+    bool operator()(Declauto_type& p)  { lingo_unreachable(); }
+    bool operator()(Function_type& p)  { lingo_unreachable(); }
     bool operator()(Reference_type& p) { return deduce_from_type(p, a, sub); }
     bool operator()(Qualified_type& p) { return deduce_from_type(p, a, sub); }
     bool operator()(Pointer_type& p)   { return deduce_from_type(p, a, sub); }
-    bool operator()(Array_type& p)     { lingo_unimplemented(); }
+    bool operator()(Array_type& p)     { lingo_unreachable(); }
     bool operator()(Sequence_type& p)  { return deduce_from_type(p, a, sub); }
     bool operator()(Typename_type& p)  { return deduce_from_type(p, a, sub); }
   };
@@ -172,7 +172,7 @@ select_template_parameters(Type& t, Substitution& init, Substitution& ret)
     Substitution& init;
     Substitution& ret;
     void operator()(Type& t)           { }
-    void operator()(Function_type& t)  { lingo_unimplemented(); }
+    void operator()(Function_type& t)  { lingo_unreachable(); }
     void operator()(Reference_type& t) { select_template_parameters(t.type(), init, ret); }
     void operator()(Qualified_type& t) { select_template_parameters(t.type(), init, ret); }
     void operator()(Pointer_type& t)   { select_template_parameters(t.type(), init, ret); }

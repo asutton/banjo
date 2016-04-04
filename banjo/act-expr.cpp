@@ -38,42 +38,42 @@ Parser::on_logical_not_expression(Token tok, Expr& e)
 Expr&
 Parser::on_ior_expression(Token tok, Expr& e1, Expr& e2)
 {
-  banjo_unimplemented("inclusive or expression");
+  lingo_unimplemented("on bit-or-expr");
 }
 
 
 Expr&
 Parser::on_xor_expression(Token tok, Expr& e1, Expr& e2)
 {
-  banjo_unimplemented("exclusive or expression");
+  lingo_unimplemented("on bit-xor-expr");
 }
 
 
 Expr&
 Parser::on_and_expression(Token tok, Expr& e1, Expr& e2)
 {
-  banjo_unimplemented("and expression");
+  lingo_unimplemented("on bit-and-expr");
 }
 
 
 Expr&
 Parser::on_lsh_expression(Token tok, Expr& e1, Expr& e2)
 {
-  banjo_unimplemented("left-shift expression");
+  lingo_unimplemented("on bit-lsh-expr");
 }
 
 
 Expr&
 Parser::on_rsh_expression(Token tok, Expr& e1, Expr& e2)
 {
-  banjo_unimplemented("right-shift expression");
+  lingo_unimplemented("on bit-rsh-expr");
 }
 
 
 Expr&
 Parser::on_compl_expression(Token tok, Expr& e)
 {
-  banjo_unimplemented("one's complement expression");
+  lingo_unimplemented("on bit-not-expr");
 }
 
 
@@ -129,49 +129,49 @@ Parser::on_cmp_expression(Token tok, Expr& e1, Expr& e2)
 Expr&
 Parser::on_add_expression(Token tok, Expr& e1, Expr& e2)
 {
-  lingo_unimplemented();
+  lingo_unimplemented("on add-expr");
 }
 
 
 Expr&
 Parser::on_sub_expression(Token tok, Expr& e1, Expr& e2)
 {
-  lingo_unimplemented();
+  lingo_unimplemented("on sub-expr");
 }
 
 
 Expr&
 Parser::on_mul_expression(Token tok, Expr& e1, Expr& e2)
 {
-  lingo_unimplemented();
+  lingo_unimplemented("on mul-expr");
 }
 
 
 Expr&
 Parser::on_div_expression(Token tok, Expr& e1, Expr& e2)
 {
-  lingo_unimplemented();
+  lingo_unimplemented("on div-expr");
 }
 
 
 Expr&
 Parser::on_rem_expression(Token tok, Expr& e1, Expr& e2)
 {
-  banjo_unimplemented("remainder expression");
+  lingo_unimplemented("on rem-expr");
 }
 
 
 Expr&
 Parser::on_neg_expression(Token tok, Expr& e)
 {
-  banjo_unimplemented("negation expression");
+  lingo_unimplemented("on neg-expr");
 }
 
 
 Expr&
 Parser::on_pos_expression(Token tok, Expr& e)
 {
-  banjo_unimplemented("identity expression");
+  lingo_unimplemented("on pos-expr");
 }
 
 

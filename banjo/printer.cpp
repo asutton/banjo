@@ -324,7 +324,7 @@ Printer::type(Type const& t)
   struct fn
   {
     Printer& p;
-    void operator()(Type const& t)           { lingo_unimplemented(); }
+    void operator()(Type const& t)           { lingo_unhandled(t); }
     void operator()(Void_type const& t)      { p.simple_type(t); }
     void operator()(Boolean_type const& t)   { p.simple_type(t); }
     void operator()(Byte_type const& t)      { p.simple_type(t); }
@@ -340,8 +340,6 @@ Printer::type(Type const& t)
     void operator()(Array_type const& t)     { p.postfix_type(t); }
     void operator()(Sequence_type const& t)  { p.sequence_type(t); }
     void operator()(Class_type const& t)     { p.simple_type(t); }
-    void operator()(Union_type const& t)     { lingo_unimplemented(); }
-    void operator()(Enum_type const& t)      { lingo_unimplemented(); }
     void operator()(Typename_type const& t)  { p.simple_type(t); }
     void operator()(Synthetic_type const& t) { p.simple_type(t); }
   };
@@ -493,7 +491,7 @@ Printer::postfix_type(Qualified_type const& t)
 void
 Printer::postfix_type(Array_type const& t)
 {
-  lingo_unimplemented();
+  lingo_unhandled(t);
 }
 
 
@@ -526,47 +524,6 @@ Printer::return_type(Type const& t)
 
 // -------------------------------------------------------------------------- //
 // Expressions
-
-
-// Returns the precedence of the operator for an expression.
-int
-precedence(Expr const& e)
-{
-  struct fn
-  {
-    int operator()(Expr const& e)           { lingo_unimplemented(); }
-    int operator()(Boolean_expr const& e)   { return 0; }
-    int operator()(Integer_expr const& e)   { return 0; }
-    int operator()(Real_expr const& e)      { return 0; }
-    int operator()(Reference_expr const& e) { return 0; }
-    int operator()(Check_expr const& e)     { return 0; }
-    int operator()(Add_expr const& e)       { return 6; }
-    int operator()(Sub_expr const& e)       { return 6; }
-    int operator()(Mul_expr const& e)       { return 5; }
-    int operator()(Div_expr const& e)       { return 5; }
-    int operator()(Rem_expr const& e)       { return 5; }
-    int operator()(Neg_expr const& e)       { return 3; }
-    int operator()(Pos_expr const& e)       { return 3; }
-    int operator()(Eq_expr const& e)        { return 9; }
-    int operator()(Ne_expr const& e)        { return 9; }
-    int operator()(Lt_expr const& e)        { return 8; }
-    int operator()(Gt_expr const& e)        { return 8; }
-    int operator()(Le_expr const& e)        { return 8; }
-    int operator()(Ge_expr const& e)        { return 8; }
-    int operator()(And_expr const& e)       { return 13; }
-    int operator()(Or_expr const& e)        { return 14; }
-    int operator()(Not_expr const& e)       { return 3; }
-    int operator()(Call_expr const& e)      { return 2; }
-    int operator()(Assign_expr const& e)    { return 15; }
-    int operator()(Requires_expr const& e)  { return 0; }
-    int operator()(Conv const& e)           { return precedence(e.source()); }
-    int operator()(Init const& e)           { lingo_unreachable(); }
-    int operator()(Bind_init const& e)      { return precedence(e.expression()); }
-    int operator()(Copy_init const& e)      { return precedence(e.expression()); }
-  };
-  return apply(e, fn{});
-}
-
 
 // Print an expression.
 //
@@ -1024,7 +981,7 @@ Printer::statement(Stmt const& s)
   struct fn
   {
     Printer& p;
-    void operator()(Stmt const&)               { lingo_unimplemented(); }
+    void operator()(Stmt const& s)             { lingo_unhandled(s); }
     void operator()(Compound_stmt const& s)    { p.compound_statement(s); }
     void operator()(Return_stmt const& s)      { p.return_statement(s); }
     void operator()(Expression_stmt const& s)  { p.expression_statement(s); }
@@ -1156,9 +1113,9 @@ Printer::function_definition(Def const& d)
   struct fn
   {
     Printer& p;
-    void operator()(Def const&) { lingo_unimplemented(); }
-    void operator()(Function_def const& d) { p.function_definition(d); }
-    void operator()(Deleted_def const& d) { p.function_definition(d); }
+    void operator()(Def const& d)           { lingo_unhandled(d); }
+    void operator()(Function_def const& d)  { p.function_definition(d); }
+    void operator()(Deleted_def const& d)   { p.function_definition(d); }
     void operator()(Defaulted_def const& d) { p.function_definition(d); }
   };
   apply(d, fn{*this});
@@ -1198,8 +1155,8 @@ Printer::class_definition(Def const& d)
   struct fn
   {
     Printer& p;
-    void operator()(Def const&) { lingo_unimplemented(); }
-    void operator()(Class_def const& d) { p.class_definition(d); }
+    void operator()(Def const& d)         { lingo_unhandled(d); }
+    void operator()(Class_def const& d)   { p.class_definition(d); }
     void operator()(Deleted_def const& d) { p.class_definition(d); }
   };
   apply(d, fn{*this});

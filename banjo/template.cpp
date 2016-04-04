@@ -57,7 +57,7 @@ initialize_value_template_parameter(Context& cxt, Value_parm& p, Term& a)
 Decl&
 initialize_template_template_parameter(Context& cxt, Template_parm& p, Term& t)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
@@ -185,7 +185,7 @@ specialize_declaration(Context& cxt, Template_decl& tmp, Decl& decl, Substitutio
     Context&       cxt;
     Template_decl& tmp;
     Substitution&  sub;
-    Decl& operator()(Decl& d)           { lingo_unimplemented(); }
+    Decl& operator()(Decl& d)           { lingo_unreachable(); }
     Decl& operator()(Variable_decl& d)  { return specialize_variable(cxt, tmp, d, sub); }
     Decl& operator()(Function_decl& d)  { return specialize_function(cxt, tmp, d, sub); }
     Decl& operator()(Class_decl& d)     { return specialize_class(cxt, tmp, d, sub); }
@@ -257,7 +257,7 @@ synthesize_template_argument(Context& cxt, Value_parm& parm)
 Decl&
 synthesize_template_argument(Context& cxt, Template_parm& parm)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 

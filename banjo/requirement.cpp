@@ -87,7 +87,7 @@ make_conversion_requirement(Context& cxt, Expr& e, Type& t)
 Req&
 make_deduction_requirement(Context& cxt, Expr& e, Type& t)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 

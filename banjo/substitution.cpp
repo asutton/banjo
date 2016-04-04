@@ -112,9 +112,9 @@ substitute(Context& cxt, Type& t, Substitution& sub)
     // Most types cannot be substituted into.
     Type& operator()(Type& t)           { return t; }
 
-    Type& operator()(Auto_type& t)      { lingo_unimplemented(); }
-    Type& operator()(Decltype_type& t)  { lingo_unimplemented(); }
-    Type& operator()(Declauto_type& t)  { lingo_unimplemented(); }
+    Type& operator()(Auto_type& t)      { lingo_unreachable(); }
+    Type& operator()(Decltype_type& t)  { lingo_unreachable(); }
+    Type& operator()(Declauto_type& t)  { lingo_unreachable(); }
 
     // Recrusively substitute through compound types.
     Type& operator()(Function_type& t)  { return substitute_type(cxt, t, sub); }
@@ -165,7 +165,7 @@ substitute_type(Context& cxt, Pointer_type& t, Substitution& sub)
 Type&
 substitute_type(Context& cxt, Array_type& t, Substitution& sub)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
@@ -338,7 +338,7 @@ substitute(Context& cxt, Decl& d, Substitution& sub)
   {
     Context&      cxt;
     Substitution& sub;
-    Decl& operator()(Decl& d)           { lingo_unimplemented(); }
+    Decl& operator()(Decl& d)           { lingo_unreachable(); }
     Decl& operator()(Variable_decl& d)  { return substitute_decl(cxt, d, sub); }
     Decl& operator()(Object_parm& d)    { return substitute_decl(cxt, d, sub); }
   };
