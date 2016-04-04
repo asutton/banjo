@@ -22,13 +22,13 @@ add_library(banjo
   parse-stmt.cpp
   parse-decl.cpp
   parse-req.cpp
-  sema-id.cpp
-  sema-type.cpp
-  sema-expr.cpp
-  sema-init.cpp
-  sema-stmt.cpp
-  sema-decl.cpp
-  sema-req.cpp
+  act-id.cpp
+  act-type.cpp
+  act-expr.cpp
+  act-init.cpp
+  act-stmt.cpp
+  act-decl.cpp
+  act-req.cpp
   printer.cpp
 
   # Semantics
