@@ -2,11 +2,11 @@
 // All rights reserved
 
 #include "parser.hpp"
+#include "printer.hpp"
 #include "ast-expr.hpp"
 #include "ast-type.hpp"
 #include "ast-decl.hpp"
 #include "expression.hpp"
-#include "print.hpp"
 
 #include <iostream>
 
@@ -32,6 +32,48 @@ Expr&
 Parser::on_logical_not_expression(Token tok, Expr& e)
 {
   return make_logical_not(cxt, e);
+}
+
+
+Expr&
+Parser::on_ior_expression(Token tok, Expr& e1, Expr& e2)
+{
+  lingo_unimplemented("on bit-or-expr");
+}
+
+
+Expr&
+Parser::on_xor_expression(Token tok, Expr& e1, Expr& e2)
+{
+  lingo_unimplemented("on bit-xor-expr");
+}
+
+
+Expr&
+Parser::on_and_expression(Token tok, Expr& e1, Expr& e2)
+{
+  lingo_unimplemented("on bit-and-expr");
+}
+
+
+Expr&
+Parser::on_lsh_expression(Token tok, Expr& e1, Expr& e2)
+{
+  lingo_unimplemented("on bit-lsh-expr");
+}
+
+
+Expr&
+Parser::on_rsh_expression(Token tok, Expr& e1, Expr& e2)
+{
+  lingo_unimplemented("on bit-rsh-expr");
+}
+
+
+Expr&
+Parser::on_compl_expression(Token tok, Expr& e)
+{
+  lingo_unimplemented("on bit-not-expr");
 }
 
 
@@ -78,37 +120,58 @@ Parser::on_ge_expression(Token tok, Expr& e1, Expr& e2)
 
 
 Expr&
+Parser::on_cmp_expression(Token tok, Expr& e1, Expr& e2)
+{
+  return make_ge(cxt, e1, e2);
+}
+
+
+Expr&
 Parser::on_add_expression(Token tok, Expr& e1, Expr& e2)
 {
-  lingo_unimplemented();
+  lingo_unimplemented("on add-expr");
 }
 
 
 Expr&
 Parser::on_sub_expression(Token tok, Expr& e1, Expr& e2)
 {
-  lingo_unimplemented();
+  lingo_unimplemented("on sub-expr");
 }
 
 
 Expr&
 Parser::on_mul_expression(Token tok, Expr& e1, Expr& e2)
 {
-  lingo_unimplemented();
+  lingo_unimplemented("on mul-expr");
 }
 
 
 Expr&
 Parser::on_div_expression(Token tok, Expr& e1, Expr& e2)
 {
-  lingo_unimplemented();
+  lingo_unimplemented("on div-expr");
 }
 
 
 Expr&
 Parser::on_rem_expression(Token tok, Expr& e1, Expr& e2)
 {
-  lingo_unimplemented();
+  lingo_unimplemented("on rem-expr");
+}
+
+
+Expr&
+Parser::on_neg_expression(Token tok, Expr& e)
+{
+  lingo_unimplemented("on neg-expr");
+}
+
+
+Expr&
+Parser::on_pos_expression(Token tok, Expr& e)
+{
+  lingo_unimplemented("on pos-expr");
 }
 
 

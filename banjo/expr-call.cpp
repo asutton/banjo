@@ -12,7 +12,7 @@
 #include "lookup.hpp"
 #include "deduction.hpp"
 #include "subsumption.hpp"
-#include "print.hpp"
+#include "printer.hpp"
 
 #include <iostream>
 
@@ -68,9 +68,8 @@ make_dependent_template_call(Context& cxt, Template_ref& e, Expr_list& args)
 Expr&
 make_dependent_function_call(Context& cxt, Reference_expr& e, Expr_list& args)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
-
 
 
 // Make a dependent function call expression.

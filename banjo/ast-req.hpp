@@ -33,25 +33,17 @@ struct Req : Term
 
 struct Req::Visitor
 {
-  virtual void visit(Type_req const&)        { }
-  virtual void visit(Syntactic_req const&)   { }
-  virtual void visit(Semantic_req const&)    { }
-  virtual void visit(Expression_req const&)  { }
-  virtual void visit(Basic_req const&)       { }
-  virtual void visit(Conversion_req const&)  { }
-  virtual void visit(Deduction_req const&)   { }
+#define define_node(Node) virtual void visit(Node const&) = 0;
+#include "ast-req.def"
+#undef define_node
 };
 
 
 struct Req::Mutator
 {
-  virtual void visit(Type_req&)        { }
-  virtual void visit(Syntactic_req&)   { }
-  virtual void visit(Semantic_req&)    { }
-  virtual void visit(Expression_req&)  { }
-  virtual void visit(Basic_req&)       { }
-  virtual void visit(Conversion_req&)  { }
-  virtual void visit(Deduction_req&)   { }
+#define define_node(Node) virtual void visit(Node&) = 0;
+#include "ast-req.def"
+#undef define_node
 };
 
 
@@ -190,7 +182,10 @@ struct Deduction_req : Req
 };
 
 
-// A generic visitor for expressions.
+// -------------------------------------------------------------------------- //
+// Visitors
+
+// A generic visitor for requirements.
 template<typename F, typename T>
 struct Generic_req_visitor : Req::Visitor, Generic_visitor<F, T>
 {
@@ -198,13 +193,23 @@ struct Generic_req_visitor : Req::Visitor, Generic_visitor<F, T>
     : Generic_visitor<F, T>(f)
   { }
 
-  void visit(Type_req const& r)        { this->invoke(r); }
-  void visit(Syntactic_req const& r)   { this->invoke(r); }
-  void visit(Semantic_req const& r)    { this->invoke(r); }
-  void visit(Expression_req const& r)  { this->invoke(r); }
-  void visit(Basic_req const& r)       { this->invoke(r); }
-  void visit(Conversion_req const& r)  { this->invoke(r); }
-  void visit(Deduction_req const& r)   { this->invoke(r); }
+#define define_node(Node) void visit(Node const& t) { this->invoke(t); }
+#include "ast-req.def"
+#undef define_node
+};
+
+
+// A generic mutator for requirements.
+template<typename F, typename T>
+struct Generic_req_mutator : Req::Mutator, Generic_mutator<F, T>
+{
+  Generic_req_mutator(F f)
+    : Generic_mutator<F, T>(f)
+  { }
+
+#define define_node(Node) void visit(Node& t) { this->invoke(t); }
+#include "ast-req.def"
+#undef define_node
 };
 
 
@@ -216,24 +221,6 @@ apply(Req const& r, F fn)
   Generic_req_visitor<F, T> vis(fn);
   return accept(r, vis);
 }
-
-
-// A generic mutator for expressions.
-template<typename F, typename T>
-struct Generic_req_mutator : Req::Mutator, Generic_mutator<F, T>
-{
-  Generic_req_mutator(F f)
-    : Generic_mutator<F, T>(f)
-  { }
-
-  void visit(Type_req& r)        { this->invoke(r); }
-  void visit(Syntactic_req& r)   { this->invoke(r); }
-  void visit(Semantic_req& r)    { this->invoke(r); }
-  void visit(Expression_req& r)  { this->invoke(r); }
-  void visit(Basic_req& r)       { this->invoke(r); }
-  void visit(Conversion_req& r)  { this->invoke(r); }
-  void visit(Deduction_req& r)   { this->invoke(r); }
-};
 
 
 // Apply a function to the given type.

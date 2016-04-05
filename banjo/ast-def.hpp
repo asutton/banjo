@@ -28,27 +28,17 @@ struct Def : Term
 
 struct Def::Visitor
 {
-  virtual void visit(Defaulted_def const&)  { }
-  virtual void visit(Deleted_def const&)    { }
-  virtual void visit(Expression_def const&) { }
-  virtual void visit(Function_def const&)   { }
-  virtual void visit(Class_def const&)      { }
-  virtual void visit(Union_def const&)      { }
-  virtual void visit(Enum_def const&)       { }
-  virtual void visit(Concept_def const&)    { }
+#define define_node(Node) virtual void visit(Node const&) = 0;
+#include "ast-def.def"
+#undef define_node
 };
 
 
 struct Def::Mutator
 {
-  virtual void visit(Defaulted_def&)  { }
-  virtual void visit(Deleted_def&)    { }
-  virtual void visit(Expression_def&) { }
-  virtual void visit(Function_def&)   { }
-  virtual void visit(Class_def&)      { }
-  virtual void visit(Union_def&)      { }
-  virtual void visit(Enum_def&)       { }
-  virtual void visit(Concept_def&)    { }
+#define define_node(Node) virtual void visit(Node&) = 0;
+#include "ast-def.def"
+#undef define_node
 };
 
 
@@ -176,6 +166,9 @@ struct Concept_def : Def
 };
 
 
+// -------------------------------------------------------------------------- //
+// Visitors
+
 // A generic visitor for definitions.
 template<typename F, typename T>
 struct Generic_def_visitor : Def::Visitor, Generic_visitor<F, T>
@@ -184,24 +177,10 @@ struct Generic_def_visitor : Def::Visitor, Generic_visitor<F, T>
     : Generic_visitor<F, T>(f)
   { }
 
-  void visit(Defaulted_def const& d)  { this->invoke(d); }
-  void visit(Deleted_def const& d)    { this->invoke(d); }
-  void visit(Expression_def const& d) { this->invoke(d); }
-  void visit(Function_def const& d)   { this->invoke(d); }
-  void visit(Class_def const& d)      { this->invoke(d); }
-  void visit(Union_def const& d)      { this->invoke(d); }
-  void visit(Enum_def const& d)       { this->invoke(d); }
-  void visit(Concept_def const& d)    { this->invoke(d); }
+#define define_node(Node) void visit(Node const& t) { this->invoke(t); }
+#include "ast-def.def"
+#undef define_node
 };
-
-
-template<typename F, typename T = typename std::result_of<F(Defaulted_def const&)>::type>
-inline decltype(auto)
-apply(Def const& t, F fn)
-{
-  Generic_def_visitor<F, T> vis(fn);
-  return accept(t, vis);
-}
 
 
 // A generic mutator for definitions.
@@ -212,15 +191,19 @@ struct Generic_def_mutator : Def::Mutator, Generic_visitor<F, T>
     : Generic_visitor<F, T>(f)
   { }
 
-  void visit(Defaulted_def& d)  { this->invoke(d); }
-  void visit(Deleted_def& d)    { this->invoke(d); }
-  void visit(Expression_def& d) { this->invoke(d); }
-  void visit(Function_def& d)   { this->invoke(d); }
-  void visit(Class_def& d)      { this->invoke(d); }
-  void visit(Union_def& d)      { this->invoke(d); }
-  void visit(Enum_def& d)       { this->invoke(d); }
-  void visit(Concept_def& d)    { this->invoke(d); }
+#define define_node(Node) void visit(Node& t) { this->invoke(t); }
+#include "ast-def.def"
+#undef define_node
 };
+
+
+template<typename F, typename T = typename std::result_of<F(Defaulted_def const&)>::type>
+inline decltype(auto)
+apply(Def const& t, F fn)
+{
+  Generic_def_visitor<F, T> vis(fn);
+  return accept(t, vis);
+}
 
 
 template<typename F, typename T = typename std::result_of<F(Defaulted_def&)>::type>

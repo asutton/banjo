@@ -30,31 +30,17 @@ struct Name : Term
 
 struct Name::Visitor
 {
-  virtual void visit(Simple_id const& n)      { }
-  virtual void visit(Global_id const& n)      { }
-  virtual void visit(Placeholder_id const& n) { }
-  virtual void visit(Operator_id const& n)    { }
-  virtual void visit(Conversion_id const& n)  { }
-  virtual void visit(Literal_id const& n)     { }
-  virtual void visit(Destructor_id const& n)  { }
-  virtual void visit(Template_id const& n)    { }
-  virtual void visit(Concept_id const& n)     { }
-  virtual void visit(Qualified_id const& n)   { }
+#define define_node(Node) virtual void visit(Node const&) = 0;
+#include "ast-name.def"
+#undef define_node
 };
 
 
 struct Name::Mutator
 {
-  virtual void visit(Simple_id& n)      { }
-  virtual void visit(Global_id& n)      { }
-  virtual void visit(Placeholder_id& n) { }
-  virtual void visit(Operator_id& n)    { }
-  virtual void visit(Conversion_id& n)  { }
-  virtual void visit(Literal_id& n)     { }
-  virtual void visit(Destructor_id& n)  { }
-  virtual void visit(Template_id& n)    { }
-  virtual void visit(Concept_id& n)     { }
-  virtual void visit(Qualified_id& n)   { }
+#define define_node(Node) virtual void visit(Node&) = 0;
+#include "ast-name.def"
+#undef define_node
 };
 
 
@@ -249,6 +235,9 @@ struct Qualified_id : Name
 };
 
 
+// -------------------------------------------------------------------------- //
+// Visitors
+
 // A generic visitor for names.
 template<typename F, typename T>
 struct Generic_name_visitor : Name::Visitor, Generic_visitor<F, T>
@@ -257,16 +246,23 @@ struct Generic_name_visitor : Name::Visitor, Generic_visitor<F, T>
     : Generic_visitor<F, T>(f)
   { }
 
-  void visit(Simple_id const& n)      { this->invoke(n); }
-  void visit(Global_id const& n)      { this->invoke(n); }
-  void visit(Placeholder_id const& n) { this->invoke(n); }
-  void visit(Operator_id const& n)    { this->invoke(n); }
-  void visit(Conversion_id const& n)  { this->invoke(n); }
-  void visit(Literal_id const& n)     { this->invoke(n); }
-  void visit(Destructor_id const& n)  { this->invoke(n); }
-  void visit(Template_id const& n)    { this->invoke(n); }
-  void visit(Concept_id const& n)     { this->invoke(n); }
-  void visit(Qualified_id const& n)   { this->invoke(n); }
+#define define_node(Node) void visit(Node const& t) { this->invoke(t); }
+#include "ast-name.def"
+#undef define_node
+};
+
+
+// A generic mutator for names.
+template<typename F, typename T>
+struct Generic_name_mutator : Name::Mutator, Generic_mutator<F, T>
+{
+  Generic_name_mutator(F f)
+    : Generic_mutator<F, T>(f)
+  { }
+
+#define define_node(Node) void visit(Node& t) { this->invoke(t); }
+#include "ast-name.def"
+#undef define_node
 };
 
 
@@ -278,27 +274,6 @@ apply(Name const& n, F fn)
   Generic_name_visitor<F, T> vis(fn);
   return accept(n, vis);
 }
-
-
-// A generic mutator for names.
-template<typename F, typename T>
-struct Generic_name_mutator : Name::Mutator, Generic_mutator<F, T>
-{
-  Generic_name_mutator(F f)
-    : Generic_mutator<F, T>(f)
-  { }
-
-  void visit(Simple_id& n)      { this->invoke(n); }
-  void visit(Global_id& n)      { this->invoke(n); }
-  void visit(Placeholder_id& n) { this->invoke(n); }
-  void visit(Operator_id& n)    { this->invoke(n); }
-  void visit(Conversion_id& n)  { this->invoke(n); }
-  void visit(Literal_id& n)     { this->invoke(n); }
-  void visit(Destructor_id& n)  { this->invoke(n); }
-  void visit(Template_id& n)    { this->invoke(n); }
-  void visit(Concept_id& n)     { this->invoke(n); }
-  void visit(Qualified_id& n)   { this->invoke(n); }
-};
 
 
 // Apply a function to the given name.

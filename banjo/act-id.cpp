@@ -2,10 +2,10 @@
 // All rights reserved
 
 #include "parser.hpp"
+#include "printer.hpp"
 #include "ast.hpp"
 #include "lookup.hpp"
 #include "template.hpp"
-#include "print.hpp"
 
 #include <iostream>
 
@@ -40,14 +40,14 @@ Parser::on_operator_id(Token tok, Operator_kind op)
 Name&
 Parser::on_conversion_id()
 {
-  lingo_unimplemented();
+  lingo_unimplemented("on conversion-id");
 }
 
 
 Name&
 Parser::on_literal_id()
 {
-  lingo_unimplemented();
+  lingo_unimplemented("on user-defined-literal");
 }
 
 
@@ -95,7 +95,7 @@ Parser::on_nested_name_specifier()
 Decl&
 Parser::on_nested_name_specifier(Decl&)
 {
-  lingo_unimplemented();
+  lingo_unimplemented("on nested-name-specifier");
 }
 
 
@@ -104,7 +104,7 @@ Parser::on_nested_name_specifier(Decl&)
 Decl&
 Parser::on_nested_name_specifier(Type& t)
 {
-  lingo_unimplemented();
+  lingo_unimplemented("on nested-name-specifier");
 }
 
 
@@ -113,7 +113,7 @@ Parser::on_nested_name_specifier(Type& t)
 Decl&
 Parser::on_nested_name_specifier(Decl&, Token)
 {
-  lingo_unimplemented();
+  lingo_unimplemented("on nested-name-specifier");
 }
 
 
@@ -122,7 +122,7 @@ Parser::on_nested_name_specifier(Decl&, Token)
 Decl&
 Parser::on_nested_name_specifier(Decl&, Name&)
 {
-  lingo_unimplemented();
+  lingo_unimplemented("on nested-name-specifier");
 }
 
 

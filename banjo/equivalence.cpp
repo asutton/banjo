@@ -11,7 +11,7 @@ namespace banjo
 {
 
 
-// Returns true.  
+// Returns true.
 template<typename T>
 bool
 always_equal(T const& t1, T const& t2)
@@ -62,7 +62,7 @@ is_equivalent(Simple_id const& n1, Simple_id const& n2)
 inline bool
 is_equivalent(Global_id const& n1, Global_id const& n2)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
@@ -83,42 +83,42 @@ is_equivalent(Operator_id const& n1, Operator_id const& n2)
 inline bool
 is_equivalent(Conversion_id const& n1, Conversion_id const& n2)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
 inline bool
 is_equivalent(Literal_id const& n1, Literal_id const& n2)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
 inline bool
 is_equivalent(Destructor_id const& n1, Destructor_id const& n2)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
 inline bool
 is_equivalent(Template_id const& n1, Template_id const& n2)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
 inline bool
 is_equivalent(Concept_id const& n1, Concept_id const& n2)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
 inline bool
 is_equivalent(Qualified_id const& n1, Qualified_id const& n2)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
@@ -184,7 +184,7 @@ is_equivalent(Auto_type const&, Auto_type const&)
 bool
 is_equivalent(Decltype_type const& a, Decltype_type const& b)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
@@ -229,13 +229,13 @@ is_equivalent(Pointer_type const& t1, Pointer_type const& t2)
 bool
 is_equivalent(Array_type const&, Array_type const&)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 bool
 is_equivalent(Dynarray_type const&, Dynarray_type const&)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 bool
@@ -283,7 +283,7 @@ is_equivalent(Type const& t1, Type const& t2)
     bool operator()(Reference_type const& t1) const    { return is_equivalent(t1, cast<Reference_type>(t2)); }
     bool operator()(Pointer_type const& t1) const      { return is_equivalent(t1, cast<Pointer_type>(t2)); }
     bool operator()(Array_type const& t1) const        { return is_equivalent(t1, cast<Array_type>(t2)); }
-    bool operator()(Dynarray_type const& t1) const        { return is_equivalent(t1, cast<Dynarray_type>(t2)); }
+    bool operator()(Dynarray_type const& t1) const     { return is_equivalent(t1, cast<Dynarray_type>(t2)); }
     bool operator()(Sequence_type const& t1) const     { return is_equivalent(t1, cast<Sequence_type>(t2)); }
     bool operator()(User_defined_type const& t1) const { return is_equivalent(t1, cast<User_defined_type>(t2)); }
     bool operator()(Synthetic_type const& t1) const    { return is_equivalent(t1, cast<Synthetic_type>(t2)); }
@@ -346,6 +346,14 @@ is_equivalent(Call_expr const& e1, Call_expr const& e2)
 
 
 bool
+is_equivalent(Conv const& e1, Conv const& e2)
+{
+  return is_equivalent(e1.destination(), e2.destination())
+      && is_equivalent(e1.source(), e2.source());
+}
+
+
+bool
 is_equivalent(Expr const& e1, Expr const& e2)
 {
   struct fn
@@ -358,6 +366,8 @@ is_equivalent(Expr const& e1, Expr const& e2)
     bool operator()(Unary_expr const& e1) const     { return is_equivalent(e1, cast<Unary_expr>(e2)); }
     bool operator()(Binary_expr const& e1) const    { return is_equivalent(e1, cast<Binary_expr>(e2)); }
     bool operator()(Call_expr const& e1) const      { return is_equivalent(e1, cast<Call_expr>(e2)); }
+
+    bool operator()(Conv const& e1) const           { return is_equivalent(e1, cast<Conv>(e2)); }
   };
 
   // The same objects represent the same types.

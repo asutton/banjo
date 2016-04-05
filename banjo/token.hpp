@@ -6,6 +6,8 @@
 
 #include "prelude.hpp"
 
+#include <lingo/token.hpp>
+
 
 namespace banjo
 {
@@ -44,6 +46,7 @@ enum Token_kind
   gt_tok,
   lt_eq_tok,
   gt_eq_tok,
+  lt_eq_gt_tok,
   lt_lt_tok,
   gt_gt_tok,
   amp_amp_tok,
@@ -51,6 +54,7 @@ enum Token_kind
   bang_tok,
   arrow_tok,
   question_tok,
+  dollar_tok,
 
   // Keywords
   first_keyword_tok,

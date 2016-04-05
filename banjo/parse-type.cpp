@@ -126,7 +126,7 @@ Parser::simple_type()
     case double_tok:
     case auto_tok:
       // FIXME: Match on each type.
-      lingo_unimplemented();
+      lingo_unimplemented("parse auto type");
     case decltype_tok:
       return decltype_type();
     case lparen_tok: {

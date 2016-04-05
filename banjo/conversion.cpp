@@ -7,7 +7,7 @@
 #include "constraint.hpp"
 #include "equivalence.hpp"
 #include "initialization.hpp"
-#include "print.hpp"
+#include "printer.hpp"
 
 #include <typeindex>
 #include <iostream>
@@ -207,13 +207,13 @@ is_similar(Array_type const& a, Array_type const& b)
 {
   // TODO: Check for equivalence of the extent before
   // recursing on the element type.
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 bool
 is_similar(Dynarray_type const& a, Dynarray_type const& b)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 bool
@@ -268,8 +268,8 @@ get_qualification_signature(Type const& t, Qualifier_list& sig)
     void operator()(Type const&)             { }
     void operator()(Qualified_type const& t) { lingo_unreachable(); }
     void operator()(Pointer_type const& t)   { get_qualification_signature(t.type(), sig); }
-    void operator()(Array_type const& t)     { lingo_unimplemented(); }
-    void operator()(Dynarray_type const& t)  { lingo_unimplemented(); }
+    void operator()(Array_type const& t)     { lingo_unreachable(); }
+    void operator()(Dynarray_type const& t)  { lingo_unreachable(); }
     void operator()(Sequence_type const& t)  { get_qualification_signature(t.type(), sig); }
   };
 

@@ -2,10 +2,10 @@
 // All rights reserved
 
 #include "parser.hpp"
+#include "printer.hpp"
 #include "ast-expr.hpp"
 #include "ast-decl.hpp"
 #include "initialization.hpp"
-#include "print.hpp"
 
 #include <iostream>
 

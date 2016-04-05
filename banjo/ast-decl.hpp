@@ -69,41 +69,17 @@ struct Decl : Term
 
 struct Decl::Visitor
 {
-  virtual void visit(Variable_decl const&)  { }
-  virtual void visit(Constant_decl const&)  { }
-  virtual void visit(Function_decl const&)  { }
-  virtual void visit(Class_decl const&)     { }
-  virtual void visit(Union_decl const&)     { }
-  virtual void visit(Enum_decl const&)      { }
-  virtual void visit(Namespace_decl const&) { }
-  virtual void visit(Template_decl const&)  { }
-  virtual void visit(Concept_decl const&)   { }
-  virtual void visit(Axiom_decl const&)     { }
-  virtual void visit(Object_parm const&)    { }
-  virtual void visit(Value_parm const&)     { }
-  virtual void visit(Type_parm const&)      { }
-  virtual void visit(Template_parm const&)  { }
-  virtual void visit(Variadic_parm const&)  { }
+#define define_node(Node) virtual void visit(Node const&) = 0;
+#include "ast-decl.def"
+#undef define_node
 };
 
 
 struct Decl::Mutator
 {
-  virtual void visit(Variable_decl&)  { }
-  virtual void visit(Constant_decl&)  { }
-  virtual void visit(Function_decl&)  { }
-  virtual void visit(Class_decl&)     { }
-  virtual void visit(Union_decl&)     { }
-  virtual void visit(Enum_decl&)      { }
-  virtual void visit(Namespace_decl&) { }
-  virtual void visit(Template_decl&)  { }
-  virtual void visit(Concept_decl&)   { }
-  virtual void visit(Axiom_decl&)     { }
-  virtual void visit(Object_parm&)    { }
-  virtual void visit(Value_parm&)     { }
-  virtual void visit(Type_parm&)      { }
-  virtual void visit(Template_parm&)  { }
-  virtual void visit(Variadic_parm&)  { }
+#define define_node(Node) virtual void visit(Node&) = 0;
+#include "ast-decl.def"
+#undef define_node
 };
 
 
@@ -640,7 +616,6 @@ Type&       declared_type(Decl&);
 // -------------------------------------------------------------------------- //
 // Visitors
 
-
 // A generic visitor for declarations.
 template<typename F, typename T>
 struct Generic_decl_visitor : Decl::Visitor, Generic_visitor<F, T>
@@ -649,21 +624,23 @@ struct Generic_decl_visitor : Decl::Visitor, Generic_visitor<F, T>
     : Generic_visitor<F, T>(f)
   { }
 
-  void visit(Variable_decl const& d)  { this->invoke(d); }
-  void visit(Constant_decl const& d)  { this->invoke(d); }
-  void visit(Function_decl const& d)  { this->invoke(d); }
-  void visit(Class_decl const& d)     { this->invoke(d); }
-  void visit(Union_decl const& d)     { this->invoke(d); }
-  void visit(Enum_decl const& d)      { this->invoke(d); }
-  void visit(Namespace_decl const& d) { this->invoke(d); }
-  void visit(Template_decl const& d)  { this->invoke(d); }
-  void visit(Concept_decl const& d)   { this->invoke(d); }
-  void visit(Axiom_decl const& d)     { this->invoke(d); }
-  void visit(Object_parm const& d)    { this->invoke(d); }
-  void visit(Value_parm const& d)     { this->invoke(d); }
-  void visit(Type_parm const& d)      { this->invoke(d); }
-  void visit(Template_parm const& d)  { this->invoke(d); }
-  void visit(Variadic_parm const& d)  { this->invoke(d); }
+#define define_node(Node) void visit(Node const& t) { this->invoke(t); }
+#include "ast-decl.def"
+#undef define_node
+};
+
+
+// A generic mutator for declarations.
+template<typename F, typename T>
+struct Generic_decl_mutator : Decl::Mutator, Generic_mutator<F, T>
+{
+  Generic_decl_mutator(F f)
+    : Generic_mutator<F, T>(f)
+  { }
+
+#define define_node(Node) void visit(Node& t) { this->invoke(t); }
+#include "ast-decl.def"
+#undef define_node
 };
 
 
@@ -675,32 +652,6 @@ apply(Decl const& d, F fn)
   Generic_decl_visitor<F, T> vis(fn);
   return accept(d, vis);
 }
-
-
-// A generic visitor for names.
-template<typename F, typename T>
-struct Generic_decl_mutator : Decl::Mutator, Generic_mutator<F, T>
-{
-  Generic_decl_mutator(F f)
-    : Generic_mutator<F, T>(f)
-  { }
-
-  void visit(Variable_decl& d)  { this->invoke(d); }
-  void visit(Constant_decl& d)  { this->invoke(d); }
-  void visit(Function_decl& d)  { this->invoke(d); }
-  void visit(Class_decl& d)     { this->invoke(d); }
-  void visit(Union_decl& d)     { this->invoke(d); }
-  void visit(Enum_decl& d)      { this->invoke(d); }
-  void visit(Namespace_decl& d) { this->invoke(d); }
-  void visit(Template_decl& d)  { this->invoke(d); }
-  void visit(Concept_decl& d)   { this->invoke(d); }
-  void visit(Axiom_decl& d)     { this->invoke(d); }
-  void visit(Object_parm& d)    { this->invoke(d); }
-  void visit(Value_parm& d)     { this->invoke(d); }
-  void visit(Type_parm& d)      { this->invoke(d); }
-  void visit(Template_parm& d)  { this->invoke(d); }
-  void visit(Variadic_parm& d)  { this->invoke(d); }
-};
 
 
 // Apply a function to the given declaration.

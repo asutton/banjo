@@ -28,7 +28,7 @@ main(int argc, char* argv[])
 
   File input(argv[1]);
   Character_stream cs(input);
-  Token_stream ts(input);
+  Token_stream ts;
   Lexer lex(cxt, cs, ts);
   Parser parse(cxt, ts);
 
@@ -39,7 +39,7 @@ main(int argc, char* argv[])
 
   // Transform tokens into a syntax tree.
   Term& unit = parse();
-  
+
   // if (error_count())
   //   return 1;
   // (void)unit;

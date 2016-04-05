@@ -9,7 +9,7 @@
 #include "substitution.hpp"
 #include "normalization.hpp"
 #include "hash.hpp"
-#include "print.hpp"
+#include "printer.hpp"
 #include "inspection.hpp"
 
 #include <iostream>

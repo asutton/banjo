@@ -3,8 +3,8 @@
 // All rights reserved
 
 #include "parser.hpp"
+#include "printer.hpp"
 #include "requirement.hpp"
-#include "print.hpp"
 
 #include <iostream>
 
@@ -15,7 +15,7 @@ namespace banjo
 Req&
 Parser::on_type_requirement(Expr&)
 {
-  lingo_unimplemented();
+  lingo_unimplemented("on type-req");
 }
 
 
@@ -29,14 +29,14 @@ Parser::on_syntactic_requirement(Expr& e)
 Req&
 Parser::on_semantic_requirement(Decl&)
 {
-  lingo_unimplemented();
+  lingo_unimplemented("on semantic-req");
 }
 
 
 Req&
 Parser::on_expression_requirement(Expr&)
 {
-  lingo_unimplemented();
+  lingo_unimplemented("on expression-req");
 }
 
 

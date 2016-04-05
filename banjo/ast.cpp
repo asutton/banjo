@@ -29,13 +29,12 @@ is_value_type(Type const& t)
 {
   struct fn
   {
-    bool operator()(Type const&)             { lingo_unimplemented(); }
+    bool operator()(Type const& t)           { lingo_unhandled(t); }
     bool operator()(Void_type const&)        { return true; }
     bool operator()(Boolean_type const&)     { return true; }
     bool operator()(Integer_type const&)     { return true; }
     bool operator()(Float_type const&)       { return true; }
     bool operator()(Auto_type const&)        { lingo_unreachable(); }
-    bool operator()(Decltype_type const&)    { lingo_unimplemented(); }
     bool operator()(Declauto_type const&)    { lingo_unreachable(); }
     bool operator()(Function_type const&)    { return false; }
     bool operator()(Qualified_type const& t) { return is_value_type(t.type()); }

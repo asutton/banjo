@@ -14,7 +14,6 @@
 #include "ast-req.hpp"
 #include "ast-cons.hpp"
 
-
 namespace banjo
 {
 

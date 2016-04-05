@@ -4,7 +4,7 @@
 #include "evaluation.hpp"
 #include "ast.hpp"
 #include "builder.hpp"
-#include "print.hpp"
+#include "printer.hpp"
 
 #include <iostream>
 
@@ -154,7 +154,7 @@ Evaluator::evaluate_call(Call_expr const& e)
   // definition rather than filter it here.
   Function_def const* def = as<Function_def>(&f.definition());
   if (!def)
-    lingo_unimplemented();
+    lingo_unreachable();
 
   // Each parameter is declared as a local variable within the
   // function.
@@ -306,7 +306,7 @@ Evaluator::elaborate_object(Object_decl const& d)
   // FIXME: Implement initialization!
   Value& v = alloca(d);
   (void)v;
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
@@ -333,11 +333,11 @@ reduce(Context& cxt, Expr& e)
     // wrong kind of expression.
     Expr& operator()(Integer_value const& v)   { return build.get_integer(type, v); };
 
-    Expr& operator()(Float_value const& v)     { lingo_unimplemented(); }
-    Expr& operator()(Function_value const& v)  { lingo_unimplemented(); }
-    Expr& operator()(Reference_value const& v) { lingo_unimplemented(); }
-    Expr& operator()(Array_value const& v)     { lingo_unimplemented(); }
-    Expr& operator()(Tuple_value const& v)     { lingo_unimplemented(); }
+    Expr& operator()(Float_value const& v)     { lingo_unreachable(); }
+    Expr& operator()(Function_value const& v)  { lingo_unreachable(); }
+    Expr& operator()(Reference_value const& v) { lingo_unreachable(); }
+    Expr& operator()(Array_value const& v)     { lingo_unreachable(); }
+    Expr& operator()(Tuple_value const& v)     { lingo_unreachable(); }
 
   };
   return apply(evaluate(e), fn{cxt, e.type()});

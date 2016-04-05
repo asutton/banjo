@@ -1,0 +1,12 @@
+// Copyright (c) 2015-2016 Andrew Sutton
+// All rights reserved
+
+define_node(Concept_cons)
+define_node(Expression_cons)
+define_node(Type_cons)
+define_node(Predicate_cons)
+define_node(Conversion_cons)
+define_node(Deduction_cons)
+define_node(Conjunction_cons)
+define_node(Disjunction_cons)
+define_node(Parameterized_cons)

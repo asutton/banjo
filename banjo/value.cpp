@@ -3,7 +3,7 @@
 
 #include "value.hpp"
 #include "ast.hpp"
-#include "print.hpp"
+#include "printer.hpp"
 
 #include <iostream>
 

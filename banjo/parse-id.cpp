@@ -6,7 +6,7 @@
 #include "ast-type.hpp"
 #include "ast-expr.hpp"
 #include "ast-decl.hpp"
-#include "print.hpp"
+#include "printer.hpp"
 
 #include <iostream>
 

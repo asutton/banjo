@@ -75,42 +75,42 @@ hash_value(Operator_id const& n)
 inline std::size_t
 hash_value(Conversion_id const&)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
 inline std::size_t
 hash_value(Literal_id const&)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
 inline std::size_t
 hash_value(Destructor_id const&)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
 inline std::size_t
 hash_value(Template_id const&)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
 inline std::size_t
 hash_value(Concept_id const&)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
 inline std::size_t
 hash_value(Qualified_id const&)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
@@ -287,6 +287,16 @@ hash_value(Call_expr const& e)
 
 
 std::size_t
+hash_conv(Conv const& e)
+{
+  std::size_t h = hash_type(e);
+  boost::hash_combine(h, e.destination());
+  boost::hash_combine(h, e.source());
+  return h;
+}
+
+
+std::size_t
 hash_value(Expr const& e)
 {
   struct fn
@@ -298,6 +308,8 @@ hash_value(Expr const& e)
     std::size_t operator()(Unary_expr const& e) const     { return hash_value(e); }
     std::size_t operator()(Binary_expr const& e) const    { return hash_value(e); }
     std::size_t operator()(Call_expr const& e) const      { return hash_value(e); }
+
+    std::size_t operator()(Conv const& e) const           { return hash_conv(e); }
   };
   return apply(e, fn{});
 }

@@ -2,8 +2,8 @@
 // All rights reserved
 
 #include "parser.hpp"
+#include "printer.hpp"
 #include "ast-req.hpp"
-#include "print.hpp"
 
 #include <iostream>
 
@@ -23,7 +23,7 @@ Parser::type_requirement()
 {
   require(typename_tok);
 
-  lingo_unimplemented();
+  lingo_unimplemented("parse type-requirement");
 }
 
 

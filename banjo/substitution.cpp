@@ -7,7 +7,7 @@
 #include "expression.hpp"
 #include "declaration.hpp"
 #include "equivalence.hpp"
-#include "print.hpp"
+#include "printer.hpp"
 
 #include <iostream>
 
@@ -112,9 +112,9 @@ substitute(Context& cxt, Type& t, Substitution& sub)
     // Most types cannot be substituted into.
     Type& operator()(Type& t)           { return t; }
 
-    Type& operator()(Auto_type& t)      { lingo_unimplemented(); }
-    Type& operator()(Decltype_type& t)  { lingo_unimplemented(); }
-    Type& operator()(Declauto_type& t)  { lingo_unimplemented(); }
+    Type& operator()(Auto_type& t)      { lingo_unreachable(); }
+    Type& operator()(Decltype_type& t)  { lingo_unreachable(); }
+    Type& operator()(Declauto_type& t)  { lingo_unreachable(); }
 
     // Recrusively substitute through compound types.
     Type& operator()(Function_type& t)  { return substitute_type(cxt, t, sub); }
@@ -165,7 +165,7 @@ substitute_type(Context& cxt, Pointer_type& t, Substitution& sub)
 Type&
 substitute_type(Context& cxt, Array_type& t, Substitution& sub)
 {
-  lingo_unimplemented();
+  lingo_unreachable();
 }
 
 
@@ -250,6 +250,16 @@ subst_binary(Context& cxt, T& e, Substitution& sub, Make make)
 }
 
 
+// FIXME: Generalize to all conversions.
+Expr&
+subst_conv(Context& cxt, Boolean_conv& e, Substitution& sub)
+{
+  Expr& e1 = substitute(cxt, e.source(), sub);
+  Type& t1 = substitute(cxt, e.destination(), sub);
+  return *new Boolean_conv(t1, e1);
+}
+
+
 Expr&
 substitute(Context& cxt, Expr& e, Substitution& sub)
 {
@@ -275,6 +285,8 @@ substitute(Context& cxt, Expr& e, Substitution& sub)
     Expr& operator()(And_expr& e) { return subst_binary(cxt, e, sub, make_logical_and); }
     Expr& operator()(Or_expr& e)  { return subst_binary(cxt, e, sub, make_logical_or); }
     Expr& operator()(Not_expr& e) { return subst_unary(cxt, e, sub, make_logical_not); }
+
+    Expr& operator()(Boolean_conv& e) { return subst_conv(cxt, e, sub); }
 
   };
   return apply(e, fn{cxt, sub});
@@ -326,7 +338,7 @@ substitute(Context& cxt, Decl& d, Substitution& sub)
   {
     Context&      cxt;
     Substitution& sub;
-    Decl& operator()(Decl& d)           { lingo_unimplemented(); }
+    Decl& operator()(Decl& d)           { lingo_unreachable(); }
     Decl& operator()(Variable_decl& d)  { return substitute_decl(cxt, d, sub); }
     Decl& operator()(Object_parm& d)    { return substitute_decl(cxt, d, sub); }
   };
