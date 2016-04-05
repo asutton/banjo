@@ -643,6 +643,13 @@ Builder::make_expression_definition(Expr& e)
 }
 
 
+Expression_def&
+Builder::make_function_definition(Expr& e)
+{
+  return make<Expression_def>(e);
+}
+
+
 Function_def&
 Builder::make_function_definition(Stmt& s)
 {
@@ -692,6 +699,18 @@ Variable_decl&
 Builder::make_variable(char const* s, Type& t, Expr& i)
 {
   return make_variable(get_id(s), t, i);
+}
+
+
+// Create a new function. The type is synthesized from the parameter
+// and return types, and the definition is synthesized from the given
+// expression.
+Function_decl&
+Builder::make_function(Name& n, Decl_list const& p, Type& t, Expr& e)
+{
+  Type& r = get_function_type(p, t);
+  Def& d = make_function_definition(e);
+  return make<Function_decl>(n, r, p, d);
 }
 
 

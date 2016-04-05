@@ -202,12 +202,22 @@ Parser::function_declaration()
   // lookup in the first pass.
   Decl_list parms = parameter_clause();
 
+  // -> type function-definition.
   if (match_if(arrow_tok)) {
     Type& ret = unparsed_return_type();
-    Stmt& body = match_if(eq_tok) ?
-      unparsed_expression_statement() :
-      unparsed_compound_statement();
-    return on_function_declaration(name, parms, ret, body);
+
+    // = expression ;
+    if (match_if(eq_tok)) {
+      Expr& body = unparsed_expression_body();
+      match(semicolon_tok);
+      return on_function_declaration(name, parms, ret, body);
+    }
+
+    // { ... }
+    else {
+      Stmt& body = unparsed_function_body();
+      return on_function_declaration(name, parms, ret, body);
+    }
   }
 
   // Othersise, the return type is unspecified, allowing for
@@ -330,6 +340,38 @@ Parser::unparsed_return_type()
     toks.push_back(accept());
   }
   return on_unparsed_type(std::move(toks));
+}
+
+
+// Returns an unparsed expression that defines a function.
+Expr&
+Parser::unparsed_expression_body()
+{
+  Token_seq toks;
+  Brace_matching_sentinel in_level(*this);
+  while (true) {
+    if (next_token_is(semicolon_tok) && in_level())
+      break;
+    toks.push_back(accept());
+  }
+  return on_unparsed_expression(std::move(toks));
+}
+
+
+// Returns an unparsed compound statement that defines a function.
+Stmt&
+Parser::unparsed_function_body()
+{
+  Token_seq toks;
+  toks.push_back(match(lbrace_tok));
+  Brace_matching_sentinel in_level(*this);
+  while (true) {
+    if (next_token_is(rbrace_tok) && in_level())
+      break;
+    toks.push_back(accept());
+  }
+  toks.push_back(match(rbrace_tok));
+  return on_unparsed_statement(std::move(toks));
 }
 
 

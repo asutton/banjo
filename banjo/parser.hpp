@@ -117,8 +117,6 @@ struct Parser
   Stmt& return_statement();
   Stmt& declaration_statement();
   Stmt& expression_statement();
-  Stmt& unparsed_expression_statement();
-  Stmt& unparsed_compound_statement();
   Stmt_list statement_seq();
 
   // Declarations
@@ -148,6 +146,8 @@ struct Parser
   Decl& parameter_declaration();
   Type& unparsed_parameter_type();
   Type& unparsed_return_type();
+  Expr& unparsed_expression_body();
+  Stmt& unparsed_function_body();
   Def& function_definition(Decl&);
 
   // Classes
@@ -283,6 +283,7 @@ struct Parser
   Decl& on_variable_declaration(Name&, Type&);
   Decl& on_variable_declaration(Name&, Type&, Expr&);
 
+  Decl& on_function_declaration(Name&, Decl_list&, Type&, Expr&);
   Decl& on_function_declaration(Name&, Decl_list&, Type&, Stmt&);
 
   Decl& on_class_declaration(Token, Name&);

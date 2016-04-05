@@ -119,6 +119,7 @@ struct Builder
   Deleted_def&    make_deleted_definition();
   Defaulted_def&  make_defaulted_definition();
   Expression_def& make_expression_definition(Expr&);
+  Expression_def& make_function_definition(Expr&);
   Function_def&   make_function_definition(Stmt&);
   Class_def&      make_class_definition(Decl_list const&);
   Concept_def&    make_concept_definition(Req_list const&);
@@ -130,9 +131,12 @@ struct Builder
   Variable_decl&  make_variable(char const*, Type&);
   Variable_decl&  make_variable(Name&, Type&, Expr&);
   Variable_decl&  make_variable(char const*, Type&, Expr&);
+  Function_decl&  make_function(Name&, Decl_list const&, Type&, Expr&);
   Function_decl&  make_function(Name&, Decl_list const&, Type&, Stmt&);
+
   Function_decl&  make_function(Name&, Decl_list const&, Type&);
   Function_decl&  make_function(char const*, Decl_list const&, Type&);
+
   Class_decl&     make_class(Name&);
   Class_decl&     make_class(char const*);
   Template_decl&  make_template(Decl_list const&, Decl&);

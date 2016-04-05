@@ -1127,14 +1127,10 @@ Printer::variable_declaration(Variable_decl const& d)
 }
 
 
-// FIXME: Print the initializer.
 void
 Printer::constant_declaration(Constant_decl const& d)
 {
-  token(const_tok);
-  type(d.type());
-  id(d.name());
-  token(semicolon_tok);
+  lingo_unreachable();
 }
 
 
@@ -1143,7 +1139,9 @@ Printer::function_declaration(Function_decl const& d)
 {
   token(def_tok);
   space();
-  id(d.name());
+  identifier(d);
+  space();
+  token(colon_tok);
   token(lparen_tok);
   parameter_list(d.parameters());
   token(rparen_tok);
@@ -1151,6 +1149,8 @@ Printer::function_declaration(Function_decl const& d)
   token(arrow_tok);
   space();
   type(d.return_type());
+  space();
+
   if (d.is_definition())
     function_definition(d.definition());
   else

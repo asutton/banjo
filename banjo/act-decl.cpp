@@ -108,6 +108,18 @@ define_entity(Decl& decl, Def& def)
 
 
 Decl&
+Parser::on_function_declaration(Name& n, Decl_list& p, Type& t, Expr& e)
+{
+  return cxt.make_function(n, p, t, e);
+
+  // Decl& d1 = build.make_function(n, ps, t);
+  // Decl& d2 = templatize_declaration(d1);
+  // declare(cxt, current_scope(), d2);
+  // return d2;
+}
+
+
+Decl&
 Parser::on_function_declaration(Name& n, Decl_list& p, Type& t, Stmt& s)
 {
   return cxt.make_function(n, p, t, s);
