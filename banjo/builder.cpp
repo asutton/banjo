@@ -695,13 +695,24 @@ Builder::make_variable(char const* s, Type& t, Expr& i)
 }
 
 
-// Creates an undefined function with parameters ps and return
-// type r.
+// Create a new function. The type is synthesized from the parameter
+// and return types, and the definition is synthesized from the given
+// statement.
 Function_decl&
-Builder::make_function(Name& n, Decl_list const& ps, Type& r)
+Builder::make_function(Name& n, Decl_list const& p, Type& t, Stmt& s)
 {
-  Type& t = get_function_type(ps, r);
-  return make<Function_decl>(n, t, ps);
+  Type& r = get_function_type(p, t);
+  Def& d = make_function_definition(s);
+  return make<Function_decl>(n, r, p, d);
+}
+
+
+// Creates an undefined function with parameters ps and return type r.
+Function_decl&
+Builder::make_function(Name& n, Decl_list const& p, Type& t)
+{
+  Type& r = get_function_type(p, t);
+  return make<Function_decl>(n, r, p);
 }
 
 

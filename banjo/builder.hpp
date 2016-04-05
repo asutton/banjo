@@ -130,6 +130,7 @@ struct Builder
   Variable_decl&  make_variable(char const*, Type&);
   Variable_decl&  make_variable(Name&, Type&, Expr&);
   Variable_decl&  make_variable(char const*, Type&, Expr&);
+  Function_decl&  make_function(Name&, Decl_list const&, Type&, Stmt&);
   Function_decl&  make_function(Name&, Decl_list const&, Type&);
   Function_decl&  make_function(char const*, Decl_list const&, Type&);
   Class_decl&     make_class(Name&);

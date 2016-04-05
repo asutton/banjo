@@ -198,26 +198,21 @@ Parser::function_declaration()
   Name& name = identifier();
   match(colon_tok);
 
-  Enter_scope pscope(cxt, cxt.make_function_parameter_scope());
+  // NOTE: We don't have to enter a scope because we aren't doing
+  // lookup in the first pass.
   Decl_list parms = parameter_clause();
 
-  // Match the "-> type function-body" case.
   if (match_if(arrow_tok)) {
     Type& ret = unparsed_return_type();
-
-    Stmt* body;
-    if (match_if(eq_tok))
-      body = &unparsed_expression_statement();
-    else
-      body = &unparsed_compound_statement();
-
-    std::cout << "HERE " << *body << '\n';
-    lingo_unreachable();
+    Stmt& body = match_if(eq_tok) ?
+      unparsed_expression_statement() :
+      unparsed_compound_statement();
+    return on_function_declaration(name, parms, ret, body);
   }
 
   // Othersise, the return type is unspecified, allowing for
   // anonymous expressions.
-  Type& ret = cxt.get_auto_type();
+  // Type& ret = cxt.get_auto_type();
 
   lingo_unreachable();
 

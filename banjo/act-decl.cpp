@@ -58,20 +58,24 @@ Parser::on_declarator(Name& n)
 Decl&
 Parser::on_variable_declaration(Name& n, Type& t)
 {
-  Decl& d1 = build.make_variable(n, t);
-  Decl& d2 = templatize_declaration(d1);
-  declare(cxt, current_scope(), d2);
-  return d2;
+  return cxt.make_variable(n, t);
+
+  // Decl& d1 = build.make_variable(n, t);
+  // Decl& d2 = templatize_declaration(d1);
+  // declare(cxt, current_scope(), d2);
+  // return d2;
 }
 
 
 Decl&
 Parser::on_variable_declaration(Name& n, Type& t, Expr& e)
 {
-  Decl& d1 = build.make_variable(n, t, e);
-  Decl& d2 = templatize_declaration(d1);
-  declare(cxt, current_scope(), d2);
-  return d2;
+  return cxt.make_variable(n, t, e);
+
+  // Decl& d1 = build.make_variable(n, t, e);
+  // Decl& d2 = templatize_declaration(d1);
+  // declare(cxt, current_scope(), d2);
+  // return d2;
 }
 
 
@@ -104,12 +108,14 @@ define_entity(Decl& decl, Def& def)
 
 
 Decl&
-Parser::on_function_declaration(Token, Name& n, Decl_list& ps, Type& t)
+Parser::on_function_declaration(Name& n, Decl_list& p, Type& t, Stmt& s)
 {
-  Decl& d1 = build.make_function(n, ps, t);
-  Decl& d2 = templatize_declaration(d1);
-  declare(cxt, current_scope(), d2);
-  return d2;
+  return cxt.make_function(n, p, t, s);
+
+  // Decl& d1 = build.make_function(n, ps, t);
+  // Decl& d2 = templatize_declaration(d1);
+  // declare(cxt, current_scope(), d2);
+  // return d2;
 }
 
 
@@ -117,7 +123,11 @@ Object_parm&
 Parser::on_function_parameter(Name& n, Type& t)
 {
   Object_parm& parm = build.make_object_parm(n, t);
-  declare(cxt, current_scope(), parm);
+
+  // FIXME: Don't declare these yet. Parameters are elaborated
+  // as part of the function type. Right?
+  // declare(cxt, current_scope(), parm);
+
   return parm;
 }
 

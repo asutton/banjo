@@ -283,7 +283,8 @@ struct Parser
   Decl& on_variable_declaration(Name&, Type&);
   Decl& on_variable_declaration(Name&, Type&, Expr&);
 
-  Decl& on_function_declaration(Token, Name&, Decl_list&, Type&);
+  Decl& on_function_declaration(Name&, Decl_list&, Type&, Stmt&);
+
   Decl& on_class_declaration(Token, Name&);
   Decl& on_namespace_declaration(Token, Name&, Decl_list&);
   Decl& on_concept_declaration(Token, Name&, Decl_list&);
