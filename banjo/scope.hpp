@@ -6,7 +6,6 @@
 
 #include "prelude.hpp"
 #include "language.hpp"
-#include "hash.hpp"
 #include "overload.hpp"
 
 

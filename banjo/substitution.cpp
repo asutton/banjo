@@ -6,7 +6,6 @@
 #include "context.hpp"
 #include "expression.hpp"
 #include "declaration.hpp"
-#include "equivalence.hpp"
 #include "printer.hpp"
 
 #include <iostream>

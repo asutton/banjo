@@ -1,7 +1,7 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#include "equivalence.hpp"
+#include "ast-eq.hpp"
 #include "ast.hpp"
 
 #include <typeindex>

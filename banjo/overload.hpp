@@ -5,7 +5,6 @@
 #define BANJO_OVERLOAD_HPP
 
 #include "language.hpp"
-#include "hash.hpp"
 
 #include <unordered_set>
 

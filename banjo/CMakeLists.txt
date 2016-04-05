@@ -41,11 +41,12 @@ add_library(banjo
   ast-decl.cpp
   ast-def.cpp
   ast-req.cpp
+  ast-hash.cpp
+  ast-eq.cpp
+
   operator.cpp
   qualifier.cpp
   specifier.cpp
-  hash.cpp
-  equivalence.cpp
   scope.cpp
   lookup.cpp
   type.cpp

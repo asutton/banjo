@@ -6,7 +6,6 @@
 #include "ast-expr.hpp"
 #include "conversion.hpp"
 #include "inheritance.hpp"
-#include "equivalence.hpp"
 #include "builder.hpp"
 #include "printer.hpp"
 

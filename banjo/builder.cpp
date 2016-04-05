@@ -4,8 +4,6 @@
 #include "builder.hpp"
 #include "context.hpp"
 #include "ast.hpp"
-#include "equivalence.hpp"
-#include "hash.hpp"
 
 #include <unordered_set>
 

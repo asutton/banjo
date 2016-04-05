@@ -11,6 +11,9 @@
 // Include ast.hpp to pull all definitions.
 
 #include "ast-base.hpp"
+#include "ast-eq.hpp"
+#include "ast-hash.hpp"
+
 #include "operator.hpp"
 #include "qualifier.hpp"
 #include "specifier.hpp"

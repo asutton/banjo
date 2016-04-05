@@ -7,7 +7,6 @@
 #include "constraint.hpp"
 #include "normalization.hpp"
 #include "substitution.hpp"
-#include "hash.hpp"
 #include "printer.hpp"
 
 #include <list>

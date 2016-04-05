@@ -1,10 +1,11 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#include "hash.hpp"
+#include "ast-hash.hpp"
 #include "ast.hpp"
 
 #include <typeinfo>
+
 
 namespace banjo
 {

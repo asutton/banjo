@@ -8,7 +8,6 @@
 #include "initialization.hpp"
 #include "substitution.hpp"
 #include "normalization.hpp"
-#include "hash.hpp"
 #include "printer.hpp"
 #include "inspection.hpp"
 
