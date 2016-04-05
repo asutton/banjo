@@ -24,6 +24,7 @@ enum Value_kind
   function_value,
   reference_value,
   array_value,
+  dynarray_value,
   tuple_value,
 };
 
@@ -65,6 +66,12 @@ struct Array_value : Aggregate_value
   std::string get_as_string() const;
 };
 
+struct Dynarray_value : Aggregate_value
+{
+  using Aggregate_value::Aggregate_value;
+
+  std::string get_as_string() const;
+};
 
 // A tuple value is a sequence of values of different kind.
 struct Tuple_value : Aggregate_value
@@ -81,6 +88,7 @@ union Value_rep
   Value_rep(Function_value f) : fn_(f) { }
   Value_rep(Reference_value r) : ref_(r) { }
   Value_rep(Array_value a) : arr_(a) { }
+  Value_rep(Dynarray_value a) : darr_(a) { }
   Value_rep(Tuple_value t) : tup_(t) { }
   ~Value_rep() { }
 
@@ -90,6 +98,7 @@ union Value_rep
   Function_value  fn_;
   Reference_value ref_;
   Array_value     arr_;
+  Dynarray_value  darr_;
   Tuple_value     tup_;
 };
 
@@ -134,6 +143,10 @@ struct Value
     : k(array_value), r(a)
   { }
 
+  Value(Dynarray_value a)
+    : k(dynarray_value), r(a)
+  { }
+
   Value(Tuple_value a)
     : k(tuple_value), r(a)
   { }
@@ -152,6 +165,7 @@ struct Value
   bool is_function() const;
   bool is_reference() const;
   bool is_array() const;
+  bool is_dynarray() const;
   bool is_tuple() const;
 
   Error_value     get_error() const;
@@ -160,6 +174,7 @@ struct Value
   Function_value  get_function() const;
   Reference_value get_reference() const;
   Array_value     get_array() const;
+  Dynarray_value  get_dynarray() const;
   Tuple_value     get_tuple() const;
   bool            get_boolean() const;
 
@@ -177,6 +192,7 @@ struct Value::Visitor
   virtual void visit(Function_value const&) = 0;
   virtual void visit(Reference_value const&) = 0;
   virtual void visit(Array_value const&) = 0;
+  virtual void visit(Dynarray_value const&) = 0;
   virtual void visit(Tuple_value const&) = 0;
 };
 
@@ -190,6 +206,7 @@ struct Value::Mutator
   virtual void visit(Function_value&) = 0;
   virtual void visit(Reference_value&) = 0;
   virtual void visit(Array_value&) = 0;
+  virtual void visit(Dynarray_value&) = 0;
   virtual void visit(Tuple_value&) = 0;
 };
 
@@ -248,6 +265,13 @@ inline bool
 Value::is_array() const
 {
   return k == array_value;
+}
+
+// Returns true if the value is a dynarray.
+inline bool
+Value::is_dynarray() const
+{
+  return k == dynarray_value;
 }
 
 
@@ -313,6 +337,15 @@ Value::get_array() const
 }
 
 
+// Returns the dynarray value.
+inline Dynarray_value
+Value::get_dynarray() const
+{
+  assert(is_dynarray());
+  return r.darr_;
+}
+
+
 // Returns the array value.
 inline Tuple_value
 Value::get_tuple() const
@@ -340,6 +373,7 @@ Value::accept(Visitor& v) const
     case function_value: return v.visit(r.fn_);
     case reference_value: return v.visit(r.ref_);
     case array_value: return v.visit(r.arr_);
+    case dynarray_value: return v.visit(r.darr_);
     case tuple_value: return v.visit(r.tup_);
   }
 }
@@ -355,6 +389,7 @@ Value::accept(Mutator& v)
     case function_value: return v.visit(r.fn_);
     case reference_value: return v.visit(r.ref_);
     case array_value: return v.visit(r.arr_);
+    case dynarray_value: return v.visit(r.darr_);
     case tuple_value: return v.visit(r.tup_);
   }
 }
@@ -376,6 +411,7 @@ struct Generic_value_visitor : Value::Visitor, lingo::Generic_visitor<F, T>
   void visit(Function_value const& v) { this->invoke(v); };
   void visit(Reference_value const& v) { this->invoke(v); };
   void visit(Array_value const& v) { this->invoke(v); };
+  void visit(Dynarray_value const& v) { this->invoke(v); };
   void visit(Tuple_value const& v) { this->invoke(v); };
 };
 
@@ -402,6 +438,7 @@ struct Generic_value_mutator : Value::Mutator, lingo::Generic_mutator<F, T>
   void visit(Function_value& v)  { this->invoke(v); };
   void visit(Reference_value& v) { this->invoke(v); };
   void visit(Array_value& v)     { this->invoke(v); };
+  void visit(Dynarray_value& v)  { this->invoke(v); };
   void visit(Tuple_value& v)     { this->invoke(v); };
 };
 

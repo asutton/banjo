@@ -24,6 +24,15 @@ Array_value::get_as_string() const
   return str;
 }
 
+std::string
+Dynarray_value::get_as_string() const
+{
+  std::string str(len, '\0');
+  std::transform(data, data + len, str.begin(), [](Value const& v) -> char {
+    return (v.is_integer() ? v.get_integer() : v.get_float());
+  });
+  return str;
+}
 
 // -------------------------------------------------------------------------- //
 // Printing
@@ -46,6 +55,20 @@ print(std::ostream& os, Array_value const& v)
   os << ']';
 }
 
+inline void
+print(std::ostream& os, Dynarray_value const& v)
+{
+  os << '[';
+  Value const* p = v.data;
+  Value const* q = p + v.len;
+  while (p != q) {
+    os << *p;
+    if (p + 1 != q)
+      os << ',';
+    ++p;
+  }
+  os << ']';
+}
 
 inline void
 print(std::ostream& os, Tuple_value const& v)
@@ -76,6 +99,7 @@ operator<<(std::ostream& os, Value const& v)
     void operator()(Function_value const& v) { os << v->name(); };
     void operator()(Reference_value const& v) { os << *v << '@' << (void*)v; };
     void operator()(Array_value const& v) { print(os, v); }
+    void operator()(Dynarray_value const& v) { print(os, v); }
     void operator()(Tuple_value const& v) { print(os, v); }
   };
 
