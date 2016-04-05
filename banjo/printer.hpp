@@ -109,7 +109,6 @@ struct Printer
   Expr_list expression_list();
 
 
-
   // Statements
   void statement(Stmt const&);
   void statement(Unparsed_stmt const&);
@@ -140,6 +139,7 @@ struct Printer
   // Functions
   void function_declaration(Function_decl const&);
   void function_definition(Def const&);
+  void function_definition(Expression_def const&);
   void function_definition(Function_def const&);
   void function_definition(Deleted_def const&);
   void function_definition(Defaulted_def const&);

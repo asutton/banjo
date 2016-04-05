@@ -973,10 +973,11 @@ Printer::function_definition(Def const& d)
   struct fn
   {
     Printer& p;
-    void operator()(Def const& d)           { lingo_unhandled(d); }
-    void operator()(Function_def const& d)  { p.function_definition(d); }
-    void operator()(Deleted_def const& d)   { p.function_definition(d); }
-    void operator()(Defaulted_def const& d) { p.function_definition(d); }
+    void operator()(Def const& d)            { lingo_unhandled(d); }
+    void operator()(Function_def const& d)   { p.function_definition(d); }
+    void operator()(Expression_def const& d) { p.function_definition(d); }
+    void operator()(Deleted_def const& d)    { p.function_definition(d); }
+    void operator()(Defaulted_def const& d)  { p.function_definition(d); }
   };
   apply(d, fn{*this});
 }
@@ -990,11 +991,18 @@ Printer::function_definition(Function_def const& d)
 
 
 void
+Printer::function_definition(Expression_def const& d)
+{
+  binary_operator(eq_tok);
+  expression(d.expression());
+  token(semicolon_tok);
+}
+
+
+void
 Printer::function_definition(Deleted_def const&)
 {
-  space();
-  token(eq_tok);
-  space();
+  binary_operator(eq_tok);
   token(delete_tok);
 }
 
@@ -1002,9 +1010,7 @@ Printer::function_definition(Deleted_def const&)
 void
 Printer::function_definition(Defaulted_def const&)
 {
-  space();
-  token(eq_tok);
-  space();
+  binary_operator(eq_tok);
   token(default_tok);
 }
 
@@ -1106,21 +1112,16 @@ Printer::declaration_seq(Decl_list const& ds)
 }
 
 
-// FIXME: Print the initializer.
 void
 Printer::variable_declaration(Variable_decl const& d)
 {
   token(var_tok);
   space();
   identifier(d);
-  space();
-  token(colon_tok);
-  space();
+  binary_operator(colon_tok);
   type(d.type());
-  space();
   if (d.has_initializer()) {
-    token(eq_tok);
-    space();
+    binary_operator(eq_tok);
     initializer(d.initializer());
   }
   token(semicolon_tok);
@@ -1140,17 +1141,14 @@ Printer::function_declaration(Function_decl const& d)
   token(def_tok);
   space();
   identifier(d);
-  space();
-  token(colon_tok);
+  binary_operator(colon_tok);
   token(lparen_tok);
   parameter_list(d.parameters());
   token(rparen_tok);
-  space();
-  token(arrow_tok);
-  space();
+  binary_operator(arrow_tok);
   type(d.return_type());
-  space();
 
+  // FIXME: Functions are always defined.
   if (d.is_definition())
     function_definition(d.definition());
   else
@@ -1395,9 +1393,9 @@ Printer::parameter(Decl const& d)
 void
 Printer::parameter(Object_parm const& p)
 {
+  identifier(p);
+  binary_operator(colon_tok);
   type(p.type());
-  space();
-  id(p.name());
 }
 
 
@@ -1413,8 +1411,10 @@ Printer::parameter_list(Decl_list const& d)
 {
   for (auto iter = d.begin(); iter != d.end(); ++iter) {
     parameter(*iter);
-    if (std::next(iter) != d.end())
+    if (std::next(iter) != d.end()) {
       token(comma_tok);
+      space();
+    }
   }
 }
 

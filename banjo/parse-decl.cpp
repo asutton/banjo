@@ -83,7 +83,7 @@ Type&
 Parser::unparsed_variable_type()
 {
   Token_seq toks;
-  while (true) {
+  while (!is_eof()) {
     if (next_token_is_one_of(semicolon_tok, eq_tok) && !in_braces())
       break;
     toks.push_back(accept());
@@ -97,7 +97,7 @@ Expr&
 Parser::unparsed_variable_initializer()
 {
   Token_seq toks;
-  while (true) {
+  while (!is_eof()) {
     if (next_token_is(semicolon_tok) && !in_braces())
       break;
     toks.push_back(accept());
@@ -334,8 +334,8 @@ Parser::unparsed_return_type()
 {
   Token_seq toks;
   Brace_matching_sentinel in_level(*this);
-  while (true) {
-    if (next_token_is_one_of(lbrace_tok) && in_level())
+  while (!is_eof()) {
+    if (next_token_is_one_of(lbrace_tok, eq_tok) && in_level())
       break;
     toks.push_back(accept());
   }
@@ -349,7 +349,7 @@ Parser::unparsed_expression_body()
 {
   Token_seq toks;
   Brace_matching_sentinel in_level(*this);
-  while (true) {
+  while (!is_eof()) {
     if (next_token_is(semicolon_tok) && in_level())
       break;
     toks.push_back(accept());
@@ -365,7 +365,7 @@ Parser::unparsed_function_body()
   Token_seq toks;
   toks.push_back(match(lbrace_tok));
   Brace_matching_sentinel in_level(*this);
-  while (true) {
+  while (!is_eof()) {
     if (next_token_is(rbrace_tok) && in_level())
       break;
     toks.push_back(accept());
