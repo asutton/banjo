@@ -90,6 +90,41 @@ Parser::expression_statement()
 }
 
 
+// Returns an unparsed expression statement. This includes the trailing
+// semicolon.
+Stmt&
+Parser::unparsed_expression_statement()
+{
+  Token_seq toks;
+  Brace_matching_sentinel in_level(*this);
+  while (true) {
+    if (next_token_is(semicolon_tok) && in_level())
+      break;
+    toks.push_back(accept());
+  }
+  toks.push_back(match(semicolon_tok));
+  return on_unparsed_statement(std::move(toks));
+}
+
+
+// Returns an unparsed compound statement.
+Stmt&
+Parser::unparsed_compound_statement()
+{
+  Token_seq toks;
+  toks.push_back(match(lbrace_tok));
+  Brace_matching_sentinel in_level(*this);
+  while (true) {
+    if (next_token_is(rbrace_tok) && in_level())
+      break;
+    toks.push_back(accept());
+  }
+  toks.push_back(match(rbrace_tok));
+  return on_unparsed_statement(std::move(toks));
+}
+
+
+
 // Parse a sequence of statements.
 //
 //    statement-seq:

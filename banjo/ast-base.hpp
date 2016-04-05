@@ -219,6 +219,21 @@ using Decl_iter = Decl_list::iterator;
 using Cons_iter = Cons_list::iterator;
 
 
+// Unparsed terms.
+template<typename T>
+struct Unparsed_term : T
+{
+  Unparsed_term(Token_seq&& toks)
+    : toks(std::move(toks))
+  { }
+
+  Token_seq const& tokens() const { return toks; }
+  Token_seq&       tokens()       { return toks; }
+
+  Token_seq toks;
+};
+
+
 // Pairs and tuples
 using Expr_pair = std::pair<Expr&, Expr&>;
 

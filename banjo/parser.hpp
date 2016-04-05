@@ -117,6 +117,8 @@ struct Parser
   Stmt& return_statement();
   Stmt& declaration_statement();
   Stmt& expression_statement();
+  Stmt& unparsed_expression_statement();
+  Stmt& unparsed_compound_statement();
   Stmt_list statement_seq();
 
   // Declarations
@@ -141,8 +143,11 @@ struct Parser
 
   // Definitions
   Decl& function_declaration();
-  Decl& parameter_declaration();
+  Decl_list parameter_clause();
   Decl_list parameter_list();
+  Decl& parameter_declaration();
+  Type& unparsed_parameter_type();
+  Type& unparsed_return_type();
   Def& function_definition(Decl&);
 
   // Classes
@@ -272,6 +277,7 @@ struct Parser
   Return_stmt& on_return_statement(Token, Expr&);
   Declaration_stmt& on_declaration_statement(Decl&);
   Expression_stmt& on_expression_statement(Expr&);
+  Stmt& on_unparsed_statement(Token_seq&&);
 
   // Declarations
   Decl& on_variable_declaration(Name&, Type&);
@@ -338,6 +344,8 @@ struct Parser
   void open_brace(Token);
   void close_brace(Token);
   bool in_braces() const;
+  bool in_level(int) const;
+  int  brace_level() const;
 
   // Tree matching.
   template<typename T> T* match_if(T& (Parser::* p)());
@@ -395,8 +403,6 @@ Parser::next_token_is_one_of()
 {
   return false;
 }
-
-
 
 
 // An RAII helper that sets or clears the flag controlling
@@ -508,9 +514,6 @@ struct Trial_parser
 };
 
 
-// -------------------------------------------------------------------------- //
-// Implementation
-
 // Match a given tree.
 template<typename R>
 inline R*
@@ -524,6 +527,26 @@ Parser::match_if(R& (Parser::* f)())
   }
   return nullptr;
 }
+
+
+
+// This class defines a predicate that can be tested to determine if the
+// current token is in the same nesting level as when this object is
+// constructed.
+struct Brace_matching_sentinel
+{
+  Brace_matching_sentinel(Parser& p)
+    : parser(p), level(p.brace_level())
+  { }
+
+  bool operator()() const
+  {
+    return parser.in_level(level);
+  }
+
+  Parser& parser;
+  int     level;
+};
 
 
 } // nammespace banjo

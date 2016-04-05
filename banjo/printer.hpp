@@ -112,6 +112,7 @@ struct Printer
 
   // Statements
   void statement(Stmt const&);
+  void statement(Unparsed_stmt const&);
   void statement_seq(Stmt_list const&);
   void compound_statement(Compound_stmt const&);
   void return_statement(Return_stmt const&);

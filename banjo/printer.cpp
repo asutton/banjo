@@ -885,12 +885,24 @@ Printer::statement(Stmt const& s)
   {
     Printer& p;
     void operator()(Stmt const& s)             { lingo_unhandled(s); }
+    void operator()(Unparsed_stmt const& s)    { p.statement(s); }
     void operator()(Compound_stmt const& s)    { p.compound_statement(s); }
     void operator()(Return_stmt const& s)      { p.return_statement(s); }
     void operator()(Expression_stmt const& s)  { p.expression_statement(s); }
     void operator()(Declaration_stmt const& s) { p.declaration_statement(s); }
   };
   apply(s, fn{*this});
+}
+
+
+void
+Printer::statement(Unparsed_stmt const& s)
+{
+  token(lt_tok);
+  token(bar_tok);
+  tokens(s.tokens());
+  token(bar_tok);
+  token(gt_tok);
 }
 
 

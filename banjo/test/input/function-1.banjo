@@ -1,0 +1,8 @@
+
+def f0 : () -> void { }
+def f1 : (x : int, y : int) -> int { return x; }
+def f2 : (x, y) -> int { return x; }
+
+def f3 : (x, y) { return x; }
+
+def f3 : (x, y) x;

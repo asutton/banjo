@@ -2,7 +2,7 @@
 // All rights reserved
 
 #include "parser.hpp"
-
+#include "ast-stmt.hpp"
 
 namespace banjo
 {
@@ -31,11 +31,17 @@ Parser::on_declaration_statement(Decl& d)
 }
 
 
-// FIXME: Use the builder.
 Expression_stmt&
 Parser::on_expression_statement(Expr& d)
 {
   return build.make_expression_statement(d);
+}
+
+
+Stmt&
+Parser::on_unparsed_statement(Token_seq&& toks)
+{
+  return *new Unparsed_stmt(std::move(toks));
 }
 
 

@@ -110,17 +110,20 @@ endmacro()
 
 
 # Unit tests
-add_unit_test(test_print       test/test_print.cpp)
-add_unit_test(test_equivalence test/test_equivalence.cpp)
-add_unit_test(test_hash        test/test_hash.cpp)
-add_unit_test(test_variable    test/test_variable.cpp)
-add_unit_test(test_function    test/test_function.cpp)
-add_unit_test(test_template    test/test_template.cpp)
-add_unit_test(test_convert     test/test_convert.cpp)
-add_unit_test(test_initialize  test/test_initialize.cpp)
-add_unit_test(test_substitute  test/test_substitute.cpp)
-add_unit_test(test_deduce      test/test_deduce.cpp)
-add_unit_test(test_constraint  test/test_constraint.cpp)
+#
+# FIXME: Conditionally the test suite using an option.
+
+# add_unit_test(test_print       test/test_print.cpp)
+# add_unit_test(test_equivalence test/test_equivalence.cpp)
+# add_unit_test(test_hash        test/test_hash.cpp)
+# add_unit_test(test_variable    test/test_variable.cpp)
+# add_unit_test(test_function    test/test_function.cpp)
+# add_unit_test(test_template    test/test_template.cpp)
+# add_unit_test(test_convert     test/test_convert.cpp)
+# add_unit_test(test_initialize  test/test_initialize.cpp)
+# add_unit_test(test_substitute  test/test_substitute.cpp)
+# add_unit_test(test_deduce      test/test_deduce.cpp)
+# add_unit_test(test_constraint  test/test_constraint.cpp)
 
 # Testing tools
 # add_test_program(test_parse   test/test_parse.cpp)

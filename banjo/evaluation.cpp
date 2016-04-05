@@ -232,10 +232,11 @@ Evaluator::evaluate(Stmt const& s, Value& r)
     Evaluator& self;
     Value&     r;
 
-    Control operator()(Compound_stmt const& s) { return self.evaluate_block(s, r); }
+    Control operator()(Stmt const& s)             { lingo_unhandled(s); }
+    Control operator()(Compound_stmt const& s)    { return self.evaluate_block(s, r); }
     Control operator()(Declaration_stmt const& s) { return self.evaluate_declaration(s, r); }
-    Control operator()(Expression_stmt const& s) { return self.evaluate_expression(s, r); }
-    Control operator()(Return_stmt const& s) { return self.evaluate_return(s, r); }
+    Control operator()(Expression_stmt const& s)  { return self.evaluate_expression(s, r); }
+    Control operator()(Return_stmt const& s)      { return self.evaluate_return(s, r); }
   };
   return apply(s, fn{*this, r});
 }

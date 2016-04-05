@@ -14,17 +14,26 @@ namespace banjo
 struct Stmt : Term
 {
   struct Visitor;
+  struct Mutator;
 
   virtual void accept(Visitor& v) const = 0;
+  virtual void accept(Mutator& v)       = 0;
 };
 
 
 struct Stmt::Visitor
 {
-  virtual void visit(Compound_stmt const&) { }
-  virtual void visit(Expression_stmt const&) { }
-  virtual void visit(Declaration_stmt const&) { }
-  virtual void visit(Return_stmt const&) { }
+#define define_node(Node) virtual void visit(Node const&) = 0;
+#include "ast-stmt.def"
+#undef define_node
+};
+
+
+struct Stmt::Mutator
+{
+#define define_node(Node) virtual void visit(Node&) = 0;
+#include "ast-stmt.def"
+#undef define_node
 };
 
 
@@ -40,6 +49,7 @@ struct Compound_stmt : Stmt
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
   Stmt_list const& statements() const { return stmts; }
   Stmt_list&       statements()       { return stmts; }
@@ -57,6 +67,7 @@ struct Expression_stmt : Stmt
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the expression of the statement.
   Expr const& expression() const { return *expr; }
@@ -74,6 +85,7 @@ struct Declaration_stmt : Stmt
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the declaration of the statement.
   Decl const& declaration() const { return *decl; }
@@ -91,6 +103,7 @@ struct Return_stmt : Stmt
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the expression returned by the statement.
   Expr const& expression() const { return *expr; }
@@ -100,7 +113,20 @@ struct Return_stmt : Stmt
 };
 
 
-// A generic visitor for statement.
+// Represents an unparsed statement.
+struct Unparsed_stmt : Unparsed_term<Stmt>
+{
+  using Unparsed_term::Unparsed_term;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// ---------------------------------------------------------------------------//
+// Visitors
+
+// A generic visitor for statements.
 template<typename F, typename T>
 struct Generic_stmt_visitor : Stmt::Visitor, Generic_visitor<F, T>
 {
@@ -108,19 +134,42 @@ struct Generic_stmt_visitor : Stmt::Visitor, Generic_visitor<F, T>
     : Generic_visitor<F, T>(f)
   { }
 
-  void visit(Compound_stmt const& s)    { this->invoke(s); }
-  void visit(Expression_stmt const& s)  { this->invoke(s); }
-  void visit(Declaration_stmt const& s) { this->invoke(s); }
-  void visit(Return_stmt const& s)      { this->invoke(s); }
+#define define_node(Node) void visit(Node const& t) { this->invoke(t); }
+#include "ast-stmt.def"
+#undef define_node
 };
 
 
-// Apply a function to the given type.
+// A generic visitor for statements.
+template<typename F, typename T>
+struct Generic_stmt_mutator : Stmt::Mutator, Generic_mutator<F, T>
+{
+  Generic_stmt_mutator(F f)
+    : Generic_mutator<F, T>(f)
+  { }
+
+#define define_node(Node) void visit(Node& t) { this->invoke(t); }
+#include "ast-stmt.def"
+#undef define_node
+};
+
+
+// Apply a function to the given statement.
 template<typename F, typename T = typename std::result_of<F(Return_stmt const&)>::type>
 inline T
 apply(Stmt const& s, F fn)
 {
   Generic_stmt_visitor<F, T> vis(fn);
+  return accept(s, vis);
+}
+
+
+// Apply a function to the given statement.
+template<typename F, typename T = typename std::result_of<F(Return_stmt&)>::type>
+inline T
+apply(Stmt& s, F fn)
+{
+  Generic_stmt_mutator<F, T> vis(fn);
   return accept(s, vis);
 }
 

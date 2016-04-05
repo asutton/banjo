@@ -237,10 +237,31 @@ Parser::close_brace(Token tok)
 }
 
 
+// Return true if the current brace nesting level is non-zero. That is,
+// we have accepted at least one bracketing character, but not its matching
+// closing brace.
 bool
 Parser::in_braces() const
 {
   return !state.braces.empty();
+}
+
+
+// Returns true when the current brace nesting level is n. This is useful
+// when checking for closing tokens at a non-empty nesting level (e.g.,
+// inside function parameter lists).
+bool
+Parser::in_level(int n) const
+{
+  return brace_level() == n;
+}
+
+
+// Returns the current brace nesting level.
+int
+Parser::brace_level() const
+{
+  return state.braces.size();
 }
 
 

@@ -42,8 +42,8 @@ Parser::declaration()
 // Parse a variable declaration.
 //
 //    variable-declaration:
-//      'var' identifier ':' type ';'
-//      'var' identifier ':' type '=' initializer ';'
+//      'var' identifier ':' [template-header] type ';'
+//      'var' identifier ':' [template-header] type '=' initializer ';'
 //      'var' identifier ':' '=' initializer ';'
 //
 // TODO: Are there other forms of variable declaration?
@@ -104,9 +104,6 @@ Parser::unparsed_variable_initializer()
   }
   return on_unparsed_expression(std::move(toks));
 }
-
-
-// Return an anparsed variable definition.
 
 
 // Parse a variable initializer.
@@ -175,51 +172,85 @@ Parser::brace_initializer(Decl&)
 // -------------------------------------------------------------------------- //
 // Function declarations
 
-
 // Parse a function declaration or definition.
 //
 //    function-declaration:
-//      'def' declarator '(' [parameter-list] ')' return-type function-definition
+//      'def' identifier ':' [template-header] parameter-clause expression-statement
+//      'def' identifier ':' [template-header] parameter-clause '->' type function-body
 //
-//    return-type:
-//      '->' type
+//    parameter-spec:
+//      '(' [parameter-list] ')'
 //
-// TODO: Handle variadics better. Maybe have an optional
-// ', ...' at the end of the parameter list.
+//    function-body:
+//      compound-statement
+//      '=' expression-statement
 //
-// TODO: Allow declared but not defeined functios?
+// TODO: Allow named return types. That would change the grammar for return
+// types to a return declaration. Note that not all functions can have named
+// returns (e.g., void functions, functions returning references, etc.). This
+// also leaks implementation details into the interface.
 //
-// TODO: Allow for additional specifiers after the ')' and before
-// the '->'. This would support qualifiers on member function
-// declarations.
+//    def f() -> ret:string { ret = "hello"; }
 Decl&
 Parser::function_declaration()
 {
-  Token tok = require(def_tok);
-  Name& n = declarator();
+  require(def_tok);
+  Name& name = identifier();
+  match(colon_tok);
 
-  // Enter function parameter scope and parse function parameters.
   Enter_scope pscope(cxt, cxt.make_function_parameter_scope());
-  Decl_list ps;
-  match(lparen_tok);
-  if (lookahead() != rparen_tok)
-    ps = parameter_list();
-  match(rparen_tok);
-  Type& t = return_type();
+  Decl_list parms = parameter_clause();
 
-  // Point of declaration.
-  Decl& fn = on_function_declaration(tok, n, ps, t);
+  // Match the "-> type function-body" case.
+  if (match_if(arrow_tok)) {
+    Type& ret = unparsed_return_type();
 
-  // Parse the definition, if any.
-  if (lookahead() == semicolon_tok) {
-    match(semicolon_tok);
-  } else {
-    // Enter function scope and parse the function definition.
-    Enter_scope fscope(cxt, cxt.make_function_scope(fn));
-    function_definition(fn);
+    Stmt* body;
+    if (match_if(eq_tok))
+      body = &unparsed_expression_statement();
+    else
+      body = &unparsed_compound_statement();
+
+    std::cout << "HERE " << *body << '\n';
+    lingo_unreachable();
   }
 
-  return fn;
+  // Othersise, the return type is unspecified, allowing for
+  // anonymous expressions.
+  Type& ret = cxt.get_auto_type();
+
+  lingo_unreachable();
+
+  // // Point of declaration.
+  // Decl& fn = on_function_declaration(tok, n, ps, t);
+  //
+  // // Parse the definition, if any.
+  // if (lookahead() == semicolon_tok) {
+  //   match(semicolon_tok);
+  // } else {
+  //   // Enter function scope and parse the function definition.
+  //   Enter_scope fscope(cxt, cxt.make_function_scope(fn));
+  //   function_definition(fn);
+  // }
+  //
+  // return fn;
+}
+
+
+// Parse a parameter clause.
+//
+//    parameter-clause:
+//      '(' [parameter-list] ')'
+//
+Decl_list
+Parser::parameter_clause()
+{
+  Decl_list parms;
+  match(lparen_tok);
+  if (lookahead() != rparen_tok)
+    parms = parameter_list();
+  match(rparen_tok);
+  return parms;
 }
 
 
@@ -247,37 +278,63 @@ Parser::parameter_list()
 // Parse a parameter declaration.
 //
 //    parameter-declaration:
-//      ... [identifier]
-//      type [identifier] [value-initializer]
+//      identifier [':' type] ['=' expression]
+//      identifier [':=' expression]
 //
-// TODO: Consider two different parses. Default arguments are
-// not allowed for the ... parameter.
+// TODO: Extend the grammar to support (named?) variadics and function
+// argument packs.
 Decl&
 Parser::parameter_declaration()
 {
-  // If ... precedes the type, then this will be the variadic
-  // parameter.
-  Type* t;
-  if (match_if(ellipsis_tok))
-    lingo_unimplemented("parse ellipsis");
-  else
-    t = &type();
+  Name& name = identifier();
 
-  // Guarantee a parameter name. This could be DeBruijn-numbered.
-  Name* n;
-  if (Token id = match_if(identifier_tok))
-    n = &on_simple_id(id);
-  else
-    n = &build.get_id();
+  if (match_if(colon_tok)) {
+    if (next_token_is(eq_tok))
+      lingo_unimplemented("default arguments");
 
-  // Point of declaration.
-  Object_parm& parm = on_function_parameter(*n, *t);
+    Type& type = unparsed_parameter_type();
 
-  // Parse the default argument.
-  if (lookahead() == eq_tok)
-    equal_initializer(parm);
+    if (next_token_is(eq_tok))
+      lingo_unimplemented("default arguments");
 
-  return parm;
+    return on_function_parameter(name, type);
+  }
+
+  Type& type = cxt.get_auto_type();
+
+  if (next_token_is(eq_tok))
+    lingo_unimplemented("default arguments");
+
+  return on_function_parameter(name, type);
+}
+
+
+Type&
+Parser::unparsed_parameter_type()
+{
+  Token_seq toks;
+  Brace_matching_sentinel in_level(*this);
+  while (true) {
+    if (next_token_is_one_of(comma_tok, rparen_tok) && in_level())
+      break;
+    toks.push_back(accept());
+  }
+  return on_unparsed_type(std::move(toks));
+}
+
+
+// Returns an unparsed return type.
+Type&
+Parser::unparsed_return_type()
+{
+  Token_seq toks;
+  Brace_matching_sentinel in_level(*this);
+  while (true) {
+    if (next_token_is_one_of(lbrace_tok) && in_level())
+      break;
+    toks.push_back(accept());
+  }
+  return on_unparsed_type(std::move(toks));
 }
 
 
