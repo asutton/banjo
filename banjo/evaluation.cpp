@@ -140,10 +140,6 @@ Evaluator::evaluate_call(Call_expr const& e)
   Value v = evaluate(e.function());
   Function_decl const& f = *v.get_function();
 
-  // Get the function's definition.
-  if (!f.is_definition())
-    throw Internal_error("function '{}' is not defined", f.name());
-
   // There should probably be a body for the function.
   //
   // FIXME: What if the function is = default. How do we determine

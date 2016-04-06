@@ -153,12 +153,13 @@ struct Constant_decl : Object_decl
 //    - a postcondition that explicitly states effects.
 struct Function_decl : Decl
 {
+  // FIXME: Deprecate this.
   Function_decl(Name& n, Type& t, Decl_list const& p)
-    : Decl(n), ty(&t), parms(p), def()
-  { }
+    : Decl(n), type_(&t), parms_(p), def_()
+  { lingo_unreachable(); }
 
   Function_decl(Name& n, Type& t, Decl_list const& p, Def& d)
-    : Decl(n), ty(&t), parms(p), def(&d)
+    : Decl(n), type_(&t), parms_(p), def_(&d)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -173,33 +174,27 @@ struct Function_decl : Decl
   Type&       return_type();
 
   // Returns the list of parameter declarations for the function.
-  Decl_list const& parameters() const { return parms; }
-  Decl_list&       parameters()       { return parms; }
+  Decl_list const& parameters() const { return parms_; }
+  Decl_list&       parameters()       { return parms_; }
 
   // Returns the function constraints. This is valid iff
   // is_constrained() is true.
-  Expr const& constraint() const     { return *constr; }
-  Expr&       constraint()           { return *constr; }
-
+  //
   // TODO: Implelemnt pre- and post-conditions.
-  // Expr const& precondition() const  { return *constr; }
-  // Expr const& postcondition() const { return *constr; }
-
-  Def const& definition() const    { return *def; }
-  Def&       definition()          { return *def; }
+  Expr const& constraint() const     { return *constr_; }
+  Expr&       constraint()           { return *constr_; }
 
   // Returns true if this declaration has function constraints.
-  bool is_constrained() const { return constr; }
+  bool is_constrained() const { return constr_; }
 
-  // Returns true iff this declaration is also a definition.
-  bool is_definition() const { return def; }
+  // Returns the function's definition.
+  Def const& definition() const    { return *def_; }
+  Def&       definition()          { return *def_; }
 
-  Type*     ty;
-  Decl_list parms;
-  Expr*     constr;
-  Expr*     pre;
-  Expr*     post;
-  Def*      def;
+  Type*     type_;
+  Decl_list parms_;
+  Expr*     constr_;
+  Def*      def_;
 };
 
 

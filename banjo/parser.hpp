@@ -188,6 +188,7 @@ struct Parser
   void elaborate_variable_declaration(Variable_decl&);
   void elaborate_function_declaration(Function_decl&);
   void elaborate_type_declaration(Type_decl&);
+  Type& elaborate_type(Type&);
 
 
   // Semantics actions

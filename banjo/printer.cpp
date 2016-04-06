@@ -408,7 +408,7 @@ Printer::primary_type(Function_type const& t)
   space();
   token(arrow_tok);
   space();
-  type(t);
+  type(t.return_type());
 }
 
 

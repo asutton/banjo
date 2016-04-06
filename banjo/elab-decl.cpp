@@ -46,23 +46,44 @@ Parser::elaborate_declaration(Decl& d)
 }
 
 
+Type&
+Parser::elaborate_type(Type& t)
+{
+  if (Unparsed_type* soup = as<Unparsed_type>(&t)) {
+    Save_input_location loc(cxt);
+    Token_stream ts(soup->tokens());
+    Parser parse(cxt, ts);
+    return parse.type();
+  }
+  return t;
+}
+
+
 // If the type is unparsed, parse that now.
 void
 Parser::elaborate_variable_declaration(Variable_decl& d)
 {
-  if (Unparsed_type* t = as<Unparsed_type>(&d.type())) {
-    Save_input_location loc(cxt);
-    Token_stream ts(t->tokens());
-    Parser parse(cxt, ts);
-    Type& type = parse.type();
-    d.type_ = &type;
-  }
+  d.type_ = &elaborate_type(d.type());
 }
+
 
 void
 Parser::elaborate_function_declaration(Function_decl& d)
 {
-  std::cout << "FN: " << d << '\n';
+  // Elaborate the type of each parameter in turn.
+  Decl_list& parms = d.parameters();
+  for (Decl& d : parms) {
+    Object_parm& p = as<Object_parm>(d);
+    p.type_ = &elaborate_type(p.type());
+  }
+
+  // Elaborate the return type.
+  Type& ret = elaborate_type(d.return_type());
+
+  // Reconstitute and update the function type.
+  d.type_ = &cxt.get_function_type(parms, ret);
+
+  // TODO: Elaborate the function constraints.
 }
 
 

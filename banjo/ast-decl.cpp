@@ -28,14 +28,14 @@ Decl::declared_name()
 Function_type const&
 Function_decl::type() const
 {
-  return *cast<Function_type>(ty);
+  return *cast<Function_type>(type_);
 }
 
 
 Function_type&
 Function_decl::type()
 {
-  return *cast<Function_type>(ty);
+  return *cast<Function_type>(type_);
 }
 
 
