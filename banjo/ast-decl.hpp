@@ -11,7 +11,6 @@
 namespace banjo
 {
 
-
 // The base class of all declarations. Each declaration has a set of
 // specifiers and a reference to the context in which it the entity
 // is declared.
@@ -99,26 +98,6 @@ struct Object_decl : Decl
 
   Type* ty;
   Expr* init;
-};
-
-
-// Declares a class, union, enum.
-struct Type_decl : Decl
-{
-  Type_decl(Name& n)
-    : Decl(n), def()
-  { }
-
-  Type_decl(Name& n, Def& i)
-    : Decl(n), def(&i)
-  { }
-
-  Def const& definition() const { return *def; }
-  Def&       definition()       { return *def; }
-
-  bool is_defined() const { return def; }
-
-  Def* def;
 };
 
 
@@ -224,6 +203,32 @@ struct Function_decl : Decl
 };
 
 
+// Represents the declaration of a user-defined type.
+//
+// TODO: Support kinds and/or metatypes.
+struct Type_decl : Decl
+{
+  // FIXME: Deprecate this constructor.
+  Type_decl(Name& n)
+    : Decl(n)
+  { lingo_unreachable(); }
+
+  Type_decl(Name& n, Def& d)
+    : Decl(n), def_(&d)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the definition of the type.
+  Def const& definition() const { return *def_; }
+  Def&       definition()       { return *def_; }
+
+  Def* def_;
+};
+
+
+
 // Represents the declaration of a class.
 struct Class_decl : Type_decl
 {
@@ -238,7 +243,7 @@ struct Class_decl : Type_decl
   Class_def&       definition();
 
   // Returns true if the declaration is also a definition.
-  bool is_definition() const { return def; }
+  bool is_definition() const { return def_; }
 };
 
 

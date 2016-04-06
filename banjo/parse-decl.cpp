@@ -25,8 +25,8 @@ Parser::declaration()
       return variable_declaration();
     case def_tok:
       return function_declaration();
-    case typename_tok:
-      lingo_unreachable();
+    case type_tok:
+      return type_declaration();
     case concept_tok:
       lingo_unreachable();
     default:
@@ -174,8 +174,9 @@ Parser::brace_initializer(Decl&)
 
 // Parse a function declaration or definition.
 //
-//    function-declaration:
+//    function-definition:
 //      'def' identifier ':' [template-header] parameter-clause expression-statement
+//      'def' identifier ':' [template-header] parameter-clause '=' expression-statement
 //      'def' identifier ':' [template-header] parameter-clause '->' type function-body
 //
 //    parameter-spec:
@@ -186,11 +187,13 @@ Parser::brace_initializer(Decl&)
 //      '=' expression-statement
 //
 // TODO: Allow named return types. That would change the grammar for return
-// types to a return declaration. Note that not all functions can have named
-// returns (e.g., void functions, functions returning references, etc.). This
-// also leaks implementation details into the interface.
+// types to a return declaration.
 //
 //    def f() -> ret:string { ret = "hello"; }
+//
+// Note that not all functions can have named returns (e.g., void functions,
+// functions returning references, etc.). This also leaks implementation
+// details into the interface.
 Decl&
 Parser::function_declaration()
 {
@@ -222,23 +225,19 @@ Parser::function_declaration()
 
   // Othersise, the return type is unspecified, allowing for
   // anonymous expressions.
-  // Type& ret = cxt.get_auto_type();
+  Type& ret = cxt.get_auto_type();
 
-  lingo_unreachable();
+  // { ... }
+  if (next_token_is(lbrace_tok)) {
+    Stmt& body = unparsed_function_body();
+    return on_function_declaration(name, parms, ret, body);
+  }
 
-  // // Point of declaration.
-  // Decl& fn = on_function_declaration(tok, n, ps, t);
-  //
-  // // Parse the definition, if any.
-  // if (lookahead() == semicolon_tok) {
-  //   match(semicolon_tok);
-  // } else {
-  //   // Enter function scope and parse the function definition.
-  //   Enter_scope fscope(cxt, cxt.make_function_scope(fn));
-  //   function_definition(fn);
-  // }
-  //
-  // return fn;
+  // ''= expression ;' or 'expression ;'
+  match_if(eq_tok);
+  Expr& body = unparsed_expression_body();
+  match(semicolon_tok);
+  return on_function_declaration(name, parms, ret, body);
 }
 
 
@@ -359,6 +358,10 @@ Parser::unparsed_expression_body()
 
 
 // Returns an unparsed compound statement that defines a function.
+//
+// FIXME: This is identical to untyped_type_body, but semantically different.
+// There should be no order independence among declarations within a function
+// body... Maybe?
 Stmt&
 Parser::unparsed_function_body()
 {
@@ -400,35 +403,51 @@ Parser::function_definition(Decl& d)
 
 
 // -------------------------------------------------------------------------- //
-// Classes
+// Types
 
-// Parse a class declaration.
+// Parse a type declaration.
 //
-//    class-declaration:
-//      struct declarator ';'
-//      struct class-definition
-//      class declarator ';'
-//      class class-definition
+//    type-declaration:
+//      'type' identifier ':' [type] type-body
 //
-// TODO: Add support for classes.
+//    type-body:
+//      compound-statement
+//
+// TODO: We could use '=' notation in bodies to create new derived types.
 Decl&
-Parser::class_declaration()
+Parser::type_declaration()
 {
-  lingo_assert(lookahead() == struct_tok || lookahead() == class_tok);
-  Token tok = accept();
-  Name& n = declarator();
+  require(type_tok);
+  Name& name = identifier();
+  match(colon_tok);
 
-  // Point of declaration.
-  Decl& cls = on_class_declaration(tok, n);
-
-  if (!match_if(semicolon_tok)) {
-    // FIXME: Enter class scpoe.
-    class_definition(cls);
+  if (next_token_is(lbrace_tok)) {
+    Stmt& body = unparsed_type_body();
+    return on_type_declaration(name, body);
   }
 
-  return cls;
+  lingo_unimplemented("kinded types");
 };
 
+
+// Returns an unparsed type body.
+Stmt&
+Parser::unparsed_type_body()
+{
+  Token_seq toks;
+  toks.push_back(match(lbrace_tok));
+  Brace_matching_sentinel in_level(*this);
+  while (!is_eof()) {
+    if (next_token_is(rbrace_tok) && in_level())
+      break;
+    toks.push_back(accept());
+  }
+  toks.push_back(match(rbrace_tok));
+  return on_unparsed_statement(std::move(toks));
+}
+
+
+// FIXME:  most of these should go away.
 
 // Parse a class definition (it's body).
 //

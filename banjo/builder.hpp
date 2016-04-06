@@ -116,26 +116,31 @@ struct Builder
   Aggregate_init& make_aggregate_init(Type&, Expr_list const&);
 
   // Definitions
+  Expression_def& make_function_definition(Expr&);
+  Function_def&   make_function_definition(Stmt&);
+  Type_def&       make_type_definition(Stmt&);
+
   Deleted_def&    make_deleted_definition();
   Defaulted_def&  make_defaulted_definition();
   Expression_def& make_expression_definition(Expr&);
-  Expression_def& make_function_definition(Expr&);
-  Function_def&   make_function_definition(Stmt&);
   Class_def&      make_class_definition(Decl_list const&);
   Concept_def&    make_concept_definition(Req_list const&);
 
   Namespace_decl& make_namespace(Name&);
   Namespace_decl& make_namespace(char const*);
   Namespace_decl& get_global_namespace();
+
   Variable_decl&  make_variable(Name&, Type&);
   Variable_decl&  make_variable(char const*, Type&);
   Variable_decl&  make_variable(Name&, Type&, Expr&);
   Variable_decl&  make_variable(char const*, Type&, Expr&);
+
   Function_decl&  make_function(Name&, Decl_list const&, Type&, Expr&);
   Function_decl&  make_function(Name&, Decl_list const&, Type&, Stmt&);
-
   Function_decl&  make_function(Name&, Decl_list const&, Type&);
   Function_decl&  make_function(char const*, Decl_list const&, Type&);
+
+  Type_decl&      make_type(Name&, Stmt&);
 
   Class_decl&     make_class(Name&);
   Class_decl&     make_class(char const*);

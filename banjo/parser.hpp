@@ -129,7 +129,7 @@ struct Parser
   Decl& namespace_declaration();
   Decl& axiom_declaration();
 
-  // Initializers
+  // Variables
   Decl& variable_declaration();
   Type& unparsed_variable_type();
   Expr& unparsed_variable_initializer();
@@ -139,7 +139,7 @@ struct Parser
   Expr& paren_initializer(Decl&);
   Expr& brace_initializer(Decl&);
 
-  // Definitions
+  // Functions
   Decl& function_declaration();
   Decl_list parameter_clause();
   Decl_list parameter_list();
@@ -148,10 +148,13 @@ struct Parser
   Type& unparsed_return_type();
   Expr& unparsed_expression_body();
   Stmt& unparsed_function_body();
+
   Def& function_definition(Decl&);
 
-  // Classes
-  Decl& class_declaration();
+  // Types
+  Decl& type_declaration();
+  Stmt& unparsed_type_body();
+
   Def& class_definition(Decl&);
   Decl_list member_seq();
   Decl& member_declaration();
@@ -286,7 +289,8 @@ struct Parser
   Decl& on_function_declaration(Name&, Decl_list&, Type&, Expr&);
   Decl& on_function_declaration(Name&, Decl_list&, Type&, Stmt&);
 
-  Decl& on_class_declaration(Token, Name&);
+  Decl& on_type_declaration(Name&, Stmt&);
+
   Decl& on_namespace_declaration(Token, Name&, Decl_list&);
   Decl& on_concept_declaration(Token, Name&, Decl_list&);
   // Function parameters

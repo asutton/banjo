@@ -657,6 +657,13 @@ Builder::make_function_definition(Stmt& s)
 }
 
 
+Type_def&
+Builder::make_type_definition(Stmt& s)
+{
+  return make<Type_def>(s);
+}
+
+
 Class_def&
 Builder::make_class_definition(Decl_list const& ds)
 {
@@ -739,6 +746,14 @@ Function_decl&
 Builder::make_function(char const* s, Decl_list const& ps, Type& r)
 {
   return make_function(get_id(s), ps, r);
+}
+
+
+Type_decl&
+Builder::make_type(Name& n, Stmt& s)
+{
+  Def& d = make_type_definition(s);
+  return make<Type_decl>(n, d);
 }
 
 

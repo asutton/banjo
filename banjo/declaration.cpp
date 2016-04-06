@@ -16,6 +16,38 @@
 namespace banjo
 {
 
+// -------------------------------------------------------------------------- //
+// Declaration of un-typed entities
+//
+// The remember() function is used to store first-class entities prior
+// to the elaboration of their type. Note that we can't distinguish (or
+// make equivalent) declarations without knowing their types. This also
+// means that we may save multiple declarations for partial definitions
+// (e.g., namespaces).
+//
+// TODO: I'm not sure that I like this design. Think about it...
+
+void
+remember(Context&, Scope& scope, Decl& decl)
+{
+  if (Overload_set* ovl = scope.lookup(decl.declared_name()))
+    ovl->push_back(decl);
+  else
+    scope.bind(decl);
+}
+
+
+// Try to declare d in the current scope.
+void
+remember(Context& cxt, Decl& d)
+{
+  remember(cxt, cxt.current_scope(), d);
+}
+
+
+// -------------------------------------------------------------------------- //
+// Declaration of typed entities
+
 // A given function or variable declaration is a redeclaration if
 // there exists a previous function or variable with the same
 // name, scope, and declared type.

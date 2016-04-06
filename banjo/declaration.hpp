@@ -15,6 +15,8 @@ struct Context;
 struct Decl;
 struct Scope;
 
+void remember(Context&, Decl&);
+void remember(Context&, Scope&, Decl&);
 
 void declare(Context&, Decl&);
 void declare(Context&, Scope&, Decl&);

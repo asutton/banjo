@@ -56,42 +56,42 @@ Function_decl::return_type()
 Class_def const&
 Class_decl::definition() const
 {
-  return *cast<Class_def>(def);
+  return *cast<Class_def>(def_);
 }
 
 
 Class_def&
 Class_decl::definition()
 {
-  return *cast<Class_def>(def);
+  return *cast<Class_def>(def_);
 }
 
 
 Union_def const&
 Union_decl::definition() const
 {
-  return *cast<Union_def>(def);
+  return *cast<Union_def>(def_);
 }
 
 
 Union_def&
 Union_decl::definition()
 {
-  return *cast<Union_def>(def);
+  return *cast<Union_def>(def_);
 }
 
 
 Enum_def const&
 Enum_decl::definition() const
 {
-  return *cast<Enum_def>(def);
+  return *cast<Enum_def>(def_);
 }
 
 
 Enum_def&
 Enum_decl::definition()
 {
-  return *cast<Enum_def>(def);
+  return *cast<Enum_def>(def_);
 }
 
 

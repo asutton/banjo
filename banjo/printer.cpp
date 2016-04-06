@@ -35,6 +35,7 @@ void
 Printer::newline_and_indent()
 {
   ++indent;
+  newline();
 }
 
 
@@ -43,6 +44,7 @@ void
 Printer::newline_and_undent()
 {
   --indent;
+  newline();
 }
 
 

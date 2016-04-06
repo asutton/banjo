@@ -112,6 +112,33 @@ struct Function_def : Def
 };
 
 
+// Represents the compound body of a type as a sequence of statements.
+//
+// TODO: If we support multiple forms of type definition then what
+// would we name the other kind. In fact, this is a broader problem for
+// most kinds of entities.
+//
+// Note that the real distinction is in the syntactic form of the
+// definitions. In subsequent passes, these would be reduced to a single
+// kind of definition for each entity.
+struct Type_def : Def
+{
+  Type_def(Stmt& s)
+    : body_(&s)
+  { }
+
+  void accept(Visitor& v) const { return v.visit(*this); }
+  void accept(Mutator& v)       { return v.visit(*this); }
+
+  // Returns the list of member declarations.
+  Stmt const& body() const { return *body_; }
+  Stmt&       body()       { return *body_; }
+
+  Stmt* body_;
+};
+
+
+
 // A definition of a class.
 //
 // FIXME: Add base classes.
