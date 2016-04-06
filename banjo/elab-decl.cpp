@@ -59,7 +59,6 @@ Parser::elaborate_type(Type& t)
 }
 
 
-// If the type is unparsed, parse that now.
 void
 Parser::elaborate_variable_declaration(Variable_decl& d)
 {
@@ -90,7 +89,7 @@ Parser::elaborate_function_declaration(Function_decl& d)
 void
 Parser::elaborate_type_declaration(Type_decl& d)
 {
-  std::cout << "TYPE: " << d << '\n';
+  d.kind_ = &elaborate_type(d.kind());
 }
 
 

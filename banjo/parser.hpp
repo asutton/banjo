@@ -76,7 +76,7 @@ struct Parser
 
   // Types
   Type& type();
-  Type& simple_type();
+  Type& primary_type();
   Type& decltype_type();
   Type& function_type();
   Type& grouped_type();
@@ -228,6 +228,7 @@ struct Parser
   Decl& on_concept_name(Token);
 
   // Types
+  Type& on_type_type(Token);
   Type& on_void_type(Token);
   Type& on_bool_type(Token);
   Type& on_int_type(Token);
