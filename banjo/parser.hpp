@@ -190,12 +190,16 @@ struct Parser
   void elaborate_type_declaration(Type_decl&);
   Type& elaborate_type(Type&);
 
+  // Definition elaboration
   void elaborate_definitions(Stmt_list&);
   void elaborate_definition(Stmt&);
   void elaborate_definition(Decl&);
-  void elaborate_variable_definition(Variable_decl&);
+  void elaborate_variable_initializer(Variable_decl&);
+  void elaborate_variable_initializer(Variable_decl&, Empty_def&);
+  void elaborate_variable_initializer(Variable_decl&, Expression_def&);
   void elaborate_function_definition(Function_decl&);
   void elaborate_type_definition(Type_decl&);
+  Expr& elaborate_expression(Expr&);
 
 
   // Semantics actions

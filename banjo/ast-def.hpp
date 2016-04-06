@@ -87,17 +87,17 @@ struct Deleted_def : Def
 struct Expression_def : Def
 {
   Expression_def(Expr& e)
-    : expr(&e)
+    : expr_(&e)
   { }
 
   void accept(Visitor& v) const { return v.visit(*this); }
   void accept(Mutator& v)       { return v.visit(*this); }
 
   // Returns the expression that defines the entity.
-  Expr const& expression() const { return *expr; }
-  Expr&       expression()       { return *expr; }
+  Expr&       expression()       { return *expr_; }
+  Expr const& expression() const { return *expr_; }
 
-  Expr* expr;
+  Expr* expr_;
 };
 
 
@@ -222,10 +222,10 @@ struct Generic_def_visitor : Def::Visitor, Generic_visitor<F, T>
 
 // A generic mutator for definitions.
 template<typename F, typename T>
-struct Generic_def_mutator : Def::Mutator, Generic_visitor<F, T>
+struct Generic_def_mutator : Def::Mutator, Generic_mutator<F, T>
 {
   Generic_def_mutator(F f)
-    : Generic_visitor<F, T>(f)
+    : Generic_mutator<F, T>(f)
   { }
 
 #define define_node(Node) void visit(Node& t) { this->invoke(t); }

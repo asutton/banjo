@@ -662,16 +662,16 @@ Printer::postfix_expression(Expr const& e)
   {
     Printer& p;
 
-    void operator()(Expr const& e)         { p.primary_expression(e); }
-    void operator()(Call_expr& e)          { p.postfix_expression(e); }
-    void operator()(Value_conv& e)         { p.postfix_expression(e); }
-    void operator()(Qualification_conv& e) { p.postfix_expression(e); }
-    void operator()(Boolean_conv& e)       { p.postfix_expression(e); }
-    void operator()(Integer_conv& e)       { p.postfix_expression(e); }
-    void operator()(Float_conv& e)         { p.postfix_expression(e); }
-    void operator()(Numeric_conv& e)       { p.postfix_expression(e); }
-    void operator()(Dependent_conv& e)     { p.postfix_expression(e); }
-    void operator()(Ellipsis_conv& e)      { p.postfix_expression(e); }
+    void operator()(Expr const& e)               { p.primary_expression(e); }
+    void operator()(Call_expr const& e)          { p.postfix_expression(e); }
+    void operator()(Value_conv const& e)         { p.postfix_expression(e); }
+    void operator()(Qualification_conv const& e) { p.postfix_expression(e); }
+    void operator()(Boolean_conv const& e)       { p.postfix_expression(e); }
+    void operator()(Integer_conv const& e)       { p.postfix_expression(e); }
+    void operator()(Float_conv const& e)         { p.postfix_expression(e); }
+    void operator()(Numeric_conv const& e)       { p.postfix_expression(e); }
+    void operator()(Dependent_conv const& e)     { p.postfix_expression(e); }
+    void operator()(Ellipsis_conv const& e)      { p.postfix_expression(e); }
   };
   apply(e, fn{*this});
 }
@@ -783,14 +783,14 @@ Printer::primary_expression(Expr const& e)
   {
     Printer& p;
 
-    void operator()(Expr const& e)      { p.grouped_expression(e); }
-    void operator()(Boolean_expr& e)    { p.literal(e); }
-    void operator()(Integer_expr& e)    { p.literal(e); }
-    void operator()(Real_expr& e)       { p.literal(e); }
-    void operator()(Reference_expr& e)  { p.id_expression(e); }
-    void operator()(Check_expr& e)      { p.id_expression(e); }
-    void operator()(Synthetic_expr& e)  { p.id_expression(e); }
-    void operator()(Requires_expr& e)   { p.requires_expression(e); }
+    void operator()(Expr const& e)           { p.grouped_expression(e); }
+    void operator()(Boolean_expr const& e)   { p.literal(e); }
+    void operator()(Integer_expr const& e)   { p.literal(e); }
+    void operator()(Real_expr const& e)      { p.literal(e); }
+    void operator()(Reference_expr const& e) { p.id_expression(e); }
+    void operator()(Check_expr const& e)     { p.id_expression(e); }
+    void operator()(Synthetic_expr const& e) { p.id_expression(e); }
+    void operator()(Requires_expr const& e)  { p.requires_expression(e); }
   };
   apply(e, fn{*this});
 }
@@ -1050,6 +1050,7 @@ Printer::variable_initializer(Empty_def const& d)
 void
 Printer::variable_initializer(Expression_def const& d)
 {
+  binary_operator(eq_tok);
   expression(d.expression());
 }
 

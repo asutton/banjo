@@ -46,19 +46,6 @@ Parser::elaborate_declaration(Decl& d)
 }
 
 
-Type&
-Parser::elaborate_type(Type& t)
-{
-  if (Unparsed_type* soup = as<Unparsed_type>(&t)) {
-    Save_input_location loc(cxt);
-    Token_stream ts(soup->tokens());
-    Parser parse(cxt, ts);
-    return parse.type();
-  }
-  return t;
-}
-
-
 void
 Parser::elaborate_variable_declaration(Variable_decl& d)
 {
@@ -90,6 +77,19 @@ void
 Parser::elaborate_type_declaration(Type_decl& d)
 {
   d.kind_ = &elaborate_type(d.kind());
+}
+
+
+Type&
+Parser::elaborate_type(Type& t)
+{
+  if (Unparsed_type* soup = as<Unparsed_type>(&t)) {
+    Save_input_location loc(cxt);
+    Token_stream ts(soup->tokens());
+    Parser parse(cxt, ts);
+    return parse.type();
+  }
+  return t;
 }
 
 
