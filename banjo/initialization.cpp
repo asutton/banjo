@@ -46,6 +46,9 @@ zero_initialize(Context& cxt, Type& t)
   // Zero initialize each sub-object in turn.
   if (is_array_type(t))
     lingo_unreachable();
+    
+  if (is_dynarray_type(t))
+    lingo_unreachable();
 
   Type& u = t.unqualified_type();
 

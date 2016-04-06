@@ -462,7 +462,7 @@ is_array_type(Type const& t)
 
 // Returns tru if `t` is a Dynarray type.
 inline bool
-is_Dynarray_type(Type const& t)
+is_dynarray_type(Type const& t)
 {
   return is<Dynarray_type>(&t);
 }

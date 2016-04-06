@@ -316,6 +316,12 @@ Builder::get_array_type(Type&, Expr&)
   lingo_unimplemented("array-type");
 }
 
+Dynarray_type&
+Builder::get_dynarray_type(Type&, Expr&)
+{
+  lingo_unimplemented("Dynarray-type");
+}
+
 
 Sequence_type&
 Builder::get_sequence_type(Type& t)

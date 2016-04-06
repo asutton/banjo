@@ -337,6 +337,7 @@ reduce(Context& cxt, Expr& e)
     Expr& operator()(Function_value const& v)  { lingo_unreachable(); }
     Expr& operator()(Reference_value const& v) { lingo_unreachable(); }
     Expr& operator()(Array_value const& v)     { lingo_unreachable(); }
+    Expr& operator()(Dynarray_value const& v)  { lingo_unreachable(); }
     Expr& operator()(Tuple_value const& v)     { lingo_unreachable(); }
 
   };
