@@ -160,13 +160,6 @@ specialize_function(Context& cxt, Template_decl& tmp, Function_decl& d, Substitu
 }
 
 
-Decl&
-specialize_class(Context& cxt, Template_decl& tmp, Class_decl& d, Substitution& sub)
-{
-  Name& n = cxt.get_template_id(tmp, sub.arguments());
-  return cxt.make_class(n);
-}
-
 
 // Specialize a templated declaration `decl` (`decl` is parameterized
 // by the template `tmp`).
@@ -188,7 +181,6 @@ specialize_declaration(Context& cxt, Template_decl& tmp, Decl& decl, Substitutio
     Decl& operator()(Decl& d)           { lingo_unreachable(); }
     Decl& operator()(Variable_decl& d)  { return specialize_variable(cxt, tmp, d, sub); }
     Decl& operator()(Function_decl& d)  { return specialize_function(cxt, tmp, d, sub); }
-    Decl& operator()(Class_decl& d)     { return specialize_class(cxt, tmp, d, sub); }
     Decl& operator()(Template_decl& d)  { lingo_unreachable(); }
   };
 

@@ -233,97 +233,6 @@ struct Type_decl : Decl
 };
 
 
-
-// Represents the declaration of a class.
-struct Class_decl : Type_decl
-{
-  using Type_decl::Type_decl;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the definition for the class, if given. Behavior is
-  // defined iff is_definition() is true.
-  Class_def const& definition() const;
-  Class_def&       definition();
-
-  // Returns true if the declaration is also a definition.
-  bool is_definition() const { return def_; }
-};
-
-
-struct Union_decl : Type_decl
-{
-  using Type_decl::Type_decl;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  Union_def const& definition() const;
-  Union_def&       definition();
-};
-
-
-struct Enum_decl : Type_decl
-{
-  using Type_decl::Type_decl;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  Enum_def const& definition() const;
-  Enum_def&       definition();
-};
-
-
-// Represents the definition of a namespace and its enclosed declarations.
-// Each namespace definition points to a (shared) scope that contains the
-// aggregated declarations of all declarations of the same namespace. Note
-// that re-opened namespaces are distinct declarations that share the same
-// scope. For example:
-//
-//    naemspace N {
-//      int x;
-//    } // #1
-//
-//    namespace N {
-//      int y;
-//    } // #2
-//
-// At #1, there is a single namespace declaration named `N`, containing
-// only the declaration of `x`. At #2, there are 2 namespace declarations
-// of `N`. They share the same scope, which contains the declarations of
-// `x` and `y`.
-//
-// TODO: Every namespace has an anonymous namespace.
-//
-// TODO: Handle using directives.
-struct Namespace_decl : Decl
-{
-  Namespace_decl(Name&);
-  Namespace_decl(Decl&, Name&);
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  bool is_global() const    { return cxt == nullptr; }
-  bool is_anonymous() const;
-
-  // Returns a list of members in this namespace.
-  Decl_list const& members() const { return decls; }
-  Decl_list&       members()       { return decls; }
-
-  // Returns the totoal set of declarations within the namespace.
-  //
-  // FIXME: Why doesn't this return a reference?
-  Scope const* scope() const { return lookup; }
-  Scope*       scope()       { return lookup; }
-
-  Decl_list decls;
-  Scope*    lookup;
-};
-
-
 // Declares a template.
 //
 // A template has a single constraint expression corresponding
@@ -405,30 +314,6 @@ struct Concept_decl : Decl
 
   Decl_list parms;
   Def*      def;
-};
-
-
-// Represents the declaration of an axiom or semantic requirements.
-struct Axiom_decl : Decl
-{
-  Axiom_decl(Name& n, Decl_list const& ds, Stmt& s)
-    : Decl(n), parms(ds), reqs(&s)
-  { }
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the list of parameters in terms of which the requirements
-  // are written.
-  Decl_list const& parameters() const { return parms; }
-  Decl_list&       parameters()       { return parms; }
-
-  // Returns the list of requirements.
-  Stmt const& body() const { return *reqs; }
-  Stmt&       body()       { return *reqs; }
-
-  Decl_list parms;
-  Stmt*     reqs;
 };
 
 

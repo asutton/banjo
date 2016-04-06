@@ -236,9 +236,6 @@ hash_value(Type const& t)
     std::size_t operator()(Reference_type const& t) const { return hash_composite(t); }
     std::size_t operator()(Array_type const& t) const     { return hash_composite(t); }
     std::size_t operator()(Sequence_type const& t) const  { return hash_composite(t); }
-    std::size_t operator()(Class_type const& t) const     { return hash_udt(t); }
-    std::size_t operator()(Union_type const& t) const     { return hash_udt(t); }
-    std::size_t operator()(Enum_type const& t) const      { return hash_udt(t); }
     std::size_t operator()(Typename_type const& t) const  { return hash_udt(t); }
     std::size_t operator()(Synthetic_type const& t) const { return hash_udt(t); }
   };

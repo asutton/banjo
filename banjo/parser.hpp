@@ -125,10 +125,6 @@ struct Parser
   Decl_list declaration_seq();
   Decl& empty_declaration();
 
-  Decl& enum_declaration();
-  Decl& namespace_declaration();
-  Decl& axiom_declaration();
-
   // Variables
   Decl& variable_declaration();
   Type& unparsed_variable_type();
@@ -156,9 +152,6 @@ struct Parser
   Type& unparsed_type_kind();
   Stmt& unparsed_type_body();
 
-  Def& class_definition(Decl&);
-  Decl_list member_seq();
-  Decl& member_declaration();
 
   // Templates
   Decl& template_declaration();
@@ -181,7 +174,6 @@ struct Parser
   Req& requirement();
   Req& type_requirement();
   Req& syntactic_requirement();
-  Req& semantic_requirement();
   Req& expression_requirement();
   Req& usage_requirement();
   Req_list usage_seq();
@@ -294,8 +286,7 @@ struct Parser
   // Type declarations
   Decl& on_type_declaration(Name&, Type&, Stmt&);
 
-
-  Decl& on_namespace_declaration(Token, Name&, Decl_list&);
+  // Concept declarations
   Decl& on_concept_declaration(Token, Name&, Decl_list&);
 
   // Function parameters
@@ -313,13 +304,10 @@ struct Parser
 
   // Definitions
   Def& on_function_definition(Decl&, Stmt&);
-  Def& on_class_definition(Decl&, Decl_list&);
   Def& on_concept_definition(Decl&, Expr&);
   Def& on_concept_definition(Decl&, Req_list&);
   Def& on_deleted_definition(Decl&);
   Def& on_defaulted_definition(Decl&);
-
-  Name& on_declarator(Name&);
 
   // Reqirements
   Req& on_type_requirement(Expr&);
@@ -330,9 +318,6 @@ struct Parser
   Req& on_basic_requirement(Expr&, Type&);
   Req& on_conversion_requirement(Expr&, Type&);
   Req& on_deduction_requirement(Expr&, Type&);
-
-  // Miscellaneous
-  Namespace_decl& on_translation_unit(Decl_list&);
 
   // Token matching.
   Token      peek() const;

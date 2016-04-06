@@ -67,9 +67,6 @@ struct Builder
   Reference_type& get_reference_type(Type&);
   Array_type&     get_array_type(Type&, Expr&);
   Sequence_type&  get_sequence_type(Type&);
-  Class_type&     get_class_type(Decl&);
-  Union_type&     get_union_type(Decl&);
-  Enum_type&      get_enum_type(Decl&);
   Typename_type&  get_typename_type(Decl&);
   Type_type&      get_type_type();
 
@@ -128,10 +125,6 @@ struct Builder
   Class_def&      make_class_definition(Decl_list const&);
   Concept_def&    make_concept_definition(Req_list const&);
 
-  Namespace_decl& make_namespace(Name&);
-  Namespace_decl& make_namespace(char const*);
-  Namespace_decl& get_global_namespace();
-
   Variable_decl&  make_variable_declaration(Name&, Type&);
   Variable_decl&  make_variable_declaration(char const*, Type&);
   Variable_decl&  make_variable_declaration(Name&, Type&, Expr&);
@@ -144,8 +137,6 @@ struct Builder
 
   Type_decl&      make_type_declaration(Name&, Type&, Stmt&);
 
-  Class_decl&     make_class(Name&);
-  Class_decl&     make_class(char const*);
   Template_decl&  make_template(Decl_list const&, Decl&);
   Concept_decl&   make_concept(Name&, Decl_list const&);
   Concept_decl&   make_concept(Name&, Decl_list const&, Def&);

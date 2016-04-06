@@ -83,11 +83,6 @@ redeclare(Decl& prev, Decl& given)
     // the same declared type.
     Decl* operator()(Variable_decl& given) { return redeclare_object(prev, given); }
     Decl* operator()(Function_decl& given) { return redeclare_object(prev, given); }
-
-    // User-defined types with the same names must be redeclarations.
-    Decl* operator()(Class_decl& given)    { return &prev; }
-    Decl* operator()(Union_decl& given)    { return &prev; }
-    Decl* operator()(Enum_decl& given)     { return &prev; }
   };
   return apply(given, fn{prev});
 }

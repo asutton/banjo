@@ -463,95 +463,6 @@ Parser::unparsed_type_body()
 }
 
 
-// FIXME:  most of these should go away.
-
-// Parse a class definition (it's body).
-//
-//    class-definition:
-//      '=' 'delete' ';'
-//      [base-clause] class-body
-//
-//    class-body:
-//      '{' [member-seq] '}'
-//
-// TODO: Implment base class parsing.
-Def&
-Parser::class_definition(Decl& d)
-{
-  // Match deleted definitions.
-  if (match_if(eq_tok)) {
-    match(delete_tok);
-    match(semicolon_tok);
-    return on_deleted_definition(d);
-  }
-
-  // Match the class body.
-  Decl_list ds;
-  match(lbrace_tok);
-  if (lookahead() != rbrace_tok)
-    ds = member_seq();
-  match(rbrace_tok);
-  return on_class_definition(d, ds);
-}
-
-
-// Parse a sequence of class members.
-//
-//    member-seq:
-//      member-declaration:
-//      member-seq member-declaration
-Decl_list
-Parser::member_seq()
-{
-  Decl_list ds;
-  do {
-    Decl& d = member_declaration();
-    ds.push_back(d);
-  } while (lookahead() != rbrace_tok);
-  return ds;
-}
-
-
-// Parse a member-declaration.
-//
-//    member-declaration:
-//      variable-declaration
-//      function-declaration
-//
-// TODO: Support member types and templates.
-//
-// TODO: Have different declarations for members and non-members?
-Decl&
-Parser::member_declaration()
-{
-  switch (lookahead()) {
-    case var_tok:
-      return variable_declaration();
-    default:
-      break;
-  }
-  throw Syntax_error("expected member-declaration");
-}
-
-
-// -------------------------------------------------------------------------- //
-// Namespaces
-
-// Parse a namespace declaration.
-//
-//    namespace-declaration:
-//      'namespace' [declarator] '{' declaration-seq '}'
-Decl&
-Parser::namespace_declaration()
-{
-  lingo_unimplemented("parse namespace");
-  // Token tok = require(namespace_tok);
-  // Name& n = declarator();
-  // declaration_seq();
-  // return on_namespace_declaration(tok, n);
-}
-
-
 // -------------------------------------------------------------------------- //
 // Template declarations
 
@@ -814,18 +725,9 @@ Parser::concept_member()
       return type_requirement();
     case requires_tok:
       return syntactic_requirement();
-    case axiom_tok:
-      return semantic_requirement();
     default:
       return expression_requirement();
   }
-}
-
-
-Decl&
-Parser::axiom_declaration()
-{
-  lingo_unimplemented("parse axiom-declaration");
 }
 
 
@@ -835,7 +737,7 @@ Parser::axiom_declaration()
 // Parse a declarator.
 //
 //    declarator:
-//      id
+//      identifier
 //
 // A declarator is the declared name of an entity. If a declarator
 // is a qualified-id, then the qualification explicitly gives the
@@ -843,12 +745,11 @@ Parser::axiom_declaration()
 //
 // TODO: Rename this to declaration-name.
 //
-// TODO: Handle declaration names.
+// FIXME: Allow non-identifiers?
 Name&
 Parser::declarator()
 {
-  Name& n = id();
-  return on_declarator(n);
+  return identifier();
 }
 
 

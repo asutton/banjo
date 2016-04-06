@@ -307,51 +307,6 @@ struct User_defined_type : Type
 };
 
 
-struct Class_decl;
-struct Union_decl;
-struct Enum_decl;
-struct Type_parm;
-
-
-struct Class_type : User_defined_type
-{
-  using User_defined_type::User_defined_type;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the declaration of the class type.
-  Class_decl const& declaration() const;
-  Class_decl&       declaration();
-};
-
-
-struct Union_type : User_defined_type
-{
-  using User_defined_type::User_defined_type;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the declaration of the union type.
-  Union_decl const& declaration() const;
-  Union_decl&       declaration();
-};
-
-
-struct Enum_type : User_defined_type
-{
-  using User_defined_type::User_defined_type;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the declaration of the enum type.
-  Enum_decl const& declaration() const;
-  Enum_decl&       declaration();
-};
-
-
 // The type of a type parameter declaration.
 //
 // FIXME: Guarantee that d is a Type_parm.
@@ -476,38 +431,6 @@ inline bool
 is_sequence_type(Type const& t)
 {
   return is<Sequence_type>(&t);
-}
-
-
-// Returns true if `t` is a class type.
-inline bool
-is_class_type(Type const& t)
-{
-  return is<Class_type>(&t);
-}
-
-
-// Returns true if `t` is a (possibly qualified) class type.
-inline bool
-is_maybe_qualified_class_type(Type const& t)
-{
-  return is_class_type(t.unqualified_type());
-}
-
-
-// Returns true if `t` is a union type.
-inline bool
-is_union_type(Type const& t)
-{
-  return is<Union_type>(&t);
-}
-
-
-// Returns true if `t` is a (possibly qualified) union type.
-inline bool
-is_maybe_qualified_union_type(Type const& t)
-{
-  return is_union_type(t.unqualified_type());
 }
 
 

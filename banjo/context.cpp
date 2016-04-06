@@ -25,9 +25,6 @@ Context::Context()
 
   // Initialize all the tokens.
   init_tokens(syms);
-
-  // Initialize the global namepace.
-  global = &get_global_namespace();
 }
 
 
@@ -244,14 +241,6 @@ Enter_scope::Enter_scope(Context& cxt)
   : cxt(cxt), prev(&cxt.current_scope()), alloc(&cxt.make_scope())
 {
   cxt.set_scope(*alloc);
-}
-
-
-// Enter the scope associated with a namespace definition.
-Enter_scope::Enter_scope(Context& c, Namespace_decl& ns)
-  : cxt(c), prev(&c.current_scope()), alloc(nullptr)
-{
-  cxt.set_scope(*ns.scope());
 }
 
 

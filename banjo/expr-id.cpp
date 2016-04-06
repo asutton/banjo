@@ -47,8 +47,6 @@ make_reference(Context& cxt, Decl& d)
   // TODO: Diagnose the error and point to the declaration.
   if (Type_decl* t = as<Type_decl>(&d))
     throw Type_error("'{}' is not an object or function", t->name());
-  if (Namespace_decl* ns = as<Namespace_decl>(&d))
-    throw Type_error("'{}' is not an object or function", ns->name());
 
   banjo_unhandled_case(d);
 }

@@ -13,13 +13,5 @@ define_node(Value_parm);
 define_node(Type_parm);
 define_node(Template_parm);
 
-// TODO: These are all kinds of type declaration. It might be useful
-// to have language support for them.
-define_node(Class_decl);
-define_node(Union_decl);
-define_node(Enum_decl);
-define_node(Namespace_decl);
-define_node(Axiom_decl);
-
 // This is probably the wrong approach for variadics.
 define_node(Variadic_parm);

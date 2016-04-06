@@ -86,7 +86,7 @@ Parser::on_qualified_id(Decl& d, Name& n)
 Decl&
 Parser::on_nested_name_specifier()
 {
-  return cxt.global_namespace();
+  lingo_unimplemented("on nested-name-specifier");
 }
 
 
@@ -200,27 +200,10 @@ Parser::on_type_alias(Name&)
 // Returns a type pointer if the declaraiton declares a type.
 // Otherwise, returns nullptr.
 //
-// TODO: Perhpas we should have a base class for all type
-// declarations?
-inline Type*
+// FIXME: This isn't being used any more.
+static inline Type*
 get_type_for_decl(Context& cxt, Decl& decl)
 {
-  Builder build(cxt);
-
-  if (Class_decl* d = as<Class_decl>(&decl))
-    return &build.get_class_type(*d);
-
-  if (Union_decl* d = as<Union_decl>(&decl))
-    return &build.get_union_type(*d);
-
-  if (Enum_decl* d = as<Enum_decl>(&decl))
-    return &build.get_enum_type(*d);
-
-  if (Type_parm* d = as<Type_parm>(&decl))
-    return &build.get_typename_type(*d);
-
-  // TODO: Handle type aliases.
-
   return nullptr;
 }
 

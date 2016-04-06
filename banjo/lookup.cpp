@@ -43,15 +43,6 @@ unqualified_lookup(Context& cxt, Scope& scope, Simple_id const& id)
       // the search.
     }
 
-    else if (Class_scope* cs = as<Class_scope>(p)) {
-      Class_decl& c = cs->declaration();
-      (void)c;
-
-      // TODO: Include base classes of c. Lookup also depends on
-      // the declarative region of c (nested classes, locals, etc).
-    }
-
-
     else if (Initializer_scope* s = as<Initializer_scope>(p)) {
       Decl& v = s->declaration();
       (void)v;

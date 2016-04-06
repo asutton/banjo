@@ -322,28 +322,6 @@ Builder::get_sequence_type(Type& t)
 }
 
 
-// FIXME: Canonicalize class types?
-Class_type&
-Builder::get_class_type(Decl& d)
-{
-  return make<Class_type>(d);
-}
-
-
-Union_type&
-Builder::get_union_type(Decl& d)
-{
-  lingo_unimplemented("union-type");
-}
-
-
-Enum_type&
-Builder::get_enum_type(Decl& d)
-{
-  lingo_unimplemented("enum-type");
-}
-
-
 Typename_type&
 Builder::get_typename_type(Decl& d)
 {
@@ -762,43 +740,6 @@ Builder::make_type_declaration(Name& n, Type& t, Stmt& s)
 {
   Def& d = make_type_definition(s);
   return make<Type_decl>(n, t, d);
-}
-
-
-Class_decl&
-Builder::make_class(Name& n)
-{
-  return make<Class_decl>(n);
-}
-
-
-Class_decl&
-Builder::make_class(char const* s)
-{
-  return make<Class_decl>(get_id(s));
-}
-
-
-Namespace_decl&
-Builder::make_namespace(Name& n)
-{
-  return make<Namespace_decl>(n);
-}
-
-
-Namespace_decl&
-Builder::make_namespace(char const* s)
-{
-  return make_namespace(get_id(s));
-}
-
-
-// FIXME: This should probably be installed on the context.
-Namespace_decl&
-Builder::get_global_namespace()
-{
-  static Namespace_decl ns(get_global_id());
-  return ns;
 }
 
 

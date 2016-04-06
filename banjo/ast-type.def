@@ -16,10 +16,8 @@ define_node(Reference_type)
 define_node(Array_type)
 define_node(Sequence_type)
 
-// FIXME: these are (likely) deprecated.
-define_node(Class_type)
-define_node(Union_type)
-define_node(Enum_type)
+// TODO: Am I actually using this anywhere? Or have I subsumed the use
+// of this with auto types.
 define_node(Typename_type)
 
 define_node(Synthetic_type)

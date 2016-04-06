@@ -1,7 +1,0 @@
-
-// Template instantiation.
-
-template<typename T>
-struct S { }
-
-var S<int> s;

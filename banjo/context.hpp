@@ -32,10 +32,6 @@ struct Context : Builder
   Symbol_table const& symbols() const { return syms; }
   Symbol_table&       symbols()       { return syms; }
 
-  // Returns the global namespace.
-  Namespace_decl const& global_namespace() const { return *global; }
-  Namespace_decl&       global_namespace()       { return *global; }
-
   // Unique ids
   int get_unique_id();
 
@@ -91,7 +87,6 @@ struct Context : Builder
 
   Symbol_table    syms;
   Location        input;  // The input location
-  Namespace_decl* global; // The global namespace
   Scope*          scope;  // The current scope
 
   // Store information for generating unique names.
@@ -167,7 +162,6 @@ Context::get_unique_id()
 struct Enter_scope
 {
   Enter_scope(Context&);
-  Enter_scope(Context&, Namespace_decl&);
   Enter_scope(Context&, Scope&);
   ~Enter_scope();
 
