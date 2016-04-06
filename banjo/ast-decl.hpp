@@ -86,18 +86,18 @@ struct Decl::Mutator
 struct Object_decl : Decl
 {
   Object_decl(Name& n, Type& t)
-    : Decl(n), ty(&t), init()
+    : Decl(n), type_(&t), init_()
   { }
 
   Object_decl(Name& n, Type& t, Expr& e)
-    : Decl(n), ty(&t), init(&e)
+    : Decl(n), type_(&t), init_(&e)
   { }
 
-  Type const& type() const { return *ty; }
-  Type&       type()       { return *ty; }
+  Type const& type() const { return *type_; }
+  Type&       type()       { return *type_; }
 
-  Type* ty;
-  Expr* init;
+  Type* type_;
+  Expr* init_;
 };
 
 
@@ -117,9 +117,9 @@ struct Variable_decl : Object_decl
 
   // Returns the initializer for the variable. This is
   // defined iff has_initializer() is true.
-  Expr const& initializer() const     { return *init; }
-  Expr&       initializer()           { return *init; }
-  bool        has_initializer() const { return init; }
+  Expr const& initializer() const     { return *init_; }
+  Expr&       initializer()           { return *init_; }
+  bool        has_initializer() const { return init_; }
 };
 
 
@@ -139,9 +139,9 @@ struct Constant_decl : Object_decl
 
   // Returns the initializer for the variable. This is
   // defined iff has_initializer() is true.
-  Expr const& initializer() const     { return *init; }
-  Expr&       initializer()           { return *init; }
-  bool        has_initializer() const { return init; }
+  Expr const& initializer() const     { return *init_; }
+  Expr&       initializer()           { return *init_; }
+  bool        has_initializer() const { return init_; }
 };
 
 
@@ -365,10 +365,10 @@ struct Object_parm : Parameter_decl<Object_decl>
 
   // Returns the default argument for the parameter.
   // This is valid iff has_default_arguement() is true.
-  Expr const& default_argument() const { return *init; }
-  Expr&       default_argument()       { return *init; }
+  Expr const& default_argument() const { return *init_; }
+  Expr&       default_argument()       { return *init_; }
 
-  bool has_default_arguement() const { return init; }
+  bool has_default_arguement() const { return init_; }
 };
 
 
@@ -391,10 +391,10 @@ struct Value_parm : Parameter_decl<Object_decl>
 
   // Returns the default argument for the parameter.
   // This is valid iff has_default_arguement() is true.
-  Expr const& default_argument() const { return *init; }
-  Expr&       default_argument()       { return *init; }
+  Expr const& default_argument() const { return *init_; }
+  Expr&       default_argument()       { return *init_; }
 
-  bool has_default_arguement() const { return init; }
+  bool has_default_arguement() const { return init_; }
 };
 
 

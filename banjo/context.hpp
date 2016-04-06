@@ -208,6 +208,24 @@ struct Enter_requires_scope : Enter_scope
 };
 
 
+// -------------------------------------------------------------------------- //
+// Input location
+
+struct Save_input_location
+{
+  Save_input_location(Context& c)
+    : cxt(c), prev(cxt.input_location())
+  { }
+
+  ~Save_input_location()
+  {
+    cxt.input_location(prev);
+  }
+
+  Context& cxt;
+  Location prev;
+};
+
 
 // -------------------------------------------------------------------------- //
 // Diagnostic utilities

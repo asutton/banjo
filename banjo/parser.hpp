@@ -181,6 +181,15 @@ struct Parser
   // Modules
   Stmt_list input();
 
+  // Elaboration
+  void elaborate_declarations(Stmt_list&);
+  void elaborate_declaration(Stmt&);
+  void elaborate_declaration(Decl&);
+  void elaborate_variable_declaration(Variable_decl&);
+  void elaborate_function_declaration(Function_decl&);
+  void elaborate_type_declaration(Type_decl&);
+
+
   // Semantics actions
 
   // Identifiers

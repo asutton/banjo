@@ -312,7 +312,10 @@ Parser::current_context()
 Stmt_list
 Parser::input()
 {
+  // TODO: This should probably be the global scope and associated with
+  // the context, instead of being allocated on the fly.
   Enter_scope scope(cxt);
+
   return statement_seq();
 }
 

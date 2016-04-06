@@ -19,7 +19,7 @@ initialize_declaration(Decl* d, Expr& e)
 {
   d = &d->parameterized_declaration();
   if (Variable_decl* var = as<Variable_decl>(d))
-    var->init = &e;
+    var->init_ = &e;
   else
     lingo_unreachable();
 }

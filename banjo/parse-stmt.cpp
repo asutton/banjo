@@ -95,20 +95,22 @@ Parser::expression_statement()
 //    statement-seq:
 //      statement
 //      statement-seq statement
+//
+// NOTE: Every time we parse a sequence of statements, we expect that
+//  a new scope has been pushed.
 Stmt_list
 Parser::statement_seq()
 {
-  Stmt_list ss;
 
-  // First pass: initial parsing of the statement list.
+  // First pass: collect declarations
+  Stmt_list ss;
   do {
     Stmt& s = statement();
     ss.push_back(s);
   } while (!is_eof() && next_token_is_not(rbrace_tok));
 
-  // Second pass. Resolve declared types.
-  // for (Stmt* s : ss)
-  //   elaborate_declaration (cxt, *s);
+  // Second pass: Resolve declared types.
+  elaborate_declarations(ss);
 
   // Thrid pass. Elaborate definitions.
   // for (Stmt* s : ss)

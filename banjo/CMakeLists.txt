@@ -29,6 +29,7 @@ add_library(banjo
   act-stmt.cpp
   act-decl.cpp
   act-req.cpp
+  elab-decl.cpp
   printer.cpp
 
   # Semantics
