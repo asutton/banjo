@@ -71,6 +71,8 @@ struct Builder
   Union_type&     get_union_type(Decl&);
   Enum_type&      get_enum_type(Decl&);
   Typename_type&  get_typename_type(Decl&);
+  Type_type&      get_type_type();
+
   Synthetic_type& synthesize_type(Decl&);
 
   // Expressions
@@ -130,17 +132,17 @@ struct Builder
   Namespace_decl& make_namespace(char const*);
   Namespace_decl& get_global_namespace();
 
-  Variable_decl&  make_variable(Name&, Type&);
-  Variable_decl&  make_variable(char const*, Type&);
-  Variable_decl&  make_variable(Name&, Type&, Expr&);
-  Variable_decl&  make_variable(char const*, Type&, Expr&);
+  Variable_decl&  make_variable_declaration(Name&, Type&);
+  Variable_decl&  make_variable_declaration(char const*, Type&);
+  Variable_decl&  make_variable_declaration(Name&, Type&, Expr&);
+  Variable_decl&  make_variable_declaration(char const*, Type&, Expr&);
 
-  Function_decl&  make_function(Name&, Decl_list const&, Type&, Expr&);
-  Function_decl&  make_function(Name&, Decl_list const&, Type&, Stmt&);
-  Function_decl&  make_function(Name&, Decl_list const&, Type&);
-  Function_decl&  make_function(char const*, Decl_list const&, Type&);
+  Function_decl&  make_function_declaration(Name&, Decl_list const&, Type&, Expr&);
+  Function_decl&  make_function_declaration(Name&, Decl_list const&, Type&, Stmt&);
+  Function_decl&  make_function_declaration(Name&, Decl_list const&, Type&);
+  Function_decl&  make_function_declaration(char const*, Decl_list const&, Type&);
 
-  Type_decl&      make_type(Name&, Stmt&);
+  Type_decl&      make_type_declaration(Name&, Type&, Stmt&);
 
   Class_decl&     make_class(Name&);
   Class_decl&     make_class(char const*);

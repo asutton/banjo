@@ -45,6 +45,7 @@ struct Context : Builder
 
   // Scope management
   void   set_scope(Scope&);
+  Scope&                    make_scope();
   Initializer_scope&        make_initializer_scope(Decl&);
   Function_scope&           make_function_scope(Decl&);
   Function_parameter_scope& make_function_parameter_scope();
@@ -165,6 +166,7 @@ Context::get_unique_id()
 // An RAII helper that manages the entry and exit of scopes.
 struct Enter_scope
 {
+  Enter_scope(Context&);
   Enter_scope(Context&, Namespace_decl&);
   Enter_scope(Context&, Scope&);
   ~Enter_scope();

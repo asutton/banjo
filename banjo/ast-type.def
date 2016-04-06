@@ -15,10 +15,14 @@ define_node(Pointer_type)
 define_node(Reference_type)
 define_node(Array_type)
 define_node(Sequence_type)
+
+// FIXME: these are (likely) deprecated.
 define_node(Class_type)
 define_node(Union_type)
 define_node(Enum_type)
 define_node(Typename_type)
+
 define_node(Synthetic_type)
 
+define_node(Type_type)
 define_node(Unparsed_type)

@@ -67,6 +67,7 @@ struct Printer
   void primary_type(Float_type const&);
   void primary_type(Auto_type const&);
   void primary_type(Function_type const&);
+  void primary_type(Type_type const&);
 
   // Expressions
   void expression(Expr const&);
@@ -131,10 +132,6 @@ struct Printer
   void declaration_seq(Decl_list const&);
   void variable_declaration(Variable_decl const&);
   void constant_declaration(Constant_decl const&);
-  void union_declaration(Union_decl const&);
-  void enum_declaration(Enum_decl const&);
-  void namespace_declaration(Namespace_decl const&);
-  void axiom_declaration(Axiom_decl const&);
 
   // Functions
   void function_declaration(Function_decl const&);
@@ -148,12 +145,10 @@ struct Printer
   void parameter(Variadic_parm const&);
   void parameter_list(Decl_list const&);
 
-  // Classes
-  void class_declaration(Class_decl const&);
-  void class_definition(Def const&);
-  void class_definition(Class_def const&);
-  void class_definition(Deleted_def const&);
-  void member_seq(Decl_list const&);
+  // Types
+  void type_declaration(Type_decl const&);
+  void type_definition(Def const&);
+  void type_definition(Type_def const&);
 
   // Concepts
   void concept_declaration(Concept_decl const&);

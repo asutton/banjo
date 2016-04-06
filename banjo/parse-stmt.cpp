@@ -23,7 +23,7 @@ Parser::statement()
   switch (lookahead()) {
     case var_tok:
     case def_tok:
-    case typename_tok:
+    case type_tok:
     case concept_tok:
       return declaration_statement();
 

@@ -351,6 +351,14 @@ Builder::get_typename_type(Decl& d)
 }
 
 
+Type_type&
+Builder::get_type_type()
+{
+  static Type_type t;
+  return t;
+}
+
+
 Synthetic_type&
 Builder::synthesize_type(Decl& d)
 {
@@ -682,30 +690,30 @@ Builder::make_concept_definition(Req_list const& ss)
 // Declarations
 
 Variable_decl&
-Builder::make_variable(Name& n, Type& t)
+Builder::make_variable_declaration(Name& n, Type& t)
 {
   return make<Variable_decl>(n, t);
 }
 
 
 Variable_decl&
-Builder::make_variable(char const* s, Type& t)
+Builder::make_variable_declaration(char const* s, Type& t)
 {
-  return make_variable(get_id(s), t);
+  return make_variable_declaration(get_id(s), t);
 }
 
 
 Variable_decl&
-Builder::make_variable(Name& n, Type& t, Expr& e)
+Builder::make_variable_declaration(Name& n, Type& t, Expr& e)
 {
   return make<Variable_decl>(n, t, e);
 }
 
 
 Variable_decl&
-Builder::make_variable(char const* s, Type& t, Expr& i)
+Builder::make_variable_declaration(char const* s, Type& t, Expr& i)
 {
-  return make_variable(get_id(s), t, i);
+  return make_variable_declaration(get_id(s), t, i);
 }
 
 
@@ -713,7 +721,7 @@ Builder::make_variable(char const* s, Type& t, Expr& i)
 // and return types, and the definition is synthesized from the given
 // expression.
 Function_decl&
-Builder::make_function(Name& n, Decl_list const& p, Type& t, Expr& e)
+Builder::make_function_declaration(Name& n, Decl_list const& p, Type& t, Expr& e)
 {
   Type& r = get_function_type(p, t);
   Def& d = make_function_definition(e);
@@ -725,7 +733,7 @@ Builder::make_function(Name& n, Decl_list const& p, Type& t, Expr& e)
 // and return types, and the definition is synthesized from the given
 // statement.
 Function_decl&
-Builder::make_function(Name& n, Decl_list const& p, Type& t, Stmt& s)
+Builder::make_function_declaration(Name& n, Decl_list const& p, Type& t, Stmt& s)
 {
   Type& r = get_function_type(p, t);
   Def& d = make_function_definition(s);
@@ -735,7 +743,7 @@ Builder::make_function(Name& n, Decl_list const& p, Type& t, Stmt& s)
 
 // Creates an undefined function with parameters ps and return type r.
 Function_decl&
-Builder::make_function(Name& n, Decl_list const& p, Type& t)
+Builder::make_function_declaration(Name& n, Decl_list const& p, Type& t)
 {
   Type& r = get_function_type(p, t);
   return make<Function_decl>(n, r, p);
@@ -743,17 +751,17 @@ Builder::make_function(Name& n, Decl_list const& p, Type& t)
 
 
 Function_decl&
-Builder::make_function(char const* s, Decl_list const& ps, Type& r)
+Builder::make_function_declaration(char const* s, Decl_list const& ps, Type& r)
 {
-  return make_function(get_id(s), ps, r);
+  return make_function_declaration(get_id(s), ps, r);
 }
 
 
 Type_decl&
-Builder::make_type(Name& n, Stmt& s)
+Builder::make_type_declaration(Name& n, Type& t, Stmt& s)
 {
   Def& d = make_type_definition(s);
-  return make<Type_decl>(n, d);
+  return make<Type_decl>(n, t, d);
 }
 
 

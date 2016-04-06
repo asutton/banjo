@@ -313,7 +313,6 @@ struct Enum_decl;
 struct Type_parm;
 
 
-// TODO: Factor a base class for all of these: user-defined type.
 struct Class_type : User_defined_type
 {
   using User_defined_type::User_defined_type;
@@ -378,6 +377,14 @@ struct Synthetic_type : User_defined_type
 {
   using User_defined_type::User_defined_type;
 
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// The type of types.
+struct Type_type : Type
+{
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 };

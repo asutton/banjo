@@ -131,7 +131,7 @@ specialize_variable(Context& cxt, Template_decl& tmp, Variable_decl& d, Substitu
   // Substitute into the type.
   Type& t = substitute(cxt, d.type(), sub);
 
-  return cxt.make_variable(n, t);
+  return cxt.make_variable_declaration(n, t);
 }
 
 
@@ -156,7 +156,7 @@ specialize_function(Context& cxt, Template_decl& tmp, Function_decl& d, Substitu
   // Substitute through the return type.
   Type& ret = substitute(cxt, d.return_type(), sub);
 
-  return cxt.make_function(n, parms, ret);
+  return cxt.make_function_declaration(n, parms, ret);
 }
 
 

@@ -126,7 +126,6 @@ Scope::lookup(Name const& n)
 using Scope_list = std::vector<Scope*>;
 
 
-
 // Represents a namespace scope.
 struct Namespace_scope : Scope
 {

@@ -213,18 +213,23 @@ struct Type_decl : Decl
     : Decl(n)
   { lingo_unreachable(); }
 
-  Type_decl(Name& n, Def& d)
-    : Decl(n), def_(&d)
+  Type_decl(Name& n, Type& t, Def& d)
+    : Decl(n), kind_(&t), def_(&d)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
+  // Returns the kind of the type.
+  Type const& kind() const { return *kind_; }
+  Type&       kind()       { return *kind_; }
+
   // Returns the definition of the type.
   Def const& definition() const { return *def_; }
   Def&       definition()       { return *def_; }
 
-  Def* def_;
+  Type* kind_;
+  Def*  def_;
 };
 
 

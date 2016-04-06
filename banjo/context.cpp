@@ -47,6 +47,14 @@ Context::set_scope(Scope& s)
 }
 
 
+// Returns a new general purpose scope.
+Scope&
+Context::make_scope()
+{
+  return *new Scope(current_scope());
+}
+
+
 // Create a new initializer scopee.
 Initializer_scope&
 Context::make_initializer_scope(Decl& d)
@@ -228,6 +236,16 @@ Context::current_template()
 
 // -------------------------------------------------------------------------- //
 // Enter scope
+
+// Enter a new, general purpose scope. This is primarily used during
+// the first pass of a parse, when names are only be associated with
+// the kind of declaration and not a more specific type.
+Enter_scope::Enter_scope(Context& cxt)
+  : cxt(cxt), prev(&cxt.current_scope()), alloc(&cxt.make_scope())
+{
+  cxt.set_scope(*alloc);
+}
+
 
 // Enter the scope associated with a namespace definition.
 Enter_scope::Enter_scope(Context& c, Namespace_decl& ns)

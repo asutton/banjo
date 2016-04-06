@@ -57,7 +57,7 @@ Parser::on_declarator(Name& n)
 Decl&
 Parser::on_variable_declaration(Name& n, Type& t)
 {
-  Decl& d = cxt.make_variable(n, t);
+  Decl& d = cxt.make_variable_declaration(n, t);
   remember(cxt, current_scope(), d);
   return d;
 }
@@ -66,7 +66,7 @@ Parser::on_variable_declaration(Name& n, Type& t)
 Decl&
 Parser::on_variable_declaration(Name& n, Type& t, Expr& e)
 {
-  Decl& d = cxt.make_variable(n, t, e);
+  Decl& d = cxt.make_variable_declaration(n, t, e);
   remember(cxt, current_scope(), d);
   return d;
 }
@@ -78,7 +78,7 @@ Parser::on_variable_declaration(Name& n, Type& t, Expr& e)
 Decl&
 Parser::on_function_declaration(Name& n, Decl_list& p, Type& t, Expr& e)
 {
-  Decl& d = cxt.make_function(n, p, t, e);
+  Decl& d = cxt.make_function_declaration(n, p, t, e);
   remember(cxt, current_scope(), d);
   return d;
 }
@@ -87,7 +87,7 @@ Parser::on_function_declaration(Name& n, Decl_list& p, Type& t, Expr& e)
 Decl&
 Parser::on_function_declaration(Name& n, Decl_list& p, Type& t, Stmt& s)
 {
-  Decl& d = cxt.make_function(n, p, t, s);
+  Decl& d = cxt.make_function_declaration(n, p, t, s);
   remember(cxt, current_scope(), d);
   return d;
 }
@@ -149,9 +149,9 @@ define_entity(Decl& decl, Def& def)
 // Classes
 
 Decl&
-Parser::on_type_declaration(Name& n, Stmt& s)
+Parser::on_type_declaration(Name& n, Type& t, Stmt& s)
 {
-  Decl& d = build.make_type(n, s);
+  Decl& d = build.make_type_declaration(n, t, s);
   declare(cxt, current_scope(), d);
   return d;
 }

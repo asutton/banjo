@@ -134,8 +134,8 @@ Parser::match_if(Token_kind k)
 }
 
 
-// Require a token of the given kind. Behavior is
-// udefined if the token does not match.
+// Require a token of the given kind. Behavior is udefined if the token
+// does not match.
 Token
 Parser::require(Token_kind k)
 {
@@ -144,11 +144,26 @@ Parser::require(Token_kind k)
 }
 
 
+// Require an identifier matching the spelling of s.
 Token
 Parser::require(char const* s)
 {
   lingo_assert(next_token_is(s));
   return accept();
+}
+
+
+// Emit an error if the next token is not of the kind given. Note that
+// this does not consume the token.
+void
+Parser::expect(Token_kind k)
+{
+  if (next_token_is_not(k)) {
+    String msg = format("expected '{}' but got '{}'",
+                        get_spelling(k),
+                        token_spelling(tokens));
+    throw Syntax_error(cxt, msg);
+  }
 }
 
 
@@ -297,7 +312,7 @@ Parser::current_context()
 Stmt_list
 Parser::input()
 {
-  Enter_scope scope(cxt, cxt.global_namespace());
+  Enter_scope scope(cxt);
   return statement_seq();
 }
 

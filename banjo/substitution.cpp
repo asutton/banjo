@@ -311,7 +311,7 @@ substitute_decl(Context& cxt, Variable_decl& d, Substitution& sub)
 {
   Name& n = d.name();
   Type& t = substitute(cxt, d.type(), sub);
-  Decl& var = cxt.make_variable(n, t);
+  Decl& var = cxt.make_variable_declaration(n, t);
   declare(cxt, var);
   return var;
 }

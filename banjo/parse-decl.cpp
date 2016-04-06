@@ -408,10 +408,13 @@ Parser::function_definition(Decl& d)
 // Parse a type declaration.
 //
 //    type-declaration:
-//      'type' identifier ':' [type] type-body
+//      'type' identifier [':' type] type-body
 //
 //    type-body:
 //      compound-statement
+//
+// NOTE: The parser currently allows the omission of the ':' because it
+// looks weird when the kind is omitted.
 //
 // TODO: We could use '=' notation in bodies to create new derived types.
 Decl&
@@ -419,15 +422,28 @@ Parser::type_declaration()
 {
   require(type_tok);
   Name& name = identifier();
-  match(colon_tok);
 
-  if (next_token_is(lbrace_tok)) {
-    Stmt& body = unparsed_type_body();
-    return on_type_declaration(name, body);
-  }
+  match_if(colon_tok);
+  Type& kind = next_token_is(lbrace_tok) ? cxt.get_type_type() : unparsed_type_kind();
 
-  lingo_unimplemented("kinded types");
+  Stmt& body = unparsed_type_body();
+
+  return on_type_declaration(name, kind, body);
 };
+
+
+// Return an unparsed type for the variable's type specification.
+Type&
+Parser::unparsed_type_kind()
+{
+  Token_seq toks;
+  while (!is_eof()) {
+    if (next_token_is_one_of(lbrace_tok) && !in_braces())
+      break;
+    toks.push_back(accept());
+  }
+  return on_unparsed_type(std::move(toks));
+}
 
 
 // Returns an unparsed type body.

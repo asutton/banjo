@@ -153,6 +153,7 @@ struct Parser
 
   // Types
   Decl& type_declaration();
+  Type& unparsed_type_kind();
   Stmt& unparsed_type_body();
 
   Def& class_definition(Decl&);
@@ -282,27 +283,34 @@ struct Parser
   Expression_stmt& on_expression_statement(Expr&);
   Stmt& on_unparsed_statement(Token_seq&&);
 
-  // Declarations
+  // Variable declarations
   Decl& on_variable_declaration(Name&, Type&);
   Decl& on_variable_declaration(Name&, Type&, Expr&);
 
+  // Function declarations
   Decl& on_function_declaration(Name&, Decl_list&, Type&, Expr&);
   Decl& on_function_declaration(Name&, Decl_list&, Type&, Stmt&);
 
-  Decl& on_type_declaration(Name&, Stmt&);
+  // Type declarations
+  Decl& on_type_declaration(Name&, Type&, Stmt&);
+
 
   Decl& on_namespace_declaration(Token, Name&, Decl_list&);
   Decl& on_concept_declaration(Token, Name&, Decl_list&);
+
   // Function parameters
   Object_parm& on_function_parameter(Name&, Type&);
+
   // Template parameters
   Type_parm& on_type_template_parameter(Name&, Type&);
   Type_parm& on_type_template_parameter(Name&);
+
   // Initializers
   Expr& on_default_initialization(Decl&);
   Expr& on_equal_initialization(Decl&, Expr&);
   Expr& on_paren_initialization(Decl&, Expr_list&);
   Expr& on_brace_initialization(Decl&, Expr_list&);
+
   // Definitions
   Def& on_function_definition(Decl&, Stmt&);
   Def& on_class_definition(Decl&, Decl_list&);
@@ -339,6 +347,7 @@ struct Parser
   Token      match_if(Token_kind);
   Token      require(Token_kind);
   Token      require(char const*);
+  void       expect(Token_kind);
   Token      accept();
 
   template<typename... Kinds>

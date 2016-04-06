@@ -412,6 +412,13 @@ Printer::primary_type(Function_type const& t)
 }
 
 
+void
+Printer::primary_type(Type_type const& t)
+{
+  token(type_tok);
+}
+
+
 // -------------------------------------------------------------------------- //
 // Expressions
 
@@ -966,109 +973,6 @@ Printer::initializer(Expr const& e)
 }
 
 
-// -------------------------------------------------------------------------- //
-// Definitions
-
-void
-Printer::function_definition(Def const& d)
-{
-  struct fn
-  {
-    Printer& p;
-    void operator()(Def const& d)            { lingo_unhandled(d); }
-    void operator()(Function_def const& d)   { p.function_definition(d); }
-    void operator()(Expression_def const& d) { p.function_definition(d); }
-    void operator()(Deleted_def const& d)    { p.function_definition(d); }
-    void operator()(Defaulted_def const& d)  { p.function_definition(d); }
-  };
-  apply(d, fn{*this});
-}
-
-void
-Printer::function_definition(Function_def const& d)
-{
-  newline();
-  statement(d.statement());
-}
-
-
-void
-Printer::function_definition(Expression_def const& d)
-{
-  binary_operator(eq_tok);
-  expression(d.expression());
-  token(semicolon_tok);
-}
-
-
-void
-Printer::function_definition(Deleted_def const&)
-{
-  binary_operator(eq_tok);
-  token(delete_tok);
-}
-
-
-void
-Printer::function_definition(Defaulted_def const&)
-{
-  binary_operator(eq_tok);
-  token(default_tok);
-}
-
-
-void
-Printer::class_definition(Def const& d)
-{
-  struct fn
-  {
-    Printer& p;
-    void operator()(Def const& d)         { lingo_unhandled(d); }
-    void operator()(Class_def const& d)   { p.class_definition(d); }
-    void operator()(Deleted_def const& d) { p.class_definition(d); }
-  };
-  apply(d, fn{*this});
-}
-
-
-void
-Printer::class_definition(Class_def const& d)
-{
-  if (d.members().empty()) {
-    space();
-    token(lbrace_tok);
-    space();
-    token(rbrace_tok);
-  } else {
-    newline();
-    token(lbrace_tok);
-    newline_and_indent();
-    member_seq(d.members());
-    newline_and_undent();
-    token(rbrace_tok);
-  }
-}
-
-
-void
-Printer::member_seq(Decl_list const& ds)
-{
-  for (auto iter = ds.begin(); iter != ds.end(); ++iter) {
-    declaration(*iter);
-    if (std::next(iter) != ds.end())
-      newline();
-  }
-}
-
-
-void
-Printer::class_definition(Deleted_def const&)
-{
-  space();
-  token(eq_tok);
-  space();
-  token(delete_tok);
-}
 
 
 // -------------------------------------------------------------------------- //
@@ -1081,20 +985,14 @@ Printer::declaration(Decl const& d)
   {
     Printer& p;
 
-    void operator()(Decl const&) { lingo_unreachable(); }
+    void operator()(Decl const& d)           { lingo_unhandled(d); }
     void operator()(Variable_decl const& d)  { p.variable_declaration(d); }
     void operator()(Constant_decl const& d)  { p.constant_declaration(d); }
     void operator()(Function_decl const& d)  { p.function_declaration(d); }
-    void operator()(Class_decl const& d)     { p.class_declaration(d); }
-    void operator()(Union_decl const& d)     { p.union_declaration(d); }
-    void operator()(Enum_decl const& d)      { p.enum_declaration(d); }
-    void operator()(Namespace_decl const& d) { p.namespace_declaration(d); }
-    void operator()(Template_decl const& d)  { p.template_declaration(d); }
-    void operator()(Concept_decl const& d)   { p.concept_declaration(d); }
-    void operator()(Axiom_decl const& d)     { p.axiom_declaration(d); }
+    void operator()(Type_decl const& d)      { p.type_declaration(d); }
 
-    // Support emitting these here so we can print parameters
-    // without an appropriate context.
+    // Support emitting these here so we can print parameters without
+    // an appropriate context.
     void operator()(Object_parm const& d)    { p.parameter(d); }
     void operator()(Value_parm const& d)     { p.value_template_parameter(d); }
     void operator()(Type_parm const& d)      { p.type_template_parameter(d); }
@@ -1149,111 +1047,96 @@ Printer::function_declaration(Function_decl const& d)
   token(rparen_tok);
   binary_operator(arrow_tok);
   type(d.return_type());
-
-  // FIXME: Functions are always defined.
-  if (d.is_definition())
-    function_definition(d.definition());
-  else
-    token(semicolon_tok);
+  function_definition(d.definition());
 }
 
 
 void
-Printer::class_declaration(Class_decl const& d)
-{
-  token(class_tok);
-  id(d.name());
-  if (d.is_definition())
-    class_definition(d.definition());
-  else
-    token(semicolon_tok);
-}
-
-
-void
-Printer::union_declaration(Union_decl const& d)
-{
-  lingo_unreachable();
-}
-
-
-void
-Printer::enum_declaration(Enum_decl const& d)
-{
-  lingo_unreachable();
-}
-
-
-// FIXME: Handle the global namespace and anonymous namespaces.
-//
-// FIXME: Print the list of members.
-void
-Printer::namespace_declaration(Namespace_decl const& d)
-{
-  if (d.is_global()) {
-    declaration_seq(d.members());
-  } else {
-    token(namespace_tok);
-    id(d.name());
-    token(lbrace_tok);
-    newline_and_indent();
-    declaration_seq(d.members());
-    newline_and_undent();
-    token(rbrace_tok);
-  }
-}
-
-
-void
-Printer::template_declaration(Template_decl const& d)
-{
-  token(template_tok);
-  token(lt_tok);
-  template_parameter_list(d.parameters());
-  token(gt_tok);
-  if (d.is_constrained()) {
-    newline_and_indent();
-    requires_clause(d.constraint());
-    newline_and_undent();
-  } else {
-    newline();
-  }
-  declaration(d.parameterized_declaration());
-}
-
-
-void
-Printer::concept_declaration(Concept_decl const& d)
-{
-  token(concept_tok);
-  id(d.name());
-  token(lt_tok);
-  template_parameter_list(d.parameters());
-  token(gt_tok);
-  space();
-  if (d.is_defined()) {
-    concept_definition(d.definition());
-  } else {
-    token(eq_tok);
-    space();
-    token(ellipsis_tok);
-    token(semicolon_tok);
-  }
-}
-
-
-void
-Printer::concept_definition(Def const& d)
+Printer::function_definition(Def const& d)
 {
   struct fn
   {
     Printer& p;
-    void operator()(Def const& d) { banjo_unhandled_case(d); }
-    void operator()(Expression_def const& d) { p.concept_definition(d); }
-    void operator()(Concept_def const& d)    { p.concept_definition(d); }
+    void operator()(Def const& d)            { lingo_unhandled(d); }
+    void operator()(Function_def const& d)   { p.function_definition(d); }
+    void operator()(Expression_def const& d) { p.function_definition(d); }
+    void operator()(Deleted_def const& d)    { p.function_definition(d); }
+    void operator()(Defaulted_def const& d)  { p.function_definition(d); }
   };
   apply(d, fn{*this});
 }
+
+void
+Printer::function_definition(Function_def const& d)
+{
+  newline();
+  statement(d.statement());
+}
+
+
+void
+Printer::function_definition(Expression_def const& d)
+{
+  binary_operator(eq_tok);
+  expression(d.expression());
+  token(semicolon_tok);
+}
+
+
+void
+Printer::function_definition(Deleted_def const&)
+{
+  binary_operator(eq_tok);
+  token(delete_tok);
+}
+
+
+void
+Printer::function_definition(Defaulted_def const&)
+{
+  binary_operator(eq_tok);
+  token(default_tok);
+}
+
+
+
+
+void
+Printer::type_declaration(Type_decl const& d)
+{
+  token(type_tok);
+  space();
+  identifier(d);
+  binary_operator(colon_tok);
+
+  // FIXME: This looks weird, but it's right.
+  token(type_tok);
+
+  type_definition(d.definition());
+}
+
+
+void
+Printer::type_definition(Def const& d)
+{
+  struct fn
+  {
+    Printer& p;
+    void operator()(Def const& d)         { lingo_unhandled(d); }
+    void operator()(Type_def const& d)    { p.type_definition(d); }
+    void operator()(Deleted_def const& d) { p.type_definition(d); }
+  };
+  apply(d, fn{*this});
+}
+
+
+void
+Printer::type_definition(Type_def const& d)
+{
+  newline();
+  statement(d.body());
+}
+
 
 
 void
@@ -1333,27 +1216,6 @@ Printer::concept_member(Expression_req const& r)
 {
   expression(r.expression());
   token(semicolon_tok);
-}
-
-
-void
-Printer::axiom_declaration(Axiom_decl const& d)
-{
-  token(axiom_tok);
-  space();
-  id(d.name());
-  space();
-
-  token(lparen_tok);
-  parameter_list(d.parameters());
-  token(rparen_tok);
-  space();
-
-  token(lbrace_tok);
-  newline_and_indent();
-  token("..."); // FIXME: Implement me!
-  newline_and_undent();
-  token(rbrace_tok);
 }
 
 
