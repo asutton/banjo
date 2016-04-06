@@ -130,8 +130,12 @@ struct Printer
   // Declarations
   void declaration(Decl const&);
   void declaration_seq(Decl_list const&);
+
+  // Variables
   void variable_declaration(Variable_decl const&);
-  void constant_declaration(Constant_decl const&);
+  void variable_initializer(Def const&);
+  void variable_initializer(Empty_def const&);
+  void variable_initializer(Expression_def const&);
 
   // Functions
   void function_declaration(Function_decl const&);
@@ -142,7 +146,6 @@ struct Printer
   void function_definition(Defaulted_def const&);
   void parameter(Decl const&);
   void parameter(Object_parm const&);
-  void parameter(Variadic_parm const&);
   void parameter_list(Decl_list const&);
 
   // Types

@@ -604,87 +604,22 @@ Builder::make_aggregate_init(Type& t, Expr_list const& es)
 
 
 // -------------------------------------------------------------------------- //
-// Definitions
-
-
-
-Deleted_def&
-Builder::make_deleted_definition()
-{
-  return make<Deleted_def>();
-}
-
-
-Defaulted_def&
-Builder::make_defaulted_definition()
-{
-  return make<Defaulted_def>();
-}
-
-
-Expression_def&
-Builder::make_expression_definition(Expr& e)
-{
-  return make<Expression_def>(e);
-}
-
-
-Expression_def&
-Builder::make_function_definition(Expr& e)
-{
-  return make<Expression_def>(e);
-}
-
-
-Function_def&
-Builder::make_function_definition(Stmt& s)
-{
-  return make<Function_def>(s);
-}
-
-
-Type_def&
-Builder::make_type_definition(Stmt& s)
-{
-  return make<Type_def>(s);
-}
-
-
-Class_def&
-Builder::make_class_definition(Decl_list const& ds)
-{
-  return make<Class_def>(ds);
-}
-
-
-Concept_def&
-Builder::make_concept_definition(Req_list const& ss)
-{
-  return make<Concept_def>(ss);
-}
-
-
-// -------------------------------------------------------------------------- //
 // Declarations
+
 
 Variable_decl&
 Builder::make_variable_declaration(Name& n, Type& t)
 {
-  return make<Variable_decl>(n, t);
-}
-
-
-Variable_decl&
-Builder::make_variable_declaration(char const* s, Type& t)
-{
-  return make_variable_declaration(get_id(s), t);
+  Def& d = make_empty_definition();
+  return make<Variable_decl>(n, t, d);
 }
 
 
 Variable_decl&
 Builder::make_variable_declaration(Name& n, Type& t, Expr& e)
 {
-  return make<Variable_decl>(n, t, e);
+  Def& d = make_expression_definition(e);
+  return make<Variable_decl>(n, t, d);
 }
 
 
@@ -702,7 +637,7 @@ Function_decl&
 Builder::make_function_declaration(Name& n, Decl_list const& p, Type& t, Expr& e)
 {
   Type& r = get_function_type(p, t);
-  Def& d = make_function_definition(e);
+  Def& d = make_expression_definition(e);
   return make<Function_decl>(n, r, p, d);
 }
 
@@ -858,6 +793,70 @@ Builder::make_placeholder_type()
   Decl& d = make<Type_parm>(x, n);
   return get_typename_type(d);
 }
+
+
+
+
+// -------------------------------------------------------------------------- //
+// Definitions
+
+Empty_def&
+Builder::make_empty_definition()
+{
+  static Empty_def d;
+  return d;
+}
+
+Deleted_def&
+Builder::make_deleted_definition()
+{
+  static Deleted_def d;
+  return d;
+}
+
+
+Defaulted_def&
+Builder::make_defaulted_definition()
+{
+  static Defaulted_def d;
+  return d;
+}
+
+
+Expression_def&
+Builder::make_expression_definition(Expr& e)
+{
+  return make<Expression_def>(e);
+}
+
+
+Function_def&
+Builder::make_function_definition(Stmt& s)
+{
+  return make<Function_def>(s);
+}
+
+
+Type_def&
+Builder::make_type_definition(Stmt& s)
+{
+  return make<Type_def>(s);
+}
+
+
+Class_def&
+Builder::make_class_definition(Decl_list const& ds)
+{
+  return make<Class_def>(ds);
+}
+
+
+Concept_def&
+Builder::make_concept_definition(Req_list const& ss)
+{
+  return make<Concept_def>(ss);
+}
+
 
 
 // -------------------------------------------------------------------------- //

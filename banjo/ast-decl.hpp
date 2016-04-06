@@ -82,66 +82,26 @@ struct Decl::Mutator
 };
 
 
-// Declares a variable, constant, or function parameter.
-struct Object_decl : Decl
+// Declares a variable.
+struct Variable_decl : Decl
 {
-  Object_decl(Name& n, Type& t)
-    : Decl(n), type_(&t), init_()
+  Variable_decl(Name& n, Type& t, Def& d)
+    : Decl(n), type_(&t), def_(&d)
   { }
 
-  Object_decl(Name& n, Type& t, Expr& e)
-    : Decl(n), type_(&t), init_(&e)
-  { }
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
+  // Returns the declared type of the variable.
   Type const& type() const { return *type_; }
   Type&       type()       { return *type_; }
 
+  // Returns the initializer for the variable.
+  Def const& initializer() const     { return *def_; }
+  Def&       initializer()           { return *def_; }
+
   Type* type_;
-  Expr* init_;
-};
-
-
-// Declares a variable.
-struct Variable_decl : Object_decl
-{
-  Variable_decl(Name& n, Type& t)
-    : Object_decl(n, t)
-  { }
-
-  Variable_decl(Name& n, Type& t, Expr& i)
-    : Object_decl(n, t, i)
-  { }
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the initializer for the variable. This is
-  // defined iff has_initializer() is true.
-  Expr const& initializer() const     { return *init_; }
-  Expr&       initializer()           { return *init_; }
-  bool        has_initializer() const { return init_; }
-};
-
-
-// Declares a symbolic constant.
-struct Constant_decl : Object_decl
-{
-  Constant_decl(Name& n, Type& t)
-    : Object_decl(n, t)
-  { }
-
-  Constant_decl(Name& n, Type& t, Expr& i)
-    : Object_decl(n, t, i)
-  { }
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the initializer for the variable. This is
-  // defined iff has_initializer() is true.
-  Expr const& initializer() const     { return *init_; }
-  Expr&       initializer()           { return *init_; }
-  bool        has_initializer() const { return init_; }
+  Def*  def_;
 };
 
 
@@ -153,11 +113,12 @@ struct Constant_decl : Object_decl
 //    - a postcondition that explicitly states effects.
 struct Function_decl : Decl
 {
-  // FIXME: Deprecate this.
+  // FIXME: Consider deprecate this.
   Function_decl(Name& n, Type& t, Decl_list const& p)
     : Decl(n), type_(&t), parms_(p), def_()
   { lingo_unreachable(); }
 
+  // FIXME: Consume parameters.
   Function_decl(Name& n, Type& t, Decl_list const& p, Def& d)
     : Decl(n), type_(&t), parms_(p), def_(&d)
   { }
@@ -337,6 +298,27 @@ struct Parameter_decl : T
 };
 
 
+// Declares a variable, constant, or function parameter.
+//
+// FIXME: I don't like this class.
+struct Object_decl : Decl
+{
+  Object_decl(Name& n, Type& t)
+    : Decl(n), type_(&t), init_()
+  { }
+
+  Object_decl(Name& n, Type& t, Expr& e)
+    : Decl(n), type_(&t), init_(&e)
+  { }
+
+  Type const& type() const { return *type_; }
+  Type&       type()       { return *type_; }
+
+  Type* type_;
+  Expr* init_;
+};
+
+
 // An object paramter of a function.
 //
 // TODO: Name this variable_parm to be consistent with variable
@@ -390,24 +372,6 @@ struct Value_parm : Parameter_decl<Object_decl>
   Expr&       default_argument()       { return *init_; }
 
   bool has_default_arguement() const { return init_; }
-};
-
-
-// Represents an unspecified sequence of arguments. This
-// is distinct from a parameter pack.
-//
-// Note that we allow the variadic parameter to be named
-// although the variadic parameter has a canonical name (...).
-//
-// TODO: Make this the type of an annamed parameter?
-struct Variadic_parm : Decl
-{
-  Variadic_parm(Name& n)
-    : Decl(n)
-  { }
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 

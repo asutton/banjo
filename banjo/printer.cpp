@@ -987,7 +987,6 @@ Printer::declaration(Decl const& d)
 
     void operator()(Decl const& d)           { lingo_unhandled(d); }
     void operator()(Variable_decl const& d)  { p.variable_declaration(d); }
-    void operator()(Constant_decl const& d)  { p.constant_declaration(d); }
     void operator()(Function_decl const& d)  { p.function_declaration(d); }
     void operator()(Type_decl const& d)      { p.type_declaration(d); }
 
@@ -1012,6 +1011,9 @@ Printer::declaration_seq(Decl_list const& ds)
 }
 
 
+// -------------------------------------------------------------------------- //
+// Variable declarations
+
 void
 Printer::variable_declaration(Variable_decl const& d)
 {
@@ -1020,20 +1022,40 @@ Printer::variable_declaration(Variable_decl const& d)
   identifier(d);
   binary_operator(colon_tok);
   type(d.type());
-  if (d.has_initializer()) {
-    binary_operator(eq_tok);
-    initializer(d.initializer());
-  }
+  variable_initializer(d.initializer());
   token(semicolon_tok);
 }
 
 
 void
-Printer::constant_declaration(Constant_decl const& d)
+Printer::variable_initializer(Def const& d)
 {
-  lingo_unreachable();
+  struct fn
+  {
+    Printer& p;
+    void operator()(Def const& d)            { lingo_unhandled(d); }
+    void operator()(Empty_def const& d)      { p.variable_initializer(d); }
+    void operator()(Expression_def const& d) { p.variable_initializer(d); }
+  };
+  apply(d, fn{*this});
 }
 
+
+// TODO: Maybe print a comment?
+void
+Printer::variable_initializer(Empty_def const& d)
+{ }
+
+
+void
+Printer::variable_initializer(Expression_def const& d)
+{
+  expression(d.expression());
+}
+
+
+// -------------------------------------------------------------------------- //
+// Function declarations
 
 void
 Printer::function_declaration(Function_decl const& d)
@@ -1239,7 +1261,6 @@ struct parameter_fn
   void operator()(T const&) { lingo_unreachable(); }
 
   void operator()(Object_parm const& d)   { p.parameter(d); }
-  void operator()(Variadic_parm const& d) { p.parameter(d); }
   void operator()(Value_parm const& d)    { p.value_template_parameter(d); }
   void operator()(Type_parm const& d)     { p.type_template_parameter(d); }
   void operator()(Template_parm const& d) { p.template_template_parameter(d); }
@@ -1260,13 +1281,6 @@ Printer::parameter(Object_parm const& p)
   identifier(p);
   binary_operator(colon_tok);
   type(p.type());
-}
-
-
-void
-Printer::parameter(Variadic_parm const& p)
-{
-  token(ellipsis_tok);
 }
 
 

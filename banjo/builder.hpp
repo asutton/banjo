@@ -81,7 +81,6 @@ struct Builder
   Integer_expr&   get_int(Integer const&);
   Integer_expr&   get_uint(Integer const&);
   Reference_expr& make_reference(Variable_decl&);
-  Reference_expr& make_reference(Constant_decl&);
   Reference_expr& make_reference(Function_decl&);
   Template_ref&   make_reference(Template_decl&);
   Reference_expr& make_reference(Object_parm&);
@@ -107,6 +106,30 @@ struct Builder
   Expression_stmt&  make_expression_statement(Expr&);
   Declaration_stmt& make_declaration_statement(Decl&);
 
+  // Variables
+  Variable_decl&  make_variable_declaration(Name&, Type&);
+  Variable_decl&  make_variable_declaration(Name&, Type&, Expr&);
+  Variable_decl&  make_variable_declaration(char const*, Type&, Expr&);
+
+  // Functions
+  Function_decl&  make_function_declaration(Name&, Decl_list const&, Type&, Expr&);
+  Function_decl&  make_function_declaration(Name&, Decl_list const&, Type&, Stmt&);
+  Function_decl&  make_function_declaration(Name&, Decl_list const&, Type&);
+  Function_decl&  make_function_declaration(char const*, Decl_list const&, Type&);
+
+  // Types
+  Type_decl&      make_type_declaration(Name&, Type&, Stmt&);
+
+  // Templates
+  Template_decl&  make_template(Decl_list const&, Decl&);
+
+  // Concepts
+  Concept_decl&   make_concept(Name&, Decl_list const&);
+  Concept_decl&   make_concept(Name&, Decl_list const&, Def&);
+  Concept_decl&   make_concept(Name&, Decl_list const&, Expr&);
+  Concept_decl&   make_concept(char const*, Decl_list const&, Def&);
+  Concept_decl&   make_concept(char const*, Decl_list const&, Expr&);
+
   // Initializers
   Trivial_init&   make_trivial_init(Type&);
   Copy_init&      make_copy_init(Type&, Expr&);
@@ -115,34 +138,15 @@ struct Builder
   Aggregate_init& make_aggregate_init(Type&, Expr_list const&);
 
   // Definitions
-  Expression_def& make_function_definition(Expr&);
-  Function_def&   make_function_definition(Stmt&);
-  Type_def&       make_type_definition(Stmt&);
-
+  Empty_def&      make_empty_definition();
   Deleted_def&    make_deleted_definition();
   Defaulted_def&  make_defaulted_definition();
   Expression_def& make_expression_definition(Expr&);
+  Function_def&   make_function_definition(Stmt&);
+  Type_def&       make_type_definition(Stmt&);
+
   Class_def&      make_class_definition(Decl_list const&);
   Concept_def&    make_concept_definition(Req_list const&);
-
-  Variable_decl&  make_variable_declaration(Name&, Type&);
-  Variable_decl&  make_variable_declaration(char const*, Type&);
-  Variable_decl&  make_variable_declaration(Name&, Type&, Expr&);
-  Variable_decl&  make_variable_declaration(char const*, Type&, Expr&);
-
-  Function_decl&  make_function_declaration(Name&, Decl_list const&, Type&, Expr&);
-  Function_decl&  make_function_declaration(Name&, Decl_list const&, Type&, Stmt&);
-  Function_decl&  make_function_declaration(Name&, Decl_list const&, Type&);
-  Function_decl&  make_function_declaration(char const*, Decl_list const&, Type&);
-
-  Type_decl&      make_type_declaration(Name&, Type&, Stmt&);
-
-  Template_decl&  make_template(Decl_list const&, Decl&);
-  Concept_decl&   make_concept(Name&, Decl_list const&);
-  Concept_decl&   make_concept(Name&, Decl_list const&, Def&);
-  Concept_decl&   make_concept(Name&, Decl_list const&, Expr&);
-  Concept_decl&   make_concept(char const*, Decl_list const&, Def&);
-  Concept_decl&   make_concept(char const*, Decl_list const&, Expr&);
 
   // Parameters
   Object_parm& make_object_parm(Name&, Type&);
@@ -190,7 +194,6 @@ struct Builder
 
   Context& cxt;
 };
-
 
 
 } // namespace banjo

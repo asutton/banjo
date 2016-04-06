@@ -42,6 +42,18 @@ struct Def::Mutator
 };
 
 
+// An empty definition. This is used to represent trivially initialiezd
+// variables.
+//
+// TODO: Are there other kinds of declarations that can have empty
+// definitions.
+struct Empty_def : Def
+{
+  void accept(Visitor& v) const { return v.visit(*this); }
+  void accept(Mutator& v)       { return v.visit(*this); }
+};
+
+
 // A defaulted definition has a specification determined by
 // the compiler.
 //
@@ -70,8 +82,8 @@ struct Deleted_def : Def
 };
 
 
-// An expression definition defines an entity by an expression.
-// Both functions and concepts can have expression definitions.
+// Represents the definition of an entity by an expression. Both
+// variables and functions can have expression definitions.
 struct Expression_def : Def
 {
   Expression_def(Expr& e)
@@ -89,11 +101,9 @@ struct Expression_def : Def
 };
 
 
-// A function declaration can be initialized by a compound
-// statement.
+// A function declaration can be initialized by a compound statement.
 //
-// TODO: Provide extended support for member initialization
-// lists of member functions.
+// FIXME: Rename this to something more meaningful.
 struct Function_def : Def
 {
   Function_def(Stmt& s)
@@ -224,7 +234,7 @@ struct Generic_def_mutator : Def::Mutator, Generic_visitor<F, T>
 };
 
 
-template<typename F, typename T = typename std::result_of<F(Defaulted_def const&)>::type>
+template<typename F, typename T = typename std::result_of<F(Empty_def const&)>::type>
 inline decltype(auto)
 apply(Def const& t, F fn)
 {
@@ -233,7 +243,7 @@ apply(Def const& t, F fn)
 }
 
 
-template<typename F, typename T = typename std::result_of<F(Defaulted_def&)>::type>
+template<typename F, typename T = typename std::result_of<F(Empty_def&)>::type>
 inline decltype(auto)
 apply(Def& t, F fn)
 {

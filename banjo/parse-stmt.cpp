@@ -112,9 +112,8 @@ Parser::statement_seq()
   // Second pass: Resolve declared types.
   elaborate_declarations(ss);
 
-  // Thrid pass. Elaborate definitions.
-  // for (Stmt* s : ss)
-  //   elaborate_definition (cxt, *s);
+  // Third pass: Resolve definitions.
+  elaborate_definitions(ss);
 
   return ss;
 }
