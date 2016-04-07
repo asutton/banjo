@@ -291,6 +291,13 @@ Parser::class_declaration()
   Token tok = accept();
   Name& n = declarator();
 
+  Type * t;
+
+  if(match_if(colon_tok))
+  {
+    t = &type();
+  }
+
   // Point of declaration.
   Decl& cls = on_class_declaration(tok, n);
 

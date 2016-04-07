@@ -237,8 +237,16 @@ struct Class_decl : Type_decl
   Class_def const& definition() const;
   Class_def&       definition();
 
+  Class_type const* base()  const;
+  Class_decl*       base_declaration() const;
+
+
+
   // Returns true if the declaration is also a definition.
   bool is_definition() const { return def; }
+
+  Type const* base_;
+  Decl*       vref_;
 };
 
 
