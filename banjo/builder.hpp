@@ -66,6 +66,7 @@ struct Builder
   Pointer_type&   get_pointer_type(Type&);
   Reference_type& get_reference_type(Type&);
   Array_type&     get_array_type(Type&, Expr&);
+  Dynarray_type&  get_dynarray_type(Type&, Expr&);
   Sequence_type&  get_sequence_type(Type&);
   Class_type&     get_class_type(Decl&);
   Union_type&     get_union_type(Decl&);

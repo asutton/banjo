@@ -74,6 +74,7 @@ struct Printer
   void postfix_type(Pointer_type const&);
   void postfix_type(Qualified_type const&);
   void postfix_type(Array_type const&);
+  void postfix_type(Dynarray_type const&);
   void sequence_type(Sequence_type const&);
   void reference_type(Reference_type const&);
   void return_type(Type const&);

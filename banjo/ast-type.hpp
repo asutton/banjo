@@ -269,6 +269,20 @@ struct Array_type : Type
   Expr* ext;
 };
 
+struct Dynarray_type : Type
+{
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  Type const& type() const { return *ty; }
+  Type&       type()       { return *ty; }
+
+  Expr const& extent() const { return *ext; }
+  Expr&       extent()       { return *ext; }
+
+  Type* ty;
+  Expr* ext;
+};
 
 // The type of an unspecified sequence of objects. An array
 // of unknown bound.
@@ -446,6 +460,12 @@ is_array_type(Type const& t)
   return is<Array_type>(&t);
 }
 
+// Returns tru if `t` is a Dynarray type.
+inline bool
+is_dynarray_type(Type const& t)
+{
+  return is<Dynarray_type>(&t);
+}
 
 // Returns true if `t` is a sequence type.
 inline bool

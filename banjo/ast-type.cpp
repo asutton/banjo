@@ -111,6 +111,7 @@ is_dependent_type(Type const& t)
     bool operator()(Reference_type const& t) { return is_dependent_type(t.type()); }
     bool operator()(Pointer_type const& t)   { return is_dependent_type(t.type()); }
     bool operator()(Array_type const& t)     { return is_dependent_type(t.type()); }
+    bool operator()(Dynarray_type const& t)  { return is_dependent_type(t.type()); }
     bool operator()(Sequence_type const& t)  { return is_dependent_type(t.type()); }
     bool operator()(Typename_type const& t)  { return true; }
   };

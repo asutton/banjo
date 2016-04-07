@@ -232,6 +232,11 @@ is_equivalent(Array_type const&, Array_type const&)
   lingo_unreachable();
 }
 
+bool
+is_equivalent(Dynarray_type const&, Dynarray_type const&)
+{
+  lingo_unreachable();
+}
 
 bool
 is_equivalent(Sequence_type const& t1, Sequence_type const& t2)
@@ -278,6 +283,7 @@ is_equivalent(Type const& t1, Type const& t2)
     bool operator()(Reference_type const& t1) const    { return is_equivalent(t1, cast<Reference_type>(t2)); }
     bool operator()(Pointer_type const& t1) const      { return is_equivalent(t1, cast<Pointer_type>(t2)); }
     bool operator()(Array_type const& t1) const        { return is_equivalent(t1, cast<Array_type>(t2)); }
+    bool operator()(Dynarray_type const& t1) const     { return is_equivalent(t1, cast<Dynarray_type>(t2)); }
     bool operator()(Sequence_type const& t1) const     { return is_equivalent(t1, cast<Sequence_type>(t2)); }
     bool operator()(User_defined_type const& t1) const { return is_equivalent(t1, cast<User_defined_type>(t2)); }
     bool operator()(Synthetic_type const& t1) const    { return is_equivalent(t1, cast<Synthetic_type>(t2)); }
