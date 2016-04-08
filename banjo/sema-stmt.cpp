@@ -2,16 +2,30 @@
 // All rights reserved
 
 #include "parser.hpp"
-
+#include "ast-stmt.hpp"
 
 namespace banjo
 {
 
-// FIXME: Use the builder.
-Compound_stmt&
-Parser::on_compound_statement(Stmt_list const& ss)
+
+Stmt&
+Parser::on_translation_statement(Stmt_list&& ss)
 {
-  return build.make_compound_statement(ss);
+  return build.make_translation_statement(std::move(ss));
+}
+
+
+Stmt&
+Parser::on_compound_statement(Stmt_list&& ss)
+{
+  return build.make_compound_statement(std::move(ss));
+}
+
+
+Stmt&
+Parser::on_member_statement(Stmt_list&& ss)
+{
+  return build.make_member_statement(std::move(ss));
 }
 
 
@@ -31,11 +45,17 @@ Parser::on_declaration_statement(Decl& d)
 }
 
 
-// FIXME: Use the builder.
 Expression_stmt&
 Parser::on_expression_statement(Expr& d)
 {
   return build.make_expression_statement(d);
+}
+
+
+Stmt&
+Parser::on_unparsed_statement(Token_seq&& toks)
+{
+  return *new Unparsed_stmt(std::move(toks));
 }
 
 

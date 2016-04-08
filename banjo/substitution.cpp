@@ -6,7 +6,6 @@
 #include "context.hpp"
 #include "expression.hpp"
 #include "declaration.hpp"
-#include "equivalence.hpp"
 #include "printer.hpp"
 
 #include <iostream>
@@ -320,7 +319,7 @@ substitute_decl(Context& cxt, Variable_decl& d, Substitution& sub)
 {
   Name& n = d.name();
   Type& t = substitute(cxt, d.type(), sub);
-  Decl& var = cxt.make_variable(n, t);
+  Decl& var = cxt.make_variable_declaration(n, t);
   declare(cxt, var);
   return var;
 }
@@ -375,7 +374,7 @@ subst_usage(Context& cxt, Expression_cons& c, Substitution& sub)
   Type& t = substitute(cxt, c.type(), sub);
 
   // Ensure that e has type t: that's what's been assumed.
-  e.ty = &t;
+  e.type_ = &t;
 
   return cxt.get_expression_constraint(e, t);
 }

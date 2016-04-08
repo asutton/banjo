@@ -5,7 +5,6 @@
 #include "ast.hpp"
 #include "context.hpp"
 #include "constraint.hpp"
-#include "equivalence.hpp"
 #include "initialization.hpp"
 #include "printer.hpp"
 

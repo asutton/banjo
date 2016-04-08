@@ -47,7 +47,7 @@ make_basic_requirement(Context& cxt, Expr& e, Type& t)
   if (requirement_lookup(cxt, e))
     throw Type_error("expression '{}' declared to have multipe types", e);
 
-  e.ty = &t;
+  e.type_ = &t;
 
   // Save the declaration of this binding.
   declare_required_expression(cxt, e);

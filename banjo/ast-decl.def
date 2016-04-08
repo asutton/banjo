@@ -2,17 +2,12 @@
 // All rights reserved
 
 define_node(Variable_decl);
-define_node(Constant_decl);
 define_node(Function_decl);
-define_node(Class_decl);
-define_node(Union_decl);
-define_node(Enum_decl);
-define_node(Namespace_decl);
-define_node(Template_decl);
+define_node(Type_decl);
 define_node(Concept_decl);
-define_node(Axiom_decl);
+define_node(Template_decl);
+
 define_node(Object_parm);
 define_node(Value_parm);
 define_node(Type_parm);
 define_node(Template_parm);
-define_node(Variadic_parm);

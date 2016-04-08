@@ -3,8 +3,6 @@
 
 #include "test.hpp"
 
-#include <banjo/hash.hpp>
-
 #include <iostream>
 #include <unordered_set>
 

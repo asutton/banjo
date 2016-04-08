@@ -38,10 +38,11 @@ struct Printer
   void token(String const&);
   void token(int);
   void token(Integer const&);
+  void tokens(Token_seq const&);
 
   void binary_operator(Token_kind);
 
-  // Unresolved names
+  void identifier(Decl const&);
   void id(Name const&);
   void unqualified_id(Name const&);
   void unqualified_id(Simple_id const&);
@@ -57,30 +58,20 @@ struct Printer
 
   // Types
   void type(Type const&);
-  void simple_type(Type const&);
-  void simple_type(Void_type const&);
-  void simple_type(Boolean_type const&);
-  void simple_type(Byte_type const&);
-  void simple_type(Integer_type const&);
-  void simple_type(Float_type const&);
-  void simple_type(Auto_type const&);
-  void simple_type(Decltype_type const&);
-  void simple_type(Declauto_type const&);
-  void simple_type(Function_type const&);
-  void simple_type(Class_type const&);
-  void simple_type(Typename_type const&);
-  void simple_type(Synthetic_type const&);
-  void grouped_type(Type const&, Type const&);
-  void postfix_type(Pointer_type const&);
-  void postfix_type(Qualified_type const&);
-  void postfix_type(Array_type const&);
-  void postfix_type(Dynarray_type const&);
-  void sequence_type(Sequence_type const&);
-  void reference_type(Reference_type const&);
-  void return_type(Type const&);
+  void type(Unparsed_type const&);
+  void primary_type(Type const&);
+  void primary_type(Void_type const&);
+  void primary_type(Boolean_type const&);
+  void primary_type(Byte_type const&);
+  void primary_type(Integer_type const&);
+  void primary_type(Float_type const&);
+  void primary_type(Auto_type const&);
+  void primary_type(Function_type const&);
+  void primary_type(Type_type const&);
 
   // Expressions
   void expression(Expr const&);
+  void expression(Unparsed_expr const&);
   void logical_or_expression(Expr const&);
   void logical_and_expression(Expr const&);
   void inclusive_or_expression(Expr const&);
@@ -119,10 +110,12 @@ struct Printer
   Expr_list expression_list();
 
 
-
   // Statements
   void statement(Stmt const&);
+  void statement(Unparsed_stmt const&);
   void statement_seq(Stmt_list const&);
+  void translation_statement(Translation_stmt const&);
+  void member_statement(Member_stmt const&);
   void compound_statement(Compound_stmt const&);
   void return_statement(Return_stmt const&);
   void expression_statement(Expression_stmt const&);
@@ -139,30 +132,28 @@ struct Printer
   // Declarations
   void declaration(Decl const&);
   void declaration_seq(Decl_list const&);
+
+  // Variables
   void variable_declaration(Variable_decl const&);
-  void constant_declaration(Constant_decl const&);
-  void union_declaration(Union_decl const&);
-  void enum_declaration(Enum_decl const&);
-  void namespace_declaration(Namespace_decl const&);
-  void axiom_declaration(Axiom_decl const&);
+  void variable_initializer(Def const&);
+  void variable_initializer(Empty_def const&);
+  void variable_initializer(Expression_def const&);
 
   // Functions
   void function_declaration(Function_decl const&);
   void function_definition(Def const&);
+  void function_definition(Expression_def const&);
   void function_definition(Function_def const&);
   void function_definition(Deleted_def const&);
   void function_definition(Defaulted_def const&);
   void parameter(Decl const&);
   void parameter(Object_parm const&);
-  void parameter(Variadic_parm const&);
   void parameter_list(Decl_list const&);
 
-  // Classes
-  void class_declaration(Class_decl const&);
-  void class_definition(Def const&);
-  void class_definition(Class_def const&);
-  void class_definition(Deleted_def const&);
-  void member_seq(Decl_list const&);
+  // Types
+  void type_declaration(Type_decl const&);
+  void type_definition(Def const&);
+  void type_definition(Type_def const&);
 
   // Concepts
   void concept_declaration(Concept_decl const&);

@@ -81,22 +81,6 @@ has_array_type(Expr const& e)
 }
 
 
-// Returns true if `e` has class type.
-bool
-has_class_type(Expr const& e)
-{
-  return is_class_type(e.type());
-}
-
-
-// Returns true if `e` has union type.
-bool
-has_union_type(Expr const& e)
-{
-  return is_union_type(e.type());
-}
-
-
 // -------------------------------------------------------------------------- //
 // Depdendent expressions
 

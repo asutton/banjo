@@ -1,11 +1,15 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BANJO_EQUIVALENCE_HPP
-#define BANJO_EQUIVALENCE_HPP
+#ifndef BANJO_AST_EQ_HPP
+#define BANJO_AST_EQ_HPP
 
-#include "prelude.hpp"
-#include "language.hpp"
+// This module defines the common equivalence relation on terms of the
+// language. In general, two terms are equivalent when they have the
+// same syntactic structure, or are identifiers that refer to the same
+// declarations.
+
+#include "ast-base.hpp"
 
 #include <algorithm>
 
@@ -30,7 +34,6 @@ is_equivalent(List<T> const& a, List<T> const& b)
   };
   return std::equal(a.begin(), a.end(), b.begin(), b.end(), cmp);
 }
-
 
 
 // Equality comparison for pointers.

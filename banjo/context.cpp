@@ -25,9 +25,6 @@ Context::Context()
 
   // Initialize all the tokens.
   init_tokens(syms);
-
-  // Initialize the global namepace.
-  global = &get_global_namespace();
 }
 
 
@@ -44,6 +41,14 @@ void
 Context::set_scope(Scope& s)
 {
   scope = &s;
+}
+
+
+// Returns a new general purpose scope.
+Scope&
+Context::make_scope()
+{
+  return *new Scope(current_scope());
 }
 
 
@@ -229,11 +234,13 @@ Context::current_template()
 // -------------------------------------------------------------------------- //
 // Enter scope
 
-// Enter the scope associated with a namespace definition.
-Enter_scope::Enter_scope(Context& c, Namespace_decl& ns)
-  : cxt(c), prev(&c.current_scope()), alloc(nullptr)
+// Enter a new, general purpose scope. This is primarily used during
+// the first pass of a parse, when names are only be associated with
+// the kind of declaration and not a more specific type.
+Enter_scope::Enter_scope(Context& cxt)
+  : cxt(cxt), prev(&cxt.current_scope()), alloc(&cxt.make_scope())
 {
-  cxt.set_scope(*ns.scope());
+  cxt.set_scope(*alloc);
 }
 
 

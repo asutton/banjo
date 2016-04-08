@@ -43,9 +43,6 @@ is_value_type(Type const& t)
     bool operator()(Array_type const&)       { return true; }
     bool operator()(Dynarray_type const&)       { return true; }
     bool operator()(Sequence_type const&)    { return true; }
-    bool operator()(Class_type const&)       { return true; }
-    bool operator()(Union_type const&)       { return true; }
-    bool operator()(Enum_type const&)        { return true; }
     bool operator()(Typename_type const&)    { lingo_unreachable(); }
   };
   return apply(t, fn{});

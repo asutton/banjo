@@ -22,13 +22,15 @@ add_library(banjo
   parse-stmt.cpp
   parse-decl.cpp
   parse-req.cpp
-  act-id.cpp
-  act-type.cpp
-  act-expr.cpp
-  act-init.cpp
-  act-stmt.cpp
-  act-decl.cpp
-  act-req.cpp
+  sema-id.cpp
+  sema-type.cpp
+  sema-expr.cpp
+  sema-init.cpp
+  sema-stmt.cpp
+  sema-decl.cpp
+  sema-req.cpp
+  elab-decl.cpp
+  elab-def.cpp
   printer.cpp
 
   # Semantics
@@ -41,11 +43,12 @@ add_library(banjo
   ast-decl.cpp
   ast-def.cpp
   ast-req.cpp
+  ast-hash.cpp
+  ast-eq.cpp
+
   operator.cpp
   qualifier.cpp
   specifier.cpp
-  hash.cpp
-  equivalence.cpp
   scope.cpp
   lookup.cpp
   type.cpp
@@ -109,18 +112,21 @@ endmacro()
 
 
 # Unit tests
-add_unit_test(test_print       test/test_print.cpp)
-add_unit_test(test_equivalence test/test_equivalence.cpp)
-add_unit_test(test_hash        test/test_hash.cpp)
-add_unit_test(test_variable    test/test_variable.cpp)
-add_unit_test(test_function    test/test_function.cpp)
-add_unit_test(test_template    test/test_template.cpp)
-add_unit_test(test_convert     test/test_convert.cpp)
-add_unit_test(test_initialize  test/test_initialize.cpp)
-add_unit_test(test_substitute  test/test_substitute.cpp)
-add_unit_test(test_deduce      test/test_deduce.cpp)
-add_unit_test(test_constraint  test/test_constraint.cpp)
+#
+# FIXME: Conditionally the test suite using an option.
+
+# add_unit_test(test_print       test/test_print.cpp)
+# add_unit_test(test_equivalence test/test_equivalence.cpp)
+# add_unit_test(test_hash        test/test_hash.cpp)
+# add_unit_test(test_variable    test/test_variable.cpp)
+# add_unit_test(test_function    test/test_function.cpp)
+# add_unit_test(test_template    test/test_template.cpp)
+# add_unit_test(test_convert     test/test_convert.cpp)
+# add_unit_test(test_initialize  test/test_initialize.cpp)
+# add_unit_test(test_substitute  test/test_substitute.cpp)
+# add_unit_test(test_deduce      test/test_deduce.cpp)
+# add_unit_test(test_constraint  test/test_constraint.cpp)
 
 # Testing tools
-add_test_program(test_parse   test/test_parse.cpp)
-add_test_program(test_inspect test/test_inspect.cpp)
+# add_test_program(test_parse   test/test_parse.cpp)
+# add_test_program(test_inspect test/test_inspect.cpp)

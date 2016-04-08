@@ -213,4 +213,12 @@ Parser::on_requires_expression(Token tok, Decl_list& tps, Decl_list& ps, Req_lis
 }
 
 
+Expr&
+Parser::on_unparsed_expression(Token_seq&& toks)
+{
+  // FIXME: Use a factory method.
+  return *new Unparsed_expr(std::move(toks));
+}
+
+
 } // namespace banjo

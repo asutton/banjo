@@ -67,6 +67,15 @@ Parser::any_operator()
 }
 
 
+// Parse an identifier.
+Name&
+Parser::identifier()
+{
+  Token tok = match(identifier_tok);
+  return on_simple_id(tok);
+}
+
+
 // -------------------------------------------------------------------------- //
 // Ids, names, and aliases
 //

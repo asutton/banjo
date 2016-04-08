@@ -3,8 +3,6 @@
 
 #include "test.hpp"
 
-#include <banjo/equivalence.hpp>
-
 #include <iostream>
 
 

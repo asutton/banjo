@@ -22,48 +22,6 @@ User_defined_type::name()
 }
 
 
-Class_decl const&
-Class_type::declaration() const
-{
-  return *cast<Class_decl>(decl);
-}
-
-
-Class_decl&
-Class_type::declaration()
-{
-  return *cast<Class_decl>(decl);
-}
-
-
-Union_decl const&
-Union_type::declaration() const
-{
-  return *cast<Union_decl>(decl);
-}
-
-
-Union_decl&
-Union_type::declaration()
-{
-  return *cast<Union_decl>(decl);
-}
-
-
-Enum_decl const&
-Enum_type::declaration() const
-{
-  return *cast<Enum_decl>(decl);
-}
-
-
-Enum_decl&
-Enum_type::declaration()
-{
-  return *cast<Enum_decl>(decl);
-}
-
-
 Type_parm const&
 Typename_type::declaration() const
 {

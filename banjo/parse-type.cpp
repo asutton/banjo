@@ -70,7 +70,7 @@ Parser::sequence_type()
 Type&
 Parser::postfix_type()
 {
-  Type* t = &simple_type();
+  Type* t = &primary_type();
   while (true) {
     if (Token tok = match_if(star_tok))
       t = &on_pointer_type(tok, *t);
@@ -108,7 +108,7 @@ Parser::postfix_type()
 //
 // TODO: Add the other specifiers.
 Type&
-Parser::simple_type()
+Parser::primary_type()
 {
   switch (lookahead()) {
     case void_tok:
@@ -129,6 +129,8 @@ Parser::simple_type()
       lingo_unimplemented("parse auto type");
     case decltype_tok:
       return decltype_type();
+    case type_tok:
+      return on_type_type(accept());
     case lparen_tok: {
       if (Type* t = match_if(&Parser::function_type))
         return *t;

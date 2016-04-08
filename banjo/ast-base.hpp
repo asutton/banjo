@@ -11,6 +11,7 @@
 
 #include <lingo/integer.hpp>
 #include <lingo/real.hpp>
+#include <lingo/token.hpp>
 
 #include <vector>
 #include <utility>
@@ -216,6 +217,21 @@ using Type_iter = Type_list::iterator;
 using Expr_iter = Expr_list::iterator;
 using Decl_iter = Decl_list::iterator;
 using Cons_iter = Cons_list::iterator;
+
+
+// Unparsed terms.
+template<typename T>
+struct Unparsed_term : T
+{
+  Unparsed_term(Token_seq&& toks)
+    : toks(std::move(toks))
+  { }
+
+  Token_seq const& tokens() const { return toks; }
+  Token_seq&       tokens()       { return toks; }
+
+  Token_seq toks;
+};
 
 
 // Pairs and tuples

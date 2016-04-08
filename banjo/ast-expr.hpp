@@ -10,27 +10,35 @@
 namespace banjo
 {
 
+// This type is used to explicitly initialize an expression that does
+// not have a computed type.
+enum untyped_t
+{
+  untyped
+};
+
+
 // The base class of all expresions.
 struct Expr : Term
 {
   struct Visitor;
   struct Mutator;
 
-  Expr()
-    : ty(nullptr)
+  Expr(Type& t)
+    : type_(&t)
   { }
 
-  Expr(Type& t)
-    : ty(&t)
+  Expr(untyped_t)
+    : type_(nullptr)
   { }
 
   virtual void accept(Visitor&) const = 0;
   virtual void accept(Mutator&) = 0;
 
-  Type const& type() const { return *ty; }
-  Type&       type()       { return *ty; }
+  Type const& type() const { return *type_; }
+  Type&       type()       { return *type_; }
 
-  Type* ty;
+  Type* type_;
 };
 
 
@@ -524,6 +532,23 @@ struct Synthetic_expr : Expr
   Decl&       declaration()       { return *decl; }
 
   Decl* decl;
+};
+
+
+// Represents an unparsed expression.
+struct Unparsed_expr : Expr
+{
+  Unparsed_expr(Token_seq&& toks)
+    : Expr(untyped), toks(std::move(toks))
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  Token_seq const& tokens() const { return toks; }
+  Token_seq&       tokens()       { return toks; }
+
+  Token_seq toks;
 };
 
 

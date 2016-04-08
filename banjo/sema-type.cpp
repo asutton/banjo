@@ -12,6 +12,13 @@ namespace banjo
 
 
 Type&
+Parser::on_type_type(Token)
+{
+  return build.get_type_type();
+}
+
+
+Type&
 Parser::on_void_type(Token)
 {
   return build.get_void_type();
@@ -103,6 +110,14 @@ Type&
 Parser::on_sequence_type(Type& t)
 {
   return build.get_sequence_type(t);
+}
+
+
+Type&
+Parser::on_unparsed_type(Token_seq&& toks)
+{
+  // FIXME: Use a factory method.
+  return *new Unparsed_type(std::move(toks));
 }
 
 

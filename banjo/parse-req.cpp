@@ -39,17 +39,6 @@ Parser::syntactic_requirement()
 }
 
 
-// Parse a semantic requirement:
-//
-//    semantic-requirement:
-//      requires-expression
-Req&
-Parser::semantic_requirement()
-{
-  Decl& d = axiom_declaration();
-  return on_semantic_requirement(d);
-}
-
 // Parse an expression requirement.
 //
 //    expression-requirement:

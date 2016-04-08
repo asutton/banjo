@@ -145,6 +145,7 @@ init_tokens(Symbol_table& syms)
   init_token(syms, this_tok, "this");
   init_token(syms, template_tok, "template");
   init_token(syms, true_tok, "true");
+  init_token(syms, type_tok, "type");
   init_token(syms, typename_tok, "typename");
   init_token(syms, uint_tok, "uint");
   init_token(syms, uint8_tok, "uint8");

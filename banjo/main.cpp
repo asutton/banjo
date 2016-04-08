@@ -4,6 +4,7 @@
 #include "context.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
+#include "printer.hpp"
 
 #include <lingo/file.hpp>
 #include <lingo/io.hpp>
@@ -16,31 +17,53 @@ using namespace lingo;
 using namespace banjo;
 
 
+using File_seq = std::vector<File*>;
+
+
 int
 main(int argc, char* argv[])
 {
   Context cxt;
 
-  if (argc != 2) {
-    std::cerr << "usage: banjo-compile <input-file>\n";
+  // Parse arguments and collect inputs.
+  File_seq inputs;
+  for (int i = 1; i < argc; ++i) {
+    String s = argv[i];
+    if (s[0] == '-') {
+      error("unknown option '{}'", s);
+    }
+    inputs.emplace_back(new File(s));
+  }
+
+  if (inputs.empty()) {
+    error("no input files given");
     return -1;
   }
 
-  File input(argv[1]);
-  Character_stream cs(input);
-  Token_stream ts;
-  Lexer lex(cxt, cs, ts);
+  // Initial file processing.
+
+  // Perform character and lexical analysis.
+  Token_seq toks;
+  for (File* f : inputs) {
+    Character_stream cs(*f);
+    Token_stream ts;
+    Lexer lex(cxt, cs, ts);
+
+    // Lex tokens.
+    lex();
+    if (error_count())
+      return 1;
+    toks.splice(toks.end(), ts.buf_);
+  }
+
+  // Perform syntactic analysis.
+  Token_stream ts(toks);
   Parser parse(cxt, ts);
+  Stmt& stmt = parse();
+  std::cout << stmt << '\n';
 
-  // Transform characters into tokens.
-  lex();
-  if (error_count())
-    return -1;
 
-  // Transform tokens into a syntax tree.
-  Term& unit = parse();
-
-  // if (error_count())
-  //   return 1;
-  // (void)unit;
+  // FIXME: This is inelegant. Use scoped resource management.
+  for (File* f : inputs)
+    delete f;
 }

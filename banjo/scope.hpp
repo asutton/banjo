@@ -6,7 +6,6 @@
 
 #include "prelude.hpp"
 #include "language.hpp"
-#include "hash.hpp"
 #include "overload.hpp"
 
 
@@ -127,18 +126,6 @@ Scope::lookup(Name const& n)
 using Scope_list = std::vector<Scope*>;
 
 
-
-// Represents a namespace scope.
-struct Namespace_scope : Scope
-{
-  using Scope::Scope;
-
-  // Returns the namespace declaration associated with the scope.
-  Namespace_decl const& declaration() const;
-  Namespace_decl&       declaration();
-};
-
-
 // Represents function scope. Only labels have function scope.
 //
 // Note that the corresponding declaration may be a template.
@@ -199,15 +186,6 @@ struct Template_parameter_scope : Scope
   Template_parameter_scope(Scope& s)
     : Scope(s)
   { }
-};
-
-
-// Represents a class scope.
-struct Class_scope : Scope
-{
-  // Returns the function declaration associated with the scope.
-  Class_decl const& declaration() const;
-  Class_decl&       declaration();
 };
 
 
@@ -284,17 +262,6 @@ struct Constrained_scope : Scope
 
   Expr* expr;
 };
-
-
-// TODO: Define other kinds of scope.
-
-
-// Returns true if s is a scope for a namespace.
-inline bool
-is_namespace_scope(Scope const& s)
-{
-  return is<Namespace_scope>(&s);
-}
 
 
 // Returns true if s is a scope for a function definition.

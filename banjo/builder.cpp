@@ -4,8 +4,6 @@
 #include "builder.hpp"
 #include "context.hpp"
 #include "ast.hpp"
-#include "equivalence.hpp"
-#include "hash.hpp"
 
 #include <unordered_set>
 
@@ -330,32 +328,18 @@ Builder::get_sequence_type(Type& t)
 }
 
 
-// FIXME: Canonicalize class types?
-Class_type&
-Builder::get_class_type(Decl& d)
-{
-  return make<Class_type>(d);
-}
-
-
-Union_type&
-Builder::get_union_type(Decl& d)
-{
-  lingo_unimplemented("union-type");
-}
-
-
-Enum_type&
-Builder::get_enum_type(Decl& d)
-{
-  lingo_unimplemented("enum-type");
-}
-
-
 Typename_type&
 Builder::get_typename_type(Decl& d)
 {
   return make<Typename_type>(d);
+}
+
+
+Type_type&
+Builder::get_type_type()
+{
+  static Type_type t;
+  return t;
 }
 
 
@@ -559,10 +543,24 @@ Builder::synthesize_expression(Decl& d)
 // -------------------------------------------------------------------------- //
 // Statements
 
-Compound_stmt&
-Builder::make_compound_statement(Stmt_list const& ss)
+Translation_stmt&
+Builder::make_translation_statement(Stmt_list&& ss)
 {
-  return make<Compound_stmt>(ss);
+  return make<Translation_stmt>(std::move(ss));
+}
+
+
+Member_stmt&
+Builder::make_member_statement(Stmt_list&& ss)
+{
+  return make<Member_stmt>(std::move(ss));
+}
+
+
+Compound_stmt&
+Builder::make_compound_statement(Stmt_list&& ss)
+{
+  return make<Compound_stmt>(std::move(ss));
 }
 
 
@@ -626,135 +624,77 @@ Builder::make_aggregate_init(Type& t, Expr_list const& es)
 
 
 // -------------------------------------------------------------------------- //
-// Definitions
-
-
-
-Deleted_def&
-Builder::make_deleted_definition()
-{
-  return make<Deleted_def>();
-}
-
-
-Defaulted_def&
-Builder::make_defaulted_definition()
-{
-  return make<Defaulted_def>();
-}
-
-
-Expression_def&
-Builder::make_expression_definition(Expr& e)
-{
-  return make<Expression_def>(e);
-}
-
-
-Function_def&
-Builder::make_function_definition(Stmt& s)
-{
-  return make<Function_def>(s);
-}
-
-
-Class_def&
-Builder::make_class_definition(Decl_list const& ds)
-{
-  return make<Class_def>(ds);
-}
-
-
-Concept_def&
-Builder::make_concept_definition(Req_list const& ss)
-{
-  return make<Concept_def>(ss);
-}
-
-
-// -------------------------------------------------------------------------- //
 // Declarations
 
+
 Variable_decl&
-Builder::make_variable(Name& n, Type& t)
+Builder::make_variable_declaration(Name& n, Type& t)
 {
-  return make<Variable_decl>(n, t);
+  Def& d = make_empty_definition();
+  return make<Variable_decl>(n, t, d);
 }
 
 
 Variable_decl&
-Builder::make_variable(char const* s, Type& t)
+Builder::make_variable_declaration(Name& n, Type& t, Expr& e)
 {
-  return make_variable(get_id(s), t);
+  Def& d = make_expression_definition(e);
+  return make<Variable_decl>(n, t, d);
 }
 
 
 Variable_decl&
-Builder::make_variable(Name& n, Type& t, Expr& i)
+Builder::make_variable_declaration(char const* s, Type& t, Expr& i)
 {
-  lingo_assert(is<Init>(&i));
-  return make<Variable_decl>(n, t, i);
+  return make_variable_declaration(get_id(s), t, i);
 }
 
 
-Variable_decl&
-Builder::make_variable(char const* s, Type& t, Expr& i)
-{
-  return make_variable(get_id(s), t, i);
-}
-
-
-// Creates an undefined function with parameters ps and return
-// type r.
+// Create a new function. The type is synthesized from the parameter
+// and return types, and the definition is synthesized from the given
+// expression.
 Function_decl&
-Builder::make_function(Name& n, Decl_list const& ps, Type& r)
+Builder::make_function_declaration(Name& n, Decl_list const& p, Type& t, Expr& e)
 {
-  Type& t = get_function_type(ps, r);
-  return make<Function_decl>(n, t, ps);
+  Type& r = get_function_type(p, t);
+  Def& d = make_expression_definition(e);
+  return make<Function_decl>(n, r, p, d);
+}
+
+
+// Create a new function. The type is synthesized from the parameter
+// and return types, and the definition is synthesized from the given
+// statement.
+Function_decl&
+Builder::make_function_declaration(Name& n, Decl_list const& p, Type& t, Stmt& s)
+{
+  Type& r = get_function_type(p, t);
+  Def& d = make_function_definition(s);
+  return make<Function_decl>(n, r, p, d);
+}
+
+
+// Creates an undefined function with parameters ps and return type r.
+Function_decl&
+Builder::make_function_declaration(Name& n, Decl_list const& p, Type& t)
+{
+  Type& r = get_function_type(p, t);
+  return make<Function_decl>(n, r, p);
 }
 
 
 Function_decl&
-Builder::make_function(char const* s, Decl_list const& ps, Type& r)
+Builder::make_function_declaration(char const* s, Decl_list const& ps, Type& r)
 {
-  return make_function(get_id(s), ps, r);
+  return make_function_declaration(get_id(s), ps, r);
 }
 
 
-Class_decl&
-Builder::make_class(Name& n)
+Type_decl&
+Builder::make_type_declaration(Name& n, Type& t, Stmt& s)
 {
-  return make<Class_decl>(n);
-}
-
-
-Class_decl&
-Builder::make_class(char const* s)
-{
-  return make<Class_decl>(get_id(s));
-}
-
-
-Namespace_decl&
-Builder::make_namespace(Name& n)
-{
-  return make<Namespace_decl>(n);
-}
-
-
-Namespace_decl&
-Builder::make_namespace(char const* s)
-{
-  return make_namespace(get_id(s));
-}
-
-
-// FIXME: This should probably be installed on the context.
-Namespace_decl&
-Builder::get_global_namespace()
-{
-  static Namespace_decl ns(get_global_id());
-  return ns;
+  Def& d = make_type_definition(s);
+  return make<Type_decl>(n, t, d);
 }
 
 
@@ -873,6 +813,63 @@ Builder::make_placeholder_type()
   Decl& d = make<Type_parm>(x, n);
   return get_typename_type(d);
 }
+
+
+
+
+// -------------------------------------------------------------------------- //
+// Definitions
+
+Empty_def&
+Builder::make_empty_definition()
+{
+  static Empty_def d;
+  return d;
+}
+
+Deleted_def&
+Builder::make_deleted_definition()
+{
+  static Deleted_def d;
+  return d;
+}
+
+
+Defaulted_def&
+Builder::make_defaulted_definition()
+{
+  static Defaulted_def d;
+  return d;
+}
+
+
+Expression_def&
+Builder::make_expression_definition(Expr& e)
+{
+  return make<Expression_def>(e);
+}
+
+
+Function_def&
+Builder::make_function_definition(Stmt& s)
+{
+  return make<Function_def>(s);
+}
+
+
+Type_def&
+Builder::make_type_definition(Stmt& s)
+{
+  return make<Type_def>(s);
+}
+
+
+Concept_def&
+Builder::make_concept_definition(Req_list const& ss)
+{
+  return make<Concept_def>(ss);
+}
+
 
 
 // -------------------------------------------------------------------------- //

@@ -321,52 +321,6 @@ struct User_defined_type : Type
 };
 
 
-struct Class_decl;
-struct Union_decl;
-struct Enum_decl;
-struct Type_parm;
-
-
-// TODO: Factor a base class for all of these: user-defined type.
-struct Class_type : User_defined_type
-{
-  using User_defined_type::User_defined_type;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the declaration of the class type.
-  Class_decl const& declaration() const;
-  Class_decl&       declaration();
-};
-
-
-struct Union_type : User_defined_type
-{
-  using User_defined_type::User_defined_type;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the declaration of the union type.
-  Union_decl const& declaration() const;
-  Union_decl&       declaration();
-};
-
-
-struct Enum_type : User_defined_type
-{
-  using User_defined_type::User_defined_type;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the declaration of the enum type.
-  Enum_decl const& declaration() const;
-  Enum_decl&       declaration();
-};
-
-
 // The type of a type parameter declaration.
 //
 // FIXME: Guarantee that d is a Type_parm.
@@ -394,6 +348,31 @@ struct Synthetic_type : User_defined_type
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// The type of types.
+struct Type_type : Type
+{
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// Represents an unparsed type.
+struct Unparsed_type : Type
+{
+  Unparsed_type(Token_seq&& toks)
+    : toks(std::move(toks))
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  Token_seq const& tokens() const { return toks; }
+  Token_seq&       tokens()       { return toks; }
+
+  Token_seq toks;
 };
 
 
@@ -475,38 +454,6 @@ is_sequence_type(Type const& t)
 }
 
 
-// Returns true if `t` is a class type.
-inline bool
-is_class_type(Type const& t)
-{
-  return is<Class_type>(&t);
-}
-
-
-// Returns true if `t` is a (possibly qualified) class type.
-inline bool
-is_maybe_qualified_class_type(Type const& t)
-{
-  return is_class_type(t.unqualified_type());
-}
-
-
-// Returns true if `t` is a union type.
-inline bool
-is_union_type(Type const& t)
-{
-  return is<Union_type>(&t);
-}
-
-
-// Returns true if `t` is a (possibly qualified) union type.
-inline bool
-is_maybe_qualified_union_type(Type const& t)
-{
-  return is_union_type(t.unqualified_type());
-}
-
-
 // Returns true if `t` is a scalar type.
 inline bool
 is_scalar_type(Type const& t)
@@ -525,7 +472,6 @@ bool is_dependent_type(Type const&);
 
 // -------------------------------------------------------------------------- //
 // Visitors
-
 
 // A generic visitor for types.
 template<typename F, typename T>

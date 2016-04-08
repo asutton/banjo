@@ -11,7 +11,6 @@
 namespace banjo
 {
 
-
 // The base class of all declarations. Each declaration has a set of
 // specifiers and a reference to the context in which it the entity
 // is declared.
@@ -83,86 +82,26 @@ struct Decl::Mutator
 };
 
 
-// Declares a variable, constant, or function parameter.
-struct Object_decl : Decl
-{
-  Object_decl(Name& n, Type& t)
-    : Decl(n), ty(&t), init()
-  { }
-
-  Object_decl(Name& n, Type& t, Expr& e)
-    : Decl(n), ty(&t), init(&e)
-  { }
-
-  Type const& type() const { return *ty; }
-  Type&       type()       { return *ty; }
-
-  Type* ty;
-  Expr* init;
-};
-
-
-// Declares a class, union, enum.
-struct Type_decl : Decl
-{
-  Type_decl(Name& n)
-    : Decl(n), def()
-  { }
-
-  Type_decl(Name& n, Def& i)
-    : Decl(n), def(&i)
-  { }
-
-  Def const& definition() const { return *def; }
-  Def&       definition()       { return *def; }
-
-  bool is_defined() const { return def; }
-
-  Def* def;
-};
-
-
 // Declares a variable.
-struct Variable_decl : Object_decl
+struct Variable_decl : Decl
 {
-  Variable_decl(Name& n, Type& t)
-    : Object_decl(n, t)
-  { }
-
-  Variable_decl(Name& n, Type& t, Expr& i)
-    : Object_decl(n, t, i)
+  Variable_decl(Name& n, Type& t, Def& d)
+    : Decl(n), type_(&t), def_(&d)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
-  // Returns the initializer for the variable. This is
-  // defined iff has_initializer() is true.
-  Expr const& initializer() const     { return *init; }
-  Expr&       initializer()           { return *init; }
-  bool        has_initializer() const { return init; }
-};
+  // Returns the declared type of the variable.
+  Type const& type() const { return *type_; }
+  Type&       type()       { return *type_; }
 
+  // Returns the initializer for the variable.
+  Def const& initializer() const     { return *def_; }
+  Def&       initializer()           { return *def_; }
 
-// Declares a symbolic constant.
-struct Constant_decl : Object_decl
-{
-  Constant_decl(Name& n, Type& t)
-    : Object_decl(n, t)
-  { }
-
-  Constant_decl(Name& n, Type& t, Expr& i)
-    : Object_decl(n, t, i)
-  { }
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the initializer for the variable. This is
-  // defined iff has_initializer() is true.
-  Expr const& initializer() const     { return *init; }
-  Expr&       initializer()           { return *init; }
-  bool        has_initializer() const { return init; }
+  Type* type_;
+  Def*  def_;
 };
 
 
@@ -174,12 +113,14 @@ struct Constant_decl : Object_decl
 //    - a postcondition that explicitly states effects.
 struct Function_decl : Decl
 {
+  // FIXME: Consider deprecate this.
   Function_decl(Name& n, Type& t, Decl_list const& p)
-    : Decl(n), ty(&t), parms(p), def()
-  { }
+    : Decl(n), type_(&t), parms_(p), def_()
+  { lingo_unreachable(); }
 
+  // FIXME: Consume parameters.
   Function_decl(Name& n, Type& t, Decl_list const& p, Def& d)
-    : Decl(n), ty(&t), parms(p), def(&d)
+    : Decl(n), type_(&t), parms_(p), def_(&d)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -194,123 +135,57 @@ struct Function_decl : Decl
   Type&       return_type();
 
   // Returns the list of parameter declarations for the function.
-  Decl_list const& parameters() const { return parms; }
-  Decl_list&       parameters()       { return parms; }
+  Decl_list const& parameters() const { return parms_; }
+  Decl_list&       parameters()       { return parms_; }
 
   // Returns the function constraints. This is valid iff
   // is_constrained() is true.
-  Expr const& constraint() const     { return *constr; }
-  Expr&       constraint()           { return *constr; }
-
+  //
   // TODO: Implelemnt pre- and post-conditions.
-  // Expr const& precondition() const  { return *constr; }
-  // Expr const& postcondition() const { return *constr; }
-
-  Def const& definition() const    { return *def; }
-  Def&       definition()          { return *def; }
+  Expr const& constraint() const     { return *constr_; }
+  Expr&       constraint()           { return *constr_; }
 
   // Returns true if this declaration has function constraints.
-  bool is_constrained() const { return constr; }
+  bool is_constrained() const { return constr_; }
 
-  // Returns true iff this declaration is also a definition.
-  bool is_definition() const { return def; }
+  // Returns the function's definition.
+  Def const& definition() const    { return *def_; }
+  Def&       definition()          { return *def_; }
 
-  Type*     ty;
-  Decl_list parms;
-  Expr*     constr;
-  Expr*     pre;
-  Expr*     post;
-  Def*      def;
+  Type*     type_;
+  Decl_list parms_;
+  Expr*     constr_;
+  Def*      def_;
 };
 
 
-// Represents the declaration of a class.
-struct Class_decl : Type_decl
+// Represents the declaration of a user-defined type.
+//
+// TODO: Support kinds and/or metatypes.
+struct Type_decl : Decl
 {
-  using Type_decl::Type_decl;
+  // FIXME: Deprecate this constructor.
+  Type_decl(Name& n)
+    : Decl(n)
+  { lingo_unreachable(); }
+
+  Type_decl(Name& n, Type& t, Def& d)
+    : Decl(n), kind_(&t), def_(&d)
+  { }
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
-  // Returns the definition for the class, if given. Behavior is
-  // defined iff is_definition() is true.
-  Class_def const& definition() const;
-  Class_def&       definition();
+  // Returns the kind of the type.
+  Type const& kind() const { return *kind_; }
+  Type&       kind()       { return *kind_; }
 
-  // Returns true if the declaration is also a definition.
-  bool is_definition() const { return def; }
-};
+  // Returns the definition of the type.
+  Def const& definition() const { return *def_; }
+  Def&       definition()       { return *def_; }
 
-
-struct Union_decl : Type_decl
-{
-  using Type_decl::Type_decl;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  Union_def const& definition() const;
-  Union_def&       definition();
-};
-
-
-struct Enum_decl : Type_decl
-{
-  using Type_decl::Type_decl;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  Enum_def const& definition() const;
-  Enum_def&       definition();
-};
-
-
-// Represents the definition of a namespace and its enclosed declarations.
-// Each namespace definition points to a (shared) scope that contains the
-// aggregated declarations of all declarations of the same namespace. Note
-// that re-opened namespaces are distinct declarations that share the same
-// scope. For example:
-//
-//    naemspace N {
-//      int x;
-//    } // #1
-//
-//    namespace N {
-//      int y;
-//    } // #2
-//
-// At #1, there is a single namespace declaration named `N`, containing
-// only the declaration of `x`. At #2, there are 2 namespace declarations
-// of `N`. They share the same scope, which contains the declarations of
-// `x` and `y`.
-//
-// TODO: Every namespace has an anonymous namespace.
-//
-// TODO: Handle using directives.
-struct Namespace_decl : Decl
-{
-  Namespace_decl(Name&);
-  Namespace_decl(Decl&, Name&);
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  bool is_global() const    { return cxt == nullptr; }
-  bool is_anonymous() const;
-
-  // Returns a list of members in this namespace.
-  Decl_list const& members() const { return decls; }
-  Decl_list&       members()       { return decls; }
-
-  // Returns the totoal set of declarations within the namespace.
-  //
-  // FIXME: Why doesn't this return a reference?
-  Scope const* scope() const { return lookup; }
-  Scope*       scope()       { return lookup; }
-
-  Decl_list decls;
-  Scope*    lookup;
+  Type* kind_;
+  Def*  def_;
 };
 
 
@@ -398,30 +273,6 @@ struct Concept_decl : Decl
 };
 
 
-// Represents the declaration of an axiom or semantic requirements.
-struct Axiom_decl : Decl
-{
-  Axiom_decl(Name& n, Decl_list const& ds, Stmt& s)
-    : Decl(n), parms(ds), reqs(&s)
-  { }
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the list of parameters in terms of which the requirements
-  // are written.
-  Decl_list const& parameters() const { return parms; }
-  Decl_list&       parameters()       { return parms; }
-
-  // Returns the list of requirements.
-  Stmt const& body() const { return *reqs; }
-  Stmt&       body()       { return *reqs; }
-
-  Decl_list parms;
-  Stmt*     reqs;
-};
-
-
 // The base class of all parameters. This provides deriviation from
 // T. Note that the constructor of this clas
 template<typename T>
@@ -444,6 +295,27 @@ struct Parameter_decl : T
   Index& index()       { return ix; }
 
   Index ix;
+};
+
+
+// Declares a variable, constant, or function parameter.
+//
+// FIXME: I don't like this class.
+struct Object_decl : Decl
+{
+  Object_decl(Name& n, Type& t)
+    : Decl(n), type_(&t), init_()
+  { }
+
+  Object_decl(Name& n, Type& t, Expr& e)
+    : Decl(n), type_(&t), init_(&e)
+  { }
+
+  Type const& type() const { return *type_; }
+  Type&       type()       { return *type_; }
+
+  Type* type_;
+  Expr* init_;
 };
 
 
@@ -470,10 +342,10 @@ struct Object_parm : Parameter_decl<Object_decl>
 
   // Returns the default argument for the parameter.
   // This is valid iff has_default_arguement() is true.
-  Expr const& default_argument() const { return *init; }
-  Expr&       default_argument()       { return *init; }
+  Expr const& default_argument() const { return *init_; }
+  Expr&       default_argument()       { return *init_; }
 
-  bool has_default_arguement() const { return init; }
+  bool has_default_arguement() const { return init_; }
 };
 
 
@@ -496,28 +368,10 @@ struct Value_parm : Parameter_decl<Object_decl>
 
   // Returns the default argument for the parameter.
   // This is valid iff has_default_arguement() is true.
-  Expr const& default_argument() const { return *init; }
-  Expr&       default_argument()       { return *init; }
+  Expr const& default_argument() const { return *init_; }
+  Expr&       default_argument()       { return *init_; }
 
-  bool has_default_arguement() const { return init; }
-};
-
-
-// Represents an unspecified sequence of arguments. This
-// is distinct from a parameter pack.
-//
-// Note that we allow the variadic parameter to be named
-// although the variadic parameter has a canonical name (...).
-//
-// TODO: Make this the type of an annamed parameter?
-struct Variadic_parm : Decl
-{
-  Variadic_parm(Name& n)
-    : Decl(n)
-  { }
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
+  bool has_default_arguement() const { return init_; }
 };
 
 

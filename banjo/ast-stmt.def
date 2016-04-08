@@ -1,7 +1,11 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
+define_node(Translation_stmt)
+define_node(Member_stmt)
 define_node(Compound_stmt)
 define_node(Expression_stmt)
 define_node(Declaration_stmt)
 define_node(Return_stmt)
+
+define_node(Unparsed_stmt)

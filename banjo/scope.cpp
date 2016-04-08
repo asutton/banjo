@@ -27,32 +27,4 @@ Scope::bind(Decl& d)
 }
 
 
-Namespace_decl const&
-Namespace_scope::declaration() const
-{
-  return *cast<Namespace_decl>(context());
-}
-
-
-Namespace_decl&
-Namespace_scope::declaration()
-{
-  return *cast<Namespace_decl>(context());
-}
-
-
-Class_decl const&
-Class_scope::declaration() const
-{
-  return *cast<Class_decl>(context());
-}
-
-
-Class_decl&
-Class_scope::declaration()
-{
-  return *cast<Class_decl>(context());
-}
-
-
 } // namespace banjo

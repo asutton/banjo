@@ -42,6 +42,18 @@ struct Def::Mutator
 };
 
 
+// An empty definition. This is used to represent trivially initialiezd
+// variables.
+//
+// TODO: Are there other kinds of declarations that can have empty
+// definitions.
+struct Empty_def : Def
+{
+  void accept(Visitor& v) const { return v.visit(*this); }
+  void accept(Mutator& v)       { return v.visit(*this); }
+};
+
+
 // A defaulted definition has a specification determined by
 // the compiler.
 //
@@ -70,34 +82,32 @@ struct Deleted_def : Def
 };
 
 
-// An expression definition defines an entity by an expression.
-// Both functions and concepts can have expression definitions.
+// Represents the definition of an entity by an expression. Both
+// variables and functions can have expression definitions.
 struct Expression_def : Def
 {
   Expression_def(Expr& e)
-    : expr(&e)
+    : expr_(&e)
   { }
 
   void accept(Visitor& v) const { return v.visit(*this); }
   void accept(Mutator& v)       { return v.visit(*this); }
 
   // Returns the expression that defines the entity.
-  Expr const& expression() const { return *expr; }
-  Expr&       expression()       { return *expr; }
+  Expr&       expression()       { return *expr_; }
+  Expr const& expression() const { return *expr_; }
 
-  Expr* expr;
+  Expr* expr_;
 };
 
 
-// A function declaration can be initialized by a compound
-// statement.
+// A function declaration can be initialized by a compound statement.
 //
-// TODO: Provide extended support for member initialization
-// lists of member functions.
+// FIXME: Rename this to something more meaningful.
 struct Function_def : Def
 {
   Function_def(Stmt& s)
-    : stmt(&s)
+    : stmt_(&s)
   { }
 
   void accept(Visitor& v) const { return v.visit(*this); }
@@ -105,46 +115,36 @@ struct Function_def : Def
 
   // Returns the statement associated with the function
   // definition.
-  Stmt const& statement() const { return *stmt; }
-  Stmt&       statement()       { return *stmt; }
+  Stmt const& statement() const { return *stmt_; }
+  Stmt&       statement()       { return *stmt_; }
 
-  Stmt* stmt;
+  Stmt* stmt_;
 };
 
 
-// A definition of a class.
+// Represents the compound body of a type as a sequence of statements.
 //
-// FIXME: Add base classes.
-struct Class_def : Def
+// TODO: If we support multiple forms of type definition then what
+// would we name the other kind. In fact, this is a broader problem for
+// most kinds of entities.
+//
+// Note that the real distinction is in the syntactic form of the
+// definitions. In subsequent passes, these would be reduced to a single
+// kind of definition for each entity.
+struct Type_def : Def
 {
-  Class_def(Decl_list const& ds)
-    : decls(ds)
+  Type_def(Stmt& s)
+    : body_(&s)
   { }
 
   void accept(Visitor& v) const { return v.visit(*this); }
   void accept(Mutator& v)       { return v.visit(*this); }
 
   // Returns the list of member declarations.
-  Decl_list const& members() const { return decls; }
-  Decl_list&       members()       { return decls; }
+  Stmt const& body() const { return *body_; }
+  Stmt&       body()       { return *body_; }
 
-  Decl_list decls;
-};
-
-
-// A definition of a union.
-struct Union_def : Def
-{
-  void accept(Visitor& v) const { return v.visit(*this); }
-  void accept(Mutator& v)       { return v.visit(*this); }
-};
-
-
-// A definition of an enumeration.
-struct Enum_def : Def
-{
-  void accept(Visitor& v) const { return v.visit(*this); }
-  void accept(Mutator& v)       { return v.visit(*this); }
+  Stmt* body_;
 };
 
 
@@ -185,10 +185,10 @@ struct Generic_def_visitor : Def::Visitor, Generic_visitor<F, T>
 
 // A generic mutator for definitions.
 template<typename F, typename T>
-struct Generic_def_mutator : Def::Mutator, Generic_visitor<F, T>
+struct Generic_def_mutator : Def::Mutator, Generic_mutator<F, T>
 {
   Generic_def_mutator(F f)
-    : Generic_visitor<F, T>(f)
+    : Generic_mutator<F, T>(f)
   { }
 
 #define define_node(Node) void visit(Node& t) { this->invoke(t); }
@@ -197,7 +197,7 @@ struct Generic_def_mutator : Def::Mutator, Generic_visitor<F, T>
 };
 
 
-template<typename F, typename T = typename std::result_of<F(Defaulted_def const&)>::type>
+template<typename F, typename T = typename std::result_of<F(Empty_def const&)>::type>
 inline decltype(auto)
 apply(Def const& t, F fn)
 {
@@ -206,7 +206,7 @@ apply(Def const& t, F fn)
 }
 
 
-template<typename F, typename T = typename std::result_of<F(Defaulted_def&)>::type>
+template<typename F, typename T = typename std::result_of<F(Empty_def&)>::type>
 inline decltype(auto)
 apply(Def& t, F fn)
 {

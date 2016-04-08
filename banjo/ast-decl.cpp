@@ -28,14 +28,14 @@ Decl::declared_name()
 Function_type const&
 Function_decl::type() const
 {
-  return *cast<Function_type>(ty);
+  return *cast<Function_type>(type_);
 }
 
 
 Function_type&
 Function_decl::type()
 {
-  return *cast<Function_type>(ty);
+  return *cast<Function_type>(type_);
 }
 
 
@@ -50,69 +50,6 @@ Type&
 Function_decl::return_type()
 {
   return type().return_type();
-}
-
-
-Class_def const&
-Class_decl::definition() const
-{
-  return *cast<Class_def>(def);
-}
-
-
-Class_def&
-Class_decl::definition()
-{
-  return *cast<Class_def>(def);
-}
-
-
-Union_def const&
-Union_decl::definition() const
-{
-  return *cast<Union_def>(def);
-}
-
-
-Union_def&
-Union_decl::definition()
-{
-  return *cast<Union_def>(def);
-}
-
-
-Enum_def const&
-Enum_decl::definition() const
-{
-  return *cast<Enum_def>(def);
-}
-
-
-Enum_def&
-Enum_decl::definition()
-{
-  return *cast<Enum_def>(def);
-}
-
-
-// Create a namespace with its own scope.
-Namespace_decl::Namespace_decl(Name& n)
-  : Decl(n), decls(), lookup(new Namespace_scope(*this))
-{ }
-
-
-// TODO: Manage the memory for the scope?
-Namespace_decl::Namespace_decl(Decl& cxt, Name& n)
-  : Decl(cxt, n)
-  , decls()
-  , lookup(new Namespace_scope(cxt, *this))
-{ }
-
-
-bool
-Namespace_decl::is_anonymous() const
-{
-  return is<Placeholder_id>(id);
 }
 
 

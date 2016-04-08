@@ -3,6 +3,7 @@
 
 #include "parser.hpp"
 #include "ast-name.hpp"
+#include "ast-type.hpp"
 #include "ast-decl.hpp"
 #include "printer.hpp"
 
@@ -24,19 +25,10 @@ Parser::declaration()
       return variable_declaration();
     case def_tok:
       return function_declaration();
-    case struct_tok:
-    case class_tok:
-      return class_declaration();
-    case enum_tok:
-      lingo_unimplemented("parse enum-declaration");
-    case namespace_tok:
-      return namespace_declaration();
-    case template_tok:
-      return template_declaration();
+    case type_tok:
+      return type_declaration();
     case concept_tok:
-      return concept_declaration();
-    case axiom_tok:
-      return axiom_declaration();
+      lingo_unreachable();
     default:
       break;
   }
@@ -50,36 +42,76 @@ Parser::declaration()
 // Parse a variable declaration.
 //
 //    variable-declaration:
-//      'var' type declarator [initializer] ';'
+//      'var' identifier ':' [template-header] type ';'
+//      'var' identifier ':' [template-header] type '=' initializer ';'
+//      'var' identifier ':' '=' initializer ';'
+//
+// TODO: Are there other forms of variable declaration?
 Decl&
 Parser::variable_declaration()
 {
-  Token tok = require(var_tok);
-  Type& t = type();
-  Name& n = declarator();
+  require(var_tok);
+  Name& name = identifier();
+  match(colon_tok);
 
-  // Point of declaration.
-  Decl& d = on_variable_declaration(tok, n, t);
-  Enter_scope s(cxt, cxt.make_initializer_scope(d));
-
-  // Initialization
-  if (lookahead() == semicolon_tok) {
-    on_default_initialization(d);
+  // Match the ":=" form.
+  if (match_if(eq_tok)) {
+    Type& type = cxt.get_auto_type();
+    Expr& init = unparsed_variable_initializer();
     match(semicolon_tok);
-  } else {
-    initializer(d);
-    match(semicolon_tok);
+    return on_variable_declaration(name, type, init);
   }
 
-  return d;
+  // Match the type.
+  Type& type = unparsed_variable_type();
+
+  // Match the "name : type =" form.
+  if (match_if(eq_tok)) {
+    Expr& init = unparsed_variable_initializer();
+    match(semicolon_tok);
+    return on_variable_declaration(name, type, init);
+  }
+
+  // Otherwise, match the "name : type ;" form.
+  match(semicolon_tok);
+  return on_variable_declaration(name, type);
+}
+
+
+// Return an unparsed type for the variable's type specification.
+Type&
+Parser::unparsed_variable_type()
+{
+  Token_seq toks;
+  Brace_matching_sentinel is_non_nested(*this);
+  while (!is_eof()) {
+    if (next_token_is_one_of(semicolon_tok, eq_tok) && is_non_nested())
+      break;
+    toks.push_back(accept());
+  }
+  return on_unparsed_type(std::move(toks));
+}
+
+
+// Returns an unparsed variable initializer.
+Expr&
+Parser::unparsed_variable_initializer()
+{
+  Token_seq toks;
+  Brace_matching_sentinel is_non_nested(*this);
+  while (!is_eof()) {
+    if (next_token_is(semicolon_tok) && is_non_nested())
+      break;
+    toks.push_back(accept());
+  }
+  return on_unparsed_expression(std::move(toks));
 }
 
 
 // Parse a variable initializer.
 //
 //    initializer:
-//      equal-initializer
-//      paren-initializer
+//      value-initializer
 //      brace-initializer
 //
 // Note that C++ refers to the equal-initializer form of initialization
@@ -142,51 +174,89 @@ Parser::brace_initializer(Decl&)
 // -------------------------------------------------------------------------- //
 // Function declarations
 
-
 // Parse a function declaration or definition.
 //
-//    function-declaration:
-//      'def' declarator '(' [parameter-list] ')' return-type function-definition
+//    function-definition:
+//      'def' identifier ':' [template-header] parameter-clause expression-statement
+//      'def' identifier ':' [template-header] parameter-clause '=' expression-statement
+//      'def' identifier ':' [template-header] parameter-clause '->' type function-body
 //
-//    return-type:
-//      '->' type
+//    parameter-spec:
+//      '(' [parameter-list] ')'
 //
-// TODO: Handle variadics better. Maybe have an optional
-// ', ...' at the end of the parameter list.
+//    function-body:
+//      compound-statement
+//      '=' expression-statement
 //
-// TODO: Allow declared but not defeined functios?
+// TODO: Allow named return types. That would change the grammar for return
+// types to a return declaration.
 //
-// TODO: Allow for additional specifiers after the ')' and before
-// the '->'. This would support qualifiers on member function
-// declarations.
+//    def f() -> ret:string { ret = "hello"; }
+//
+// Note that not all functions can have named returns (e.g., void functions,
+// functions returning references, etc.). This also leaks implementation
+// details into the interface.
 Decl&
 Parser::function_declaration()
 {
-  Token tok = require(def_tok);
-  Name& n = declarator();
+  require(def_tok);
+  Name& name = identifier();
+  match(colon_tok);
 
-  // Enter function parameter scope and parse function parameters.
-  Enter_scope pscope(cxt, cxt.make_function_parameter_scope());
-  Decl_list ps;
-  match(lparen_tok);
-  if (lookahead() != rparen_tok)
-    ps = parameter_list();
-  match(rparen_tok);
-  Type& t = return_type();
+  // NOTE: We don't have to enter a scope because we aren't doing
+  // lookup in the first pass.
+  Decl_list parms = parameter_clause();
 
-  // Point of declaration.
-  Decl& fn = on_function_declaration(tok, n, ps, t);
+  // -> type function-definition.
+  if (match_if(arrow_tok)) {
+    Type& ret = unparsed_return_type();
 
-  // Parse the definition, if any.
-  if (lookahead() == semicolon_tok) {
-    match(semicolon_tok);
-  } else {
-    // Enter function scope and parse the function definition.
-    Enter_scope fscope(cxt, cxt.make_function_scope(fn));
-    function_definition(fn);
+    // = expression ;
+    if (match_if(eq_tok)) {
+      Expr& body = unparsed_expression_body();
+      match(semicolon_tok);
+      return on_function_declaration(name, parms, ret, body);
+    }
+
+    // { ... }
+    else {
+      Stmt& body = unparsed_function_body();
+      return on_function_declaration(name, parms, ret, body);
+    }
   }
 
-  return fn;
+  // Othersise, the return type is unspecified, allowing for
+  // anonymous expressions.
+  Type& ret = cxt.get_auto_type();
+
+  // { ... }
+  if (next_token_is(lbrace_tok)) {
+    Stmt& body = unparsed_function_body();
+    return on_function_declaration(name, parms, ret, body);
+  }
+
+  // ''= expression ;' or 'expression ;'
+  match_if(eq_tok);
+  Expr& body = unparsed_expression_body();
+  match(semicolon_tok);
+  return on_function_declaration(name, parms, ret, body);
+}
+
+
+// Parse a parameter clause.
+//
+//    parameter-clause:
+//      '(' [parameter-list] ')'
+//
+Decl_list
+Parser::parameter_clause()
+{
+  Decl_list parms;
+  match(lparen_tok);
+  if (lookahead() != rparen_tok)
+    parms = parameter_list();
+  match(rparen_tok);
+  return parms;
 }
 
 
@@ -214,37 +284,99 @@ Parser::parameter_list()
 // Parse a parameter declaration.
 //
 //    parameter-declaration:
-//      ... [identifier]
-//      type [identifier] [value-initializer]
+//      identifier [':' type] ['=' expression]
+//      identifier [':=' expression]
 //
-// TODO: Consider two different parses. Default arguments are
-// not allowed for the ... parameter.
+// TODO: Extend the grammar to support (named?) variadics and function
+// argument packs.
 Decl&
 Parser::parameter_declaration()
 {
-  // If ... precedes the type, then this will be the variadic
-  // parameter.
-  Type* t;
-  if (match_if(ellipsis_tok))
-    lingo_unimplemented("parse ellipsis");
-  else
-    t = &type();
+  Name& name = identifier();
 
-  // Guarantee a parameter name. This could be DeBruijn-numbered.
-  Name* n;
-  if (Token id = match_if(identifier_tok))
-    n = &on_simple_id(id);
-  else
-    n = &build.get_id();
+  if (match_if(colon_tok)) {
+    if (next_token_is(eq_tok))
+      lingo_unimplemented("default arguments");
 
-  // Point of declaration.
-  Object_parm& parm = on_function_parameter(*n, *t);
+    Type& type = unparsed_parameter_type();
 
-  // Parse the default argument.
-  if (lookahead() == eq_tok)
-    equal_initializer(parm);
+    if (next_token_is(eq_tok))
+      lingo_unimplemented("default arguments");
 
-  return parm;
+    return on_function_parameter(name, type);
+  }
+
+  Type& type = cxt.get_auto_type();
+
+  if (next_token_is(eq_tok))
+    lingo_unimplemented("default arguments");
+
+  return on_function_parameter(name, type);
+}
+
+
+Type&
+Parser::unparsed_parameter_type()
+{
+  Token_seq toks;
+  Brace_matching_sentinel is_non_nested(*this);
+  while (true) {
+    if (next_token_is_one_of(comma_tok, rparen_tok) && is_non_nested())
+      break;
+    toks.push_back(accept());
+  }
+  return on_unparsed_type(std::move(toks));
+}
+
+
+// Returns an unparsed return type.
+Type&
+Parser::unparsed_return_type()
+{
+  Token_seq toks;
+  Brace_matching_sentinel is_non_nested(*this);
+  while (!is_eof()) {
+    if (next_token_is_one_of(lbrace_tok, eq_tok) && is_non_nested())
+      break;
+    toks.push_back(accept());
+  }
+  return on_unparsed_type(std::move(toks));
+}
+
+
+// Returns an unparsed expression that defines a function.
+Expr&
+Parser::unparsed_expression_body()
+{
+  Token_seq toks;
+  Brace_matching_sentinel is_non_nested(*this);
+  while (!is_eof()) {
+    if (next_token_is(semicolon_tok) && is_non_nested())
+      break;
+    toks.push_back(accept());
+  }
+  return on_unparsed_expression(std::move(toks));
+}
+
+
+// Returns an unparsed compound statement that defines a function.
+//
+// FIXME: This is identical to untyped_type_body, but semantically different.
+// There should be no order independence among declarations within a function
+// body... Maybe?
+Stmt&
+Parser::unparsed_function_body()
+{
+  Token_seq toks;
+  toks.push_back(match(lbrace_tok));
+  Brace_matching_sentinel is_non_nested(*this);
+  while (!is_eof()) {
+    if (next_token_is(rbrace_tok) && is_non_nested())
+      break;
+    toks.push_back(accept());
+  }
+  toks.push_back(match(rbrace_tok));
+  return on_unparsed_statement(std::move(toks));
 }
 
 
@@ -273,120 +405,67 @@ Parser::function_definition(Decl& d)
 
 
 // -------------------------------------------------------------------------- //
-// Classes
+// Types
 
-// Parse a class declaration.
+// Parse a type declaration.
 //
-//    class-declaration:
-//      struct declarator ';'
-//      struct class-definition
-//      class declarator ';'
-//      class class-definition
+//    type-declaration:
+//      'type' identifier [':' type] type-body
 //
-// TODO: Add support for classes.
+//    type-body:
+//      compound-statement
+//
+// NOTE: The parser currently allows the omission of the ':' because it
+// looks weird when the kind is omitted.
+//
+// TODO: We could use '=' notation in bodies to create new derived types.
 Decl&
-Parser::class_declaration()
+Parser::type_declaration()
 {
-  lingo_assert(lookahead() == struct_tok || lookahead() == class_tok);
-  Token tok = accept();
-  Name& n = declarator();
+  require(type_tok);
+  Name& name = identifier();
 
-  // Point of declaration.
-  Decl& cls = on_class_declaration(tok, n);
+  match_if(colon_tok);
+  Type& kind = next_token_is(lbrace_tok) ? cxt.get_type_type() : unparsed_type_kind();
 
-  if (!match_if(semicolon_tok)) {
-    // FIXME: Enter class scpoe.
-    class_definition(cls);
-  }
+  Stmt& body = unparsed_type_body();
 
-  return cls;
+  return on_type_declaration(name, kind, body);
 };
 
 
-// Parse a class definition (it's body).
-//
-//    class-definition:
-//      '=' 'delete' ';'
-//      [base-clause] class-body
-//
-//    class-body:
-//      '{' [member-seq] '}'
-//
-// TODO: Implment base class parsing.
-Def&
-Parser::class_definition(Decl& d)
+// Return an unparsed type for the variable's type specification.
+Type&
+Parser::unparsed_type_kind()
 {
-  // Match deleted definitions.
-  if (match_if(eq_tok)) {
-    match(delete_tok);
-    match(semicolon_tok);
-    return on_deleted_definition(d);
-  }
-
-  // Match the class body.
-  Decl_list ds;
-  match(lbrace_tok);
-  if (lookahead() != rbrace_tok)
-    ds = member_seq();
-  match(rbrace_tok);
-  return on_class_definition(d, ds);
-}
-
-
-// Parse a sequence of class members.
-//
-//    member-seq:
-//      member-declaration:
-//      member-seq member-declaration
-Decl_list
-Parser::member_seq()
-{
-  Decl_list ds;
-  do {
-    Decl& d = member_declaration();
-    ds.push_back(d);
-  } while (lookahead() != rbrace_tok);
-  return ds;
-}
-
-
-// Parse a member-declaration.
-//
-//    member-declaration:
-//      variable-declaration
-//      function-declaration
-//
-// TODO: Support member types and templates.
-//
-// TODO: Have different declarations for members and non-members?
-Decl&
-Parser::member_declaration()
-{
-  switch (lookahead()) {
-    case var_tok:
-      return variable_declaration();
-    default:
+  Token_seq toks;
+  while (!is_eof()) {
+    if (next_token_is_one_of(lbrace_tok) && !in_braces())
       break;
+    toks.push_back(accept());
   }
-  throw Syntax_error("expected member-declaration");
+  return on_unparsed_type(std::move(toks));
 }
 
 
-// -------------------------------------------------------------------------- //
-// Namespaces
-
-// Parse a namespace declaration.
+// Returns an unparsed type body.
 //
-//    namespace-declaration:
-//      'namespace' [declarator] '{' declaration-seq '}'
-Decl&
-Parser::namespace_declaration()
+// NOTE: The sequence of tokens are identical to a compound statement
+// but, because this is a type body, they will be interpreted as a
+// member statement.
+Stmt&
+Parser::unparsed_type_body()
 {
-  lingo_unimplemented("parse namespace");
-  // Token tok = require(namespace_tok);
-  // Name& n = declarator();
-  // declaration_seq();
-  // return on_namespace_declaration(tok, n);
+  Token_seq toks;
+  toks.push_back(match(lbrace_tok));
+  Brace_matching_sentinel is_non_nested(*this);
+  while (!is_eof()) {
+    if (next_token_is(rbrace_tok) && is_non_nested())
+      break;
+    toks.push_back(accept());
+  }
+  toks.push_back(match(rbrace_tok));
+  return on_unparsed_statement(std::move(toks));
 }
 
 
@@ -652,18 +731,9 @@ Parser::concept_member()
       return type_requirement();
     case requires_tok:
       return syntactic_requirement();
-    case axiom_tok:
-      return semantic_requirement();
     default:
       return expression_requirement();
   }
-}
-
-
-Decl&
-Parser::axiom_declaration()
-{
-  lingo_unimplemented("parse axiom-declaration");
 }
 
 
@@ -673,7 +743,7 @@ Parser::axiom_declaration()
 // Parse a declarator.
 //
 //    declarator:
-//      id
+//      identifier
 //
 // A declarator is the declared name of an entity. If a declarator
 // is a qualified-id, then the qualification explicitly gives the
@@ -681,12 +751,11 @@ Parser::axiom_declaration()
 //
 // TODO: Rename this to declaration-name.
 //
-// TODO: Handle declaration names.
+// FIXME: Allow non-identifiers?
 Name&
 Parser::declarator()
 {
-  Name& n = id();
-  return on_declarator(n);
+  return identifier();
 }
 
 
@@ -718,7 +787,6 @@ Parser::declaration_seq()
   } while (peek() && lookahead() != rbrace_tok && lookahead() != identifier_tok);
   return ds;
 }
-
 
 
 } // namespace banjo

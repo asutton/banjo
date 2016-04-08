@@ -32,10 +32,6 @@ struct Context : Builder
   Symbol_table const& symbols() const { return syms; }
   Symbol_table&       symbols()       { return syms; }
 
-  // Returns the global namespace.
-  Namespace_decl const& global_namespace() const { return *global; }
-  Namespace_decl&       global_namespace()       { return *global; }
-
   // Unique ids
   int get_unique_id();
 
@@ -45,6 +41,7 @@ struct Context : Builder
 
   // Scope management
   void   set_scope(Scope&);
+  Scope&                    make_scope();
   Initializer_scope&        make_initializer_scope(Decl&);
   Function_scope&           make_function_scope(Decl&);
   Function_parameter_scope& make_function_parameter_scope();
@@ -90,7 +87,6 @@ struct Context : Builder
 
   Symbol_table    syms;
   Location        input;  // The input location
-  Namespace_decl* global; // The global namespace
   Scope*          scope;  // The current scope
 
   // Store information for generating unique names.
@@ -165,7 +161,7 @@ Context::get_unique_id()
 // An RAII helper that manages the entry and exit of scopes.
 struct Enter_scope
 {
-  Enter_scope(Context&, Namespace_decl&);
+  Enter_scope(Context&);
   Enter_scope(Context&, Scope&);
   ~Enter_scope();
 
@@ -211,6 +207,24 @@ struct Enter_requires_scope : Enter_scope
   { }
 };
 
+
+// -------------------------------------------------------------------------- //
+// Input location
+
+struct Save_input_location
+{
+  Save_input_location(Context& c)
+    : cxt(c), prev(cxt.input_location())
+  { }
+
+  ~Save_input_location()
+  {
+    cxt.input_location(prev);
+  }
+
+  Context& cxt;
+  Location prev;
+};
 
 
 // -------------------------------------------------------------------------- //

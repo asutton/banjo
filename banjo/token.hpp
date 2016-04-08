@@ -107,6 +107,7 @@ enum Token_kind
   this_tok,
   template_tok,
   true_tok,
+  type_tok,
   typename_tok,
   uint_tok,
   uint8_tok,
