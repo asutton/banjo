@@ -96,6 +96,13 @@ struct Builder
   Gt_expr&        make_gt(Type&, Expr&, Expr&);
   Le_expr&        make_le(Type&, Expr&, Expr&);
   Ge_expr&        make_ge(Type&, Expr&, Expr&);
+  Add_expr&       make_add(Type&, Expr&, Expr&);
+  Sub_expr&       make_sub(Type&, Expr&, Expr&);
+  Mul_expr&       make_mul(Type&, Expr&, Expr&);
+  Div_expr&       make_div(Type&, Expr&, Expr&);
+  Rem_expr&       make_rem(Type&, Expr&, Expr&);
+  Neg_expr&       make_neg(Type&, Expr&);
+  Pos_expr&       make_pos(Type&, Expr&);
   Call_expr&      make_call(Type&, Expr&, Expr_list const&);
   Call_expr&      make_call(Type&, Function_decl&, Expr_list const&);
   Requires_expr&  make_requires(Decl_list const&, Decl_list const&, Req_list const&);

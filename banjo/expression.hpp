@@ -26,6 +26,14 @@ Expr& make_gt(Context&, Expr&, Expr&);
 Expr& make_le(Context&, Expr&, Expr&);
 Expr& make_ge(Context&, Expr&, Expr&);
 
+Expr& make_add(Context&, Expr&, Expr&);
+Expr& make_sub(Context&, Expr&, Expr&);
+Expr& make_mul(Context&, Expr&, Expr&);
+Expr& make_div(Context&, Expr&, Expr&);
+Expr& make_rem(Context&, Expr&, Expr&);
+Expr& make_neg(Context&, Expr&);
+Expr& make_pos(Context&, Expr&);
+
 Expr& make_call(Context& cxt, Expr& e, Expr_list&);
 
 Expr& make_reference(Context& cxt, Name&);

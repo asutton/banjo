@@ -512,6 +512,55 @@ Builder::make_ge(Type& t, Expr& e1, Expr& e2)
 }
 
 
+Add_expr&
+Builder::make_add(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Add_expr>(t, e1, e2);
+}
+
+
+Sub_expr&
+Builder::make_sub(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Sub_expr>(t, e1, e2);
+}
+
+
+Mul_expr&
+Builder::make_mul(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Mul_expr>(t, e1, e2);
+}
+
+
+Div_expr&
+Builder::make_div(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Div_expr>(t, e1, e2);
+}
+
+
+Rem_expr&
+Builder::make_rem(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Rem_expr>(t, e1, e2);
+}
+
+
+Neg_expr&
+Builder::make_neg(Type& t, Expr& e)
+{
+  return make<Neg_expr>(t, e);
+}
+
+
+Pos_expr&
+Builder::make_pos(Type& t, Expr& e)
+{
+  return make<Pos_expr>(t, e);
+}
+
+
 Call_expr&
 Builder::make_call(Type& t, Expr& f, Expr_list const& a)
 {

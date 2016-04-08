@@ -7,14 +7,10 @@ add_library(banjo
   error.cpp
   context.cpp
 
-  # Lexical components
+  # TODO: Factor this out to support multiple front ends.
+  # Lexical and syntactic components
   token.cpp
   lexer.cpp
-
-  # Syntactic components
-  # TODO: Factor this out to support multiple front ends.
-  value.cpp
-  builder.cpp
   parser.cpp
   parse-id.cpp
   parse-type.cpp
@@ -33,7 +29,8 @@ add_library(banjo
   elab-def.cpp
   printer.cpp
 
-  # Semantics
+  # Core facilities
+  builder.cpp
   ast.cpp
   ast-base.cpp
   ast-name.cpp
@@ -45,6 +42,7 @@ add_library(banjo
   ast-req.cpp
   ast-hash.cpp
   ast-eq.cpp
+  value.cpp
 
   operator.cpp
   qualifier.cpp
@@ -58,6 +56,7 @@ add_library(banjo
   expr-id.cpp
   expr-logical.cpp
   expr-relational.cpp
+  expr-arithmetic.cpp
   expr-call.cpp
   conversion.cpp
   initialization.cpp

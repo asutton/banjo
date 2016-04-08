@@ -129,49 +129,49 @@ Parser::on_cmp_expression(Token tok, Expr& e1, Expr& e2)
 Expr&
 Parser::on_add_expression(Token tok, Expr& e1, Expr& e2)
 {
-  lingo_unimplemented("on add-expr");
+  return make_add(cxt, e1, e2);
 }
 
 
 Expr&
 Parser::on_sub_expression(Token tok, Expr& e1, Expr& e2)
 {
-  lingo_unimplemented("on sub-expr");
+  return make_sub(cxt, e1, e2);
 }
 
 
 Expr&
 Parser::on_mul_expression(Token tok, Expr& e1, Expr& e2)
 {
-  lingo_unimplemented("on mul-expr");
+  return make_mul(cxt, e1, e2);
 }
 
 
 Expr&
 Parser::on_div_expression(Token tok, Expr& e1, Expr& e2)
 {
-  lingo_unimplemented("on div-expr");
+  return make_div(cxt, e1, e2);
 }
 
 
 Expr&
 Parser::on_rem_expression(Token tok, Expr& e1, Expr& e2)
 {
-  lingo_unimplemented("on rem-expr");
+  return make_rem(cxt, e1, e2);
 }
 
 
 Expr&
 Parser::on_neg_expression(Token tok, Expr& e)
 {
-  lingo_unimplemented("on neg-expr");
+  return make_neg(cxt, e);
 }
 
 
 Expr&
 Parser::on_pos_expression(Token tok, Expr& e)
 {
-  lingo_unimplemented("on pos-expr");
+  return make_pos(cxt, e);
 }
 
 
