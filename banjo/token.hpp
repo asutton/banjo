@@ -122,6 +122,7 @@ enum Token_kind
   void_tok,
   volatile_tok,
   while_tok,
+  yield_tok,
   last_keyword_tok,
 
   // Character classes

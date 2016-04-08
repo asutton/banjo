@@ -506,7 +506,7 @@ Parser::Parsing_template::~Parsing_template()
 
 // The trial parser provides recovery information for the parser
 // class. If the trial parse fails, then the state of the underlying
-// parser is rewound to the state cached bythe trial parser.
+// parser is rewound to the state cached by the trial parser.
 //
 // TODO: Can we automatically detect failures without needing
 // an explicit indication of failure?
