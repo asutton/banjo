@@ -1,2 +1,4 @@
 
-type T1 : type { }
+type T1 : type {
+  var x : int;
+}

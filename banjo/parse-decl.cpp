@@ -83,8 +83,9 @@ Type&
 Parser::unparsed_variable_type()
 {
   Token_seq toks;
+  Brace_matching_sentinel is_non_nested(*this);
   while (!is_eof()) {
-    if (next_token_is_one_of(semicolon_tok, eq_tok) && !in_braces())
+    if (next_token_is_one_of(semicolon_tok, eq_tok) && is_non_nested())
       break;
     toks.push_back(accept());
   }
@@ -97,8 +98,9 @@ Expr&
 Parser::unparsed_variable_initializer()
 {
   Token_seq toks;
+  Brace_matching_sentinel is_non_nested(*this);
   while (!is_eof()) {
-    if (next_token_is(semicolon_tok) && !in_braces())
+    if (next_token_is(semicolon_tok) && is_non_nested())
       break;
     toks.push_back(accept());
   }
@@ -317,9 +319,9 @@ Type&
 Parser::unparsed_parameter_type()
 {
   Token_seq toks;
-  Brace_matching_sentinel in_level(*this);
+  Brace_matching_sentinel is_non_nested(*this);
   while (true) {
-    if (next_token_is_one_of(comma_tok, rparen_tok) && in_level())
+    if (next_token_is_one_of(comma_tok, rparen_tok) && is_non_nested())
       break;
     toks.push_back(accept());
   }
@@ -332,9 +334,9 @@ Type&
 Parser::unparsed_return_type()
 {
   Token_seq toks;
-  Brace_matching_sentinel in_level(*this);
+  Brace_matching_sentinel is_non_nested(*this);
   while (!is_eof()) {
-    if (next_token_is_one_of(lbrace_tok, eq_tok) && in_level())
+    if (next_token_is_one_of(lbrace_tok, eq_tok) && is_non_nested())
       break;
     toks.push_back(accept());
   }
@@ -347,9 +349,9 @@ Expr&
 Parser::unparsed_expression_body()
 {
   Token_seq toks;
-  Brace_matching_sentinel in_level(*this);
+  Brace_matching_sentinel is_non_nested(*this);
   while (!is_eof()) {
-    if (next_token_is(semicolon_tok) && in_level())
+    if (next_token_is(semicolon_tok) && is_non_nested())
       break;
     toks.push_back(accept());
   }
@@ -367,9 +369,9 @@ Parser::unparsed_function_body()
 {
   Token_seq toks;
   toks.push_back(match(lbrace_tok));
-  Brace_matching_sentinel in_level(*this);
+  Brace_matching_sentinel is_non_nested(*this);
   while (!is_eof()) {
-    if (next_token_is(rbrace_tok) && in_level())
+    if (next_token_is(rbrace_tok) && is_non_nested())
       break;
     toks.push_back(accept());
   }
@@ -447,14 +449,18 @@ Parser::unparsed_type_kind()
 
 
 // Returns an unparsed type body.
+//
+// NOTE: The sequence of tokens are identical to a compound statement
+// but, because this is a type body, they will be interpreted as a
+// member statement.
 Stmt&
 Parser::unparsed_type_body()
 {
   Token_seq toks;
   toks.push_back(match(lbrace_tok));
-  Brace_matching_sentinel in_level(*this);
+  Brace_matching_sentinel is_non_nested(*this);
   while (!is_eof()) {
-    if (next_token_is(rbrace_tok) && in_level())
+    if (next_token_is(rbrace_tok) && is_non_nested())
       break;
     toks.push_back(accept());
   }
@@ -781,7 +787,6 @@ Parser::declaration_seq()
   } while (peek() && lookahead() != rbrace_tok && lookahead() != identifier_tok);
   return ds;
 }
-
 
 
 } // namespace banjo

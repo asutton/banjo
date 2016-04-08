@@ -32,7 +32,7 @@ struct Parser
     : cxt(cxt), build(cxt), tokens(ts), state()
   { }
 
-  Stmt_list operator()();
+  Stmt& operator()();
 
   // Syntactic forms
   Operator_kind any_operator();
@@ -114,6 +114,7 @@ struct Parser
   // Statements
   Stmt& statement();
   Stmt& compound_statement();
+  Stmt& member_statement();
   Stmt& return_statement();
   Stmt& declaration_statement();
   Stmt& expression_statement();
@@ -179,7 +180,7 @@ struct Parser
   Req_list usage_seq();
 
   // Modules
-  Stmt_list input();
+  Stmt& translation();
 
   // Type elaboration
   void elaborate_declarations(Stmt_list&);
@@ -203,7 +204,8 @@ struct Parser
   void elaborate_type_definition(Type_decl&);
   void elaborate_type_definition(Type_decl&, Type_def&);
   Expr& elaborate_expression(Expr&);
-  Stmt& elaborate_statement(Stmt&);
+  Stmt& elaborate_compound_statement(Stmt&);
+  Stmt& elaborate_member_statement(Stmt&);
 
 
   // Semantics actions
@@ -295,7 +297,9 @@ struct Parser
   Expr& on_unparsed_expression(Token_seq&&);
 
   // Statements
-  Compound_stmt& on_compound_statement(Stmt_list const&);
+  Stmt& on_translation_statement(Stmt_list&&);
+  Stmt& on_member_statement(Stmt_list&&);
+  Stmt& on_compound_statement(Stmt_list&&);
   Return_stmt& on_return_statement(Token, Expr&);
   Declaration_stmt& on_declaration_statement(Decl&);
   Expression_stmt& on_expression_statement(Expr&);

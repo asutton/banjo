@@ -895,6 +895,8 @@ Printer::statement(Stmt const& s)
     Printer& p;
     void operator()(Stmt const& s)             { lingo_unhandled(s); }
     void operator()(Unparsed_stmt const& s)    { p.statement(s); }
+    void operator()(Translation_stmt const& s) { p.translation_statement(s); }
+    void operator()(Member_stmt const& s)      { p.member_statement(s); }
     void operator()(Compound_stmt const& s)    { p.compound_statement(s); }
     void operator()(Return_stmt const& s)      { p.return_statement(s); }
     void operator()(Expression_stmt const& s)  { p.expression_statement(s); }
@@ -923,6 +925,24 @@ Printer::statement_seq(Stmt_list const& ss)
     if (std::next(iter) != ss.end())
       newline();
   }
+}
+
+
+void
+Printer::translation_statement(Translation_stmt const& s)
+{
+  statement_seq(s.statements());
+}
+
+
+void
+Printer::member_statement(Member_stmt const& s)
+{
+  token(lbrace_tok);
+  newline_and_indent();
+  statement_seq(s.statements());
+  newline_and_undent();
+  token(rbrace_tok);
 }
 
 

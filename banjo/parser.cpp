@@ -309,21 +309,22 @@ Parser::current_context()
 //      [statement-list]
 //
 // FIXME: This should return a single node, not a sequence.
-Stmt_list
-Parser::input()
+Stmt&
+Parser::translation()
 {
-  // TODO: This should probably be the global scope and associated with
-  // the context, instead of being allocated on the fly.
+  // TODO: We should enter the global scope and not create a temporary
+  // one.
   Enter_scope scope(cxt);
 
-  return statement_seq();
+  Stmt_list ss = statement_seq();
+  return on_translation_statement(std::move(ss));
 }
 
 
-Stmt_list
+Stmt&
 Parser::operator()()
 {
-  return input();
+  return translation();
 }
 
 

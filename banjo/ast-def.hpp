@@ -148,43 +148,6 @@ struct Type_def : Def
 };
 
 
-
-// A definition of a class.
-//
-// FIXME: Add base classes.
-struct Class_def : Def
-{
-  Class_def(Decl_list const& ds)
-    : decls(ds)
-  { }
-
-  void accept(Visitor& v) const { return v.visit(*this); }
-  void accept(Mutator& v)       { return v.visit(*this); }
-
-  // Returns the list of member declarations.
-  Decl_list const& members() const { return decls; }
-  Decl_list&       members()       { return decls; }
-
-  Decl_list decls;
-};
-
-
-// A definition of a union.
-struct Union_def : Def
-{
-  void accept(Visitor& v) const { return v.visit(*this); }
-  void accept(Mutator& v)       { return v.visit(*this); }
-};
-
-
-// A definition of an enumeration.
-struct Enum_def : Def
-{
-  void accept(Visitor& v) const { return v.visit(*this); }
-  void accept(Mutator& v)       { return v.visit(*this); }
-};
-
-
 // A concept body is a sequence of statements.
 struct Concept_def : Def
 {

@@ -7,11 +7,25 @@
 namespace banjo
 {
 
-// FIXME: Use the builder.
-Compound_stmt&
-Parser::on_compound_statement(Stmt_list const& ss)
+
+Stmt&
+Parser::on_translation_statement(Stmt_list&& ss)
 {
-  return build.make_compound_statement(ss);
+  return build.make_translation_statement(std::move(ss));
+}
+
+
+Stmt&
+Parser::on_compound_statement(Stmt_list&& ss)
+{
+  return build.make_compound_statement(std::move(ss));
+}
+
+
+Stmt&
+Parser::on_member_statement(Stmt_list&& ss)
+{
+  return build.make_member_statement(std::move(ss));
 }
 
 

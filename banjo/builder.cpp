@@ -537,10 +537,24 @@ Builder::synthesize_expression(Decl& d)
 // -------------------------------------------------------------------------- //
 // Statements
 
-Compound_stmt&
-Builder::make_compound_statement(Stmt_list const& ss)
+Translation_stmt&
+Builder::make_translation_statement(Stmt_list&& ss)
 {
-  return make<Compound_stmt>(ss);
+  return make<Translation_stmt>(std::move(ss));
+}
+
+
+Member_stmt&
+Builder::make_member_statement(Stmt_list&& ss)
+{
+  return make<Member_stmt>(std::move(ss));
+}
+
+
+Compound_stmt&
+Builder::make_compound_statement(Stmt_list&& ss)
+{
+  return make<Compound_stmt>(std::move(ss));
 }
 
 
@@ -841,13 +855,6 @@ Type_def&
 Builder::make_type_definition(Stmt& s)
 {
   return make<Type_def>(s);
-}
-
-
-Class_def&
-Builder::make_class_definition(Decl_list const& ds)
-{
-  return make<Class_def>(ds);
 }
 
 

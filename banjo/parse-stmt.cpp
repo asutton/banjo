@@ -42,18 +42,37 @@ Parser::statement()
 //
 //    compound-statement:
 //      '{' [statement-seq] '}'
+//
+// A compound statement defines a new block scope.
 Stmt&
 Parser::compound_statement()
 {
-  // A compound statement defines a new scope.
-  Enter_scope(cxt, cxt.make_block_scope());
-
+  Enter_scope scope(cxt, cxt.make_block_scope());
   Stmt_list ss;
   match(lbrace_tok);
   if (lookahead() != rbrace_tok)
     ss = statement_seq();
   match(rbrace_tok);
-  return on_compound_statement(ss);
+  return on_compound_statement(std::move(ss));
+}
+
+
+// Parse a member statement, which represents the body of a class.
+//
+//    member-statement:
+//      '{' [statement-seq] '}'
+//
+// Note that that the scope into which declarations are added is
+// pushed prior to the parsing of the member statement.
+Stmt&
+Parser::member_statement()
+{
+  Stmt_list ss;
+  match(lbrace_tok);
+  if (lookahead() != rbrace_tok)
+    ss = statement_seq();
+  match(rbrace_tok);
+  return on_member_statement(std::move(ss));
 }
 
 
@@ -96,12 +115,11 @@ Parser::expression_statement()
 //      statement
 //      statement-seq statement
 //
-// NOTE: Every time we parse a sequence of statements, we expect that
-//  a new scope has been pushed.
+// NOTE: In general, we expect that a new scope has been pushed prior
+// to the parsing of the nested statements.
 Stmt_list
 Parser::statement_seq()
 {
-
   // First pass: collect declarations
   Stmt_list ss;
   do {

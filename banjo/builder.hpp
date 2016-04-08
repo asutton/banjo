@@ -101,7 +101,9 @@ struct Builder
   Synthetic_expr& synthesize_expression(Decl&);
 
   // Statements
-  Compound_stmt&    make_compound_statement(Stmt_list const&);
+  Translation_stmt& make_translation_statement(Stmt_list&&);
+  Member_stmt&      make_member_statement(Stmt_list&&);
+  Compound_stmt&    make_compound_statement(Stmt_list&&);
   Return_stmt&      make_return_statement(Expr&);
   Expression_stmt&  make_expression_statement(Expr&);
   Declaration_stmt& make_declaration_statement(Decl&);
@@ -144,8 +146,6 @@ struct Builder
   Expression_def& make_expression_definition(Expr&);
   Function_def&   make_function_definition(Stmt&);
   Type_def&       make_type_definition(Stmt&);
-
-  Class_def&      make_class_definition(Decl_list const&);
   Concept_def&    make_concept_definition(Req_list const&);
 
   // Parameters

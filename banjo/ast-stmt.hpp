@@ -37,24 +37,55 @@ struct Stmt::Mutator
 };
 
 
-// A blocked sequence of statements.
-struct Compound_stmt : Stmt
+// A helper node that represents all kinds of statement sequences.
+struct Multiple_stmt : Stmt
 {
-  Compound_stmt()
+  Multiple_stmt()
     : Stmt()
   { }
 
-  Compound_stmt(Stmt_list const& ss)
-    : Stmt(), stmts(ss)
+  Multiple_stmt(Stmt_list&& ss)
+    : Stmt(), stmts(std::move(ss))
   { }
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
 
   Stmt_list const& statements() const { return stmts; }
   Stmt_list&       statements()       { return stmts; }
 
   Stmt_list stmts;
+};
+
+
+// A sequence of statements representing a complete translation unit.
+struct Translation_stmt : Multiple_stmt
+{
+  using Multiple_stmt::Multiple_stmt;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// A sequence of statements representing the body of a type.
+//
+// Note that this term only follows the declaration of a type as a form
+// of its definition. It is otherwise syntactically identical to compound
+// statement, but with different semantics.
+struct Member_stmt : Multiple_stmt
+{
+  using Multiple_stmt::Multiple_stmt;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// A sequence of statements to be executed within a function.
+struct Compound_stmt : Multiple_stmt
+{
+  using Multiple_stmt::Multiple_stmt;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -155,7 +186,7 @@ struct Generic_stmt_mutator : Stmt::Mutator, Generic_mutator<F, T>
 
 
 // Apply a function to the given statement.
-template<typename F, typename T = typename std::result_of<F(Return_stmt const&)>::type>
+template<typename F, typename T = typename std::result_of<F(Translation_stmt const&)>::type>
 inline T
 apply(Stmt const& s, F fn)
 {
@@ -165,7 +196,7 @@ apply(Stmt const& s, F fn)
 
 
 // Apply a function to the given statement.
-template<typename F, typename T = typename std::result_of<F(Return_stmt&)>::type>
+template<typename F, typename T = typename std::result_of<F(Translation_stmt&)>::type>
 inline T
 apply(Stmt& s, F fn)
 {

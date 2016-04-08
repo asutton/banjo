@@ -124,8 +124,8 @@ Parser::elaborate_function_definition(Function_decl& decl, Function_def& def)
   for (Decl& d : decl.parameters())
     declare(cxt, d);
 
-  // Elaborate the definition's statemnt, possibly parsing it.
-  Stmt& stmt = elaborate_statement(def.statement());
+  // Elaborate the definition's statement, possibly parsing it.
+  Stmt& stmt = elaborate_compound_statement(def.statement());
 
   // Update the definition with the new statement. We don't need
   // to update the declaration.
@@ -136,7 +136,32 @@ Parser::elaborate_function_definition(Function_decl& decl, Function_def& def)
 void
 Parser::elaborate_type_definition(Type_decl& d)
 {
-  std::cout << "TYPE DEF: " << d << '\n';
+  struct fn
+  {
+    Parser& p;
+    Type_decl& type;
+    void operator()(Def& d)      { lingo_unhandled(d); }
+    void operator()(Type_def& d) { p.elaborate_type_definition(type, d); }
+  };
+  apply(d.definition(), fn{*this, d});
+}
+
+
+void
+Parser::elaborate_type_definition(Type_decl& decl, Type_def& def)
+{
+  // Enter into the type of the scope.
+  //
+  // FIXME: The type should have an associated scope, and we should
+  // just enter that.
+  Enter_scope scope(cxt);
+
+  // Elaborate the definition's statement, possibly parsing it.
+  Stmt& stmt = elaborate_member_statement(def.body());
+
+  // Update the definition with the new statement. We don't need
+  // to update the declaration.
+  def.body_ = &stmt;
 }
 
 
@@ -154,13 +179,26 @@ Parser::elaborate_expression(Expr& e)
 
 
 Stmt&
-Parser::elaborate_statement(Stmt& s)
+Parser::elaborate_compound_statement(Stmt& s)
 {
   if (Unparsed_stmt* soup = as<Unparsed_stmt>(&s)) {
     Save_input_location loc(cxt);
     Token_stream ts(soup->tokens());
     Parser parse(cxt, ts);
-    return parse.statement();
+    return parse.compound_statement();
+  }
+  return s;
+}
+
+
+Stmt&
+Parser::elaborate_member_statement(Stmt& s)
+{
+  if (Unparsed_stmt* soup = as<Unparsed_stmt>(&s)) {
+    Save_input_location loc(cxt);
+    Token_stream ts(soup->tokens());
+    Parser parse(cxt, ts);
+    return parse.member_statement();
   }
   return s;
 }
