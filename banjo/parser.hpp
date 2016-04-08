@@ -198,7 +198,10 @@ struct Parser
   void elaborate_variable_initializer(Variable_decl&, Empty_def&);
   void elaborate_variable_initializer(Variable_decl&, Expression_def&);
   void elaborate_function_definition(Function_decl&);
+  void elaborate_function_definition(Function_decl&, Expression_def&);
+  void elaborate_function_definition(Function_decl&, Function_def&);
   void elaborate_type_definition(Type_decl&);
+  void elaborate_type_definition(Type_decl&, Type_def&);
   Expr& elaborate_expression(Expr&);
 
 

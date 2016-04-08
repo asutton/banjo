@@ -5,5 +5,5 @@ def f2 : (x, y) -> int { return x; }
 def f3 : (x, y) -> int = x;
 
 def f4 : (x, y) { return x; }
-def f5 : (x, y) = x + 1;
-def f6 : (x, y) x * y;
+def f5 : (x, y) = x;
+def f6 : (x, y) x;

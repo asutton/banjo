@@ -3,6 +3,7 @@
 
 #include "parser.hpp"
 #include "printer.hpp"
+#include "declaration.hpp"
 #include "ast.hpp"
 
 #include <iostream>
@@ -78,8 +79,42 @@ Parser::elaborate_variable_initializer(Variable_decl& decl, Expression_def& def)
 void
 Parser::elaborate_function_definition(Function_decl& d)
 {
-  std::cout << "FN DEF: " << d << '\n';
+  struct fn
+  {
+    Parser& p;
+    Function_decl& fn;
+    void operator()(Def& d)            { lingo_unhandled(d); }
+    void operator()(Expression_def& d) { p.elaborate_function_definition(fn, d); }
+    void operator()(Function_def& d)   { p.elaborate_function_definition(fn, d); }
+  };
+  apply(d.definition(), fn{*this, d});
 }
+
+
+void
+Parser::elaborate_function_definition(Function_decl& decl, Expression_def& def)
+{
+  // Declare parameters as local variables prior to elaborating the definition.
+  //
+  // TODO: Should we be using a specifici kind of scope here?
+  Enter_scope scope(cxt);
+  for (Decl& d : decl.parameters())
+    declare(cxt, d);
+
+  // Elaborate the definition, possibly parsing it.
+  Expr& expr = elaborate_expression(def.expression());
+
+  // Transform the returned expression into a normal function
+  // definition with a single return statement with that expression.
+  Stmt& ret = cxt.make_return_statement(expr);
+  Stmt& body = cxt.make_compound_statement({&ret});
+  decl.def_ = &cxt.make_function_definition(body);
+}
+
+
+void
+Parser::elaborate_function_definition(Function_decl& decl, Function_def& def)
+{ }
 
 
 void

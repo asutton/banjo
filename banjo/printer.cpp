@@ -941,6 +941,7 @@ void
 Printer::return_statement(Return_stmt const& s)
 {
   token(return_tok);
+  space();
   expression(s.expression());
   token(semicolon_tok);
 }
