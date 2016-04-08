@@ -277,63 +277,63 @@ struct Pos_expr : Unary_expr
 };
 
 
-struct Bit_or_expr : Binary_expr
-{
-    using Binary_expr::Binary_expr;
-
-    void accept(Visitor& v) const { return v.visit(*this); }
-    void accept(Mutator& v)       { return v.visit(*this); }
-
-};
-
-
-struct Bit_xor_expr : Binary_expr
-{
-    using Binary_expr::Binary_expr;
-
-    void accept(Visitor& v) const { return v.visit(*this); }
-    void accept(Mutator& v)       { return v.visit(*this); }
-
-};
-
-
+// Represents a bitwise ad expression.
 struct Bit_and_expr : Binary_expr
 {
-    using Binary_expr::Binary_expr;
+  using Binary_expr::Binary_expr;
 
-    void accept(Visitor& v) const { return v.visit(*this); }
-    void accept(Mutator& v)       { return v.visit(*this); }
-
+  void accept(Visitor& v) const { return v.visit(*this); }
+  void accept(Mutator& v)       { return v.visit(*this); }
 };
 
 
+// Represents a bitwise inclusive-or expression.
+struct Bit_or_expr : Binary_expr
+{
+  using Binary_expr::Binary_expr;
+
+  void accept(Visitor& v) const { return v.visit(*this); }
+  void accept(Mutator& v)       { return v.visit(*this); }
+};
+
+
+// Represents a bitwsise exclusive-or expression.
+struct Bit_xor_expr : Binary_expr
+{
+  using Binary_expr::Binary_expr;
+
+  void accept(Visitor& v) const { return v.visit(*this); }
+  void accept(Mutator& v)       { return v.visit(*this); }
+};
+
+
+// Represents a bitwise left-shift expression.
+struct Bit_lsh_expr : Binary_expr
+{
+  using Binary_expr::Binary_expr;
+
+  void accept(Visitor& v) const { return v.visit(*this); }
+  void accept(Mutator& v)       { return v.visit(*this); }
+};
+
+
+// Represents a bitwise-right shift expression.
+struct Bit_rsh_expr : Binary_expr
+{
+  using Binary_expr::Binary_expr;
+
+  void accept(Visitor& v) const { return v.visit(*this); }
+  void accept(Mutator& v)       { return v.visit(*this); }
+};
+
+
+// Represents bit-not (one's complement) expression.
 struct Bit_not_expr : Unary_expr
 {
-    using Unary_expr::Unary_expr;
+  using Unary_expr::Unary_expr;
 
-    void accept(Visitor& v) const { return v.visit(*this); }
-    void accept(Mutator& v)       { return v.visit(*this); }
-
-};
-
-
-struct Lsh_expr : Binary_expr
-{
-    using Binary_expr::Binary_expr;
-
-    void accept(Visitor& v) const { return v.visit(*this); }
-    void accept(Mutator& v)       { return v.visit(*this); }
-
-};
-
-
-struct Rsh_expr : Binary_expr
-{
-    using Binary_expr::Binary_expr;
-
-    void accept(Visitor& v) const { return v.visit(*this); }
-    void accept(Mutator& v)       { return v.visit(*this); }
-
+  void accept(Visitor& v) const { return v.visit(*this); }
+  void accept(Mutator& v)       { return v.visit(*this); }
 };
 
 

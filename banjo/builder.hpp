@@ -103,6 +103,12 @@ struct Builder
   Rem_expr&       make_rem(Type&, Expr&, Expr&);
   Neg_expr&       make_neg(Type&, Expr&);
   Pos_expr&       make_pos(Type&, Expr&);
+  Bit_and_expr&   make_bit_and(Type&, Expr&, Expr&);
+  Bit_or_expr&    make_bit_or(Type&, Expr&, Expr&);
+  Bit_xor_expr&   make_bit_xor(Type&, Expr&, Expr&);
+  Bit_lsh_expr&   make_bit_lsh(Type&, Expr&, Expr&);
+  Bit_rsh_expr&   make_bit_rsh(Type&, Expr&, Expr&);
+  Bit_not_expr&   make_bit_not(Type&, Expr&);
   Call_expr&      make_call(Type&, Expr&, Expr_list const&);
   Call_expr&      make_call(Type&, Function_decl&, Expr_list const&);
   Requires_expr&  make_requires(Decl_list const&, Decl_list const&, Req_list const&);

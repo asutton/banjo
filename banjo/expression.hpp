@@ -34,6 +34,13 @@ Expr& make_rem(Context&, Expr&, Expr&);
 Expr& make_neg(Context&, Expr&);
 Expr& make_pos(Context&, Expr&);
 
+Expr& make_bit_and(Context&, Expr&, Expr&);
+Expr& make_bit_or(Context&, Expr&, Expr&);
+Expr& make_bit_xor(Context&, Expr&, Expr&);
+Expr& make_bit_lsh(Context&, Expr&, Expr&);
+Expr& make_bit_rsh(Context&, Expr&, Expr&);
+Expr& make_bit_not(Context&, Expr&);
+
 Expr& make_call(Context& cxt, Expr& e, Expr_list&);
 
 Expr& make_reference(Context& cxt, Name&);

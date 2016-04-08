@@ -36,44 +36,44 @@ Parser::on_logical_not_expression(Token tok, Expr& e)
 
 
 Expr&
-Parser::on_ior_expression(Token tok, Expr& e1, Expr& e2)
+Parser::on_or_expression(Token tok, Expr& e1, Expr& e2)
 {
-  lingo_unimplemented("on bit-or-expr");
+  return make_bit_or(cxt, e1, e2);
 }
 
 
 Expr&
 Parser::on_xor_expression(Token tok, Expr& e1, Expr& e2)
 {
-  lingo_unimplemented("on bit-xor-expr");
+  return make_bit_xor(cxt, e1, e2);
 }
 
 
 Expr&
 Parser::on_and_expression(Token tok, Expr& e1, Expr& e2)
 {
-  lingo_unimplemented("on bit-and-expr");
+  return make_bit_and(cxt, e1, e2);
 }
 
 
 Expr&
 Parser::on_lsh_expression(Token tok, Expr& e1, Expr& e2)
 {
-  lingo_unimplemented("on bit-lsh-expr");
+  return make_bit_lsh(cxt, e1, e2);
 }
 
 
 Expr&
 Parser::on_rsh_expression(Token tok, Expr& e1, Expr& e2)
 {
-  lingo_unimplemented("on bit-rsh-expr");
+  return make_bit_rsh(cxt, e1, e2);
 }
 
 
 Expr&
 Parser::on_compl_expression(Token tok, Expr& e)
 {
-  lingo_unimplemented("on bit-not-expr");
+  return make_bit_not(cxt, e);
 }
 
 

@@ -57,6 +57,7 @@ add_library(banjo
   expr-logical.cpp
   expr-relational.cpp
   expr-arithmetic.cpp
+  expr-bitwise.cpp
   expr-call.cpp
   conversion.cpp
   initialization.cpp

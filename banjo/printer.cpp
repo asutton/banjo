@@ -575,8 +575,8 @@ Printer::shift_expression(Expr const& e)
   {
     Printer& p;
     void operator()(Expr const& e) { p.additive_expression(e); }
-    void operator()(Lsh_expr const& e) { print(e, lt_lt_tok); }
-    void operator()(Rsh_expr const& e) { print(e, gt_gt_tok); }
+    void operator()(Bit_lsh_expr const& e) { print(e, lt_lt_tok); }
+    void operator()(Bit_rsh_expr const& e) { print(e, gt_gt_tok); }
 
     void print(Binary_expr const& e, Token_kind k)
     {

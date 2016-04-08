@@ -265,7 +265,7 @@ struct Parser
   Expr& on_logical_or_expression(Token, Expr&, Expr&);
   Expr& on_logical_not_expression(Token, Expr&);
 
-  Expr& on_ior_expression(Token, Expr&, Expr&);
+  Expr& on_or_expression(Token, Expr&, Expr&);
   Expr& on_xor_expression(Token, Expr&, Expr&);
   Expr& on_and_expression(Token, Expr&, Expr&);
   Expr& on_lsh_expression(Token, Expr&, Expr&);

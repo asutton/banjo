@@ -78,7 +78,7 @@ Parser::inclusive_or_expression()
   while (true) {
     if (Token tok = match_if(bar_tok)) {
       Expr& e2 = exclusive_or_expression();
-      e1 = &on_ior_expression(tok, *e1, e2);
+      e1 = &on_or_expression(tok, *e1, e2);
     } else {
       break;
     }

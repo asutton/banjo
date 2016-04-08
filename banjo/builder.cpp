@@ -561,6 +561,48 @@ Builder::make_pos(Type& t, Expr& e)
 }
 
 
+Bit_and_expr&
+Builder::make_bit_and(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Bit_and_expr>(t, e1, e2);
+}
+
+
+Bit_or_expr&
+Builder::make_bit_or(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Bit_or_expr>(t, e1, e2);
+}
+
+
+Bit_xor_expr&
+Builder::make_bit_xor(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Bit_xor_expr>(t, e1, e2);
+}
+
+
+Bit_lsh_expr&
+Builder::make_bit_lsh(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Bit_lsh_expr>(t, e1, e2);
+}
+
+
+Bit_rsh_expr&
+Builder::make_bit_rsh(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Bit_rsh_expr>(t, e1, e2);
+}
+
+
+Bit_not_expr&
+Builder::make_bit_not(Type& t, Expr& e)
+{
+  return make<Bit_not_expr>(t, e);
+}
+
+
 Call_expr&
 Builder::make_call(Type& t, Expr& f, Expr_list const& a)
 {
