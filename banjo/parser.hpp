@@ -203,6 +203,7 @@ struct Parser
   void elaborate_type_definition(Type_decl&);
   void elaborate_type_definition(Type_decl&, Type_def&);
   Expr& elaborate_expression(Expr&);
+  Stmt& elaborate_statement(Stmt&);
 
 
   // Semantics actions

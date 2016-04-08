@@ -94,7 +94,8 @@ Parser::elaborate_function_definition(Function_decl& d)
 void
 Parser::elaborate_function_definition(Function_decl& decl, Expression_def& def)
 {
-  // Declare parameters as local variables prior to elaborating the definition.
+  // Declare parameters as local variables prior to elaborating
+  // the definition.
   //
   // TODO: Should we be using a specifici kind of scope here?
   Enter_scope scope(cxt);
@@ -114,7 +115,22 @@ Parser::elaborate_function_definition(Function_decl& decl, Expression_def& def)
 
 void
 Parser::elaborate_function_definition(Function_decl& decl, Function_def& def)
-{ }
+{
+  // Declare parameters as local variables prior to elaborating
+  // the definition.
+  //
+  // TODO: Should we be using a specifici kind of scope here?
+  Enter_scope scope(cxt);
+  for (Decl& d : decl.parameters())
+    declare(cxt, d);
+
+  // Elaborate the definition's statemnt, possibly parsing it.
+  Stmt& stmt = elaborate_statement(def.statement());
+
+  // Update the definition with the new statement. We don't need
+  // to update the declaration.
+  def.stmt_ = &stmt;
+}
 
 
 void
@@ -134,6 +150,19 @@ Parser::elaborate_expression(Expr& e)
     return parse.expression();
   }
   return e;
+}
+
+
+Stmt&
+Parser::elaborate_statement(Stmt& s)
+{
+  if (Unparsed_stmt* soup = as<Unparsed_stmt>(&s)) {
+    Save_input_location loc(cxt);
+    Token_stream ts(soup->tokens());
+    Parser parse(cxt, ts);
+    return parse.statement();
+  }
+  return s;
 }
 
 

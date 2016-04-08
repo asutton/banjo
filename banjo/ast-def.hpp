@@ -107,7 +107,7 @@ struct Expression_def : Def
 struct Function_def : Def
 {
   Function_def(Stmt& s)
-    : stmt(&s)
+    : stmt_(&s)
   { }
 
   void accept(Visitor& v) const { return v.visit(*this); }
@@ -115,10 +115,10 @@ struct Function_def : Def
 
   // Returns the statement associated with the function
   // definition.
-  Stmt const& statement() const { return *stmt; }
-  Stmt&       statement()       { return *stmt; }
+  Stmt const& statement() const { return *stmt_; }
+  Stmt&       statement()       { return *stmt_; }
 
-  Stmt* stmt;
+  Stmt* stmt_;
 };
 
 
