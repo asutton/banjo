@@ -8,6 +8,7 @@
 #include "prelude.hpp"
 #include "token.hpp"
 #include "language.hpp"
+#include "ast-stmt.hpp"
 
 #include <lingo/token.hpp>
 
@@ -119,6 +120,7 @@ struct Builder
   Member_stmt&      make_member_statement(Stmt_list&&);
   Compound_stmt&    make_compound_statement(Stmt_list&&);
   Return_stmt&      make_return_statement(Expr&);
+  Yield_stmt&       make_yield_statement(Expr&);
   Expression_stmt&  make_expression_statement(Expr&);
   Declaration_stmt& make_declaration_statement(Decl&);
 

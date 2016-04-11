@@ -7,5 +7,6 @@ define_node(Compound_stmt)
 define_node(Expression_stmt)
 define_node(Declaration_stmt)
 define_node(Return_stmt)
+define_node(Yield_stmt)
 
 define_node(Unparsed_stmt)

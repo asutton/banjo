@@ -71,6 +71,7 @@ enum Token_kind
   class_tok,
   concept_tok,
   const_tok,
+  coroutine_tok,
   decltype_tok,
   def_tok,
   default_tok,

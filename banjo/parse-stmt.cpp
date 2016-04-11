@@ -85,6 +85,14 @@ Parser::return_statement()
   return on_return_statement(tok, e);
 }
 
+Stmt&
+Parser::yield_statement()
+{
+  Token tok = require(yield_tok);
+  Expr&e = expression();
+  match(semicolon_tok);
+  return on_yield_statement(tok, e);
+}
 
 // Parse a declaration-statement.
 Stmt&

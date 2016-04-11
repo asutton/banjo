@@ -109,6 +109,7 @@ init_tokens(Symbol_table& syms)
   init_token(syms, class_tok, "class");
   init_token(syms, concept_tok, "concept");
   init_token(syms, const_tok, "const");
+  init_token(syms, coroutine_tok, "co_def");
   init_token(syms, decltype_tok, "decltype");
   init_token(syms, def_tok, "def");
   init_token(syms, default_tok, "default");

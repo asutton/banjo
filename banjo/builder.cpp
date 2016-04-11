@@ -661,6 +661,11 @@ Builder::make_return_statement(Expr& e)
   return make<Return_stmt>(e);
 }
 
+Yield_stmt&
+Builder::make_yield_statement(Expr& e)
+{
+  return make<Yield_stmt>(e);
+}
 
 Expression_stmt&
 Builder::make_expression_statement(Expr& e)

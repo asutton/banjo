@@ -37,6 +37,11 @@ Parser::on_return_statement(Token, Expr& e)
   return build.make_return_statement(e);
 }
 
+Yield_stmt&
+Parser::on_yield_statement(Token, Expr& e)
+{
+ return build.make_yield_statement(e);
+}
 
 Declaration_stmt&
 Parser::on_declaration_statement(Decl& d)
