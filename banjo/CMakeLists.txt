@@ -76,6 +76,7 @@ add_library(banjo
 
   # Code generation
   gen/cxx/generator.cpp
+  gen/llvm/generator.cpp
 )
 target_compile_definitions(banjo PUBLIC ${LLVM_DEFINITIONS})
 target_include_directories(banjo
