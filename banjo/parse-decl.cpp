@@ -25,6 +25,8 @@ Parser::declaration()
       return variable_declaration();
     case def_tok:
       return function_declaration();
+    case coroutine_tok:
+      lingo_unimplemented("co_def");
     case type_tok:
       return type_declaration();
     case concept_tok:
@@ -225,7 +227,7 @@ Parser::function_declaration()
     }
   }
 
-  // Othersise, the return type is unspecified, allowing for
+  // Otherwise, the return type is unspecified, allowing for
   // anonymous expressions.
   Type& ret = cxt.get_auto_type();
 
@@ -242,6 +244,14 @@ Parser::function_declaration()
   return on_function_declaration(name, parms, ret, body);
 }
 
+Decl&
+Parser::coroutine_declaration()
+{
+  require(coroutine_tok);
+  Name& name = identifier();
+  match(colon_tok);
+
+}
 
 // Parse a parameter clause.
 //

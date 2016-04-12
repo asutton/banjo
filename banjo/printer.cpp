@@ -899,6 +899,7 @@ Printer::statement(Stmt const& s)
     void operator()(Member_stmt const& s)      { p.member_statement(s); }
     void operator()(Compound_stmt const& s)    { p.compound_statement(s); }
     void operator()(Return_stmt const& s)      { p.return_statement(s); }
+    void operator()(Yield_stmt const& s)       { p.yield_statement(s); }
     void operator()(Expression_stmt const& s)  { p.expression_statement(s); }
     void operator()(Declaration_stmt const& s) { p.declaration_statement(s); }
   };
@@ -966,6 +967,14 @@ Printer::return_statement(Return_stmt const& s)
   token(semicolon_tok);
 }
 
+void
+Printer::yield_statement(Yield_stmt const& s)
+{
+  token(yield_tok);
+  space();
+  expression(s.expression());
+  token(semicolon_tok);
+}
 
 void
 Printer::expression_statement(Expression_stmt const& s)

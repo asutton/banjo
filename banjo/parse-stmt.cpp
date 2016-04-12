@@ -23,6 +23,7 @@ Parser::statement()
   switch (lookahead()) {
     case var_tok:
     case def_tok:
+    case coroutine_tok: // co_def
     case type_tok:
     case concept_tok:
       return declaration_statement();
@@ -31,6 +32,8 @@ Parser::statement()
       return compound_statement();
     case return_tok:
       return return_statement();
+    case yield_tok:
+      return yield_statement();
 
     default:
       return expression_statement();

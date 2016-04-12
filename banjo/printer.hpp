@@ -6,6 +6,7 @@
 
 #include "token.hpp"
 #include "language.hpp"
+#include "ast-stmt.hpp"
 
 #include <iosfwd>
 
@@ -118,6 +119,7 @@ struct Printer
   void member_statement(Member_stmt const&);
   void compound_statement(Compound_stmt const&);
   void return_statement(Return_stmt const&);
+  void yield_statement(Yield_stmt const&);
   void expression_statement(Expression_stmt const&);
   void declaration_statement(Declaration_stmt const&);
 

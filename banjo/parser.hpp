@@ -139,6 +139,7 @@ struct Parser
 
   // Functions
   Decl& function_declaration();
+  Decl& coroutine_declaration();
   Decl_list parameter_clause();
   Decl_list parameter_list();
   Decl& parameter_declaration();
