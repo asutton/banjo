@@ -80,6 +80,8 @@ Parser::postfix_type()
       t = &on_volatile_type(tok, *t);
     else if (Token tok = match_if(amp_tok))
       t = &on_reference_type(tok, *t);
+    else if (Token tok = match_if(lbracket_tok))
+      t = &array_type();
     else
       break;
   }
@@ -215,6 +217,16 @@ Parser::return_type()
 {
   match(arrow_tok);
   return type();
+}
+
+Type&
+Parser::array_type()
+{
+  Type& t = type();
+  match(lbracket_tok);
+  Expr& e = expression();
+  match(rbracket_tok);
+  return on_array_type(t, e);
 }
 
 

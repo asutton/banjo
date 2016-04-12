@@ -83,6 +83,8 @@ struct Parser
   Type& postfix_type();
   Type& sequence_type();
   Type& reference_type();
+  Type& array_type();
+  Type& dynarray_type();
 
   // Type helpers
   Type& return_type();
@@ -259,6 +261,8 @@ struct Parser
   Type& on_sequence_type(Type&);
   Type& on_reference_type(Token, Type&);
   Type& on_unparsed_type(Token_seq&&);
+  Type& on_array_type(Type&, Expr&);
+  Type& on_dynarray_type(Type&, Expr&);
 
   // Expressions
   Expr& on_logical_and_expression(Token, Expr&, Expr&);
