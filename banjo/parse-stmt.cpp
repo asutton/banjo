@@ -47,7 +47,7 @@ Parser::statement()
 Stmt&
 Parser::compound_statement()
 {
-  Enter_scope scope(cxt, cxt.make_block_scope());
+  Enter_scope scope(cxt);
   Stmt_list ss;
   match(lbrace_tok);
   if (lookahead() != rbrace_tok)

@@ -477,18 +477,19 @@ Parser::unparsed_type_body()
 //    tempate-declaration:
 //      'template' '<' template-parameter-list '>' [requires-clause] declaration
 //
-// FIXME: Support explicit template instantations in one way or
+// FIXME: Support explicit template instantiations in one way or
 // another.
 Decl&
 Parser::template_declaration()
 {
+  #if 0
   require(template_tok);
 
   // Build a psuedo-scope.
   //
   // FIXME: Merge this with template parameter scope. I don't think
   // that it's serving a very useful purpose.
-  Template_scope& tmp = cxt.make_template_scope();
+  // Template_scope& tmp = cxt.make_template_scope();
   Enter_scope tscope(cxt, tmp);
 
   // TODO: Allow >> to close the template parameter list in the
@@ -503,13 +504,15 @@ Parser::template_declaration()
   if (next_token_is(requires_tok)) {
     // TODO: How are dependent names resolved in a requires clause?
     tmp.cons = &requires_clause();
-    Enter_scope cscope(cxt, cxt.make_constrained_scope(*tmp.cons));
+    // Enter_scope cscope(cxt, cxt.make_constrained_scope(*tmp.cons));
     Parsing_template save(*this, &tmp.parms, tmp.cons);
     return declaration();
   } else {
     Parsing_template save(*this, &tmp.parms);
     return declaration();
   }
+  #endif
+  lingo_unreachable();
 }
 
 
@@ -644,7 +647,7 @@ Parser::concept_declaration()
   Token tok = require(concept_tok);
   Name& n = declarator();
 
-  Enter_template_parameter_scope pscope(cxt);
+  // Enter_template_parameter_scope pscope(cxt);
   match(lt_tok);
   Decl_list ps = template_parameter_list();
   match(gt_tok);
@@ -652,7 +655,7 @@ Parser::concept_declaration()
   // Point of declaration. Enter the associated context prior
   // to defininging the concept.
   Decl& con = on_concept_declaration(tok, n, ps);
-  Enter_scope cscope(cxt, cxt.make_concept_scope(con));
+  // Enter_scope cscope(cxt, cxt.make_concept_scope(con));
   concept_definition(con);
   return con;
 }

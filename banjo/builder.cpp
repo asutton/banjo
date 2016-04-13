@@ -850,8 +850,7 @@ Builder::make_object_parm(char const* s, Type& t)
 Value_parm&
 Builder::make_value_parm(Name& n, Type& t)
 {
-  Index x = cxt.make_template_parameter_index();
-  return make<Value_parm>(x, n, t);
+  return make<Value_parm>(Index {}, n, t);
 }
 
 
@@ -865,8 +864,7 @@ Builder::make_value_parm(char const* s, Type& t)
 Type_parm&
 Builder::make_type_parameter(Name& n)
 {
-  Index x = cxt.make_template_parameter_index();
-  return make<Type_parm>(x, n);
+  return make<Type_parm>(Index {}, n);
 }
 
 
@@ -881,8 +879,7 @@ Builder::make_type_parameter(char const* n)
 Type_parm&
 Builder::make_type_parameter(Name& n, Type& t)
 {
-  Index x = cxt.make_template_parameter_index();
-  return make<Type_parm>(x, n, t);
+  return make<Type_parm>(Index {}, n, t);
 }
 
 
@@ -900,8 +897,7 @@ Typename_type&
 Builder::make_placeholder_type()
 {
   Name& n = get_id();
-  Index x = cxt.make_placeholder_index();
-  Decl& d = make<Type_parm>(x, n);
+  Decl& d = make<Type_parm>(Index {}, n);
   return get_typename_type(d);
 }
 

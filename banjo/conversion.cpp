@@ -662,6 +662,7 @@ contextual_conversion_to_bool(Context& cxt, Expr& e)
 Expr&
 dependent_conversion(Context& cxt, Expr& e, Type& t)
 {
+#if 0
   // In certain contexts, no conversions are applied.
   if (cxt.in_requirements())
     return e;
@@ -689,6 +690,7 @@ dependent_conversion(Context& cxt, Expr& e, Type& t)
   if (Expr* c = admit_conversion(cxt, cons, e, t)) {
     return *c;
   }
+#endif
 
   throw Type_error(cxt, "no admissible conversion from '{}' to '{}'", e, t);
 }

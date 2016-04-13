@@ -396,7 +396,7 @@ subst_usage(Context& cxt, Conversion_cons& c, Substitution& sub)
 Cons&
 subst_parametric(Context& cxt, Parameterized_cons& c, Substitution& sub)
 {
-  Enter_requires_scope rscope(cxt);
+  // Enter_requires_scope rscope(cxt);
   Decl_list parms = substitute(cxt, c.variables(), sub);
   Cons& cons = substitute(cxt, c.constraint(), sub);
   return cxt.get_parameterized_constraint(parms, cons);

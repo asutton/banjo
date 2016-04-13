@@ -37,6 +37,7 @@ template<typename Make>
 static Expr&
 make_dependent_logical_expr(Context& cxt, Expr& e, Make make)
 {
+#if 0
   // Build the initial expression.
   Type& t = make_fresh_type(cxt);
   Expr& init = make(t, e);
@@ -54,6 +55,7 @@ make_dependent_logical_expr(Context& cxt, Expr& e, Make make)
   Expr& con = *cxt.current_template_constraints();
   if (Expr* ret = admit_expression(cxt, con, init))
     return *ret;
+#endif
 
   // If no no such expression is admitted by the constraints, then
   // we must be using the standard operator. Dependent conversions
@@ -117,6 +119,7 @@ template<typename Make>
 static Expr&
 make_dependent_logical_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
 {
+#if 0
   // Build a dependent expression.
   Type& t = make_fresh_type(cxt);
   Expr& init = make(t, e1, e2);
@@ -134,6 +137,7 @@ make_dependent_logical_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
   Expr& con = *cxt.current_template_constraints();
   if (Expr* ret = admit_expression(cxt, con, init))
     return *ret;
+#endif
 
   // If no no such expression is admitted by the constraints, then
   // we must be using the standard operator. Dependent conversions

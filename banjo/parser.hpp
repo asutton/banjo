@@ -386,7 +386,6 @@ struct Parser
 
   // Scope management
   Scope& current_scope();
-  Decl&  current_context();
 
   // Declarations
   Decl& templatize_declaration(Decl&);

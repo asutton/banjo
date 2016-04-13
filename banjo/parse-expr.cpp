@@ -432,7 +432,7 @@ Parser::requires_expression()
   }
 
   // Parse parameters in a new block scope.
-  Enter_scope scope(cxt, cxt.make_requires_scope());
+  // Enter_scope scope(cxt, cxt.make_requires_scope());
   Decl_list parms;
   if (match_if(lparen_tok)) {
     parms = parameter_list();
@@ -444,6 +444,7 @@ Parser::requires_expression()
   match(rbrace_tok);
 
   return on_requires_expression(tok, tparms, parms, reqs);
+
 }
 
 

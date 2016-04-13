@@ -24,6 +24,7 @@ namespace banjo
 Expr&
 make_dependent_template_call(Context& cxt, Template_ref& e, Expr_list& args)
 {
+#if 0
   Template_decl& temp = e.declaration();
 
   Decl& pd = temp.parameterized_declaration();
@@ -61,7 +62,8 @@ make_dependent_template_call(Context& cxt, Template_ref& e, Expr_list& args)
       throw Type_error("no matching call to 'e'");
     }
   }
-  banjo_unhandled_case(pd);
+#endif
+  lingo_unimplemented("dependent function call");
 }
 
 
@@ -76,6 +78,7 @@ make_dependent_function_call(Context& cxt, Reference_expr& e, Expr_list& args)
 Expr&
 make_dependent_call(Context& cxt, Expr& e, Expr_list& args)
 {
+#if 0
   Type& t = make_fresh_type(cxt);
   Expr& init = cxt.make_call(t, e, args);
 
@@ -91,6 +94,7 @@ make_dependent_call(Context& cxt, Expr& e, Expr_list& args)
   Expr& cons = *cxt.current_template_constraints();
   if (Expr* ret = admit_expression(cxt, cons, init))
     return *ret;
+#endif
 
   // Otherwise, e refers to a previous declaration, possibly many.
   //
