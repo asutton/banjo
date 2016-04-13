@@ -54,25 +54,17 @@ struct Parser
   Name& qualified_id();
 
   // Name helpers
-  Name& simple_template_id();
   Term_list template_argument_list();
   Term& template_argument();
 
   // Nested name specifiers
-  Decl& leading_name_specifier();
   Decl& nested_name_specifier();
-  Decl* nested_name_specifier_opt();
 
   // Resolved names
-  Type& class_name();
-  Type& union_name();
-  Type& enum_name();
-  Type& type_name();
-  Type& type_alias();
-  Decl& namespace_name();
-  Decl& namespace_alias();
   Decl& template_name();
   Decl& concept_name();
+
+  // Specifiers
 
   // Types
   Type& type();
@@ -217,31 +209,11 @@ struct Parser
   Name& on_operator_id(Token, Operator_kind);
   Name& on_conversion_id();
   Name& on_literal_id();
-  Name& on_template_id(Token, Decl&, Term_list const&);
+  Name& on_template_id(Decl&, Term_list const&);
   Name& on_concept_id(Decl&, Term_list const&);
   Name& on_qualified_id(Decl&, Name&);
 
-  Decl& on_nested_name_specifier();
-  Decl& on_nested_name_specifier(Decl&);
-  Decl& on_nested_name_specifier(Type&);
-  Decl& on_nested_name_specifier(Decl&, Token);
-  Decl& on_nested_name_specifier(Decl&, Name&);
-
   // Names
-  Type& on_class_name(Token);
-  Type& on_class_name(Name&);
-  Type& on_union_name(Token);
-  Type& on_union_name(Name&);
-  Type& on_enum_name(Token);
-  Type& on_enum_name(Name&);
-  Type& on_type_alias(Token);
-  Type& on_type_alias(Name&);
-  Type& on_type_name(Token);
-  Type& on_type_name(Name&);
-  Decl& on_namespace_name(Token);
-  Decl& on_namespace_name(Name&);
-  Decl& on_namespace_alias(Token);
-  Decl& on_namespace_alias(Name&);
   Decl& on_template_name(Token);
   Decl& on_concept_name(Token);
 

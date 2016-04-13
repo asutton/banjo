@@ -55,7 +55,7 @@ Parser::on_literal_id()
 // require the id to be resolved (e.g., as a type-name or an
 // id-expression)?
 Name&
-Parser::on_template_id(Token, Decl& d, Term_list const& a)
+Parser::on_template_id(Decl& d, Term_list const& a)
 {
   return build.get_template_id(cast<Template_decl>(d), a);
 }
@@ -78,188 +78,11 @@ Parser::on_qualified_id(Decl& d, Name& n)
 
 
 // -------------------------------------------------------------------------- //
-// Nested name specifiers
-
-
-// Returns the declaration for the global nested name specifier.
-// This is just the global namespace.
-Decl&
-Parser::on_nested_name_specifier()
-{
-  lingo_unimplemented("on nested-name-specifier");
-}
-
-
-// Returns the declaration for a leading identifier that names
-// a namespace.
-Decl&
-Parser::on_nested_name_specifier(Decl&)
-{
-  lingo_unimplemented("on nested-name-specifier");
-}
-
-
-// Returns the type declaration for a leading identifier that
-// names a type name.
-Decl&
-Parser::on_nested_name_specifier(Type& t)
-{
-  lingo_unimplemented("on nested-name-specifier");
-}
-
-
-// Returns the declaration for a nested name specifier of
-// an identifier.
-Decl&
-Parser::on_nested_name_specifier(Decl&, Token)
-{
-  lingo_unimplemented("on nested-name-specifier");
-}
-
-
-// Returns the declaration for a nested name specifier of
-// a template id.
-Decl&
-Parser::on_nested_name_specifier(Decl&, Name&)
-{
-  lingo_unimplemented("on nested-name-specifier");
-}
-
-
-// -------------------------------------------------------------------------- //
 // Resolved names
 //
 // All of these functions perform lookup on their id and
 // check that the resolved declaration matches the specified
 // name.
-
-Type&
-Parser::on_class_name(Token)
-{
-  throw Lookup_error("not a class");
-}
-
-
-Type&
-Parser::on_class_name(Name&)
-{
-  throw Lookup_error("not a class");
-}
-
-
-Type&
-Parser::on_union_name(Token)
-{
-  throw Lookup_error("not a union");
-}
-
-
-Type&
-Parser::on_union_name(Name&)
-{
-  throw Lookup_error("not a union");
-}
-
-
-Type&
-Parser::on_enum_name(Token)
-{
-  throw Lookup_error("not an enum");
-}
-
-
-Type&
-Parser::on_enum_name(Name&)
-{
-  throw Lookup_error("not an enum");
-}
-
-
-Type&
-Parser::on_type_alias(Token tok)
-{
-  Simple_id& id = build.get_id(tok);
-  Decl& decl = simple_lookup(cxt, current_scope(), id);
-
-  if (Type_parm* d = as<Type_parm>(&decl))
-    return build.get_typename_type(*d);
-
-  // TODO: Actually support type aliases.
-
-  throw Lookup_error("'{}' does not name a type", id);
-}
-
-
-Type&
-Parser::on_type_alias(Name&)
-{
-  throw Lookup_error("not a type alias");
-}
-
-
-// Returns a type pointer if the declaraiton declares a type.
-// Otherwise, returns nullptr.
-//
-// FIXME: This isn't being used any more.
-static inline Type*
-get_type_for_decl(Context& cxt, Decl& decl)
-{
-  return nullptr;
-}
-
-
-Type&
-Parser::on_type_name(Token tok)
-{
-  Simple_id& id = build.get_id(tok);
-  Decl& decl = simple_lookup(cxt, current_scope(), id);
-  if (Type* type = get_type_for_decl(cxt, decl))
-    return *type;
-  throw Lookup_error("'{}' does not name a type", id);
-}
-
-
-// Check if the template-id n refers to a type.
-Type&
-Parser::on_type_name(Name& n)
-{
-  lingo_unreachable();
-  // Template_id& id = cast<Template_id>(n);
-  // Template_decl& tmp = id.declaration();
-  // Term_list& args = id.arguments();
-  // Decl& decl = specialize_template(cxt, tmp, args);
-  // if (Type* type = get_type_for_decl(cxt, decl))
-  //   return *type;
-  // throw Lookup_error("not a type name");
-}
-
-
-Decl&
-Parser::on_namespace_name(Token id)
-{
-  throw Lookup_error("not a namespace");
-}
-
-
-Decl&
-Parser::on_namespace_name(Name&)
-{
-  throw Lookup_error("not a namespace");
-}
-
-
-Decl&
-Parser::on_namespace_alias(Token)
-{
-  throw Lookup_error("not a namespace alias");
-}
-
-
-Decl&
-Parser::on_namespace_alias(Name&)
-{
-  throw Lookup_error("not a namespace alias");
-}
 
 
 // FIXME: What if the identifier refers to a set of declarations?
