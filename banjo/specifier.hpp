@@ -12,8 +12,23 @@ namespace banjo
 enum Specifier_set
 {
   empty_spec    = 0,
-  virtual_spec  = 1 << 5,
-  abstract_spec = 1 << 6
+
+  // Storage specifiers
+  static_spec    = 1 << 0,
+  dynamic_spec   = 1 << 1,  // TODO: Unused!
+  implicit_spec  = 1 << 2,
+  explicit_spec  = 1 << 3,
+  virtual_spec   = 1 << 4,
+  abstract_spec  = 1 << 5,
+  inline_spec    = 1 << 6,
+  public_spec    = 1 << 7,
+  private_spec   = 1 << 8,
+  protected_spec = 1 << 9,
+  in_spec        = 1 << 10,
+  out_spec       = 1 << 11,
+  mutable_spec   = 1 << 12,
+  consume_spec   = 1 << 13,
+  forward_spec   = 1 << 14,
 };
 
 

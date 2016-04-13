@@ -13,13 +13,120 @@ namespace banjo
 {
 
 // -------------------------------------------------------------------------- //
+// Declaration specifiers
+//
+// Declaration specifiers are an optional sequence of terms parsed
+// before a declaation's type. They look like part of the type but
+// are distinct.
+
+namespace
+{
+
+inline void
+accept_specifier(Parser& p, Specifier_set s)
+{
+  p.accept();
+  p.decl_specs() |= s;
+}
+
+} // namespace
+
+
+// Parse a declaration specifier.
+//
+//    specifier:
+//      storage-specifier
+//      function-specifier
+//      parameter-specifier
+//      access-specifier
+//
+//    storage-specifier:
+//      static
+//
+//    parameter-specifier:
+//      in
+//      out
+//      mutable
+//      consume
+//      forward
+//
+//    function-specifier:
+//      implicit
+//      explicit
+//      inline
+//
+// TODO: Figure out how we want to write foreign and extern functions.
+Specifier_set
+Parser::specifier_seq()
+{
+  // Reset the declaration specifiers (they should be empty).
+  decl_specs() = Specs();
+
+  while (true) {
+    switch (lookahead()) {
+      case virtual_tok:
+        accept_specifier(*this, virtual_spec);
+        break;
+
+      case abstract_tok:
+        accept_specifier(*this, abstract_spec);
+        break;
+
+      case static_tok:
+        accept_specifier(*this, static_spec);
+        break;
+
+      case inline_tok:
+        accept_specifier(*this, inline_spec);
+        break;
+
+      case explicit_tok:
+        accept_specifier(*this, explicit_spec);
+        break;
+
+      case implicit_tok:
+        accept_specifier(*this, implicit_spec);
+        break;
+
+      case public_tok:
+        accept_specifier(*this, public_spec);
+        break;
+
+      case private_tok:
+        accept_specifier(*this, private_spec);
+        break;
+
+      case protected_tok:
+        accept_specifier(*this, protected_spec);
+        break;
+
+      default:
+        return decl_specs();
+    }
+  }
+  lingo_unreachable();
+}
+
+
+// -------------------------------------------------------------------------- //
 // Declarations
 
-
-
+// Parse a declaration.
+//
+//    declaration:
+//      [specifier-seq] basic-declaration
+//
+//    basic-declaration:
+//      variable-declaration
+//      function-declarattion
+//      type-declaration
+//      concept-declaration
 Decl&
 Parser::declaration()
 {
+  // Parse and cache the specifier sequences.
+  specifier_seq();
+
   switch (lookahead()) {
     case var_tok:
       return variable_declaration();
@@ -284,14 +391,17 @@ Parser::parameter_list()
 // Parse a parameter declaration.
 //
 //    parameter-declaration:
-//      identifier [':' type] ['=' expression]
-//      identifier [':=' expression]
+//      [specifier-seq] identifier [':' type] ['=' expression]
+//      [specifier-seq] identifier [':=' expression]
 //
 // TODO: Extend the grammar to support (named?) variadics and function
 // argument packs.
 Decl&
 Parser::parameter_declaration()
 {
+  // Parse and cache the specifier sequence.
+  specifier_seq();
+
   Name& name = identifier();
 
   if (match_if(colon_tok)) {

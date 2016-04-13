@@ -28,6 +28,8 @@ struct Braces : Token_seq
 // tokens. This supports the resolution of source code locations.
 struct Parser
 {
+  using Specs = Specifier_set; // For brevity
+
   Parser(Context& cxt, Token_stream& ts)
     : cxt(cxt), build(cxt), tokens(ts), state()
   { }
@@ -119,6 +121,9 @@ struct Parser
   Decl_list declaration_seq();
   Decl& empty_declaration();
 
+  // Specifiers
+  Specifier_set specifier_seq();
+
   // Variables
   Decl& variable_declaration();
   Type& unparsed_variable_type();
@@ -138,14 +143,12 @@ struct Parser
   Type& unparsed_return_type();
   Expr& unparsed_expression_body();
   Stmt& unparsed_function_body();
-
   Def& function_definition(Decl&);
 
   // Types
   Decl& type_declaration();
   Type& unparsed_type_kind();
   Stmt& unparsed_type_body();
-
 
   // Templates
   Decl& template_declaration();
@@ -199,7 +202,6 @@ struct Parser
   Expr& elaborate_expression(Expr&);
   Stmt& elaborate_compound_statement(Stmt&);
   Stmt& elaborate_member_statement(Stmt&);
-
 
   // Semantics actions
 
@@ -294,11 +296,11 @@ struct Parser
   Decl& on_concept_declaration(Token, Name&, Decl_list&);
 
   // Function parameters
-  Object_parm& on_function_parameter(Name&, Type&);
+  Decl& on_function_parameter(Name&, Type&);
 
   // Template parameters
-  Type_parm& on_type_template_parameter(Name&, Type&);
-  Type_parm& on_type_template_parameter(Name&);
+  Decl& on_type_template_parameter(Name&, Type&);
+  Decl& on_type_template_parameter(Name&);
 
   // Initializers
   Expr& on_default_initialization(Decl&);
@@ -344,12 +346,17 @@ struct Parser
 
   bool next_token_is_one_of();
 
-  // Enclosures
+  // Braces
   void open_brace(Token);
   void close_brace(Token);
   bool in_braces() const;
   bool in_level(int) const;
   int  brace_level() const;
+
+  // Specifiers
+  Specs  decl_specs() const { return state.specs; }
+  Specs& decl_specs()       { return state.specs; }
+  Specs  take_decl_specs();
 
   // Tree matching.
   template<typename T> T* match_if(T& (Parser::* p)());
@@ -369,18 +376,18 @@ struct Parser
   // and restoring parse state.
   struct State
   {
+    State()
+      : braces(), specs(), template_parms(), template_cons()
+    { }
+
     Braces  braces;
+    Specs   specs;
 
-    Decl_list* template_parms = nullptr; // The current (innermost) template parameters
-    Expr*      template_cons = nullptr;  // The current (innermost) template constraints
-
-    // Parsing flags.
-    bool parsing_declarator = false; // True if parsing a declarator.
-    bool assume_typename = false;    // True if the following term is a type.
-    bool assume_template = false;    // True if the next identifier is a template.
+    // FIXME: Do I need these?
+    Decl_list* template_parms; // The current (innermost) template parameters
+    Expr*      template_cons;  // The current (innermost) template constraints
   };
 
-  struct Assume_template;
   struct Parsing_template;
 
   Context&      cxt;
@@ -408,25 +415,15 @@ Parser::next_token_is_one_of()
 }
 
 
-// An RAII helper that sets or clears the flag controlling
-// whether or not the 'template' keyword was seen before
-// a template-name.
-struct Parser::Assume_template
+// Return the current specifiers, resetting them to
+// their default value.
+inline Parser::Specs
+Parser::take_decl_specs()
 {
-  Assume_template(Parser& p, bool b)
-    : parser(p), saved(p.state.assume_template)
-  {
-    parser.state.assume_template = b;
-  }
-
-  ~Assume_template()
-  {
-    parser.state.assume_template = saved;
-  }
-
-  Parser& parser;
-  bool    saved;
-};
+  Specs s = decl_specs();
+  decl_specs() = Specs();
+  return s;
+}
 
 
 // An RAII helper that manages parsing state related to the parsing
@@ -530,7 +527,6 @@ Parser::match_if(R& (Parser::* f)())
   }
   return nullptr;
 }
-
 
 
 // This class defines a predicate that can be tested to determine if the
