@@ -35,12 +35,12 @@ consume_op(Parser& p, Token_kind tok, Operator_kind op)
 //
 //    operator: one_of
 //      + - * / %
-//      == != < > <= >=
+//      == != < > <= >= <=>
 //      && || !
 //      () []
 //      =
 //
-// FIXME: Match more operators.
+// TODO: Match bitwise operators.
 Operator_kind
 Parser::any_operator()
 {
@@ -56,6 +56,7 @@ Parser::any_operator()
     case gt_tok: return consume_op(*this, gt_op);
     case lt_eq_tok: return consume_op(*this, le_op);
     case gt_eq_tok: return consume_op(*this, ge_op);
+    case lt_eq_gt_tok: return consume_op(*this, cmp_op);
     case amp_amp_tok: return consume_op(*this, and_op);
     case bar_bar_tok: return consume_op(*this, or_op);
     case bang_tok: return consume_op(*this, not_op);
@@ -158,7 +159,7 @@ Parser::unqualified_id()
 }
 
 
-// Parse a destructor-id. A destuctor-id naems the destructor of
+// Parse a destructor-id. A destructor-id names the destructor of
 // a class or a decltype-type that refers to a class.
 //
 //    destructor-id:
@@ -227,7 +228,7 @@ Parser::simple_template_id()
 // Parse a template id.
 //
 //    concept-id:
-//      cocncept-name '< [template-argument-list] '>'
+//      concept-name '< [template-argument-list] '>'
 Name&
 Parser::concept_id()
 {
@@ -359,7 +360,6 @@ Parser::qualified_id()
   Name& id = unqualified_id();
   return on_qualified_id(scope, id);
 }
-
 
 
 // -------------------------------------------------------------------------- //

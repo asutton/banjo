@@ -20,11 +20,11 @@
 namespace banjo
 {
 
+#if 0
 // Attempt to resolve a dependent call to a (single) function template.
 Expr&
 make_dependent_template_call(Context& cxt, Template_ref& e, Expr_list& args)
 {
-#if 0
   Template_decl& temp = e.declaration();
 
   Decl& pd = temp.parameterized_declaration();
@@ -62,15 +62,7 @@ make_dependent_template_call(Context& cxt, Template_ref& e, Expr_list& args)
       throw Type_error("no matching call to 'e'");
     }
   }
-#endif
   lingo_unimplemented("dependent function call");
-}
-
-
-Expr&
-make_dependent_function_call(Context& cxt, Reference_expr& e, Expr_list& args)
-{
-  lingo_unreachable();
 }
 
 
@@ -78,7 +70,6 @@ make_dependent_function_call(Context& cxt, Reference_expr& e, Expr_list& args)
 Expr&
 make_dependent_call(Context& cxt, Expr& e, Expr_list& args)
 {
-#if 0
   Type& t = make_fresh_type(cxt);
   Expr& init = cxt.make_call(t, e, args);
 
@@ -94,7 +85,6 @@ make_dependent_call(Context& cxt, Expr& e, Expr_list& args)
   Expr& cons = *cxt.current_template_constraints();
   if (Expr* ret = admit_expression(cxt, cons, init))
     return *ret;
-#endif
 
   // Otherwise, e refers to a previous declaration, possibly many.
   //
@@ -109,6 +99,7 @@ make_dependent_call(Context& cxt, Expr& e, Expr_list& args)
 
   banjo_unhandled_case(e);
 }
+#endif
 
 
 // Make a non-dependent call expression.
@@ -123,7 +114,7 @@ make_dependent_call(Context& cxt, Expr& e, Expr_list& args)
 Expr&
 make_regular_call(Context& cxt, Expr& e, Expr_list& args)
 {
-  if (Reference_expr* ref = as<Reference_expr>(&e)) {
+  if (Decl_expr* ref = as<Decl_expr>(&e)) {
     Decl& d = ref->declaration();
     Type& t = declared_type(d);
 
@@ -140,10 +131,11 @@ make_regular_call(Context& cxt, Expr& e, Expr_list& args)
 Expr&
 make_call(Context& cxt, Expr& e, Expr_list& args)
 {
-  if (is_type_dependent(e) || is_type_dependent(args))
-    return make_dependent_call(cxt, e, args);
-  else
-    return make_regular_call(cxt, e, args);
+  // if (is_type_dependent(e) || is_type_dependent(args))
+  //   return make_dependent_call(cxt, e, args);
+  // else
+  //   return make_regular_call(cxt, e, args);
+  return make_regular_call(cxt, e, args);
 }
 
 

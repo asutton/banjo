@@ -242,7 +242,16 @@ hash_value(Literal_expr<T> const& e)
 
 
 std::size_t
-hash_value(Reference_expr const& e)
+hash_value(Id_expr const& e)
+{
+  std::size_t h = hash_type(e);
+  boost::hash_combine(h, e.id());
+  return h;
+}
+
+
+std::size_t
+hash_value(Decl_expr const& e)
 {
   std::size_t h = hash_type(e);
   boost::hash_combine(h, e.declaration());
@@ -297,7 +306,8 @@ hash_value(Expr const& e)
     std::size_t operator()(Expr const& e) const           { banjo_unhandled_case(e); }
     std::size_t operator()(Boolean_expr const& e) const   { return hash_value(e); }
     std::size_t operator()(Integer_expr const& e) const   { return hash_value(e); }
-    std::size_t operator()(Reference_expr const& e) const { return hash_value(e); }
+    std::size_t operator()(Id_expr const& e) const        { return hash_value(e); }
+    std::size_t operator()(Decl_expr const& e) const      { return hash_value(e); }
     std::size_t operator()(Unary_expr const& e) const     { return hash_value(e); }
     std::size_t operator()(Binary_expr const& e) const    { return hash_value(e); }
     std::size_t operator()(Call_expr const& e) const      { return hash_value(e); }

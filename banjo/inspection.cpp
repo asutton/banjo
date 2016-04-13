@@ -147,7 +147,7 @@ Debug_printer::expression(Expr const& e)
     void operator()(Expr const& e)           { banjo_unhandled_case(e); }
     void operator()(Boolean_expr const& e)   { self.literal(e); }
     void operator()(Integer_expr const& e)   { self.literal(e); }
-    void operator()(Reference_expr const& e) { self.reference_expression(e); }
+    void operator()(Decl_expr const& e)      { self.id_expression(e); }
     void operator()(Binary_expr const& e)    { self.binary_expression(e); }
     void operator()(Unary_expr const& e)     { self.unary_expression(e); }
     void operator()(Bind_init const& e)      { self.initializer(e); }
@@ -181,7 +181,7 @@ Debug_printer::literal(Integer_expr const& e)
 
 
 void
-Debug_printer::reference_expression(Reference_expr const& e)
+Debug_printer::id_expression(Decl_expr const& e)
 {
   Sexpr sentinel(*this, e);
   space();

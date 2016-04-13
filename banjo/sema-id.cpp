@@ -223,13 +223,14 @@ Parser::on_type_name(Token tok)
 Type&
 Parser::on_type_name(Name& n)
 {
-  Template_id& id = cast<Template_id>(n);
-  Template_decl& tmp = id.declaration();
-  Term_list& args = id.arguments();
-  Decl& decl = specialize_template(cxt, tmp, args);
-  if (Type* type = get_type_for_decl(cxt, decl))
-    return *type;
-  throw Lookup_error("not a type name");
+  lingo_unreachable();
+  // Template_id& id = cast<Template_id>(n);
+  // Template_decl& tmp = id.declaration();
+  // Term_list& args = id.arguments();
+  // Decl& decl = specialize_template(cxt, tmp, args);
+  // if (Type* type = get_type_for_decl(cxt, decl))
+  //   return *type;
+  // throw Lookup_error("not a type name");
 }
 
 

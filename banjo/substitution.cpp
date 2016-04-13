@@ -205,12 +205,12 @@ substitute_type(Context& cxt, Typename_type& t, Substitution& sub)
 
 // Substitute into a declaration reference. The result of the
 // substitution depends on whether the name refers to a member
-// of the current instantation. If so, then we need to rebind
-// the identfier to the locally instantiated declaration.
+// of the current instantiation. If so, then we need to rebind
+// the identifier to the locally instantiated declaration.
 //
 // FIXME: This is almost certainly incorrect.
 Expr&
-subst_ref(Context& cxt, Reference_expr& e, Substitution& sub)
+subst_ref(Context& cxt, Decl_expr& e, Substitution& sub)
 {
   return make_reference(cxt, e.declaration().name());
 }
@@ -277,11 +277,11 @@ substitute(Context& cxt, Expr& e, Substitution& sub)
 
     Expr& operator()(Expr& e) { banjo_unhandled_case(e); }
 
-    Expr& operator()(Boolean_expr& e)   { return e; }
-    Expr& operator()(Integer_expr& e)   { return e; }
-    Expr& operator()(Reference_expr& e) { return subst_ref(cxt, e, sub); }
-    Expr& operator()(Check_expr& e)     { return subst_check(cxt, e, sub); }
-    Expr& operator()(Call_expr& e)      { return subst_call(cxt, e, sub); }
+    Expr& operator()(Boolean_expr& e) { return e; }
+    Expr& operator()(Integer_expr& e) { return e; }
+    Expr& operator()(Decl_expr& e)    { return subst_ref(cxt, e, sub); }
+    Expr& operator()(Check_expr& e)   { return subst_check(cxt, e, sub); }
+    Expr& operator()(Call_expr& e)    { return subst_call(cxt, e, sub); }
 
     Expr& operator()(Eq_expr& e)  { return subst_binary(cxt, e, sub, make_eq); }
     Expr& operator()(Ne_expr& e)  { return subst_binary(cxt, e, sub, make_ne); }

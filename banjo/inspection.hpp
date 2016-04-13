@@ -55,7 +55,7 @@ struct Debug_printer
   void expression(Expr const&);
   void literal(Boolean_expr const&);
   void literal(Integer_expr const&);
-  void reference_expression(Reference_expr const&);
+  void id_expression(Decl_expr const&);
   void unary_expression(Unary_expr const&);
   void binary_expression(Binary_expr const&);
 

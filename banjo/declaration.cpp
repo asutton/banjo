@@ -17,7 +17,7 @@ namespace banjo
 {
 
 // -------------------------------------------------------------------------- //
-// Declaration of un-typed entities
+// Declaration of untyped entities
 //
 // The remember() function is used to store first-class entities prior
 // to the elaboration of their type. Note that we can't distinguish (or
@@ -30,7 +30,7 @@ namespace banjo
 void
 remember(Context&, Scope& scope, Decl& decl)
 {
-  if (Overload_set* ovl = scope.lookup(decl.declared_name()))
+  if (Overload_set* ovl = scope.lookup(decl.name()))
     ovl->push_back(decl);
   else
     scope.bind(decl);
@@ -79,7 +79,7 @@ declare(Overload_set& ovl, Decl& d)
 void
 declare(Context&, Scope& scope, Decl& decl)
 {
-  if (Overload_set* ovl = scope.lookup(decl.declared_name()))
+  if (Overload_set* ovl = scope.lookup(decl.name()))
     declare(*ovl, decl);
   else
     scope.bind(decl);

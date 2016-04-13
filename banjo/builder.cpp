@@ -412,32 +412,32 @@ Builder::get_uint(Integer const& n)
 
 // Get an expression that refers to a variable. The type
 // is a reference to the declared type of the variable.
-Reference_expr&
+Object_expr&
 Builder::make_reference(Variable_decl& d)
 {
-  return make<Reference_expr>(get_reference_type(d.type()), d);
+  Type& t = get_reference_type(d.type());
+  Name& n = d.name();
+  return make<Object_expr>(t, n, d);
 }
 
 
-Reference_expr&
-Builder::make_reference(Function_decl& d)
-{
-  return make<Reference_expr>(get_reference_type(d.type()), d);
-}
-
-
-Template_ref&
-Builder::make_reference(Template_decl& d)
-{
-  Type& t = declared_type(d);
-  return make<Template_ref>(t, d);
-}
-
-
-Reference_expr&
+// Get an expression that refers to a parameter. The type
+// is a reference to the declared type of the parameter.
+Object_expr&
 Builder::make_reference(Object_parm& d)
 {
-  return make<Reference_expr>(get_reference_type(d.type()), d);
+  Type& t = get_reference_type(d.type());
+  Name& n = d.name();
+  return make<Object_expr>(t, n, d);
+}
+
+
+Function_expr&
+Builder::make_reference(Function_decl& d)
+{
+  Type& t = get_reference_type(d.type());
+  Name& n = d.name();
+  return make<Function_expr>(t, n, d);
 }
 
 
@@ -762,22 +762,6 @@ Builder::make_function_declaration(Name& n, Decl_list const& p, Type& t, Stmt& s
   Type& r = get_function_type(p, t);
   Def& d = make_function_definition(s);
   return make<Function_decl>(n, r, p, d);
-}
-
-
-// Creates an undefined function with parameters ps and return type r.
-Function_decl&
-Builder::make_function_declaration(Name& n, Decl_list const& p, Type& t)
-{
-  Type& r = get_function_type(p, t);
-  return make<Function_decl>(n, r, p);
-}
-
-
-Function_decl&
-Builder::make_function_declaration(char const* s, Decl_list const& ps, Type& r)
-{
-  return make_function_declaration(get_id(s), ps, r);
 }
 
 

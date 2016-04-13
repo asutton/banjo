@@ -100,8 +100,8 @@ struct Printer
   void literal(Boolean_expr const&);
   void literal(Integer_expr const&);
   void literal(Real_expr const&);
-
-  void id_expression(Reference_expr const&);
+  void id_expression(Id_expr const&);
+  void id_expression(Decl_expr const&);
   void id_expression(Check_expr const&);
   void id_expression(Synthetic_expr const&);
 

@@ -22,7 +22,7 @@ Scope::Scope(Decl& cxt, Decl& d)
 Binding&
 Scope::bind(Decl& d)
 {
-  return bind(d.declared_name(), d);
+  return bind(d.name(), d);
 }
 
 

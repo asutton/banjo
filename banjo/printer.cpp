@@ -294,7 +294,7 @@ Printer::nested_name_specifier(Decl const& d)
   // Print out the nested name specifier.
   for (auto iter = scopes.rbegin(); iter != scopes.rend(); ++iter) {
     Decl const* d = *iter;
-    unqualified_id(d->declared_name());
+    id(d->name());
     token(colon_colon_tok);
   }
 }
@@ -787,7 +787,8 @@ Printer::primary_expression(Expr const& e)
     void operator()(Boolean_expr const& e)   { p.literal(e); }
     void operator()(Integer_expr const& e)   { p.literal(e); }
     void operator()(Real_expr const& e)      { p.literal(e); }
-    void operator()(Reference_expr const& e) { p.id_expression(e); }
+    void operator()(Id_expr const& e)        { p.id_expression(e); }
+    void operator()(Decl_expr const& e)      { p.id_expression(e); }
     void operator()(Check_expr const& e)     { p.id_expression(e); }
     void operator()(Synthetic_expr const& e) { p.id_expression(e); }
     void operator()(Requires_expr const& e)  { p.requires_expression(e); }
@@ -835,8 +836,17 @@ Printer::literal(Real_expr const& e)
 }
 
 
+// Write the identifier used in the unresolved id-expression.
 void
-Printer::id_expression(Reference_expr const& e)
+Printer::id_expression(Id_expr const& e)
+{
+  id(e.id());
+}
+
+
+// Write the qualified name of the referenced declaration.
+void
+Printer::id_expression(Decl_expr const& e)
 {
   id(e.declaration().name());
 }
