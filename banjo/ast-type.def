@@ -9,6 +9,7 @@ define_node(Float_type)
 define_node(Auto_type)
 define_node(Decltype_type)
 define_node(Declauto_type)
+define_node(User_type)
 define_node(Function_type)
 define_node(Qualified_type)
 define_node(Pointer_type)
@@ -18,10 +19,12 @@ define_node(Dynarray_type)
 define_node(Sequence_type)
 
 // TODO: Am I actually using this anywhere? Or have I subsumed the use
-// of this with auto types.
+// of this with auto types. Or is it still useful...
 define_node(Typename_type)
 
 define_node(Synthetic_type)
 
+// The type of types.
 define_node(Type_type)
+
 define_node(Unparsed_type)

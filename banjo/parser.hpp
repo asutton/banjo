@@ -76,13 +76,14 @@ struct Parser
 
   // Types
   Type& type();
-  Type& primary_type();
-  Type& decltype_type();
-  Type& function_type();
-  Type& grouped_type();
   Type& postfix_type();
   Type& sequence_type();
   Type& reference_type();
+  Type& primary_type();
+  Type& id_type();
+  Type& grouped_type();
+  Type& function_type();
+  Type& decltype_type();
 
   // Type helpers
   Type& return_type();
@@ -250,6 +251,7 @@ struct Parser
   Type& on_bool_type(Token);
   Type& on_int_type(Token);
   Type& on_byte_type(Token);
+  Type& on_id_type(Name&);
   Type& on_decltype_type(Token, Expr&);
   Type& on_function_type(Type_list&, Type&);
   Type& on_pointer_type(Token, Type&);

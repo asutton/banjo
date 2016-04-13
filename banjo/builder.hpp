@@ -48,6 +48,7 @@ struct Builder
   Global_id&      get_global_id();
 
   // Types
+  User_type&      get_type(Type_decl&);
   Void_type&      get_void_type();
   Boolean_type&   get_bool_type();
   Byte_type&      get_byte_type();

@@ -167,6 +167,28 @@ struct Declauto_type : Type
 };
 
 
+// A user-defined type refers to its declaration.
+struct User_type : Type
+{
+  User_type(Decl& d)
+    : decl_(&d)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the name of the user-defined type.
+  Name const& name() const;
+  Name&       name();
+
+  // Returns the declaration of the user-defined type.
+  Type_decl const& declaration() const;
+  Type_decl&       declaration();
+
+  Decl* decl_;
+};
+
+
 // A function type.
 struct Function_type : Type
 {
@@ -302,38 +324,15 @@ struct Sequence_type : Type
 };
 
 
-// The base class of all user-defined types.
-struct User_defined_type : Type
-{
-  User_defined_type(Decl& d)
-    : decl(&d)
-  { }
-
-  // Returns the name of the user-defined type.
-  Name const& name() const;
-  Name&       name();
-
-  // Returns the declaration of the user-defined type.
-  Decl const& declaration() const { return *decl; }
-  Decl&       declaration()       { return *decl; }
-
-  Decl* decl;
-};
-
-
 // The type of a type parameter declaration.
 //
-// FIXME: Guarantee that d is a Type_parm.
-struct Typename_type : User_defined_type
+// FIXME: This should probably go away.
+struct Typename_type : User_type
 {
-  using User_defined_type::User_defined_type;
+  using User_type::User_type;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the declaration of the typename type.
-  Type_parm const& declaration() const;
-  Type_parm&       declaration();
 };
 
 
@@ -342,9 +341,9 @@ struct Typename_type : User_defined_type
 //
 // TODO: Do we always need a declaration, or can we just synthesize
 // types from thin air?
-struct Synthetic_type : User_defined_type
+struct Synthetic_type : User_type
 {
-  using User_defined_type::User_defined_type;
+  using User_type::User_type;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }

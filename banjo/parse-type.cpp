@@ -91,22 +91,18 @@ Parser::postfix_type()
 //
 //    simple-type:
 //      'void'
-//      'char'  | 'char16' | 'char32'
-//      'short' | 'ushort'
-//      'int'   | 'uint'
-//      'long'  | 'ulong'
-//      'int8'  | 'int16'  | 'int32'  | 'int64'  | ...
-//      'uint8' | 'uint16' | 'uint32' | 'uint64' | ...
+//      'byte'
+//      'bool'
+//      'char'
+//      'int'
 //      'float'
-//      'double'
-//      'float16' | 'float32' | 'float64'
 //      'auto'
-//      type-name
+//      id-type
 //      decltype-type
 //      function-type
 //      grouped-type
 //
-// TODO: Add the other specifiers.
+// FIXME: Design a better integer and FP type suite.
 Type&
 Parser::primary_type()
 {
@@ -119,26 +115,41 @@ Parser::primary_type()
       return on_int_type(accept());
     case byte_tok:
       return on_byte_type(accept());
+
     // TODO: Implement me.
     case char_tok:
-    case uint_tok:
     case float_tok:
-    case double_tok:
     case auto_tok:
       // FIXME: Match on each type.
       lingo_unimplemented("parse auto type");
+    
     case decltype_tok:
       return decltype_type();
+
     case type_tok:
       return on_type_type(accept());
+
     case lparen_tok: {
       if (Type* t = match_if(&Parser::function_type))
         return *t;
       return grouped_type();
     }
+
     default:
-      return type_name();
+      return id_type();
   }
+}
+
+
+// Parse an id-type type.
+//
+//    id-type:
+//      id
+Type&
+Parser::id_type()
+{
+  Name& n = id();
+  return on_id_type(n);
 }
 
 

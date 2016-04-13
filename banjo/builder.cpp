@@ -176,6 +176,13 @@ Builder::get_global_id()
 // -------------------------------------------------------------------------- //
 // Types
 
+User_type&
+Builder::get_type(Type_decl& d)
+{
+  return make<User_type>(d);
+}
+
+
 Void_type&
 Builder::get_void_type()
 {

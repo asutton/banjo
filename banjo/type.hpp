@@ -13,9 +13,8 @@
 namespace banjo
 {
 
-struct Context;
 
-
+Type& make_type(Context&, Name&);
 Type& make_fresh_type(Context&);
 
 

@@ -246,7 +246,7 @@ is_equivalent(Sequence_type const& t1, Sequence_type const& t2)
 
 
 bool
-is_equivalent(User_defined_type const& t1, User_defined_type const& t2)
+is_equivalent(User_type const& t1, User_type const& t2)
 {
   return is_equivalent(t1.declaration(), t2.declaration());
 }
@@ -270,24 +270,23 @@ is_equivalent(Type const& t1, Type const& t2)
   struct fn
   {
     Type const& t2;
-    bool operator()(Type const& t1) const              { lingo_unhandled(t1); }
-    bool operator()(Void_type const& t1) const         { return always_equal(t1, cast<Void_type>(t2)); }
-    bool operator()(Boolean_type const& t1) const      { return always_equal(t1, cast<Boolean_type>(t2)); }
-    bool operator()(Byte_type const& t1) const         { return always_equal(t1, cast<Byte_type>(t2)); }
-    bool operator()(Integer_type const& t1) const      { return is_equivalent(t1, cast<Integer_type>(t2)); }
-    bool operator()(Float_type const& t1) const        { return is_equivalent(t1, cast<Float_type>(t2)); }
-    bool operator()(Auto_type const& t1) const         { return is_equivalent(t1, cast<Auto_type>(t2)); }
-    bool operator()(Decltype_type const& t1) const     { return is_equivalent(t1, cast<Decltype_type>(t2)); }
-    bool operator()(Declauto_type const& t1) const     { return is_equivalent(t1, cast<Declauto_type>(t2)); }
-    bool operator()(Function_type const& t1) const     { return is_equivalent(t1, cast<Function_type>(t2)); }
-    bool operator()(Qualified_type const& t1) const    { return is_equivalent(t1, cast<Qualified_type>(t2)); }
-    bool operator()(Reference_type const& t1) const    { return is_equivalent(t1, cast<Reference_type>(t2)); }
-    bool operator()(Pointer_type const& t1) const      { return is_equivalent(t1, cast<Pointer_type>(t2)); }
-    bool operator()(Array_type const& t1) const        { return is_equivalent(t1, cast<Array_type>(t2)); }
-    bool operator()(Dynarray_type const& t1) const     { return is_equivalent(t1, cast<Dynarray_type>(t2)); }
-    bool operator()(Sequence_type const& t1) const     { return is_equivalent(t1, cast<Sequence_type>(t2)); }
-    bool operator()(User_defined_type const& t1) const { return is_equivalent(t1, cast<User_defined_type>(t2)); }
-    bool operator()(Synthetic_type const& t1) const    { return is_equivalent(t1, cast<Synthetic_type>(t2)); }
+    bool operator()(Type const& t1) const           { lingo_unhandled(t1); }
+    bool operator()(Void_type const& t1) const      { return always_equal(t1, cast<Void_type>(t2)); }
+    bool operator()(Boolean_type const& t1) const   { return always_equal(t1, cast<Boolean_type>(t2)); }
+    bool operator()(Byte_type const& t1) const      { return always_equal(t1, cast<Byte_type>(t2)); }
+    bool operator()(Integer_type const& t1) const   { return is_equivalent(t1, cast<Integer_type>(t2)); }
+    bool operator()(Float_type const& t1) const     { return is_equivalent(t1, cast<Float_type>(t2)); }
+    bool operator()(Auto_type const& t1) const      { return is_equivalent(t1, cast<Auto_type>(t2)); }
+    bool operator()(Decltype_type const& t1) const  { return is_equivalent(t1, cast<Decltype_type>(t2)); }
+    bool operator()(Declauto_type const& t1) const  { return is_equivalent(t1, cast<Declauto_type>(t2)); }
+    bool operator()(Function_type const& t1) const  { return is_equivalent(t1, cast<Function_type>(t2)); }
+    bool operator()(Qualified_type const& t1) const { return is_equivalent(t1, cast<Qualified_type>(t2)); }
+    bool operator()(Reference_type const& t1) const { return is_equivalent(t1, cast<Reference_type>(t2)); }
+    bool operator()(Pointer_type const& t1) const   { return is_equivalent(t1, cast<Pointer_type>(t2)); }
+    bool operator()(Array_type const& t1) const     { return is_equivalent(t1, cast<Array_type>(t2)); }
+    bool operator()(Dynarray_type const& t1) const  { return is_equivalent(t1, cast<Dynarray_type>(t2)); }
+    bool operator()(Sequence_type const& t1) const  { return is_equivalent(t1, cast<Sequence_type>(t2)); }
+    bool operator()(User_type const& t1) const      { return is_equivalent(t1, cast<User_type>(t2)); }
   };
 
   // The same objects represent the same types.

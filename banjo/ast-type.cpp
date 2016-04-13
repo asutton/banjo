@@ -9,30 +9,30 @@ namespace banjo
 {
 
 Name const&
-User_defined_type::name() const
+User_type::name() const
 {
   return declaration().name();
 }
 
 
 Name&
-User_defined_type::name()
+User_type::name()
 {
   return declaration().name();
 }
 
 
-Type_parm const&
-Typename_type::declaration() const
+Type_decl const&
+User_type::declaration() const
 {
-  return *cast<Type_parm>(decl);
+  return cast<Type_decl>(*decl_);
 }
 
 
-Type_parm&
-Typename_type::declaration()
+Type_decl&
+User_type::declaration()
 {
-  return *cast<Type_parm>(decl);
+  return cast<Type_decl>(*decl_);
 }
 
 

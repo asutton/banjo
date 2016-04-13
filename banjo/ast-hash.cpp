@@ -197,7 +197,7 @@ hash_value(Function_type const& t)
 
 // The hash value of a user-defined type is that of its declaration.
 inline std::size_t
-hash_udt(User_defined_type const& t)
+hash_udt(User_type const& t)
 {
   std::size_t h = hash_type(t);
   boost::hash_combine(h, t.declaration());
@@ -220,8 +220,8 @@ hash_value(Type const& t)
     std::size_t operator()(Auto_type const& t) const      { return hash_value(t); }
     std::size_t operator()(Decltype_type const& t) const  { return hash_value(t); }
     std::size_t operator()(Declauto_type const& t) const  { return hash_value(t); }
+    std::size_t operator()(User_type const& t) const  { return hash_udt(t); }
     std::size_t operator()(Function_type const& t) const  { return hash_value(t); }
-    std::size_t operator()(Typename_type const& t) const  { return hash_udt(t); }
     std::size_t operator()(Synthetic_type const& t) const { banjo_unhandled_case(t); }
   };
   return apply(t, fn{});

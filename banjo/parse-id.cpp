@@ -105,7 +105,7 @@ Parser::identifier()
 Name&
 Parser::id()
 {
-  // FIXME: Re-enable this when I add scoped stuff.
+  // FIXME: Re-enable this when I add scoping stuff.
   // if (Name* n = match_if(&Parser::qualified_id))
   //   return *n;
   return unqualified_id();
@@ -439,10 +439,6 @@ Parser::type_alias()
 // Parse a type name.
 //
 //    type-name:
-//      class-name
-//      union-name
-//      enum-name
-//      type-alias
 //
 // Note that all of these names are either identifiers or
 // simple-template-ids. Match syntactically and differentiate

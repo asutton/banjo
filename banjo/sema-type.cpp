@@ -3,6 +3,7 @@
 
 #include "parser.hpp"
 #include "ast-type.hpp"
+#include "type.hpp"
 
 #include <iostream>
 
@@ -26,6 +27,13 @@ Parser::on_void_type(Token)
 
 
 Type&
+Parser::on_byte_type(Token)
+{
+  return build.get_byte_type();
+}
+
+
+Type&
 Parser::on_bool_type(Token)
 {
   return build.get_bool_type();
@@ -38,11 +46,13 @@ Parser::on_int_type(Token)
   return build.get_int_type();
 }
 
+
 Type&
-Parser::on_byte_type(Token)
+Parser::on_id_type(Name& n)
 {
-  return build.get_byte_type();
+  return make_type(cxt, n);
 }
+
 
 Type&
 Parser::on_decltype_type(Token, Expr&)
