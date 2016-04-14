@@ -333,7 +333,7 @@ Printer::type(Unparsed_type const& t)
 void
 Printer::suffix_type(Type const& t)
 {
-  if (Pack_type const* t1 = as<Pack_type>(t1))
+  if (Pack_type const* t1 = as<Pack_type>(&t))
     suffix_type(*t1);
   prefix_type(t);
 }
@@ -1236,7 +1236,7 @@ Printer::specifier(Token_kind k)
 }
 
 
-void 
+void
 Printer::specifier_seq(Specifier_set s)
 {
   if (s & static_spec)
