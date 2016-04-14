@@ -107,7 +107,7 @@ struct Variable_decl : Decl
 
 // Declares a function.
 //
-// A function has three associated exprssions:
+// A function has three associated expressions:
 //    - a type constraint which governs use,
 //    - a precondition which guards entry, and
 //    - a postcondition that explicitly states effects.
@@ -518,6 +518,6 @@ apply(Decl& d, F fn)
 }
 
 
-} // namesapce banjo
+} // namespace banjo
 
 #endif

@@ -152,6 +152,8 @@ struct Printer
   void parameter(Object_parm const&);
   void parameter_list(Decl_list const&);
 
+  // Coroutines
+
   // Types
   void type_declaration(Type_decl const&);
   void type_definition(Def const&);

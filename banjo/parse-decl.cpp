@@ -26,7 +26,7 @@ Parser::declaration()
     case def_tok:
       return function_declaration();
     case coroutine_tok:
-      lingo_unimplemented("co_def");
+      coroutine_declaration();
     case type_tok:
       return type_declaration();
     case concept_tok:
@@ -251,6 +251,9 @@ Parser::coroutine_declaration()
   Name& name = identifier();
   match(colon_tok);
 
+
+
+  lingo_unimplemented("coroutine_declaration");
 }
 
 // Parse a parameter clause.
