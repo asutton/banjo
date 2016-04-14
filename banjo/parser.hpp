@@ -126,6 +126,9 @@ struct Parser
   Decl_list declaration_seq();
   Decl& empty_declaration();
 
+  // Super
+  Decl& super_declaration();
+
   // Variables
   Decl& variable_declaration();
   Type& unparsed_variable_type();

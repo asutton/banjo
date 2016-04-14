@@ -21,6 +21,8 @@ Decl&
 Parser::declaration()
 {
   switch (lookahead()) {
+    case super_tok:
+      return super_declaration();
     case var_tok:
       return variable_declaration();
     case def_tok:
@@ -35,7 +37,74 @@ Parser::declaration()
   throw Syntax_error("invalid declaration");
 }
 
+// -------------------------------------------------------------------------- //
 
+// Parse a super type (inheritance declaration)
+
+// right now this is just a basic variable declared with keyword super
+//
+// Super declaration:
+//
+//  explicit identifier:
+//
+//    super <identifier> : Type_name;
+//                       := <initialzer>;
+//                       : Type_name = <initializer>;
+//
+//  implicit identifier:
+//
+//    super : Type_name;
+//          := <initializer>;
+//          : Type_name = <initializer>;
+Decl&
+Parser::super_declaration()
+{
+  require(super_tok);
+
+  Name* name;
+
+  if(match_if(identifier_tok)) // If the user optionally named the super class
+  {
+    name = &identifier();
+  }
+  else
+  {
+    // Ok so this is a little dirty BUT
+    // We make an anonymous identifier for the super class and then build up
+    // a symbol, and then get a name for it.
+    std::string identifier = "_base_subobject_" + std::to_string(cxt.get_unique_id());
+    Symbol* sym = cxt.symbols().put_symbol(super_tok,  identifier.c_str());
+    name = &build.get_id(sym);
+  }
+
+  // The rest of this is exactly the same as a variable declarataion
+  // and it even calls on_variable_declaration
+
+  match(colon_tok);
+
+  // Match the ":=" form.
+  if (match_if(eq_tok)) {
+    Type& type = cxt.get_auto_type();
+    Expr& init = unparsed_variable_initializer();
+    match(semicolon_tok);
+    return on_variable_declaration(*name, type, init);
+  }
+
+  // Match the type.
+  Type& type = unparsed_variable_type();
+
+  // Match the "name : type =" form.
+  if (match_if(eq_tok)) {
+    Expr& init = unparsed_variable_initializer();
+    match(semicolon_tok);
+    return on_variable_declaration(*name, type, init);
+  }
+
+  // Otherwise, match the "name : type ;" form.
+  match(semicolon_tok);
+  return on_variable_declaration(*name, type);
+
+}
 // -------------------------------------------------------------------------- //
 // Variable declarations
 
