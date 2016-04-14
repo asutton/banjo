@@ -315,7 +315,7 @@ Printer::type(Type const& t)
 {
   if (Unparsed_type const* t1 = as<Unparsed_type>(&t))
     return type(*t1);
-  return primary_type(t);
+  return suffix_type(t);
 }
 
 
@@ -327,6 +327,177 @@ Printer::type(Unparsed_type const& t)
   tokens(t.tokens());
   token(bar_tok);
   token(gt_tok);
+}
+
+
+void
+Printer::suffix_type(Type const& t)
+{
+  if (Pack_type const* t1 = as<Pack_type>(t1))
+    suffix_type(*t1);
+  prefix_type(t);
+}
+
+
+void
+Printer::suffix_type(Pack_type const& t)
+{
+  type(t.type());
+  token(ellipsis_tok);
+}
+
+
+void
+Printer::prefix_type(Type const& t)
+{
+  struct fn
+  {
+    Printer& p;
+    void operator()(Type const& t)           { p.unary_type(t); }
+    void operator()(Reference_type const& t) { p.prefix_type(t); }
+    void operator()(In_type const& t)        { p.prefix_type(t); }
+    void operator()(Out_type const& t)       { p.prefix_type(t); }
+    void operator()(Mutable_type const& t)   { p.prefix_type(t); }
+    void operator()(Consume_type const& t)   { p.prefix_type(t); }
+    void operator()(Forward_type const& t)   { p.prefix_type(t); }
+  };
+  return apply(t, fn{*this});
+}
+
+
+void
+Printer::prefix_type(Reference_type const& t)
+{
+  token(amp_tok);
+  unary_type(t.type());
+}
+
+
+void
+Printer::prefix_type(In_type const& t)
+{
+  token(in_tok);
+  space();
+  unary_type(t.type());
+}
+
+
+void
+Printer::prefix_type(Out_type const& t)
+{
+  token(out_tok);
+  space();
+  unary_type(t.type());
+}
+
+
+void
+Printer::prefix_type(Mutable_type const& t)
+{
+  token(mutable_tok);
+  space();
+  unary_type(t.type());
+}
+
+
+void
+Printer::prefix_type(Consume_type const& t)
+{
+  token(consume_tok);
+  space();
+  unary_type(t.type());
+
+}
+
+
+void
+Printer::prefix_type(Forward_type const& t)
+{
+  token(forward_tok);
+  space();
+  unary_type(t.type());
+}
+
+
+void
+Printer::unary_type(Type const& t)
+{
+  struct fn
+  {
+    Printer& p;
+    void operator()(Type const& t)           { p.postfix_type(t); }
+    void operator()(Pointer_type const& t)   { p.unary_type(t); }
+    void operator()(Qualified_type const& t) { p.unary_type(t); }
+  };
+  return apply(t, fn{*this});
+}
+
+
+void
+Printer::unary_type(Pointer_type const& t)
+{
+  token(star_tok);
+  unary_type(t.type());
+}
+
+
+void
+Printer::unary_type(Qualified_type const& t)
+{
+  if (t.is_const()) {
+    token(const_tok);
+    space();
+  }
+  if (t.is_volatile()) {
+    token(volatile_tok);
+    space();
+  }
+  unary_type(t.type());
+}
+
+
+void
+Printer::postfix_type(Type const& t)
+{
+  struct fn
+  {
+    Printer& p;
+    void operator()(Type const& t)          { p.primary_type(t); }
+    void operator()(Array_type const& t)    { p.postfix_type(t); }
+    void operator()(Slice_type const& t)    { p.postfix_type(t); }
+    void operator()(Dynarray_type const& t) { p.postfix_type(t); }
+  };
+  return apply(t, fn{*this});
+}
+
+
+void
+Printer::postfix_type(Array_type const& t)
+{
+  postfix_type(t.type());
+  token(lbracket_tok);
+  expression(t.extent());
+  token(rbracket_tok);
+}
+
+
+void
+Printer::postfix_type(Slice_type const& t)
+{
+  postfix_type(t.type());
+  token(lbracket_tok);
+  token(rbracket_tok);
+}
+
+
+// FIXME: Unify with array-type.
+void
+Printer::postfix_type(Dynarray_type const& t)
+{
+  postfix_type(t.type());
+  token(lbracket_tok);
+  expression(t.extent());
+  token(rbracket_tok);
 }
 
 
@@ -969,9 +1140,11 @@ void
 Printer::compound_statement(Compound_stmt const& s)
 {
   token(lbrace_tok);
-  newline_and_indent();
-  statement_seq(s.statements());
-  newline_and_undent();
+  if (!s.statements().empty()) {
+    newline_and_indent();
+    statement_seq(s.statements());
+    newline_and_undent();
+  }
   token(rbrace_tok);
 }
 
