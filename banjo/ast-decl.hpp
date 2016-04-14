@@ -75,6 +75,9 @@ struct Decl : Term
   Type const& type() const { return *type_; }
   Type&       type()       { return *type_; }
 
+  // Returns the set of declaration specifiers for the declaration.
+  Specifier_set specifiers() const { return spec_; }
+
   // If the declaration is a template, this returns the templated
   // declaration.
   virtual Decl const& parameterized_declaration() const { return *this; }

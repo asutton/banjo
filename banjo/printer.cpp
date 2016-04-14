@@ -1037,6 +1037,9 @@ Printer::declaration(Decl const& d)
     void operator()(Type_parm const& d)      { p.type_template_parameter(d); }
     void operator()(Template_parm const& d)  { p.template_template_parameter(d); }
   };
+
+  // Print specifiers before the declaration.
+  specifier_seq(d.specifiers());
   apply(d, fn{*this});
 }
 
@@ -1048,6 +1051,41 @@ Printer::declaration_seq(Decl_list const& ds)
     declaration(d);
     newline();
   }
+}
+
+
+// Write the specifier token followed by a space.
+void
+Printer::specifier(Token_kind k)
+{
+  token(k);
+  space();
+}
+
+
+void 
+Printer::specifier_seq(Specifier_set s)
+{
+  if (s & static_spec)
+    specifier(static_tok);
+  if (s & dynamic_spec)
+    specifier(dynamic_tok);
+  if (s & implicit_spec)
+    specifier(implicit_tok);
+  if (s & explicit_spec)
+    specifier(explicit_tok);
+  if (s & virtual_spec)
+    specifier(virtual_tok);
+  if (s & abstract_spec)
+    specifier(abstract_tok);
+  if (s & inline_spec)
+    specifier(inline_tok);
+  if (s & public_spec)
+    specifier(public_tok);
+  if (s & private_spec)
+    specifier(private_tok);
+  if (s & protected_spec)
+    specifier(protected_tok);
 }
 
 
@@ -1291,26 +1329,20 @@ Printer::requires_clause(Expr const& e)
 }
 
 
-// Dispatch function for printing parameters. This combines
-// the printing of all parameters into the same framework
-// for convenience.
-struct parameter_fn
-{
-  Printer& p;
-
-  template<typename T>
-  void operator()(T const&) { lingo_unreachable(); }
-
-  void operator()(Object_parm const& d)   { p.parameter(d); }
-  void operator()(Value_parm const& d)    { p.value_template_parameter(d); }
-  void operator()(Type_parm const& d)     { p.type_template_parameter(d); }
-  void operator()(Template_parm const& d) { p.template_template_parameter(d); }
-};
-
-
 void
 Printer::parameter(Decl const& d)
 {
+  struct parameter_fn
+  {
+    Printer& p;
+    void operator()(Decl const& d) { lingo_unhandled(d); }
+    void operator()(Object_parm const& d)   { p.parameter(d); }
+    void operator()(Value_parm const& d)    { p.value_template_parameter(d); }
+    void operator()(Type_parm const& d)     { p.type_template_parameter(d); }
+    void operator()(Template_parm const& d) { p.template_template_parameter(d); }
+  };
+
+  specifier_seq(d.specifiers());
   apply(d, parameter_fn{*this});
 }
 
@@ -1341,7 +1373,8 @@ Printer::parameter_list(Decl_list const& d)
 void
 Printer::template_parameter(Decl const& d)
 {
-  apply(d, parameter_fn{*this});
+  // FIXME: This is a bit odd.
+  parameter(d);
 }
 
 

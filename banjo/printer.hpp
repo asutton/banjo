@@ -133,6 +133,8 @@ struct Printer
   // Declarations
   void declaration(Decl const&);
   void declaration_seq(Decl_list const&);
+  void specifier(Token_kind);
+  void specifier_seq(Specifier_set);
 
   // Variables
   void variable_declaration(Variable_decl const&);

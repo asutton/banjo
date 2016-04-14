@@ -12,8 +12,6 @@ namespace banjo
 enum Specifier_set
 {
   empty_spec    = 0,
-
-  // Storage specifiers
   static_spec    = 1 << 0,
   dynamic_spec   = 1 << 1,  // TODO: Find a use.
   implicit_spec  = 1 << 2,  // TODO: Find a use.
@@ -34,6 +32,6 @@ operator|=(Specifier_set& a, Specifier_set b)
 }
 
 
-} // namesapce banjo
+} // namespace banjo
 
 #endif
