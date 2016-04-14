@@ -38,6 +38,20 @@ Parser::on_return_statement(Token, Expr& e)
 }
 
 
+Break_stmt&
+Parser::on_break_statement()
+{
+  return *new Break_stmt();
+}
+
+
+Continue_stmt&
+Parser::on_continue_statement()
+{
+  return *new Continue_stmt();
+}
+
+
 Declaration_stmt&
 Parser::on_declaration_statement(Decl& d)
 {

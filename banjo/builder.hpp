@@ -126,6 +126,8 @@ struct Builder
   Member_stmt&      make_member_statement(Stmt_list&&);
   Compound_stmt&    make_compound_statement(Stmt_list&&);
   Return_stmt&      make_return_statement(Expr&);
+  Break_stmt&       make_break_statement();
+  Continue_stmt&    make_continue_statement();
   Expression_stmt&  make_expression_statement(Expr&);
   Declaration_stmt& make_declaration_statement(Decl&);
 

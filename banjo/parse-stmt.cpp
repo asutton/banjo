@@ -40,8 +40,21 @@ Parser::statement()
 
     case lbrace_tok:
       return compound_statement();
+
     case return_tok:
       return return_statement();
+
+    case if_tok:
+      lingo_unimplemented("if");
+
+    case while_tok:
+      lingo_unimplemented("while");
+
+    case break_tok:
+      return break_statement();
+
+    case continue_tok:
+      return continue_statement();
 
     default:
       return expression_statement();
@@ -94,6 +107,24 @@ Parser::return_statement()
   Expr& e = expression();
   match(semicolon_tok);
   return on_return_statement(tok, e);
+}
+
+
+Stmt&
+Parser::break_statement()
+{
+  require(break_tok);
+  match(semicolon_tok);
+  return on_break_statement();
+}
+
+
+Stmt&
+Parser::continue_statement()
+{
+  require(continue_tok);
+  match(semicolon_tok);
+  return on_continue_statement();
 }
 
 

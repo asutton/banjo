@@ -712,6 +712,20 @@ Builder::make_return_statement(Expr& e)
 }
 
 
+Break_stmt&
+Builder::make_break_statement()
+{
+  return make<Break_stmt>();
+}
+
+
+Continue_stmt&
+Builder::make_continue_statement()
+{
+  return make<Continue_stmt>();
+}
+
+
 Expression_stmt&
 Builder::make_expression_statement(Expr& e)
 {
