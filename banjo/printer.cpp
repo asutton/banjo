@@ -344,6 +344,7 @@ Printer::primary_type(Type const& t)
     void operator()(Float_type const& t)     { p.primary_type(t); }
     void operator()(Auto_type const& t)      { p.primary_type(t); }
     void operator()(Function_type const& t)  { p.primary_type(t); }
+    void operator()(User_type const& t)      { p.id_type(t); }
     void operator()(Unparsed_type const& t)  { p.primary_type(t); }
   };
   apply(t, fn{*this});
@@ -416,6 +417,14 @@ void
 Printer::primary_type(Type_type const& t)
 {
   token(type_tok);
+}
+
+
+// Print the name of the user-defined type.
+void
+Printer::id_type(User_type const& t)
+{
+  identifier(t.declaration());
 }
 
 

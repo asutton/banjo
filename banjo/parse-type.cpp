@@ -12,74 +12,131 @@ namespace banjo
 // Parse a type.
 //
 //    type:
-//      reference-type
+//      suffix-type
 //
-// TODO: Add general support for packed types (e.g.: int...). This
-// has lower precedence than reference types.
+// TODO: Somewhere in this grammar, add general support for packed 
+// types (e.g., int...). 
 Type&
 Parser::type()
 {
-  return reference_type();
+  return prefix_type();
 }
 
 
-// Parse a reference type.
+// Parse a suffix type specifier.
 //
-//    reference-type:
-//      sequence-type ['&']
-//      sequence-type ['&&']
-//
-// FIXME: Implement rvalue and forwarding references.
+//    suffix-type:
+//      prefix-type ['...']
 Type&
-Parser::reference_type()
+Parser::suffix_type()
 {
-  Type& t = sequence_type();
-  if (Token tok = match_if(amp_tok))
-    return on_reference_type(tok, t);
+  Type& t = prefix_type();
+  if (match_if(ellipsis_tok))
+    return on_pack_type(t);
   return t;
 }
 
 
-// Parse a sequence type. This is a type type followed
-// by empty brackets.
+// Parse a unary type specifier.
 //
-//    sequence-type:
-//      postfix-type ['[' ']']
+//    unary-type:
+//      unary-type
+//      '&' unary-type
+//      '&&' unary-type
+//      'in' unary-type
+//      'out' unary-type
+//      'mutable' unary-type
+//      'consume' unary-type
+//      'forward' unary-type
+//
+// FIXME: Rvalue references have not been implemented. Do we actually
+// need them, or can we get by with parameter passing types.
+//
+// NOTE: The parameter passing types (in, out, etc.) do not apply to
+// cv-qualified types, but can apply to pointers (presumably). It would
+// be nice if we could make the grammar reflect this, but it means
+// making lots of weird branches.
 Type&
-Parser::sequence_type()
+Parser::prefix_type()
 {
-  Type& t = postfix_type();
-  if (match_if(lbracket_tok)) {
-    match(rbracket_tok);
-    return on_sequence_type(t);
+  switch (lookahead()) {
+    case amp_tok: {
+      accept();
+      Type& t = unary_type();
+      return on_reference_type(t);
+    }
+    case in_tok: {
+      accept();
+      Type& t = unary_type();
+      return on_in_type(t);
+    }
+    case out_tok: {
+      accept();
+      Type& t = unary_type();
+      return on_out_type(t);
+    }
+    case mutable_tok: {
+      accept();
+      Type& t = unary_type();
+      return on_mutable_type(t);
+    }
+    case forward_tok: {
+      accept();
+      Type& t = unary_type();
+      return on_forward_type(t);
+    }
+    case consume_tok: {
+      accept();
+      Type& t = unary_type();
+      return on_consume_type(t);
+    }
+    default:
+      break;
   }
-  return t;
+  return unary_type();
+}
+
+
+// Parse a qualified type.
+//
+//    unary-type:
+//      postfix-type
+//      '*' unary-type 
+//      'const' unary-type
+//      'volatile' unary-type
+Type&
+Parser::unary_type()
+{
+  if (match_if(const_tok)) {
+    Type& t = unary_type();
+    return on_const_type(t);
+  }
+  if (match_if(volatile_tok)) {
+    Type& t = unary_type();
+    return on_volatile_type(t);
+  }
+  if (match_if(star_tok)) {
+    Type& t = unary_type();
+    return on_pointer_type(t);
+  }
+  return postfix_type();
 }
 
 
 // Parse a postfix-type.
 //
-//    postfix-type:
-//      simple-type
-//      postfix-type 'const'
-//      postfix-type 'volatile'
-//      postfix-type '*'
+//    postfix-type
+//      primary-type
+//      postfix-type '[]'
 //      postfix-type '[' expression ']'
 //
-// TODO: Implement array types.
 Type&
 Parser::postfix_type()
 {
   Type* t = &primary_type();
   while (true) {
-    if (Token tok = match_if(star_tok))
-      t = &on_pointer_type(tok, *t);
-    else if (Token tok = match_if(const_tok))
-      t = &on_const_type(tok, *t);
-    else if (Token tok = match_if(volatile_tok))
-      t = &on_volatile_type(tok, *t);
-    else if (Token tok = match_if(amp_tok))
-      t = &on_reference_type(tok, *t);
+    if (match_if(lbracket_tok))
+      t = &array_type(*t);   
     else
       break;
   }
@@ -87,9 +144,22 @@ Parser::postfix_type()
 }
 
 
-// Parse a simple type.
+// Parse an array of slice type.
+Type&
+ Parser::array_type(Type& t)
+ {
+   match(lbracket_tok);
+   if (match_if(rbracket_tok))
+      return on_slice_type(t);
+   Expr& e = expression();
+   match(rbracket_tok);
+   return on_array_type(t, e);
+ }
+ 
+
+// Parse a primary type.
 //
-//    simple-type:
+//    primary-type:
 //      'void'
 //      'byte'
 //      'bool'
@@ -100,7 +170,7 @@ Parser::postfix_type()
 //      id-type
 //      decltype-type
 //      function-type
-//      grouped-type
+//      '( unary-type )'
 //
 // FIXME: Design a better integer and FP type suite.
 Type&
@@ -118,10 +188,13 @@ Parser::primary_type()
 
     // TODO: Implement me.
     case char_tok:
+      lingo_unimplemented("char type");
+    
     case float_tok:
+      lingo_unimplemented("float type");
+    
     case auto_tok:
-      // FIXME: Match on each type.
-      lingo_unimplemented("parse auto type");
+      lingo_unimplemented("auto type");
     
     case decltype_tok:
       return decltype_type();
@@ -130,6 +203,7 @@ Parser::primary_type()
       return on_type_type(accept());
 
     case lparen_tok: {
+      // FIXME: We shouldn't need a tentative parse for this.
       if (Type* t = match_if(&Parser::function_type))
         return *t;
       return grouped_type();
@@ -156,7 +230,9 @@ Parser::id_type()
 // Parse a function type.
 //
 //    function-type:
-//      '(' [type-list] ')' return-type
+//      '(' [type-list] ')' type
+//
+// TODO: A function should not be able to return a pack type.
 Type&
 Parser::function_type()
 {
@@ -165,7 +241,8 @@ Parser::function_type()
   if (lookahead() != rparen_tok)
     types = type_list();
   match(rparen_tok);
-  Type& ret = return_type();
+  match(arrow_tok);
+  Type& ret = type();
   return on_function_type(types, ret);
 }
 
@@ -194,7 +271,7 @@ Type&
 Parser::grouped_type()
 {
   match(lparen_tok);
-  Type& t = type();
+  Type& t = unary_type();
   match(rparen_tok);
   return t;
 }
@@ -214,18 +291,6 @@ Parser::decltype_type()
   Expr& expr = expression();
   match(rparen_tok);
   return on_decltype_type(tok, expr);
-}
-
-
-// Parse a return-type.
-//
-//      return-type:
-//        '->' type
-Type&
-Parser::return_type()
-{
-  match(arrow_tok);
-  return type();
 }
 
 

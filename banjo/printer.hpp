@@ -68,6 +68,7 @@ struct Printer
   void primary_type(Auto_type const&);
   void primary_type(Function_type const&);
   void primary_type(Type_type const&);
+  void id_type(User_type const&);
 
   // Expressions
   void expression(Expr const&);

@@ -321,17 +321,60 @@ Builder::get_array_type(Type&, Expr&)
   lingo_unimplemented("array-type");
 }
 
-Dynarray_type&
-Builder::get_dynarray_type(Type&, Expr&)
+
+Slice_type&
+Builder::get_slice_type(Type& t)
 {
-  lingo_unimplemented("Dynarray-type");
+  return make<Slice_type>(t);
 }
 
 
-Sequence_type&
-Builder::get_sequence_type(Type& t)
+Dynarray_type&
+Builder::get_dynarray_type(Type&, Expr&)
 {
-  return make<Sequence_type>(t);
+  lingo_unimplemented("dynarray-type");
+}
+
+
+In_type&
+Builder::get_in_type(Type& t)
+{
+  return make<In_type>(t);
+}
+
+
+Out_type&
+Builder::get_out_type(Type& t)
+{
+  return make<Out_type>(t);
+}
+
+
+Mutable_type&
+Builder::get_mutable_type(Type& t)
+{
+  return make<Mutable_type>(t);
+}
+
+
+Consume_type&
+Builder::get_consume_type(Type& t)
+{
+  return make<Consume_type>(t);
+}
+
+
+Forward_type&
+Builder::get_forward_type(Type& t)
+{
+  return make<Forward_type>(t);
+}
+
+
+Pack_type&
+Builder::get_pack_type(Type& t)
+{
+  return make<Pack_type>(t);
 }
 
 

@@ -139,7 +139,6 @@ init_tokens(Symbol_table& syms)
   init_token(syms, static_tok, "static");
   init_token(syms, struct_tok, "struct");
   init_token(syms, switch_tok, "switch");
-  init_token(syms, this_tok, "this");
   init_token(syms, template_tok, "template");
   init_token(syms, true_tok, "true");
   init_token(syms, type_tok, "type");

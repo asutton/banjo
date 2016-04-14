@@ -67,8 +67,14 @@ struct Builder
   Pointer_type&   get_pointer_type(Type&);
   Reference_type& get_reference_type(Type&);
   Array_type&     get_array_type(Type&, Expr&);
+  Slice_type&     get_slice_type(Type&);
   Dynarray_type&  get_dynarray_type(Type&, Expr&);
-  Sequence_type&  get_sequence_type(Type&);
+  In_type&        get_in_type(Type&);
+  Out_type&       get_out_type(Type&);
+  Mutable_type&   get_mutable_type(Type&);
+  Consume_type&   get_consume_type(Type&);
+  Forward_type&   get_forward_type(Type&);
+  Pack_type&      get_pack_type(Type&);
   Typename_type&  get_typename_type(Decl&);
   Type_type&      get_type_type();
 

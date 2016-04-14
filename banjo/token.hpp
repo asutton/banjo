@@ -101,7 +101,6 @@ enum Token_kind
   static_tok,
   struct_tok,
   switch_tok,
-  this_tok,
   template_tok,
   true_tok,
   type_tok,

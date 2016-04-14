@@ -21,6 +21,17 @@ Stmt&
 Parser::statement()
 {
   switch (lookahead()) {
+    // Declaration specifiers start declarations.
+    case virtual_tok:
+    case abstract_tok:
+    case static_tok:
+    case inline_tok:
+    case explicit_tok:
+    case implicit_tok:
+    case public_tok:
+    case private_tok:
+    case protected_tok:
+    // Declaration introducers.
     case var_tok:
     case def_tok:
     case type_tok:

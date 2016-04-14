@@ -132,7 +132,7 @@ copy_initialize(Context& cxt, Type& t, Expr& e)
   // If the destination type is T[N] or T[] and the initializer
   // is `= s` where `s` is a string literal, perform string
   // initialization.
-  if (is_array_type(t) || is_sequence_type(t))
+  if (is_array_type(t))
     banjo_unhandled_case(t);
 
   // If the initializer has a source type, then try to find a
@@ -172,7 +172,7 @@ direct_initialize(Context& cxt, Type& t, Expr_list& es)
   // Arrays must be copy or list-initialized.
   //
   // FIXME: Provide a better diagnostic.
-  if (is_array_type(t) || is_sequence_type(t))
+  if (is_array_type(t))
     throw Translation_error("invalid array initialization");
 
   // If the initializer is (), the object is value initialized.

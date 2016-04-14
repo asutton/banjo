@@ -15,14 +15,19 @@ define_node(Qualified_type)
 define_node(Pointer_type)
 define_node(Reference_type)
 define_node(Array_type)
+define_node(Slice_type)
 define_node(Dynarray_type)
-define_node(Sequence_type)
+define_node(In_type)
+define_node(Out_type)
+define_node(Mutable_type)
+define_node(Consume_type)
+define_node(Forward_type)
+define_node(Pack_type)
+define_node(Synthetic_type)
 
 // TODO: Am I actually using this anywhere? Or have I subsumed the use
 // of this with auto types. Or is it still useful...
 define_node(Typename_type)
-
-define_node(Synthetic_type)
 
 // The type of types.
 define_node(Type_type)

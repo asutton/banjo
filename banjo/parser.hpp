@@ -70,17 +70,16 @@ struct Parser
 
   // Types
   Type& type();
+  Type& suffix_type();
+  Type& prefix_type();
+  Type& unary_type();
   Type& postfix_type();
-  Type& sequence_type();
-  Type& reference_type();
+  Type& array_type(Type&);
   Type& primary_type();
   Type& id_type();
   Type& grouped_type();
   Type& function_type();
   Type& decltype_type();
-
-  // Type helpers
-  Type& return_type();
   Type_list type_list();
 
   // Expressions
@@ -228,12 +227,18 @@ struct Parser
   Type& on_id_type(Name&);
   Type& on_decltype_type(Token, Expr&);
   Type& on_function_type(Type_list&, Type&);
-  Type& on_pointer_type(Token, Type&);
-  Type& on_qualified_type(Token, Type&, Qualifier_set);
-  Type& on_const_type(Token, Type&);
-  Type& on_volatile_type(Token, Type&);
-  Type& on_sequence_type(Type&);
-  Type& on_reference_type(Token, Type&);
+  Type& on_slice_type(Type&);
+  Type& on_array_type(Type&, Expr&);
+  Type& on_pointer_type(Type&);
+  Type& on_const_type(Type&);
+  Type& on_volatile_type(Type&);
+  Type& on_reference_type(Type&);
+  Type& on_in_type(Type&);
+  Type& on_out_type(Type&);
+  Type& on_mutable_type(Type&);
+  Type& on_consume_type(Type&);
+  Type& on_forward_type(Type&);
+  Type& on_pack_type(Type&);
   Type& on_unparsed_type(Token_seq&&);
 
   // Expressions
