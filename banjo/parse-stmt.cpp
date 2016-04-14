@@ -21,6 +21,7 @@ Stmt&
 Parser::statement()
 {
   switch (lookahead()) {
+    case super_tok:
     case var_tok:
     case def_tok:
     case type_tok:

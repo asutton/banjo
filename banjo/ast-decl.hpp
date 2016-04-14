@@ -6,6 +6,7 @@
 
 #include "ast-base.hpp"
 #include "specifier.hpp"
+#include "ast-def.hpp"
 
 
 namespace banjo
@@ -79,6 +80,29 @@ struct Decl::Mutator
 #define define_node(Node) virtual void visit(Node&) = 0;
 #include "ast-decl.def"
 #undef define_node
+};
+
+
+// Declares a base_subobject(henceforth called a "Super")
+struct Super_decl : Decl
+{
+  Super_decl(Name& n, Type& t)
+    : Decl(n), type_(&t)
+  { def_ = new Empty_def(); }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the declared type of the super
+  Type const& type() const { return *type_; }
+  Type&       type()       { return *type_; }
+
+  Def const& initializer() const  { return *def_; }
+  Def&       initializer()        { return *def_; }
+
+  Type * type_;
+  Def* def_;
+
 };
 
 

@@ -63,7 +63,7 @@ Parser::super_declaration()
 
   Name* name;
 
-  if(match_if(identifier_tok)) // If the user optionally named the super class
+  if(next_token_is(identifier_tok)) // If the user optionally named the super class
   {
     name = &identifier();
   }
@@ -73,7 +73,7 @@ Parser::super_declaration()
     // We make an anonymous identifier for the super class and then build up
     // a symbol, and then get a name for it.
     std::string identifier = "_base_subobject_" + std::to_string(cxt.get_unique_id());
-    Symbol* sym = cxt.symbols().put_symbol(super_tok,  identifier.c_str());
+    Symbol* sym = cxt.symbols().put_identifier(identifier_tok,  identifier.c_str());
     name = &build.get_id(sym);
   }
 
