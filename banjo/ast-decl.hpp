@@ -214,6 +214,33 @@ struct Type_decl : Decl
 };
 
 
+// Declares a field of a record. This stores the index of the field within
+// the class, which is used to support code generation and compile-time
+// evaluation.
+struct Field_decl : Variable_decl
+{
+  using Variable_decl::Variable_decl;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the index of the field within the class.
+  int index() const { return index_; }
+
+  int index_;
+};
+
+
+// Declares a method of a record.
+struct Method_decl : Function_decl
+{
+  using Function_decl::Function_decl;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
 // Declares a template.
 //
 // A template has a single constraint expression corresponding
