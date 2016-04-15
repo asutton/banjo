@@ -133,6 +133,7 @@ Parser::elaborate_function_definition(Function_decl& decl, Function_def& def)
 }
 
 
+// Elaborate the definition of a type.
 void
 Parser::elaborate_type_definition(Type_decl& d)
 {
@@ -147,14 +148,12 @@ Parser::elaborate_type_definition(Type_decl& d)
 }
 
 
+// The type is defined by its body.
 void
 Parser::elaborate_type_definition(Type_decl& decl, Type_def& def)
 {
-  // Enter into the type of the scope.
-  //
-  // FIXME: The type should have an associated scope, and we should
-  // just enter that.
-  Enter_scope scope(cxt);
+  // Enter the scope associated with the declaration.
+  Enter_scope scope(cxt, cxt.saved_scope(decl));
 
   // Elaborate the definition's statement, possibly parsing it.
   Stmt& stmt = elaborate_member_statement(def.body());

@@ -38,19 +38,16 @@ struct Scope
   { }
 
   // Construct a scope for the given declaration, but with
-  // no enclosing scope. This is primarily used to create the
-  // global namespace.
+  // no enclosing scope. 
   Scope(Decl& d)
     : parent(nullptr), decl(&d)
   { }
 
-  // Construt a scope having the given parent and affiliated with
+  // Construct a scope having the given parent and affiliated with
   // the declaration.
   Scope(Scope& p, Decl& d)
     : parent(&p), decl(&d)
   { }
-
-  Scope(Decl&, Decl&);
 
   virtual ~Scope() { }
 

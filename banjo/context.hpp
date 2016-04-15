@@ -15,6 +15,10 @@ namespace banjo
 struct Scope;
 
 
+// Used to associate scopes with declarations.
+using Scope_map = std::unordered_map<Decl*, Scope*>;
+
+
 // A repository of information to support translation.
 //
 // TODO: Add an allocator/object pool and management support.
@@ -42,6 +46,7 @@ struct Context : Builder
   // Scope management
   Scope& make_scope();
   void   set_scope(Scope&);
+  Scope& saved_scope(Decl&);
   Scope& current_scope();
   Scope& global_scope();
 
@@ -54,6 +59,7 @@ struct Context : Builder
   // Scope information
   Scope*       global; // The global scope
   Scope*       scope;  // The current scope
+  Scope_map    saved;  // Saved scopes.
 
   // Store information for generating unique names.
   int             id;     // The current id counter
@@ -73,6 +79,23 @@ inline void
 Context::set_scope(Scope& s)
 {
   scope = &s;
+}
+
+
+// Retrieve the saved scope for the declaration. If no such scope exists,
+// create one. Note that newly created saved scopes are linked to the current
+// scope.
+inline Scope&
+Context::saved_scope(Decl& d)
+{
+  auto iter = saved.find(&d);
+  if (iter != saved.end()) {
+    return *iter->second;
+  } else {
+    Scope& s = make_scope();
+    saved.emplace(&d, &s);
+    return s;
+  }
 }
 
 
@@ -115,7 +138,8 @@ struct Enter_scope
 };
 
 
-// Enter a new purpose scope. 
+// Enter a new purpose scope. This scope is destroyed when the sentinel
+// goes out of scope.
 inline
 Enter_scope::Enter_scope(Context& cxt)
   : cxt(cxt), prev(&cxt.current_scope()), alloc(&cxt.make_scope())
@@ -124,13 +148,12 @@ Enter_scope::Enter_scope(Context& cxt)
 }
 
 
-// Enter the given scope. This does not assume ownership of the scope
-// when the object goes out of scope.
+// Enter the given scope.
 inline
 Enter_scope::Enter_scope(Context& c, Scope& s)
   : cxt(c), prev(&c.current_scope()), alloc(nullptr)
 {
-  cxt.set_scope(*alloc);
+  cxt.set_scope(s);
 }
 
 

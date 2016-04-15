@@ -865,6 +865,41 @@ Builder::make_type_declaration(Name& n, Type& t, Stmt& s)
 }
 
 
+Field_decl&
+Builder::make_field_declaration(Name& n, Type& t)
+{
+  Def& d = make_empty_definition();
+  return make<Field_decl>(n, t, d);
+}
+
+
+Field_decl&
+Builder::make_field_declaration(Name& n, Type& t, Expr& e)
+{
+  Def& d = make_expression_definition(e);
+  return make<Field_decl>(n, t, d);
+}
+
+
+Method_decl&
+Builder::make_method_declaration(Name& n, Decl_list const& p, Type& t, Expr& e)
+{
+  Type& r = get_function_type(p, t);
+  Def& d = make_expression_definition(e);
+  return make<Method_decl>(n, r, p, d);
+}
+
+
+Method_decl&
+Builder::make_method_declaration(Name& n, Decl_list const& p, Type& t, Stmt& s)
+{
+  Type& r = get_function_type(p, t);
+  Def& d = make_function_definition(s);
+  return make<Method_decl>(n, r, p, d);
+}
+
+
+
 Template_decl&
 Builder::make_template(Decl_list const& p, Decl& d)
 {

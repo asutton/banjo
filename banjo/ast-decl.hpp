@@ -83,11 +83,6 @@ struct Decl : Term
   virtual Decl const& parameterized_declaration() const { return *this; }
   virtual Decl&       parameterized_declaration()       { return *this; }
 
-  // Returns the saved scope associated with the declaration, if any.
-  // Not all declarations have an associated scope.
-  virtual Scope const* scope() const { return nullptr; }
-  virtual Scope*       scope()       { return nullptr; }
-
   Decl*         cxt_;
   Name*         name_;
   Type*         type_;
@@ -197,7 +192,7 @@ struct Type_decl : Decl
   Type_decl(Name& n, Type& t, Def& d)
     : Decl(n, t), def_(&d)
   { }
-
+  
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
@@ -209,8 +204,8 @@ struct Type_decl : Decl
   Def const& definition() const { return *def_; }
   Def&       definition()       { return *def_; }
 
-  Type* kind_;
-  Def*  def_;
+  Type*  kind_;
+  Def*   def_;
 };
 
 
@@ -232,6 +227,10 @@ struct Field_decl : Variable_decl
 
 
 // Declares a method of a record.
+//
+// TODO: I think that the type of a method is the same as that of a function,
+// except that the first parameter type must always be a (possibly qualified) 
+// reference to this. That could be enforced in the constructor, I suppose.
 struct Method_decl : Function_decl
 {
   using Function_decl::Function_decl;

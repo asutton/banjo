@@ -56,7 +56,8 @@ Parser::elaborate_variable_declaration(Variable_decl& d)
 void
 Parser::elaborate_function_declaration(Function_decl& d)
 {
-  // Elaborate the type of each parameter in turn.
+  // Elaborate the type of each parameter in turn. Note that this does
+  // not declare the parameters, it just checks their types.
   Decl_list& parms = d.parameters();
   for (Decl& d : parms) {
     Object_parm& p = as<Object_parm>(d);
@@ -66,13 +67,14 @@ Parser::elaborate_function_declaration(Function_decl& d)
   // Elaborate the return type.
   Type& ret = elaborate_type(d.return_type());
 
-  // Reconstitute and update the function type.
+  // Rebuild the function type and update the declaration.
   d.type_ = &cxt.get_function_type(parms, ret);
 
   // TODO: Elaborate the function constraints.
 }
 
 
+// Elaborate the kind of a type.
 void
 Parser::elaborate_type_declaration(Type_decl& d)
 {

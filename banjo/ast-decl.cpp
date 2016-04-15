@@ -11,6 +11,8 @@
 namespace banjo
 {
 
+// Function_decl
+
 Function_type const&
 Function_decl::type() const
 {

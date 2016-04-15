@@ -16,7 +16,7 @@ namespace banjo
 // Declaration specifiers
 //
 // Declaration specifiers are an optional sequence of terms parsed
-// before a declaation's type. They look like part of the type but
+// before a declaration's type. They look like part of the type but
 // are distinct.
 
 namespace
@@ -223,13 +223,15 @@ Parser::unparsed_variable_initializer()
 //
 // Note that C++ refers to the equal-initializer form of initialization
 // as copy-initialization. This term also applies to object initialization
-// that occurs in argument passing, initialiation of condition variables,
+// that occurs in argument passing, initialization of condition variables,
 // exception construction and catching and aggregate member initialization.
 // Copy initialization may invoke a move.
 //
-// The paren- and brace-initializer foms are called direct initialization.
+// The paren- and brace-initializer forms are called direct initialization.
 // This term also applies to object initialization in new expressions,
 // static casts, functional conversion, and member initializers.
+//
+// TODO: Am I using this or not?
 Expr&
 Parser::initializer(Decl& d)
 {
@@ -293,7 +295,10 @@ Parser::brace_initializer(Decl&)
 //
 //    function-body:
 //      compound-statement
+//      '=' delete
 //      '=' expression-statement
+//
+// TODO: Implement deleted functions.
 //
 // TODO: Allow named return types. That would change the grammar for return
 // types to a return declaration.

@@ -144,8 +144,12 @@ struct Builder
   Function_decl&  make_function_declaration(Name&, Decl_list const&, Type&, Expr&);
   Function_decl&  make_function_declaration(Name&, Decl_list const&, Type&, Stmt&);
 
-  // Types
+  // Types and members
   Type_decl&      make_type_declaration(Name&, Type&, Stmt&);
+  Field_decl&     make_field_declaration(Name&, Type&);
+  Field_decl&     make_field_declaration(Name&, Type&, Expr&);
+  Method_decl&    make_method_declaration(Name&, Decl_list const&, Type&, Expr&);
+  Method_decl&    make_method_declaration(Name&, Decl_list const&, Type&, Stmt&);
 
   // Templates
   Template_decl&  make_template(Decl_list const&, Decl&);
