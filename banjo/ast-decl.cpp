@@ -48,7 +48,7 @@ Function_decl::return_type()
 // references.
 //
 // FIXME: This is kind of dumb. We should have a base class that
-// contributes a type to the declaration hiearchy (Typed_decl).
+// contributes a type to the declaration hierarchy (Typed_decl).
 Type&
 declared_type(Decl& decl)
 {

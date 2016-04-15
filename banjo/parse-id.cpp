@@ -97,7 +97,7 @@ Parser::identifier()
 // type and provides a function call operator.
 
 
-// Parse a name that refers to a declaration of any kind.
+// Parse an unresolved id.
 //
 //    id:
 //      unqualified-id
@@ -142,19 +142,13 @@ Parser::unqualified_id()
     return on_operator_id(tok, op);
   }
 
-  // Use a trial parser to determine if we're looking at a template-id
-  // or concept-id instead of a plain old identifier.
-  //
-  // FIXME: This doesn't really need to be a trial parse. Just get
-  // the identifier, and depending on a) its resolution and b) whether
-  // we assume it should be interpreted as a template or concept via
-  // a prior keyword, handle the template argument.
-  if (Name* n = match_if(&Parser::template_id))
-    return *n;
-  if (Name* n = match_if(&Parser::concept_id))
-    return *n;
-
   Token tok = match(identifier_tok);
+
+  // FIXME: For a template-id or concept-id, we need to know about the
+  // name. Presumably, at this point in the parse, we should have all possible
+  // names available to us (or have the ability to find them).
+  // We do not need a tentative parse for this.
+
   return on_simple_id(tok);
 }
 
@@ -164,8 +158,6 @@ Parser::unqualified_id()
 //
 //    destructor-id:
 //      '~' primary-type
-//
-// TODO: Does the destructor name realal
 Name&
 Parser::destructor_id()
 {

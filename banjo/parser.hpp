@@ -97,6 +97,7 @@ struct Parser
   Expr& unary_expression();
   Expr& postfix_expression();
   Expr& call_expression(Expr&);
+  Expr& dot_expression(Expr&);
   Expr& subscript_expression(Expr&);
   Expr& primary_expression();
   Expr& id_expression();
@@ -250,14 +251,12 @@ struct Parser
   Expr& on_logical_and_expression(Token, Expr&, Expr&);
   Expr& on_logical_or_expression(Token, Expr&, Expr&);
   Expr& on_logical_not_expression(Token, Expr&);
-
   Expr& on_or_expression(Token, Expr&, Expr&);
   Expr& on_xor_expression(Token, Expr&, Expr&);
   Expr& on_and_expression(Token, Expr&, Expr&);
   Expr& on_lsh_expression(Token, Expr&, Expr&);
   Expr& on_rsh_expression(Token, Expr&, Expr&);
   Expr& on_compl_expression(Token, Expr&);
-
   Expr& on_eq_expression(Token, Expr&, Expr&);
   Expr& on_ne_expression(Token, Expr&, Expr&);
   Expr& on_lt_expression(Token, Expr&, Expr&);
@@ -265,7 +264,6 @@ struct Parser
   Expr& on_le_expression(Token, Expr&, Expr&);
   Expr& on_ge_expression(Token, Expr&, Expr&);
   Expr& on_cmp_expression(Token, Expr&, Expr&);
-
   Expr& on_add_expression(Token, Expr&, Expr&);
   Expr& on_sub_expression(Token, Expr&, Expr&);
   Expr& on_mul_expression(Token, Expr&, Expr&);
@@ -273,8 +271,8 @@ struct Parser
   Expr& on_rem_expression(Token, Expr&, Expr&);
   Expr& on_neg_expression(Token, Expr&);
   Expr& on_pos_expression(Token, Expr&);
-
   Expr& on_call_expression(Expr&, Expr_list&);
+  Expr& on_dot_expression(Expr&, Name&);
   Expr& on_id_expression(Name&);
   Expr& on_boolean_literal(Token, bool);
   Expr& on_integer_literal(Token);
@@ -331,7 +329,7 @@ struct Parser
   Def& on_deleted_definition(Decl&);
   Def& on_defaulted_definition(Decl&);
 
-  // Reqirements
+  // Requirements
   Req& on_type_requirement(Expr&);
   Req& on_syntactic_requirement(Expr&);
   Req& on_semantic_requirement(Decl&);

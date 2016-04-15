@@ -45,10 +45,14 @@ struct Context : Builder
 
   // Scope management
   Scope& make_scope();
-  void   set_scope(Scope&);
+  Scope& make_scope(Decl&);
   Scope& saved_scope(Decl&);
+  void   set_scope(Scope&);
   Scope& current_scope();
   Scope& global_scope();
+
+  Decl* immediate_context();
+  Decl* current_context();
 
   // Diagnostic state
   bool diagnose_errors() const { return diags; }
@@ -69,16 +73,19 @@ struct Context : Builder
 };
 
 
-// Enter the given scope. Unless `s` is the scope of the global
-// namespace, `s` must be linked through its enclosing scopes
-// to the global namespace.
-//
-// Do not call this function directly. Use Context::Scope_sentinel
-// to enter a new scope, and guarantee cleanup and scope exit.
-inline void
-Context::set_scope(Scope& s)
+// Returns a new general purpose scope.
+inline Scope&
+Context::make_scope()
 {
-  scope = &s;
+  return *new Scope(current_scope());
+}
+
+
+// Returns a new general purpose scope bound to the given declaration.
+inline Scope&
+Context::make_scope(Decl& d)
+{
+  return *new Scope(current_scope(), d);
 }
 
 
@@ -92,18 +99,23 @@ Context::saved_scope(Decl& d)
   if (iter != saved.end()) {
     return *iter->second;
   } else {
-    Scope& s = make_scope();
+    Scope& s = make_scope(d);
     saved.emplace(&d, &s);
     return s;
   }
 }
 
 
-// Returns a new general purpose scope.
-inline Scope&
-Context::make_scope()
+// Enter the given scope. Unless `s` is the scope of the global
+// namespace, `s` must be linked through its enclosing scopes
+// to the global namespace.
+//
+// Do not call this function directly. Use Context::Scope_sentinel
+// to enter a new scope, and guarantee cleanup and scope exit.
+inline void
+Context::set_scope(Scope& s)
 {
-  return *new Scope(current_scope());
+  scope = &s;
 }
 
 

@@ -92,6 +92,9 @@ struct Builder
   Object_expr&    make_reference(Object_parm&);
   Function_expr&  make_reference(Function_decl&);
   Overload_expr&  make_reference(Overload_set&);
+  Field_expr&     make_member_reference(Expr&, Field_decl&);
+  Method_expr&    make_member_reference(Expr&, Method_decl&);
+  Member_expr&    make_member_reference(Expr&, Overload_set&);
   Check_expr&     make_check(Concept_decl&, Term_list const&);
 
   And_expr&       make_and(Type&, Expr&, Expr&);

@@ -2,3 +2,12 @@
 type T1 : type {
   var x : int;
 }
+
+var t : T1;
+
+// FIXME: This tries to assign an unparsed type to t.
+// We should defer parsing statements until the 2nd pass
+// so that all types are parsed.
+// t.x;
+
+var v : int = t.x;

@@ -168,6 +168,8 @@ struct Declauto_type : Type
 
 
 // A user-defined type refers to its declaration.
+//
+// FIXME: Rename to Record_type.
 struct User_type : Type
 {
   User_type(Decl& d)

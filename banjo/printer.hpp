@@ -85,6 +85,7 @@ struct Printer
   void primary_type(Function_type const&);
   void primary_type(Type_type const&);
   void id_type(User_type const&);
+  void grouped_type(Type const&);
 
   // Expressions
   void expression(Expr const&);
@@ -102,6 +103,7 @@ struct Printer
   void unary_expression(Expr const&);
   void postfix_expression(Expr const&);
   void postfix_expression(Call_expr const&);
+  void postfix_expression(Dot_expr const&);
   void postfix_expression(Value_conv const&);
   void postfix_expression(Qualification_conv const&);
   void postfix_expression(Boolean_conv const&);

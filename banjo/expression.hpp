@@ -44,6 +44,7 @@ Expr& make_bit_not(Context&, Expr&);
 Expr& make_call(Context& cxt, Expr& e, Expr_list&);
 
 Expr& make_reference(Context& cxt, Name&);
+Expr& make_member_reference(Context& cxt, Expr&, Name&);
 
 Expr& make_requirements(Context& cxt, Decl_list const&, Decl_list const&, Req_list const&);
 

@@ -13,26 +13,47 @@ namespace banjo
 {
 
 
+// Returns true if it looks like we're declaring a non-static member
+// of a user-defined type.
+inline static bool
+declaring_member(Parser& p)
+{
+  bool in_udt = is<Type_decl>(p.cxt.immediate_context());
+  bool is_static = p.decl_specs() & static_spec;
+  return in_udt && !is_static;
+}
+
+
 // -------------------------------------------------------------------------- //
 // Variables
 
 Decl&
 Parser::on_variable_declaration(Name& n, Type& t)
 {
-  Decl& d = cxt.make_variable_declaration(n, t);
-  d.spec_ = take_decl_specs();
-  remember(cxt, current_scope(), d);
-  return d;
+  Decl* ret;
+  if (declaring_member(*this))
+    ret = &cxt.make_field_declaration(n, t);
+  else
+    ret = &cxt.make_variable_declaration(n, t);
+  ret->spec_ = take_decl_specs();
+
+  remember(cxt, current_scope(), *ret);
+  return *ret;
 }
 
 
+// FIXME: There's a lot of duplication hereabouts. Can we reduce it?
 Decl&
 Parser::on_variable_declaration(Name& n, Type& t, Expr& e)
 {
-  Decl& d = cxt.make_variable_declaration(n, t, e);
-  d.spec_ = take_decl_specs();
-  remember(cxt, current_scope(), d);
-  return d;
+  Decl* ret;
+  if (declaring_member(*this))
+    ret = &cxt.make_field_declaration(n, t, e);
+  else
+    ret = &cxt.make_variable_declaration(n, t, e);
+  ret->spec_ = take_decl_specs();
+  remember(cxt, current_scope(), *ret);
+  return *ret;
 }
 
 
@@ -42,20 +63,28 @@ Parser::on_variable_declaration(Name& n, Type& t, Expr& e)
 Decl&
 Parser::on_function_declaration(Name& n, Decl_list& p, Type& t, Expr& e)
 {
-  Decl& d = cxt.make_function_declaration(n, p, t, e);
-  d.spec_ = take_decl_specs();
-  remember(cxt, current_scope(), d);
-  return d;
+  Decl* ret;
+  if (declaring_member(*this))
+    ret = &cxt.make_method_declaration(n, p, t, e);
+  else
+    ret = &cxt.make_function_declaration(n, p, t, e);
+  ret->spec_ = take_decl_specs();
+  remember(cxt, current_scope(), *ret);
+  return *ret;
 }
 
 
 Decl&
 Parser::on_function_declaration(Name& n, Decl_list& p, Type& t, Stmt& s)
 {
-  Decl& d = cxt.make_function_declaration(n, p, t, s);
-  d.spec_ = take_decl_specs();
-  remember(cxt, current_scope(), d);
-  return d;
+  Decl* ret;
+  if (declaring_member(*this))
+    ret = &cxt.make_method_declaration(n, p, t, s);
+  else
+    ret = &cxt.make_function_declaration(n, p, t, s);
+  ret->spec_ = take_decl_specs();
+  remember(cxt, current_scope(), *ret);
+  return *ret;
 }
 
 

@@ -90,7 +90,7 @@ Decl&
 Parser::on_template_name(Token tok)
 {
   Simple_id& id = build.get_id(tok);
-  Decl& decl = simple_lookup(cxt, current_scope(), id);
+  Decl& decl = simple_lookup(cxt, id);
   if (is<Template_decl>(&decl))
     return decl;
   throw Lookup_error("'{}' does not name a template", id);
@@ -102,7 +102,7 @@ Decl&
 Parser::on_concept_name(Token tok)
 {
   Simple_id& id = build.get_id(tok);
-  Decl& decl = simple_lookup(cxt, current_scope(), id);
+  Decl& decl = simple_lookup(cxt, id);
   if (is<Concept_decl>(&decl))
     return decl;
   throw Lookup_error("'{}' does not name a concept", id);

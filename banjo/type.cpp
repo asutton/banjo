@@ -19,7 +19,7 @@ namespace
 Type&
 make_type(Context& cxt, Simple_id& id)
 {
-  Decl& d = simple_lookup(cxt, cxt.current_scope(), id);
+  Decl& d = simple_lookup(cxt, id);
   if (!is<Type_decl>(d)) {
     error(cxt, "'{}' does not name a type", d);
     throw Type_error("not a type");

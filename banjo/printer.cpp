@@ -507,7 +507,7 @@ Printer::primary_type(Type const& t)
   struct fn
   {
     Printer& p;
-    void operator()(Type const& t)           { lingo_unhandled(t); }
+    void operator()(Type const& t)           { p.grouped_type(t); }
     void operator()(Void_type const& t)      { p.primary_type(t); }
     void operator()(Boolean_type const& t)   { p.primary_type(t); }
     void operator()(Byte_type const& t)      { p.primary_type(t); }
@@ -516,7 +516,6 @@ Printer::primary_type(Type const& t)
     void operator()(Auto_type const& t)      { p.primary_type(t); }
     void operator()(Function_type const& t)  { p.primary_type(t); }
     void operator()(User_type const& t)      { p.id_type(t); }
-    void operator()(Unparsed_type const& t)  { p.primary_type(t); }
   };
   apply(t, fn{*this});
 }
@@ -596,6 +595,15 @@ void
 Printer::id_type(User_type const& t)
 {
   identifier(t.declaration());
+}
+
+
+void
+Printer::grouped_type(Type const& t)
+{
+  token(lparen_tok);
+  type(t);
+  token(rparen_tok);
 }
 
 
@@ -841,8 +849,8 @@ Printer::postfix_expression(Expr const& e)
   struct fn
   {
     Printer& p;
-
     void operator()(Expr const& e)               { p.primary_expression(e); }
+    void operator()(Dot_expr const& e)           { p.postfix_expression(e); }
     void operator()(Call_expr const& e)          { p.postfix_expression(e); }
     void operator()(Value_conv const& e)         { p.postfix_expression(e); }
     void operator()(Qualification_conv const& e) { p.postfix_expression(e); }
@@ -854,6 +862,17 @@ Printer::postfix_expression(Expr const& e)
     void operator()(Ellipsis_conv const& e)      { p.postfix_expression(e); }
   };
   apply(e, fn{*this});
+}
+
+
+// TODO: We may need to specialize the printing for resolved declarations
+// in case of ambiguous names from different base classes.
+void
+Printer::postfix_expression(Dot_expr const& e)
+{
+  postfix_expression(e.object());
+  token(dot_tok);
+  id(e.member());
 }
 
 

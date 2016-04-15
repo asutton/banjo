@@ -460,8 +460,8 @@ Builder::get_uint(Integer const& n)
 }
 
 
-// Get an expression that refers to a variable. The type
-// is a reference to the declared type of the variable.
+// Get an expression that refers to a variable. The type is a reference to 
+// the declared type of the variable.
 Object_expr&
 Builder::make_reference(Variable_decl& d)
 {
@@ -471,8 +471,8 @@ Builder::make_reference(Variable_decl& d)
 }
 
 
-// Get an expression that refers to a parameter. The type
-// is a reference to the declared type of the parameter.
+// Get an expression that refers to a parameter. The type is a reference to 
+// the declared type of the parameter.
 Object_expr&
 Builder::make_reference(Object_parm& d)
 {
@@ -482,12 +482,38 @@ Builder::make_reference(Object_parm& d)
 }
 
 
+// FIXME: Do I want functions to be references or not?
 Function_expr&
 Builder::make_reference(Function_decl& d)
 {
   Type& t = get_reference_type(d.type());
   Name& n = d.name();
   return make<Function_expr>(t, n, d);
+}
+
+
+Field_expr&
+Builder::make_member_reference(Expr& e, Field_decl& d)
+{
+  Type& t = get_reference_type(d.type());
+  Name& n = d.name();
+  return make<Field_expr>(t, e, n, d);
+}
+
+
+Method_expr&
+Builder::make_member_reference(Expr& e, Method_decl& d)
+{
+  Type& t = get_reference_type(d.type());
+  Name& n = d.name();
+  return make<Method_expr>(t, e, n, d);
+}
+
+
+Member_expr&
+Builder::make_member_reference(Expr& e, Overload_set& ovl)
+{
+  lingo_unimplemented("");
 }
 
 
