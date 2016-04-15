@@ -1074,8 +1074,7 @@ Printer::requires_expression(Requires_expr const& e)
 
 
 // -------------------------------------------------------------------------- //
-// Definitions
-
+// Printing of statements
 
 void
 Printer::statement(Stmt const& s)
@@ -1089,6 +1088,11 @@ Printer::statement(Stmt const& s)
     void operator()(Member_stmt const& s)      { p.member_statement(s); }
     void operator()(Compound_stmt const& s)    { p.compound_statement(s); }
     void operator()(Return_stmt const& s)      { p.return_statement(s); }
+    void operator()(If_then_stmt const& s)     { p.if_statement(s); }
+    void operator()(If_else_stmt const& s)     { p.if_statement(s); }
+    void operator()(While_stmt const& s)       { p.while_statement(s); }
+    void operator()(Break_stmt const& s)       { p.break_statement(s); }
+    void operator()(Continue_stmt const& s)    { p.continue_statement(s); }
     void operator()(Expression_stmt const& s)  { p.expression_statement(s); }
     void operator()(Declaration_stmt const& s) { p.declaration_statement(s); }
   };
@@ -1115,6 +1119,13 @@ Printer::statement_seq(Stmt_list const& ss)
     if (std::next(iter) != ss.end())
       newline();
   }
+}
+
+
+void
+Printer::empty_statement(Empty_stmt const& s)
+{
+  token(semicolon_tok);
 }
 
 
@@ -1155,6 +1166,71 @@ Printer::return_statement(Return_stmt const& s)
   token(return_tok);
   space();
   expression(s.expression());
+  token(semicolon_tok);
+}
+
+
+// TODO: If the branch is not compound statement, then drop to the next
+// line and indent, so it prints like this:
+//
+//    if (expr)
+//      stmt;
+void
+Printer::if_statement(If_then_stmt const& s)
+{
+  token(if_tok);
+  space();
+  token(lparen_tok);
+  expression(s.condition());
+  token(rparen_tok);
+  space();
+  statement(s.true_branch());
+}
+
+
+// TODO: See notes above.
+void
+Printer::if_statement(If_else_stmt const& s)
+{
+  token(if_tok);
+  space();
+  token(lparen_tok);
+  expression(s.condition());
+  token(rparen_tok);
+  space();
+  statement(s.true_branch());
+  newline();
+  token(else_tok);
+  space();
+  statement(s.false_branch());
+}
+
+
+void
+Printer::while_statement(While_stmt const& s)
+{
+  token(while_tok);
+  space();
+  token(lparen_tok);
+  expression(s.condition());
+  token(rparen_tok);
+  space();
+  statement(s.body());
+}
+
+
+void
+Printer::break_statement(Break_stmt const& s)
+{
+  token(break_tok);
+  token(semicolon_tok);
+}
+
+
+void
+Printer::continue_statement(Continue_stmt const& s)
+{
+  token(continue_tok);
   token(semicolon_tok);
 }
 

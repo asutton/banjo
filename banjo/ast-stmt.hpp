@@ -37,6 +37,14 @@ struct Stmt::Mutator
 };
 
 
+// An empty statement.
+struct Empty_stmt : Stmt
+{
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
 // A helper node that represents all kinds of statement sequences.
 struct Multiple_stmt : Stmt
 {
@@ -108,7 +116,7 @@ struct Expression_stmt : Stmt
 };
 
 
-// A statemnt that declares a variable.
+// A statement that declares a variable.
 struct Declaration_stmt : Stmt
 {
   Declaration_stmt(Decl& d)
@@ -269,7 +277,7 @@ struct Generic_stmt_mutator : Stmt::Mutator, Generic_mutator<F, T>
 
 
 // Apply a function to the given statement.
-template<typename F, typename T = typename std::result_of<F(Translation_stmt const&)>::type>
+template<typename F, typename T = typename std::result_of<F(Empty_stmt const&)>::type>
 inline T
 apply(Stmt const& s, F fn)
 {
@@ -279,7 +287,7 @@ apply(Stmt const& s, F fn)
 
 
 // Apply a function to the given statement.
-template<typename F, typename T = typename std::result_of<F(Translation_stmt&)>::type>
+template<typename F, typename T = typename std::result_of<F(Empty_stmt&)>::type>
 inline T
 apply(Stmt& s, F fn)
 {

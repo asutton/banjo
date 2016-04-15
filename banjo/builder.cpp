@@ -705,10 +705,38 @@ Builder::make_compound_statement(Stmt_list&& ss)
 }
 
 
+Empty_stmt&
+Builder::make_empty_statement()
+{
+  return make<Empty_stmt>();
+}
+
+
 Return_stmt&
 Builder::make_return_statement(Expr& e)
 {
   return make<Return_stmt>(e);
+}
+
+
+If_then_stmt&
+Builder::make_if_statement(Expr& e, Stmt& s)
+{
+  return make<If_then_stmt>(e, s);
+}
+
+
+If_else_stmt&
+Builder::make_if_statement(Expr& e, Stmt& s1, Stmt& s2)
+{
+  return make<If_else_stmt>(e, s1, s2);
+}
+
+
+While_stmt&
+Builder::make_while_statement(Expr& e, Stmt& s)
+{
+  return make<While_stmt>(e, s);
 }
 
 

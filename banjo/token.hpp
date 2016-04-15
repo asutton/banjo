@@ -78,6 +78,7 @@ enum Token_kind
   do_tok,
   double_tok,
   dynamic_tok,
+  else_tok,
   enum_tok,
   explicit_tok,
   export_tok,

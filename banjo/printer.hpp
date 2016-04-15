@@ -131,10 +131,16 @@ struct Printer
   void statement(Stmt const&);
   void statement(Unparsed_stmt const&);
   void statement_seq(Stmt_list const&);
+  void empty_statement(Empty_stmt const&);
   void translation_statement(Translation_stmt const&);
   void member_statement(Member_stmt const&);
   void compound_statement(Compound_stmt const&);
   void return_statement(Return_stmt const&);
+  void if_statement(If_then_stmt const&);
+  void if_statement(If_else_stmt const&);
+  void while_statement(While_stmt const&);
+  void break_statement(Break_stmt const&);
+  void continue_statement(Continue_stmt const&);
   void expression_statement(Expression_stmt const&);
   void declaration_statement(Declaration_stmt const&);
 

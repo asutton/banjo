@@ -109,13 +109,14 @@ struct Parser
   Stmt& statement();
   Stmt& compound_statement();
   Stmt& member_statement();
-  Stmt& declaration_statement();
-  Stmt& expression_statement();
+  Stmt& empty_statement();
   Stmt& return_statement();
   Stmt& if_statement();
   Stmt& while_statement();
   Stmt& break_statement();
   Stmt& continue_statement();
+  Stmt& declaration_statement();
+  Stmt& expression_statement();
   Stmt_list statement_seq();
 
   // Declarations
@@ -285,11 +286,15 @@ struct Parser
   Stmt& on_translation_statement(Stmt_list&&);
   Stmt& on_member_statement(Stmt_list&&);
   Stmt& on_compound_statement(Stmt_list&&);
-  Declaration_stmt& on_declaration_statement(Decl&);
-  Expression_stmt& on_expression_statement(Expr&);
-  Return_stmt& on_return_statement(Token, Expr&);
-  Break_stmt& on_break_statement();
-  Continue_stmt& on_continue_statement();
+  Stmt& on_empty_statement();
+  Stmt& on_return_statement(Token, Expr&);
+  Stmt& on_if_statement(Expr&, Stmt&);
+  Stmt& on_if_statement(Expr&, Stmt&, Stmt&);
+  Stmt& on_while_statement(Expr&, Stmt&);
+  Stmt& on_break_statement();
+  Stmt& on_continue_statement();
+  Stmt& on_declaration_statement(Decl&);
+  Stmt& on_expression_statement(Expr&);
   Stmt& on_unparsed_statement(Token_seq&&);
 
   // Variable declarations
