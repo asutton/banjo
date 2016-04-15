@@ -1,6 +1,7 @@
 
 type T1 : type {
   var x : int;
+  static var y : int;
 }
 
 var t : T1;
@@ -10,4 +11,5 @@ var t : T1;
 // so that all types are parsed.
 // t.x;
 
-var v : int = t.x;
+var v1 : int = t.x;
+var v2 : int = t.y;
