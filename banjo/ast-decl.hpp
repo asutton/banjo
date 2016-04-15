@@ -190,6 +190,8 @@ struct Function_decl : Decl
 // Represents the declaration of a user-defined type.
 //
 // TODO: Support kinds and/or metatypes.
+//
+// TODO: Rename this to Record_decl, and also its corresponding type.
 struct Type_decl : Decl
 {
   Type_decl(Name& n, Type& t, Def& d)
