@@ -12,6 +12,16 @@
 namespace banjo
 {
 
+// -------------------------------------------------------------------------- //
+// Supers
+Decl&
+Parser::on_super_declaration(Name& n, Type& t)
+{
+  Decl& d = cxt.make_super_declaration(n, t);
+  remember(cxt, current_scope(), d);
+  return d;
+}
+
 
 // Returns true if it looks like we're declaring a non-static member
 // of a user-defined type.

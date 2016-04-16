@@ -835,6 +835,12 @@ Builder::make_aggregate_init(Type& t, Expr_list const& es)
 // -------------------------------------------------------------------------- //
 // Declarations
 
+Super_decl&
+Builder::make_super_declaration(Name& n, Type& t)
+{
+  Def& d = make_empty_definition();
+  return make<Super_decl>(n, t, d);
+}
 
 Variable_decl&
 Builder::make_variable_declaration(Name& n, Type& t)
