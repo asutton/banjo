@@ -86,9 +86,9 @@ struct Decl::Mutator
 // Declares a base_subobject(henceforth called a "Super")
 struct Super_decl : Decl
 {
-  Super_decl(Name& n, Type& t)
-    : Decl(n), type_(&t)
-  { def_ = new Empty_def(); }
+  Super_decl(Name& n, Type& t, Def& d)
+    : Decl(n), type_(&t), def_(&d)
+  { }
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }

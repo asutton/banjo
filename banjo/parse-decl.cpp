@@ -82,27 +82,13 @@ Parser::super_declaration()
 
   match(colon_tok);
 
-  // Match the ":=" form.
-  if (match_if(eq_tok)) {
-    Type& type = cxt.get_auto_type();
-    Expr& init = unparsed_variable_initializer();
-    match(semicolon_tok);
-    return on_variable_declaration(*name, type, init);
-  }
-
   // Match the type.
   Type& type = unparsed_variable_type();
 
-  // Match the "name : type =" form.
-  if (match_if(eq_tok)) {
-    Expr& init = unparsed_variable_initializer();
-    match(semicolon_tok);
-    return on_variable_declaration(*name, type, init);
-  }
-
-  // Otherwise, match the "name : type ;" form.
+  // Match the "name : type ;" form.
+  // TODO: Should supers be default initializable?
   match(semicolon_tok);
-  return on_variable_declaration(*name, type);
+  return on_super_declaration(*name, type);
 
 }
 // -------------------------------------------------------------------------- //

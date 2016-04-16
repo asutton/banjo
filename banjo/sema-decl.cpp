@@ -12,6 +12,16 @@
 namespace banjo
 {
 
+// -------------------------------------------------------------------------- //
+// Supers
+Decl&
+Parser::on_super_declaration(Name& n, Type& t)
+{
+  Decl& d = cxt.make_super_declaration(n, t);
+  remember(cxt, current_scope(), d);
+  return d;
+}
+
 
 // -------------------------------------------------------------------------- //
 // Variables

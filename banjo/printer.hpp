@@ -133,6 +133,9 @@ struct Printer
   void declaration(Decl const&);
   void declaration_seq(Decl_list const&);
 
+  // Supers
+  void super_declaration(Super_decl const&);
+
   // Variables
   void variable_declaration(Variable_decl const&);
   void variable_initializer(Def const&);
