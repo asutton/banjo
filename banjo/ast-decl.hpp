@@ -118,10 +118,10 @@ struct Object_decl : Decl
 
 
 // Declares a base_subobject(henceforth called a "Super")
-struct Super_decl : Object_Decl
+struct Super_decl : Object_decl
 {
   Super_decl(Name& n, Type& t, Def& d)
-    : Object_Decl(n), type_(&t), def_(&d)
+    : Object_decl(n), type_(&t), def_(&d)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
