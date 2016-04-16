@@ -10,27 +10,41 @@
 namespace banjo
 {
 
+// This type is used to explicitly initialize an expression that does
+// not have a computed type.
+enum untyped_t
+{
+  untyped
+};
+
+
 // The base class of all expresions.
 struct Expr : Term
 {
   struct Visitor;
   struct Mutator;
 
-  Expr()
-    : ty(nullptr)
+  Expr(Type& t)
+    : type_(&t)
   { }
 
-  Expr(Type& t)
-    : ty(&t)
+  Expr(untyped_t)
+    : type_(nullptr)
   { }
 
   virtual void accept(Visitor&) const = 0;
   virtual void accept(Mutator&) = 0;
 
-  Type const& type() const { return *ty; }
-  Type&       type()       { return *ty; }
+  // Returns the type of the expression. 
+  // This is valid only when  is_typed() returns true.
+  Type const& type() const { return *type_; }
+  Type&       type()       { return *type_; }
 
-  Type* ty;
+  // Returns true when the expression has a type. This is generally
+  // the case.
+  bool is_typed() const { return type_; }
+
+  Type* type_;
 };
 
 
@@ -132,47 +146,155 @@ struct Real_expr : Literal_expr<lingo::Real>
 };
 
 
-// A reference to a single declaration.
-//
-// TODO: Subclass for variables, constants, and functions.
-// Unresolved identifiers are also interesting. These should be
-// called Variable_expr, Constant_expr, and Function_expr,
-// respectively.
-struct Reference_expr : Expr
+// The base class of all ids that refer to declarations. 
+struct Id_expr : Expr
 {
-  Reference_expr(Type& t, Decl& d)
-    : Expr(t), decl(&d)
+  Id_expr(Name& n)
+    : Expr(untyped), name_(&n)
   { }
 
+  Id_expr(Type& t, Name& n)
+    : Expr(t), name_(&n)
+  { }
+
+  // Returns the original id of the expression.
+  Name const& id() const { return *name_; }
+  Name&       id()       { return *name_; }
+
+  Name* name_;
+};
+
+
+// The base class of all identifiers that resolved to a single declaration.
+struct Decl_expr : Id_expr
+{
+  Decl_expr(Type& t, Name& n, Decl& d)
+    : Id_expr(t, n), decl_(&d)
+  { }
+  
+  // Returns the referenced declaration.
+  Decl const& declaration() const { return *decl_; }
+  Decl&       declaration()       { return *decl_; }
+
+  Decl* decl_;
+};
+
+
+// A name that refers to a variable or parameter.
+struct Object_expr : Decl_expr
+{
+  using Decl_expr::Decl_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the referenced variable or parameter.
+  Object_decl const& declaration() const;
+  Object_decl&       declaration();
+};
+
+
+// A name that refers to a function.
+struct Function_expr : Decl_expr
+{
+  using Decl_expr::Decl_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the referenced function.
+  Function_decl const& declaration() const;
+  Function_decl&       declaration();
+};
+
+
+// A name that refers to a set of declarations.
+struct Overload_expr : Id_expr
+{
+  Overload_expr(Name& n, Overload_set& o)
+    : Id_expr(n), ovl_(&o)
+  { }
+  
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the referenced declaration.
-  Decl const& declaration() const { return *decl; }
-  Decl&       declaration()       { return *decl; }
+  Overload_set const& declarations() const { return *ovl_; }
+  Overload_set&       declarations()       { return *ovl_; }
 
-  Decl* decl;
+  Overload_set* ovl_;
 };
 
 
-// Represents an id-expression that refers to a template declaration.
-// These primarily occur in call expresssions:
-//
-//    template<typename T> def f(T) -> void;
-//
-//    f(0);
-//
-// In the call f(0), f is a template reference.
-struct Template_ref : Reference_expr
+// The base class of all dot expressions. 
+struct Dot_expr : Expr
 {
-  using Reference_expr::Reference_expr;
+  Dot_expr(Expr& e, Name& n)
+    : Expr(untyped), obj_(&e), mem_(&n)
+  { }
+
+  Dot_expr(Type& t, Expr& e, Name& n)
+    : Expr(t), obj_(&e), mem_(&n)
+  { }
+
+  // Returns the object enclosing the member name.
+  Expr const& object() const { return *obj_; }
+  Expr&       object()       { return *obj_; }
+
+
+  // Returns the requested member name.
+  Name const& member() const { return *mem_; }
+  Name&       member()       { return *mem_; }
+  
+  Expr* obj_;
+  Name* mem_;
+};
+
+
+// The base class of resolved dot-expressions. This stores the resolved
+// declaration of the member name.
+struct Nested_decl_expr : Dot_expr
+{
+  Nested_decl_expr(Type& t, Expr& e, Name& n, Decl& d)
+    : Dot_expr(t, e, n), decl_(&d)
+  { }
+
+  Decl const& declaration() const { return *decl_; }
+  Decl&       declaration()       { return *decl_; }
+
+  Decl* decl_;
+};
+
+
+// A dot-expression that has been resolved to a member variable 
+// (or field) of a record type.
+struct Field_expr : Nested_decl_expr
+{
+  using Nested_decl_expr::Nested_decl_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
+};
 
-  // Returns the referenced templaet declaration.
-  Template_decl const& declaration() const;
-  Template_decl&       declaration();
+
+// A dot-expression that has been resolved to a member function
+// (or method) of a record type.
+struct Method_expr : Nested_decl_expr
+{
+  using Nested_decl_expr::Nested_decl_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// An unresolved dot-expression that refers to a overload set.
+struct Member_expr : Dot_expr
+{
+  using Dot_expr::Dot_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -269,63 +391,63 @@ struct Pos_expr : Unary_expr
 };
 
 
-struct Bit_or_expr : Binary_expr
-{
-    using Binary_expr::Binary_expr;
-
-    void accept(Visitor& v) const { return v.visit(*this); }
-    void accept(Mutator& v)       { return v.visit(*this); }
-
-};
-
-
-struct Bit_xor_expr : Binary_expr
-{
-    using Binary_expr::Binary_expr;
-
-    void accept(Visitor& v) const { return v.visit(*this); }
-    void accept(Mutator& v)       { return v.visit(*this); }
-
-};
-
-
+// Represents a bitwise ad expression.
 struct Bit_and_expr : Binary_expr
 {
-    using Binary_expr::Binary_expr;
+  using Binary_expr::Binary_expr;
 
-    void accept(Visitor& v) const { return v.visit(*this); }
-    void accept(Mutator& v)       { return v.visit(*this); }
-
+  void accept(Visitor& v) const { return v.visit(*this); }
+  void accept(Mutator& v)       { return v.visit(*this); }
 };
 
 
+// Represents a bitwise inclusive-or expression.
+struct Bit_or_expr : Binary_expr
+{
+  using Binary_expr::Binary_expr;
+
+  void accept(Visitor& v) const { return v.visit(*this); }
+  void accept(Mutator& v)       { return v.visit(*this); }
+};
+
+
+// Represents a bitwsise exclusive-or expression.
+struct Bit_xor_expr : Binary_expr
+{
+  using Binary_expr::Binary_expr;
+
+  void accept(Visitor& v) const { return v.visit(*this); }
+  void accept(Mutator& v)       { return v.visit(*this); }
+};
+
+
+// Represents a bitwise left-shift expression.
+struct Bit_lsh_expr : Binary_expr
+{
+  using Binary_expr::Binary_expr;
+
+  void accept(Visitor& v) const { return v.visit(*this); }
+  void accept(Mutator& v)       { return v.visit(*this); }
+};
+
+
+// Represents a bitwise-right shift expression.
+struct Bit_rsh_expr : Binary_expr
+{
+  using Binary_expr::Binary_expr;
+
+  void accept(Visitor& v) const { return v.visit(*this); }
+  void accept(Mutator& v)       { return v.visit(*this); }
+};
+
+
+// Represents bit-not (one's complement) expression.
 struct Bit_not_expr : Unary_expr
 {
-    using Unary_expr::Unary_expr;
+  using Unary_expr::Unary_expr;
 
-    void accept(Visitor& v) const { return v.visit(*this); }
-    void accept(Mutator& v)       { return v.visit(*this); }
-
-};
-
-
-struct Lsh_expr : Binary_expr
-{
-    using Binary_expr::Binary_expr;
-
-    void accept(Visitor& v) const { return v.visit(*this); }
-    void accept(Mutator& v)       { return v.visit(*this); }
-
-};
-
-
-struct Rsh_expr : Binary_expr
-{
-    using Binary_expr::Binary_expr;
-
-    void accept(Visitor& v) const { return v.visit(*this); }
-    void accept(Mutator& v)       { return v.visit(*this); }
-
+  void accept(Visitor& v) const { return v.visit(*this); }
+  void accept(Mutator& v)       { return v.visit(*this); }
 };
 
 
@@ -524,6 +646,23 @@ struct Synthetic_expr : Expr
   Decl&       declaration()       { return *decl; }
 
   Decl* decl;
+};
+
+
+// Represents an unparsed expression.
+struct Unparsed_expr : Expr
+{
+  Unparsed_expr(Token_seq&& toks)
+    : Expr(untyped), toks(std::move(toks))
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  Token_seq const& tokens() const { return toks; }
+  Token_seq&       tokens()       { return toks; }
+
+  Token_seq toks;
 };
 
 

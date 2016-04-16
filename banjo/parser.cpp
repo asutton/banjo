@@ -37,6 +37,14 @@ Parser::symbols()
 }
 
 
+// Returns true if at the end of input.
+bool
+Parser::is_eof() const
+{
+  return !peek();
+}
+
+
 // Returns the current token.
 Token
 Parser::peek() const
@@ -126,8 +134,8 @@ Parser::match_if(Token_kind k)
 }
 
 
-// Require a token of the given kind. Behavior is
-// udefined if the token does not match.
+// Require a token of the given kind. Behavior is udefined if the token
+// does not match.
 Token
 Parser::require(Token_kind k)
 {
@@ -136,11 +144,26 @@ Parser::require(Token_kind k)
 }
 
 
+// Require an identifier matching the spelling of s.
 Token
 Parser::require(char const* s)
 {
   lingo_assert(next_token_is(s));
   return accept();
+}
+
+
+// Emit an error if the next token is not of the kind given. Note that
+// this does not consume the token.
+void
+Parser::expect(Token_kind k)
+{
+  if (next_token_is_not(k)) {
+    String msg = format("expected '{}' but got '{}'",
+                        get_spelling(k),
+                        token_spelling(tokens));
+    throw Syntax_error(cxt, msg);
+  }
 }
 
 
@@ -152,14 +175,113 @@ Token
 Parser::accept()
 {
   Token tok = tokens.get();
+
+  // Update the global input location.
   cxt.input_location(tok.location());
+
+  // If the token is a brace, then record that for the purpose of
+  // brace matching and diagnostics.
+  switch (tok.kind()) {
+    case lparen_tok:
+    case lbrace_tok:
+    case lbracket_tok:
+      open_brace(tok);
+      break;
+
+    case rparen_tok:
+    case rbrace_tok:
+    case rbracket_tok:
+      close_brace(tok);
+      break;
+  }
+
   return tok;
+}
+
+
+void
+Parser::open_brace(Token tok)
+{
+  Braces& braces = state.braces;
+  braces.open(tok);
+}
+
+
+// Return the the kind of closing brace that would match the closing
+// token.
+static inline Token_kind
+get_closing_brace(Token tok)
+{
+  switch (tok.kind()) {
+    case lparen_tok: return rparen_tok;
+    case lbrace_tok: return rbrace_tok;
+    case lbracket_tok: return rbracket_tok;
+    default: lingo_unreachable();
+  }
+}
+
+
+
+// TODO: It might be nice to have a function that returns the opener
+// for a closer.
+static inline bool
+is_matching_brace(Token left, Token right)
+{
+  return get_closing_brace(left) == right.kind();
+}
+
+
+void
+Parser::close_brace(Token tok)
+{
+  Braces& braces = state.braces;
+
+  if (braces.empty()) {
+    error(cxt, "unmatched brace '{}'", tok);
+    throw Syntax_error("mismatched brace");
+  }
+
+  Token prev = braces.back();
+  if (!is_matching_brace(prev, tok)) {
+    // FIXME: show the location of the matching brace.
+    error(cxt, "unbalanced brace '{}'", tok);
+    throw Syntax_error("unbalanced brace");
+  }
+
+  braces.close();
+}
+
+
+// Return true if the current brace nesting level is non-zero. That is,
+// we have accepted at least one bracketing character, but not its matching
+// closing brace.
+bool
+Parser::in_braces() const
+{
+  return !state.braces.empty();
+}
+
+
+// Returns true when the current brace nesting level is n. This is useful
+// when checking for closing tokens at a non-empty nesting level (e.g.,
+// inside function parameter lists).
+bool
+Parser::in_level(int n) const
+{
+  return brace_level() == n;
+}
+
+
+// Returns the current brace nesting level.
+int
+Parser::brace_level() const
+{
+  return state.braces.size();
 }
 
 
 // -------------------------------------------------------------------------- //
 // Scope management
-
 
 // Returns the current scope.
 Scope&
@@ -169,44 +291,31 @@ Parser::current_scope()
 }
 
 
-// Find the innermost declaration context. This is the first
-// scope associatd with a declaration.
-Decl&
-Parser::current_context()
-{
-  return cxt.current_context();
-}
-
-
 // -------------------------------------------------------------------------- //
 // Miscellaneous parsing
 
 // Parse a translation unit.
 //
-//    translation-unit:
-//      [declaration-seq]
+//    input:
+//      [statement-list]
 //
-// FIXME: This currently returns the global namespace, but I'm not
-// entirely sure that this is what I want to do. Should we have
-Term&
-Parser::translation_unit()
+// FIXME: This should return a single node, not a sequence.
+Stmt&
+Parser::translation()
 {
-  Enter_scope scope(cxt, cxt.global_namespace());
-  Decl_list ds;
+  // TODO: We should enter the global scope and not create a temporary
+  // one.
+  Enter_scope scope(cxt);
 
-  // NOTE: We match against identifier so that we don't try to
-  // parse inspect scripts as real programs. Perhaps we should
-  // have a very explicit end-of-program token (e.g., --?).
-  if (peek() && lookahead() != identifier_tok)
-    ds = declaration_seq();
-  return on_translation_unit(ds);
+  Stmt_list ss = statement_seq();
+  return on_translation_statement(std::move(ss));
 }
 
 
-Term&
+Stmt&
 Parser::operator()()
 {
-  return translation_unit();
+  return translation();
 }
 
 

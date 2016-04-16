@@ -14,6 +14,10 @@ namespace banjo
 {
 
 
+// FIXME: The names accepted by qualified lookup must be "atomic". That is,
+// they can be neither qualified nor template-ids.
+
+
 // Returns the non-empty set of declarations for give (unqualified) id.
 // Throws an exception if no matching declarations are found.
 //
@@ -22,110 +26,99 @@ namespace banjo
 // TODO: How should we handle non-simple id's like operator-ids
 // and conversion function ids.
 Decl_list
-unqualified_lookup(Context& cxt, Scope& scope, Simple_id const& id)
+unqualified_lookup(Context& cxt, Name const& name)
 {
-  Scope* p = &scope;
+  Scope* p = &cxt.current_scope();
   while (p) {
     // In general, a name used in any context must be declared
     // before it's use. Search this scope for such a declaration.
-    if (Overload_set* ovl = p->lookup(id))
+    if (Overload_set* ovl = p->lookup(name))
       return *ovl;
 
-    // Depending on current scope, we might re-direct the scope
-    // to search different things.
-
-    if (Function_scope* s = as<Function_scope>(p)) {
-      Decl& f = s->declaration();
-      (void)f;
-
-      // TODO: If fn is defined by a qualified-id, then we should
-      // should search the scope(s) named in the id before resuming
-      // the search.
-    }
-
-    else if (Class_scope* cs = as<Class_scope>(p)) {
-      Class_decl& c = cs->declaration();
-      (void)c;
-
-      // TODO: Include base classes of c. Lookup also depends on
-      // the declarative region of c (nested classes, locals, etc).
-    }
-
-
-    else if (Initializer_scope* s = as<Initializer_scope>(p)) {
-      Decl& v = s->declaration();
-      (void)v;
-
-      // TODO: If v is declared by a qualified-id, then re-direct
-      // to the scope of v before working outwards.
-    }
+    // TODO: The "advanced" search rules depend on the declaration
+    // associated with the current scope. For example, unqualified
+    // lookup within a class searches base classes.
 
     p = p->enclosing_scope();
   }
 
-  throw Lookup_error(cxt, "no matching declaration for '{}'", id);
+  error(cxt, "no matching declaration for '{}'", name);
+  throw Lookup_error("no matching declaration");
 }
 
 
 // Simple lookup is a form of unqualified lookup that returns the
 // single declaration associated with the name.
 Decl&
-simple_lookup(Context& cxt, Scope& scope, Simple_id const& id)
+simple_lookup(Context& cxt, Name const& name)
 {
-  Decl_list result = unqualified_lookup(cxt, scope, id);
+  Decl_list result = unqualified_lookup(cxt, name);
 
-  // FIXME: Can we find names that are *like* id?
-  if (result.empty())
-    throw Lookup_error(cxt, "no matching declaration for '{}'", id);
+  // TODO: Can we find names that are similar to name in order to support 
+  // better diagnostics? As in "did you mean...?".
+  if (result.empty()) {
+    error(cxt, "no matching declaration for '{}'", name);
+    throw Lookup_error("no matching declaration");
+  }
 
-  // FIXME: Find some way of attaching informative diagnotics
-  // to the error (i.e., candidates).
-  if (result.size() > 1)
-    throw Lookup_error(cxt, "lookup of '{}' is ambiguous", id);
+  // TODO: List candidates.
+  if (result.size() > 1) {
+    error(cxt, "lookup of '{}' is ambiguous", name);
+    throw Lookup_error("ambiguous lookup");
+  }
 
   return result.front();
 }
 
 
-/*
+// -------------------------------------------------------------------------- //
+// Qualified lookup
+
+// Just search in the local scope.
 Decl_list
-qualified_lookup(Scope&, Symbol const&)
+qualified_lookup(Context& cxt, Scope& scope, Name const& name)
 {
-  return nullptr;
+  if (Overload_set* ovl = scope.lookup(name))
+    return *ovl;
+  else
+    return {};  
 }
 
 
+// Perform qualified lookup. This searches the scope of the user-defined 
+// type t and its base classes for the declared name n. If lookup fails, 
+// the program is ill-formed.
+Decl_list
+qualified_lookup(Context& cxt, Type& type, Name const& name)
+{
+  // TODO: This probably needs to strip of all reference qualifiers,
+  // not just &.
+  Type& t1 = type.non_reference_type();
+  
+  if (!is<User_type>(t1)) {
+    error("'{}' is not a user-defined type");
+    throw Lookup_error("wrong type");
+  }
+  Decl& decl = cast<User_type>(t1).declaration();
+  
+  // Start by searching this scope.
+  Decl_list decls = qualified_lookup(cxt, cxt.saved_scope(decl), name);
+
+  // TODO: Search (all) bases for a member with the given name.
+  // Note that multiple members can be found in multiple base classes.
+  // That would constitute an ambiguous lookup.
+
+  return decls;
+}
+
+
+/*
 Decl_list
 argument_dependent_lookup(Scope&, Expr_list&)
 {
   return nullptr;
 }
 */
-
-
-static Type_list
-get_operand_types(Call_expr& e)
-{
-  Type_list ts;
-  ts.push_back(e.function().type());
-  for (Expr& a : e.arguments())
-    ts.push_back(a.type());
-  return ts;
-}
-
-
-static Type_list
-get_operand_types(Expr& e)
-{
-  struct fn
-  {
-    Type_list operator()(Expr& e)        { banjo_unhandled_case(e); }
-    Type_list operator()(Unary_expr& e)  { return {&e.operand().type()}; }
-    Type_list operator()(Binary_expr& e) { return {&e.left().type(), &e.right().type()}; }
-    Type_list operator()(Call_expr& e)   { return get_operand_types(e); }
-  };
-  return apply(e, fn{});
-}
 
 
 // Lookup the expression in the current requirement scope. This
@@ -138,6 +131,7 @@ get_operand_types(Expr& e)
 Expr*
 requirement_lookup(Context& cxt, Expr& e)
 {
+  #if 0
   Requires_scope& s = *cxt.current_requires_scope();
 
   Type_list t1 = get_operand_types(e); // Yuck.
@@ -152,6 +146,7 @@ requirement_lookup(Context& cxt, Expr& e)
       return &e;
     }
   }
+  #endif
   return nullptr;
 }
 

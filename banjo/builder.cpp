@@ -4,8 +4,6 @@
 #include "builder.hpp"
 #include "context.hpp"
 #include "ast.hpp"
-#include "equivalence.hpp"
-#include "hash.hpp"
 
 #include <unordered_set>
 
@@ -178,6 +176,13 @@ Builder::get_global_id()
 // -------------------------------------------------------------------------- //
 // Types
 
+User_type&
+Builder::get_type(Type_decl& d)
+{
+  return make<User_type>(d);
+}
+
+
 Void_type&
 Builder::get_void_type()
 {
@@ -316,39 +321,60 @@ Builder::get_array_type(Type&, Expr&)
   lingo_unimplemented("array-type");
 }
 
+
+Slice_type&
+Builder::get_slice_type(Type& t)
+{
+  return make<Slice_type>(t);
+}
+
+
 Dynarray_type&
 Builder::get_dynarray_type(Type&, Expr&)
 {
-  lingo_unimplemented("Dynarray-type");
+  lingo_unimplemented("dynarray-type");
 }
 
 
-Sequence_type&
-Builder::get_sequence_type(Type& t)
+In_type&
+Builder::get_in_type(Type& t)
 {
-  return make<Sequence_type>(t);
+  return make<In_type>(t);
 }
 
 
-// FIXME: Canonicalize class types?
-Class_type&
-Builder::get_class_type(Decl& d)
+Out_type&
+Builder::get_out_type(Type& t)
 {
-  return make<Class_type>(d);
+  return make<Out_type>(t);
 }
 
 
-Union_type&
-Builder::get_union_type(Decl& d)
+Mutable_type&
+Builder::get_mutable_type(Type& t)
 {
-  lingo_unimplemented("union-type");
+  return make<Mutable_type>(t);
 }
 
 
-Enum_type&
-Builder::get_enum_type(Decl& d)
+Consume_type&
+Builder::get_consume_type(Type& t)
 {
-  lingo_unimplemented("enum-type");
+  return make<Consume_type>(t);
+}
+
+
+Forward_type&
+Builder::get_forward_type(Type& t)
+{
+  return make<Forward_type>(t);
+}
+
+
+Pack_type&
+Builder::get_pack_type(Type& t)
+{
+  return make<Pack_type>(t);
 }
 
 
@@ -356,6 +382,14 @@ Typename_type&
 Builder::get_typename_type(Decl& d)
 {
   return make<Typename_type>(d);
+}
+
+
+Type_type&
+Builder::get_type_type()
+{
+  static Type_type t;
+  return t;
 }
 
 
@@ -426,34 +460,60 @@ Builder::get_uint(Integer const& n)
 }
 
 
-// Get an expression that refers to a variable. The type
-// is a reference to the declared type of the variable.
-Reference_expr&
+// Get an expression that refers to a variable. The type is a reference to 
+// the declared type of the variable.
+Object_expr&
 Builder::make_reference(Variable_decl& d)
 {
-  return make<Reference_expr>(get_reference_type(d.type()), d);
+  Type& t = get_reference_type(d.type());
+  Name& n = d.name();
+  return make<Object_expr>(t, n, d);
 }
 
 
-Reference_expr&
-Builder::make_reference(Function_decl& d)
-{
-  return make<Reference_expr>(get_reference_type(d.type()), d);
-}
-
-
-Template_ref&
-Builder::make_reference(Template_decl& d)
-{
-  Type& t = declared_type(d);
-  return make<Template_ref>(t, d);
-}
-
-
-Reference_expr&
+// Get an expression that refers to a parameter. The type is a reference to 
+// the declared type of the parameter.
+Object_expr&
 Builder::make_reference(Object_parm& d)
 {
-  return make<Reference_expr>(get_reference_type(d.type()), d);
+  Type& t = get_reference_type(d.type());
+  Name& n = d.name();
+  return make<Object_expr>(t, n, d);
+}
+
+
+// FIXME: Do I want functions to be references or not?
+Function_expr&
+Builder::make_reference(Function_decl& d)
+{
+  Type& t = get_reference_type(d.type());
+  Name& n = d.name();
+  return make<Function_expr>(t, n, d);
+}
+
+
+Field_expr&
+Builder::make_member_reference(Expr& e, Field_decl& d)
+{
+  Type& t = get_reference_type(d.type());
+  Name& n = d.name();
+  return make<Field_expr>(t, e, n, d);
+}
+
+
+Method_expr&
+Builder::make_member_reference(Expr& e, Method_decl& d)
+{
+  Type& t = get_reference_type(d.type());
+  Name& n = d.name();
+  return make<Method_expr>(t, e, n, d);
+}
+
+
+Member_expr&
+Builder::make_member_reference(Expr& e, Overload_set& ovl)
+{
+  lingo_unimplemented("");
 }
 
 
@@ -528,6 +588,97 @@ Builder::make_ge(Type& t, Expr& e1, Expr& e2)
 }
 
 
+Add_expr&
+Builder::make_add(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Add_expr>(t, e1, e2);
+}
+
+
+Sub_expr&
+Builder::make_sub(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Sub_expr>(t, e1, e2);
+}
+
+
+Mul_expr&
+Builder::make_mul(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Mul_expr>(t, e1, e2);
+}
+
+
+Div_expr&
+Builder::make_div(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Div_expr>(t, e1, e2);
+}
+
+
+Rem_expr&
+Builder::make_rem(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Rem_expr>(t, e1, e2);
+}
+
+
+Neg_expr&
+Builder::make_neg(Type& t, Expr& e)
+{
+  return make<Neg_expr>(t, e);
+}
+
+
+Pos_expr&
+Builder::make_pos(Type& t, Expr& e)
+{
+  return make<Pos_expr>(t, e);
+}
+
+
+Bit_and_expr&
+Builder::make_bit_and(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Bit_and_expr>(t, e1, e2);
+}
+
+
+Bit_or_expr&
+Builder::make_bit_or(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Bit_or_expr>(t, e1, e2);
+}
+
+
+Bit_xor_expr&
+Builder::make_bit_xor(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Bit_xor_expr>(t, e1, e2);
+}
+
+
+Bit_lsh_expr&
+Builder::make_bit_lsh(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Bit_lsh_expr>(t, e1, e2);
+}
+
+
+Bit_rsh_expr&
+Builder::make_bit_rsh(Type& t, Expr& e1, Expr& e2)
+{
+  return make<Bit_rsh_expr>(t, e1, e2);
+}
+
+
+Bit_not_expr&
+Builder::make_bit_not(Type& t, Expr& e)
+{
+  return make<Bit_not_expr>(t, e);
+}
+
+
 Call_expr&
 Builder::make_call(Type& t, Expr& f, Expr_list const& a)
 {
@@ -559,10 +710,31 @@ Builder::synthesize_expression(Decl& d)
 // -------------------------------------------------------------------------- //
 // Statements
 
-Compound_stmt&
-Builder::make_compound_statement(Stmt_list const& ss)
+Translation_stmt&
+Builder::make_translation_statement(Stmt_list&& ss)
 {
-  return make<Compound_stmt>(ss);
+  return make<Translation_stmt>(std::move(ss));
+}
+
+
+Member_stmt&
+Builder::make_member_statement(Stmt_list&& ss)
+{
+  return make<Member_stmt>(std::move(ss));
+}
+
+
+Compound_stmt&
+Builder::make_compound_statement(Stmt_list&& ss)
+{
+  return make<Compound_stmt>(std::move(ss));
+}
+
+
+Empty_stmt&
+Builder::make_empty_statement()
+{
+  return make<Empty_stmt>();
 }
 
 
@@ -570,6 +742,41 @@ Return_stmt&
 Builder::make_return_statement(Expr& e)
 {
   return make<Return_stmt>(e);
+}
+
+
+If_then_stmt&
+Builder::make_if_statement(Expr& e, Stmt& s)
+{
+  return make<If_then_stmt>(e, s);
+}
+
+
+If_else_stmt&
+Builder::make_if_statement(Expr& e, Stmt& s1, Stmt& s2)
+{
+  return make<If_else_stmt>(e, s1, s2);
+}
+
+
+While_stmt&
+Builder::make_while_statement(Expr& e, Stmt& s)
+{
+  return make<While_stmt>(e, s);
+}
+
+
+Break_stmt&
+Builder::make_break_statement()
+{
+  return make<Break_stmt>();
+}
+
+
+Continue_stmt&
+Builder::make_continue_statement()
+{
+  return make<Continue_stmt>();
 }
 
 
@@ -626,136 +833,97 @@ Builder::make_aggregate_init(Type& t, Expr_list const& es)
 
 
 // -------------------------------------------------------------------------- //
-// Definitions
-
-
-
-Deleted_def&
-Builder::make_deleted_definition()
-{
-  return make<Deleted_def>();
-}
-
-
-Defaulted_def&
-Builder::make_defaulted_definition()
-{
-  return make<Defaulted_def>();
-}
-
-
-Expression_def&
-Builder::make_expression_definition(Expr& e)
-{
-  return make<Expression_def>(e);
-}
-
-
-Function_def&
-Builder::make_function_definition(Stmt& s)
-{
-  return make<Function_def>(s);
-}
-
-
-Class_def&
-Builder::make_class_definition(Decl_list const& ds)
-{
-  return make<Class_def>(ds);
-}
-
-
-Concept_def&
-Builder::make_concept_definition(Req_list const& ss)
-{
-  return make<Concept_def>(ss);
-}
-
-
-// -------------------------------------------------------------------------- //
 // Declarations
 
+
 Variable_decl&
-Builder::make_variable(Name& n, Type& t)
+Builder::make_variable_declaration(Name& n, Type& t)
 {
-  return make<Variable_decl>(n, t);
+  Def& d = make_empty_definition();
+  return make<Variable_decl>(n, t, d);
 }
 
 
 Variable_decl&
-Builder::make_variable(char const* s, Type& t)
+Builder::make_variable_declaration(Name& n, Type& t, Expr& e)
 {
-  return make_variable(get_id(s), t);
+  Def& d = make_expression_definition(e);
+  return make<Variable_decl>(n, t, d);
 }
 
 
 Variable_decl&
-Builder::make_variable(Name& n, Type& t, Expr& i)
+Builder::make_variable_declaration(char const* s, Type& t, Expr& i)
 {
-  lingo_assert(is<Init>(&i));
-  return make<Variable_decl>(n, t, i);
+  return make_variable_declaration(get_id(s), t, i);
 }
 
 
-Variable_decl&
-Builder::make_variable(char const* s, Type& t, Expr& i)
-{
-  return make_variable(get_id(s), t, i);
-}
-
-
-// Creates an undefined function with parameters ps and return
-// type r.
+// Create a new function. The type is synthesized from the parameter
+// and return types, and the definition is synthesized from the given
+// expression.
 Function_decl&
-Builder::make_function(Name& n, Decl_list const& ps, Type& r)
+Builder::make_function_declaration(Name& n, Decl_list const& p, Type& t, Expr& e)
 {
-  Type& t = get_function_type(ps, r);
-  return make<Function_decl>(n, t, ps);
+  Type& r = get_function_type(p, t);
+  Def& d = make_expression_definition(e);
+  return make<Function_decl>(n, r, p, d);
 }
 
 
+// Create a new function. The type is synthesized from the parameter
+// and return types, and the definition is synthesized from the given
+// statement.
 Function_decl&
-Builder::make_function(char const* s, Decl_list const& ps, Type& r)
+Builder::make_function_declaration(Name& n, Decl_list const& p, Type& t, Stmt& s)
 {
-  return make_function(get_id(s), ps, r);
+  Type& r = get_function_type(p, t);
+  Def& d = make_function_definition(s);
+  return make<Function_decl>(n, r, p, d);
 }
 
 
-Class_decl&
-Builder::make_class(Name& n)
+Type_decl&
+Builder::make_type_declaration(Name& n, Type& t, Stmt& s)
 {
-  return make<Class_decl>(n);
+  Def& d = make_type_definition(s);
+  return make<Type_decl>(n, t, d);
 }
 
 
-Class_decl&
-Builder::make_class(char const* s)
+Field_decl&
+Builder::make_field_declaration(Name& n, Type& t)
 {
-  return make<Class_decl>(get_id(s));
+  Def& d = make_empty_definition();
+  return make<Field_decl>(n, t, d);
 }
 
 
-Namespace_decl&
-Builder::make_namespace(Name& n)
+Field_decl&
+Builder::make_field_declaration(Name& n, Type& t, Expr& e)
 {
-  return make<Namespace_decl>(n);
+  Def& d = make_expression_definition(e);
+  return make<Field_decl>(n, t, d);
 }
 
 
-Namespace_decl&
-Builder::make_namespace(char const* s)
+Method_decl&
+Builder::make_method_declaration(Name& n, Decl_list const& p, Type& t, Expr& e)
 {
-  return make_namespace(get_id(s));
+  Type& r = get_function_type(p, t);
+  Def& d = make_expression_definition(e);
+  return make<Method_decl>(n, r, p, d);
 }
 
 
-// FIXME: This should probably be installed on the context.
-Namespace_decl&
-Builder::get_global_namespace()
+Method_decl&
+Builder::make_method_declaration(Name& n, Decl_list const& p, Type& t, Stmt& s)
 {
-  static Namespace_decl ns(get_global_id());
-  return ns;
+  Type& r = get_function_type(p, t);
+  Def& d = make_function_definition(s);
+  return make<Method_decl>(n, r, p, d);
 }
+
 
 
 Template_decl&
@@ -819,8 +987,7 @@ Builder::make_object_parm(char const* s, Type& t)
 Value_parm&
 Builder::make_value_parm(Name& n, Type& t)
 {
-  Index x = cxt.make_template_parameter_index();
-  return make<Value_parm>(x, n, t);
+  return make<Value_parm>(Index {}, n, t);
 }
 
 
@@ -834,8 +1001,7 @@ Builder::make_value_parm(char const* s, Type& t)
 Type_parm&
 Builder::make_type_parameter(Name& n)
 {
-  Index x = cxt.make_template_parameter_index();
-  return make<Type_parm>(x, n);
+  return make<Type_parm>(Index {}, n);
 }
 
 
@@ -850,8 +1016,7 @@ Builder::make_type_parameter(char const* n)
 Type_parm&
 Builder::make_type_parameter(Name& n, Type& t)
 {
-  Index x = cxt.make_template_parameter_index();
-  return make<Type_parm>(x, n, t);
+  return make<Type_parm>(Index {}, n, t);
 }
 
 
@@ -869,10 +1034,66 @@ Typename_type&
 Builder::make_placeholder_type()
 {
   Name& n = get_id();
-  Index x = cxt.make_placeholder_index();
-  Decl& d = make<Type_parm>(x, n);
+  Decl& d = make<Type_parm>(Index {}, n);
   return get_typename_type(d);
 }
+
+
+
+
+// -------------------------------------------------------------------------- //
+// Definitions
+
+Empty_def&
+Builder::make_empty_definition()
+{
+  static Empty_def d;
+  return d;
+}
+
+Deleted_def&
+Builder::make_deleted_definition()
+{
+  static Deleted_def d;
+  return d;
+}
+
+
+Defaulted_def&
+Builder::make_defaulted_definition()
+{
+  static Defaulted_def d;
+  return d;
+}
+
+
+Expression_def&
+Builder::make_expression_definition(Expr& e)
+{
+  return make<Expression_def>(e);
+}
+
+
+Function_def&
+Builder::make_function_definition(Stmt& s)
+{
+  return make<Function_def>(s);
+}
+
+
+Type_def&
+Builder::make_type_definition(Stmt& s)
+{
+  return make<Type_def>(s);
+}
+
+
+Concept_def&
+Builder::make_concept_definition(Req_list const& ss)
+{
+  return make<Concept_def>(ss);
+}
+
 
 
 // -------------------------------------------------------------------------- //

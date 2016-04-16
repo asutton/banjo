@@ -5,14 +5,18 @@
 #define BANJO_CONTEXT_HPP
 
 #include "prelude.hpp"
-#include "scope.hpp"
 #include "builder.hpp"
+#include "scope.hpp"
 
 
 namespace banjo
 {
 
 struct Scope;
+
+
+// Used to associate scopes with declarations.
+using Scope_map = std::unordered_map<Decl*, Scope*>;
 
 
 // A repository of information to support translation.
@@ -32,10 +36,6 @@ struct Context : Builder
   Symbol_table const& symbols() const { return syms; }
   Symbol_table&       symbols()       { return syms; }
 
-  // Returns the global namespace.
-  Namespace_decl const& global_namespace() const { return *global; }
-  Namespace_decl&       global_namespace()       { return *global; }
-
   // Unique ids
   int get_unique_id();
 
@@ -44,117 +44,92 @@ struct Context : Builder
   void     input_location(Location loc) { input = loc; }
 
   // Scope management
+  Scope& make_scope();
+  Scope& make_scope(Decl&);
+  Scope& saved_scope(Decl&);
   void   set_scope(Scope&);
-  Initializer_scope&        make_initializer_scope(Decl&);
-  Function_scope&           make_function_scope(Decl&);
-  Function_parameter_scope& make_function_parameter_scope();
-  Template_scope&           make_template_scope();
-  Template_parameter_scope& make_template_parameter_scope();
-  Block_scope&              make_block_scope();
-  Requires_scope&           make_requires_scope();
-  Concept_scope&            make_concept_scope(Decl&);
-  Constrained_scope&        make_constrained_scope(Expr&);
+  Scope& current_scope();
+  Scope& global_scope();
 
-  // Scope queries
-  Scope&          current_scope();
-  Template_scope* current_template_scope();
-  Decl_list*      current_template_parameters();
-  Expr*           current_template_constraints();
-  Requires_scope* current_requires_scope();
-
-  // Declaration context queries
-  Decl&           current_context();
-  Template_decl*  current_template();
-
-  // Template depth and offset. When the template level is -1,
-  // we are not inside a template. When the template index is -1,
-  // we have yet to declare a new parameter at this level.
-  int current_template_level() const { return tparms.first; }
-  int current_template_index() const { return tparms.second; }
-
-  // Allocate a new template parameter or placeholder index.
-  // This increments the count in the corresponding level.
-  Index make_template_parameter_index();
-  Index make_placeholder_index();
-
-  // Returns true if there we are in the scope of a template.
-  bool in_template() const;
-  bool in_constrained_template() const;
-  bool in_unconstrained_template() const;
-
-  // Returns true we are in the scope of a requires-expression.
-  bool in_requirements() const;
+  Decl* immediate_context();
+  Decl* current_context();
 
   // Diagnostic state
   bool diagnose_errors() const { return diags; }
 
-  Symbol_table    syms;
-  Location        input;  // The input location
-  Namespace_decl* global; // The global namespace
-  Scope*          scope;  // The current scope
+  Symbol_table syms;   // The symbol table
+  Location     input;  // The input location
+ 
+  // Scope information
+  Scope*       global; // The global scope
+  Scope*       scope;  // The current scope
+  Scope_map    saved;  // Saved scopes.
 
   // Store information for generating unique names.
   int             id;     // The current id counter
-
-  // Store information that can be used to generate template
-  // parameter indexes, and unique indexes for placeholders.
-  Index   tparms; // template parameters
-  Index   pholds; // placeholders
 
   // Diagnostic state
   bool diags; // True if diagnostics should be emitted.
 };
 
 
-inline Index
-Context::make_template_parameter_index()
+// Returns a new general purpose scope.
+inline Scope&
+Context::make_scope()
 {
-  return {tparms.first, ++tparms.second};
+  return *new Scope(current_scope());
 }
 
 
-inline Index
-Context::make_placeholder_index()
+// Returns a new general purpose scope bound to the given declaration.
+inline Scope&
+Context::make_scope(Decl& d)
 {
-  return {pholds.first, ++pholds.second};
+  return *new Scope(current_scope(), d);
 }
 
 
-// Returns true if there we are in the scope of a template.
-inline bool
-Context::in_template() const
+// Retrieve the saved scope for the declaration. If no such scope exists,
+// create one. Note that newly created saved scopes are linked to the current
+// scope.
+inline Scope&
+Context::saved_scope(Decl& d)
 {
-  return modify(this)->current_template_scope();
+  auto iter = saved.find(&d);
+  if (iter != saved.end()) {
+    return *iter->second;
+  } else {
+    Scope& s = make_scope(d);
+    saved.emplace(&d, &s);
+    return s;
+  }
 }
 
 
-// Returns true if the current context is a constrained template.
-inline bool
-Context::in_constrained_template() const
+// Enter the given scope. Unless `s` is the scope of the global
+// namespace, `s` must be linked through its enclosing scopes
+// to the global namespace.
+//
+// Do not call this function directly. Use Context::Scope_sentinel
+// to enter a new scope, and guarantee cleanup and scope exit.
+inline void
+Context::set_scope(Scope& s)
 {
-  return modify(this)->current_template_constraints();
+  scope = &s;
 }
 
 
-// Returns true if the current context is an unconstrained template.
-inline bool
-Context::in_unconstrained_template() const
+// Returns the current scope.
+inline Scope&
+Context::current_scope()
 {
-  return !modify(this)->current_template_constraints();
-}
-
-
-// Returns true we are in the scope of a requires-expression.
-inline bool
-Context::in_requirements() const
-{
-  return modify(this)->current_requires_scope();
+  return *scope;
 }
 
 
 // Returns a unique id number and updates the context so that the
 // next id will be different than this one. This is primarily used
-// to maintain placehoder ids.
+// to maintain placeholder ids.
 inline int
 Context::get_unique_id()
 {
@@ -165,52 +140,61 @@ Context::get_unique_id()
 // An RAII helper that manages the entry and exit of scopes.
 struct Enter_scope
 {
-  Enter_scope(Context&, Namespace_decl&);
+  Enter_scope(Context&);
   Enter_scope(Context&, Scope&);
   ~Enter_scope();
 
   Context& cxt;
-  Scope*   prev;  // The previous socpe.
-  Scope*   alloc; // Only set when locally allocated.
+  Scope*   prev;  // The previous scope.
+  Scope*   alloc; // An owned scope.
 };
 
 
-// Enter a template scope.
-struct Enter_template_scope : Enter_scope
+// Enter a new purpose scope. This scope is destroyed when the sentinel
+// goes out of scope.
+inline
+Enter_scope::Enter_scope(Context& cxt)
+  : cxt(cxt), prev(&cxt.current_scope()), alloc(&cxt.make_scope())
 {
-  Enter_template_scope(Context& cxt)
-    : Enter_scope(cxt, cxt.make_template_scope())
+  cxt.set_scope(*alloc);
+}
+
+
+// Enter the given scope.
+inline
+Enter_scope::Enter_scope(Context& c, Scope& s)
+  : cxt(c), prev(&c.current_scope()), alloc(nullptr)
+{
+  cxt.set_scope(s);
+}
+
+
+// Restore the previous scope and delete any allocated scopes.
+inline
+Enter_scope::~Enter_scope()
+{
+  cxt.set_scope(*prev);
+  delete alloc;
+}
+
+
+// -------------------------------------------------------------------------- //
+// Input location
+
+struct Save_input_location
+{
+  Save_input_location(Context& c)
+    : cxt(c), prev(cxt.input_location())
   { }
-};
 
-
-// Enter a template parameter scope. This replaces the previous template
-// index info so that that parameters in the new scope are distinct
-// from those in the enclosing scope.
-struct Enter_template_parameter_scope : Enter_scope
-{
-  Enter_template_parameter_scope(Context& cxt)
-    : Enter_scope(cxt, cxt.make_template_parameter_scope()), prev(cxt.tparms)
+  ~Save_input_location()
   {
-    cxt.tparms = {prev.first + 1, -1};
+    cxt.input_location(prev);
   }
 
-  ~Enter_template_parameter_scope()
-  {
-    cxt.tparms = prev;
-  }
-
-  Index prev;
+  Context& cxt;
+  Location prev;
 };
-
-
-struct Enter_requires_scope : Enter_scope
-{
-  Enter_requires_scope(Context& cxt)
-    : Enter_scope(cxt, cxt.make_requires_scope())
-  { }
-};
-
 
 
 // -------------------------------------------------------------------------- //

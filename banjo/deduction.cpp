@@ -5,7 +5,6 @@
 #include "ast.hpp"
 #include "context.hpp"
 #include "template.hpp"
-#include "equivalence.hpp"
 #include "printer.hpp"
 
 #include <iostream>

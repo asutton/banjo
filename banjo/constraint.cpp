@@ -8,7 +8,6 @@
 #include "initialization.hpp"
 #include "substitution.hpp"
 #include "normalization.hpp"
-#include "hash.hpp"
 #include "printer.hpp"
 #include "inspection.hpp"
 
@@ -126,7 +125,7 @@ admit_binary_expr(Context& cxt, Usage& c, Binary_expr& e)
   //
   // FIXME: See the notes on admit_binary_conv. We may want
   // to preserve the conversions for the purpose of ordering.
-  e.ty = &a.type();
+  e.type_ = &a.type();
   return &e;
 }
 
@@ -159,7 +158,7 @@ admit_call_expr(Context& cxt, Usage& c, Call_expr& e)
   }
 
   // Adjust the type and admit the expression.
-  e.ty = &a.type();
+  e.type_ = &a.type();
   return &e;
 }
 

@@ -43,17 +43,19 @@ enum Control
 };
 
 
-// The evaluator is responsible for the interpretation
-// of a program as a value.
+// The evaluator is responsible for the interpretation  of a program as a 
+// value.
+//
+// FIXME: 
 struct Evaluator
 {
 public:
-  Value operator()(Expr const& e)           { return evaluate(e); }
+  Value operator()(Expr const& e) { return evaluate(e); }
 
   Value evaluate(Expr const&);
   Value evaluate_boolean(Boolean_expr const&);
   Value evaluate_integer(Integer_expr const&);
-  Value evaluate_reference(Reference_expr const&);
+  Value evaluate_reference(Decl_expr const&);
   Value evaluate_call(Call_expr const&);
   Value evaluate_and(And_expr const&);
   Value evaluate_or(Or_expr const&);

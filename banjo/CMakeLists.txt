@@ -7,14 +7,10 @@ add_library(banjo
   error.cpp
   context.cpp
 
-  # Lexical components
+  # TODO: Factor this out to support multiple front ends.
+  # Lexical and syntactic components
   token.cpp
   lexer.cpp
-
-  # Syntactic components
-  # TODO: Factor this out to support multiple front ends.
-  value.cpp
-  builder.cpp
   parser.cpp
   parse-id.cpp
   parse-type.cpp
@@ -22,16 +18,19 @@ add_library(banjo
   parse-stmt.cpp
   parse-decl.cpp
   parse-req.cpp
-  act-id.cpp
-  act-type.cpp
-  act-expr.cpp
-  act-init.cpp
-  act-stmt.cpp
-  act-decl.cpp
-  act-req.cpp
+  sema-id.cpp
+  sema-type.cpp
+  sema-expr.cpp
+  sema-init.cpp
+  sema-stmt.cpp
+  sema-decl.cpp
+  sema-req.cpp
+  elab-decl.cpp
+  elab-def.cpp
   printer.cpp
 
-  # Semantics
+  # Core facilities
+  builder.cpp
   ast.cpp
   ast-base.cpp
   ast-name.cpp
@@ -41,11 +40,13 @@ add_library(banjo
   ast-decl.cpp
   ast-def.cpp
   ast-req.cpp
+  ast-hash.cpp
+  ast-eq.cpp
+  value.cpp
+
   operator.cpp
   qualifier.cpp
   specifier.cpp
-  hash.cpp
-  equivalence.cpp
   scope.cpp
   lookup.cpp
   type.cpp
@@ -55,24 +56,27 @@ add_library(banjo
   expr-id.cpp
   expr-logical.cpp
   expr-relational.cpp
+  expr-arithmetic.cpp
+  expr-bitwise.cpp
   expr-call.cpp
   conversion.cpp
   initialization.cpp
   call.cpp
   inheritance.cpp
-  template.cpp
-  substitution.cpp
-  deduction.cpp
-  requirement.cpp
-  constraint.cpp
-  normalization.cpp
-  satisfaction.cpp
-  subsumption.cpp
+  # template.cpp
+  # substitution.cpp
+  # deduction.cpp
+  # requirement.cpp
+  # constraint.cpp
+  # normalization.cpp
+  # satisfaction.cpp
+  # subsumption.cpp
   evaluation.cpp
   inspection.cpp
 
   # Code generation
   gen/cxx/generator.cpp
+  gen/llvm/generator.cpp
 )
 target_compile_definitions(banjo PUBLIC ${LLVM_DEFINITIONS})
 target_include_directories(banjo
@@ -109,18 +113,21 @@ endmacro()
 
 
 # Unit tests
-add_unit_test(test_print       test/test_print.cpp)
-add_unit_test(test_equivalence test/test_equivalence.cpp)
-add_unit_test(test_hash        test/test_hash.cpp)
-add_unit_test(test_variable    test/test_variable.cpp)
-add_unit_test(test_function    test/test_function.cpp)
-add_unit_test(test_template    test/test_template.cpp)
-add_unit_test(test_convert     test/test_convert.cpp)
-add_unit_test(test_initialize  test/test_initialize.cpp)
-add_unit_test(test_substitute  test/test_substitute.cpp)
-add_unit_test(test_deduce      test/test_deduce.cpp)
-add_unit_test(test_constraint  test/test_constraint.cpp)
+#
+# FIXME: Conditionally the test suite using an option.
+
+# add_unit_test(test_print       test/test_print.cpp)
+# add_unit_test(test_equivalence test/test_equivalence.cpp)
+# add_unit_test(test_hash        test/test_hash.cpp)
+# add_unit_test(test_variable    test/test_variable.cpp)
+# add_unit_test(test_function    test/test_function.cpp)
+# add_unit_test(test_template    test/test_template.cpp)
+# add_unit_test(test_convert     test/test_convert.cpp)
+# add_unit_test(test_initialize  test/test_initialize.cpp)
+# add_unit_test(test_substitute  test/test_substitute.cpp)
+# add_unit_test(test_deduce      test/test_deduce.cpp)
+# add_unit_test(test_constraint  test/test_constraint.cpp)
 
 # Testing tools
-add_test_program(test_parse   test/test_parse.cpp)
-add_test_program(test_inspect test/test_inspect.cpp)
+# add_test_program(test_parse   test/test_parse.cpp)
+# add_test_program(test_inspect test/test_inspect.cpp)

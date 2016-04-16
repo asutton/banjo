@@ -36,44 +36,44 @@ Parser::on_logical_not_expression(Token tok, Expr& e)
 
 
 Expr&
-Parser::on_ior_expression(Token tok, Expr& e1, Expr& e2)
+Parser::on_or_expression(Token tok, Expr& e1, Expr& e2)
 {
-  lingo_unimplemented("on bit-or-expr");
+  return make_bit_or(cxt, e1, e2);
 }
 
 
 Expr&
 Parser::on_xor_expression(Token tok, Expr& e1, Expr& e2)
 {
-  lingo_unimplemented("on bit-xor-expr");
+  return make_bit_xor(cxt, e1, e2);
 }
 
 
 Expr&
 Parser::on_and_expression(Token tok, Expr& e1, Expr& e2)
 {
-  lingo_unimplemented("on bit-and-expr");
+  return make_bit_and(cxt, e1, e2);
 }
 
 
 Expr&
 Parser::on_lsh_expression(Token tok, Expr& e1, Expr& e2)
 {
-  lingo_unimplemented("on bit-lsh-expr");
+  return make_bit_lsh(cxt, e1, e2);
 }
 
 
 Expr&
 Parser::on_rsh_expression(Token tok, Expr& e1, Expr& e2)
 {
-  lingo_unimplemented("on bit-rsh-expr");
+  return make_bit_rsh(cxt, e1, e2);
 }
 
 
 Expr&
 Parser::on_compl_expression(Token tok, Expr& e)
 {
-  lingo_unimplemented("on bit-not-expr");
+  return make_bit_not(cxt, e);
 }
 
 
@@ -129,49 +129,49 @@ Parser::on_cmp_expression(Token tok, Expr& e1, Expr& e2)
 Expr&
 Parser::on_add_expression(Token tok, Expr& e1, Expr& e2)
 {
-  lingo_unimplemented("on add-expr");
+  return make_add(cxt, e1, e2);
 }
 
 
 Expr&
 Parser::on_sub_expression(Token tok, Expr& e1, Expr& e2)
 {
-  lingo_unimplemented("on sub-expr");
+  return make_sub(cxt, e1, e2);
 }
 
 
 Expr&
 Parser::on_mul_expression(Token tok, Expr& e1, Expr& e2)
 {
-  lingo_unimplemented("on mul-expr");
+  return make_mul(cxt, e1, e2);
 }
 
 
 Expr&
 Parser::on_div_expression(Token tok, Expr& e1, Expr& e2)
 {
-  lingo_unimplemented("on div-expr");
+  return make_div(cxt, e1, e2);
 }
 
 
 Expr&
 Parser::on_rem_expression(Token tok, Expr& e1, Expr& e2)
 {
-  lingo_unimplemented("on rem-expr");
+  return make_rem(cxt, e1, e2);
 }
 
 
 Expr&
 Parser::on_neg_expression(Token tok, Expr& e)
 {
-  lingo_unimplemented("on neg-expr");
+  return make_neg(cxt, e);
 }
 
 
 Expr&
 Parser::on_pos_expression(Token tok, Expr& e)
 {
-  lingo_unimplemented("on pos-expr");
+  return make_pos(cxt, e);
 }
 
 
@@ -180,6 +180,15 @@ Expr&
 Parser::on_call_expression(Expr& e, Expr_list& es)
 {
   return make_call(cxt, e, es);
+}
+
+
+// Returns type declaration associated with the type of the expression.
+// If e does not have user-defined type, the program is ill-formed.
+Expr&
+Parser::on_dot_expression(Expr& e, Name& n)
+{
+  return make_member_reference(cxt, e, n);
 }
 
 
@@ -210,6 +219,14 @@ Expr&
 Parser::on_requires_expression(Token tok, Decl_list& tps, Decl_list& ps, Req_list& rs)
 {
   return make_requirements(cxt, tps, ps, rs);
+}
+
+
+Expr&
+Parser::on_unparsed_expression(Token_seq&& toks)
+{
+  // FIXME: Use a factory method.
+  return *new Unparsed_expr(std::move(toks));
 }
 
 

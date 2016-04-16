@@ -1,9 +1,0 @@
-
-concept C<typename T>
-{
-  requires (T a, T b)
-  {
-    a == b -> bool;
-    a != b -> bool;
-  }
-}

@@ -4,9 +4,15 @@
 define_node(Boolean_expr)
 define_node(Integer_expr)
 define_node(Real_expr)
-define_node(Reference_expr)
-define_node(Template_ref)
-define_node(Check_expr)
+
+// References to declarations
+define_node(Object_expr)
+define_node(Function_expr)
+define_node(Overload_expr)
+define_node(Field_expr)
+define_node(Method_expr)
+define_node(Member_expr)
+
 
 // Arithmetic expressions
 define_node(Add_expr)
@@ -21,9 +27,9 @@ define_node(Pos_expr)
 define_node(Bit_or_expr)
 define_node(Bit_xor_expr)
 define_node(Bit_and_expr)
+define_node(Bit_lsh_expr)
+define_node(Bit_rsh_expr)
 define_node(Bit_not_expr)
-define_node(Lsh_expr)
-define_node(Rsh_expr)
 
 // Relational expressions
 define_node(Eq_expr)
@@ -39,11 +45,18 @@ define_node(And_expr)
 define_node(Or_expr)
 define_node(Not_expr)
 
-// Misc.
-define_node(Call_expr)
+// Assignment
 define_node(Assign_expr)
+
+// Function call
+define_node(Call_expr)
+
+// Concept check
+define_node(Check_expr)
+
 define_node(Requires_expr)
 define_node(Synthetic_expr)
+define_node(Unparsed_expr)
 
 // Conversions
 // TODO: Factor these into a single conversion expression.

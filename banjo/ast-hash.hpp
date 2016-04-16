@@ -1,12 +1,16 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BANJO_HASH_HPP
-#define BANJO_HASH_HPP
+#ifndef BANJO_AST_HASH_HPP
+#define BANJO_AST_HASH_HPP
 
-#include "prelude.hpp"
-#include "language.hpp"
-#include "equivalence.hpp"
+// This module defines the hash function on AST nodes.
+//
+// TODO: Migrate this to use an iterative hash instead of Boost's hashing
+// library. It will generate better keys (although this is a big rewrite).
+
+#include "ast-base.hpp"
+#include "ast-eq.hpp"
 
 #include <boost/functional/hash.hpp>
 

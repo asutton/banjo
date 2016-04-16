@@ -12,46 +12,11 @@ namespace banjo
 using Binding = Scope::Binding;
 
 
-// Construct a scope enclosed by that of its surrounding
-// declaration.
-Scope::Scope(Decl& cxt, Decl& d)
-  : parent(cxt.scope()), decl(&d)
-{ }
-
-
 // Register a name binding for the declaration `d`.
 Binding&
 Scope::bind(Decl& d)
 {
-  return bind(d.declared_name(), d);
-}
-
-
-Namespace_decl const&
-Namespace_scope::declaration() const
-{
-  return *cast<Namespace_decl>(context());
-}
-
-
-Namespace_decl&
-Namespace_scope::declaration()
-{
-  return *cast<Namespace_decl>(context());
-}
-
-
-Class_decl const&
-Class_scope::declaration() const
-{
-  return *cast<Class_decl>(context());
-}
-
-
-Class_decl&
-Class_scope::declaration()
-{
-  return *cast<Class_decl>(context());
+  return bind(d.name(), d);
 }
 
 

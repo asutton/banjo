@@ -131,13 +131,14 @@ specialize_variable(Context& cxt, Template_decl& tmp, Variable_decl& d, Substitu
   // Substitute into the type.
   Type& t = substitute(cxt, d.type(), sub);
 
-  return cxt.make_variable(n, t);
+  return cxt.make_variable_declaration(n, t);
 }
 
 
 Decl&
 specialize_function(Context& cxt, Template_decl& tmp, Function_decl& d, Substitution& sub)
 {
+#if 0
   // Create the specialization name.
   Name& n = cxt.get_template_id(tmp, sub.arguments());
 
@@ -156,16 +157,13 @@ specialize_function(Context& cxt, Template_decl& tmp, Function_decl& d, Substitu
   // Substitute through the return type.
   Type& ret = substitute(cxt, d.return_type(), sub);
 
-  return cxt.make_function(n, parms, ret);
+  // FIXME: I've just re-attached an uninstantiated definition
+  // to the declaration. That is going to be a problem.
+  // return cxt.make_function_declaration(n, parms, ret, d.definition());
+#endif
+  lingo_unreachable();
 }
 
-
-Decl&
-specialize_class(Context& cxt, Template_decl& tmp, Class_decl& d, Substitution& sub)
-{
-  Name& n = cxt.get_template_id(tmp, sub.arguments());
-  return cxt.make_class(n);
-}
 
 
 // Specialize a templated declaration `decl` (`decl` is parameterized
@@ -188,7 +186,6 @@ specialize_declaration(Context& cxt, Template_decl& tmp, Decl& decl, Substitutio
     Decl& operator()(Decl& d)           { lingo_unreachable(); }
     Decl& operator()(Variable_decl& d)  { return specialize_variable(cxt, tmp, d, sub); }
     Decl& operator()(Function_decl& d)  { return specialize_function(cxt, tmp, d, sub); }
-    Decl& operator()(Class_decl& d)     { return specialize_class(cxt, tmp, d, sub); }
     Decl& operator()(Template_decl& d)  { lingo_unreachable(); }
   };
 

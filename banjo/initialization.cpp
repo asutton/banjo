@@ -6,7 +6,6 @@
 #include "ast-expr.hpp"
 #include "conversion.hpp"
 #include "inheritance.hpp"
-#include "equivalence.hpp"
 #include "builder.hpp"
 #include "printer.hpp"
 
@@ -52,14 +51,6 @@ zero_initialize(Context& cxt, Type& t)
 
   Type& u = t.unqualified_type();
 
-  // Zero each sub-object in turn.
-  if (is_class_type(u))
-    lingo_unreachable();
-
-  // Zero initialize the first sub-object.
-  if (is_union_type(u))
-    lingo_unreachable();
-
   // FIXME: Determine the kind of zero that best matches the
   // type (i.e., produce an appropriate literal).
   if (is_scalar_type(u))
@@ -90,17 +81,6 @@ default_initialize(Context& cxt, Type& t)
   if (is_array_type(t))
     lingo_unreachable();
 
-  // Select a (possibly synthesized) default constructor for u.
-  //
-  // FIXME: This is totally incorrect. Select the default
-  // construtor from t.
-  if (is_maybe_qualified_class_type(t))
-    return build.make_trivial_init(t);
-
-  // Select a (possibly synthesized) default constructor for u.
-  if (is_maybe_qualified_union_type(t))
-    lingo_unreachable();
-
   // Otherwise, no initialization is performed.
   return build.make_trivial_init(t);
 }
@@ -117,11 +97,6 @@ value_initialize(Context& cxt, Type& t)
 
   // FIXME: Can you value initialize a T[]?
   if (is_array_type(t))
-    lingo_unreachable();
-
-  // Either zero-initialize or default-initialize based on
-  // the presence of user-defined constructors.
-  if (is_maybe_qualified_class_type(t) || is_maybe_qualified_union_type(t))
     lingo_unreachable();
 
   // Are we sure that there are no other categories of types?
@@ -157,12 +132,7 @@ copy_initialize(Context& cxt, Type& t, Expr& e)
   // If the destination type is T[N] or T[] and the initializer
   // is `= s` where `s` is a string literal, perform string
   // initialization.
-  if (is_array_type(t) || is_sequence_type(t))
-    banjo_unhandled_case(t);
-
-  // Find a constructor taking `e` as an argument or if not available,
-  // find a user-defined conversion from `e` to `t`.
-  if (is_maybe_qualified_class_type(t) || is_maybe_qualified_union_type(t))
+  if (is_array_type(t))
     banjo_unhandled_case(t);
 
   // If the initializer has a source type, then try to find a
@@ -175,10 +145,6 @@ copy_initialize(Context& cxt, Type& t, Expr& e)
     Expr& c = dependent_conversion(cxt, e, t);
     return cxt.make_copy_init(t, c);
   }
-
-  // Search for user-defined conversions to a fundamental type.
-  if (is_maybe_qualified_class_type(s) || is_maybe_qualified_union_type(s))
-    banjo_unhandled_case(t);
 
   // If all else fails, try a standard conversion. This should be the
   // case that we have a non-class, fundamental, or dependent type.
@@ -206,19 +172,13 @@ direct_initialize(Context& cxt, Type& t, Expr_list& es)
   // Arrays must be copy or list-initialized.
   //
   // FIXME: Provide a better diagnostic.
-  if (is_array_type(t) || is_sequence_type(t))
+  if (is_array_type(t))
     throw Translation_error("invalid array initialization");
 
   // If the initializer is (), the object is value initialized.
   if (es.empty())
     return value_initialize(cxt, t);
 
-  // If t is not a class type, then there shall be a single
-  // expression. Save the source expression for later.
-  if (!is_maybe_qualified_class_type(t)) {
-    if (es.size() > 1)
-      throw Translation_error("scalar initialized from multiple arguments");
-  }
   Expr& e = es.front();
 
   // If the destination type is a T&, then perform reference
@@ -235,10 +195,6 @@ direct_initialize(Context& cxt, Type& t, Expr_list& es)
     return cxt.make_copy_init(t, c);
   }
 
-  // Find a constructor taking the given arguments.
-  if (is_maybe_qualified_class_type(t) || is_maybe_qualified_union_type(t))
-    lingo_unreachable();
-
   // If the initializer has a source type, then try to find a
   // user-defined conversion from s to the destination type, which
   // should be a (possibly qualified) fundamental type.
@@ -252,10 +208,6 @@ direct_initialize(Context& cxt, Type& t, Expr_list& es)
     Expr& c = dependent_conversion(cxt, e, t);
     return cxt.make_copy_init(t, c);
   }
-
-  // Search for user-defined conversion from the source expression.
-  if (is_maybe_qualified_class_type(s))
-    lingo_unreachable();
 
   // If all else fails, try a a standard conversion. This should be
   // the case that we have a non-class, fundamental type.
@@ -362,12 +314,6 @@ reference_initialize(Context& cxt, Reference_type& t1, Expr& e)
     // offsets.
     if (is_reference_compatible(r1, r2))
       return cxt.make_bind_init(t1, e);
-
-    // t2 has class type and has a user-defined conversion that is
-    // reference compatible with t1, then bind the the to the
-    // result of that conversion.
-    if (is_class_type(t2))
-      ; // Fall through for now...
   }
 
   // The reference must be a const reference.

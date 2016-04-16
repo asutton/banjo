@@ -11,6 +11,7 @@
 
 #include <lingo/integer.hpp>
 #include <lingo/real.hpp>
+#include <lingo/token.hpp>
 
 #include <vector>
 #include <utility>
@@ -24,15 +25,20 @@ struct Term;
 struct Name;
 struct Type;
 struct Expr;
+struct Id_expr;
+struct Decl_expr;
 struct Unary_expr;
 struct Binary_expr;
+struct Dot_expr;
 struct Conv;
 struct Init;
 struct Req;
 struct Stmt;
 struct Decl;
+struct Object_decl;
 struct Def;
 struct Cons;
+
 
 #define define_node(Node) struct Node;
 #include "ast-name.def"
@@ -46,7 +52,9 @@ struct Cons;
 #undef define_node
 
 
+// Secondary structures.
 struct Scope;
+struct Overload_set;
 
 using lingo::Integer;
 
@@ -218,6 +226,21 @@ using Decl_iter = Decl_list::iterator;
 using Cons_iter = Cons_list::iterator;
 
 
+// Unparsed terms.
+template<typename T>
+struct Unparsed_term : T
+{
+  Unparsed_term(Token_seq&& toks)
+    : toks(std::move(toks))
+  { }
+
+  Token_seq const& tokens() const { return toks; }
+  Token_seq&       tokens()       { return toks; }
+
+  Token_seq toks;
+};
+
+
 // Pairs and tuples
 using Expr_pair = std::pair<Expr&, Expr&>;
 
@@ -232,6 +255,6 @@ struct Index : std::pair<int, int>
 };
 
 
-} // namesapce banjo
+} // namespace banjo
 
 #endif

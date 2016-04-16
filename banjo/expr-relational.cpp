@@ -39,6 +39,7 @@ template<typename Make>
 static Expr&
 make_dependent_relational_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
 {
+#if 0
   // Build a dependent expression.
   Type& t = make_fresh_type(cxt);
   Expr& init = make(t, e1, e2);
@@ -56,6 +57,7 @@ make_dependent_relational_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
   Expr& con = *cxt.current_template_constraints();
   if (Expr* ret = admit_expression(cxt, con, init))
     return *ret;
+#endif
 
   // Search for dependent conversions.
   return make_standard_relational_expr(cxt, e1, e2, make);

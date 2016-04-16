@@ -58,7 +58,7 @@ non_overloadable_declaration(Decl& prev, Decl& given)
 // Function declarations that differ only in the return type
 // cannot be overloaded.
 bool
-can_declare_overload(Function_decl& prev, Function_decl& given)
+can_overload(Function_decl& prev, Function_decl& given)
 {
   Function_type& t1 = prev.type();
   Function_type& t2 = given.type();
@@ -77,13 +77,13 @@ can_declare_overload(Function_decl& prev, Function_decl& given)
 //
 // TODO: This will need to be adjusted when we add member functions.
 bool
-can_declare_overload(Decl& prev, Decl& given)
+can_overload(Decl& prev, Decl& given)
 {
   // Only functions and function templates can be overloaded. There
   // are some restrictions on the overloading of functions.
   if (Function_decl* f1 = as<Function_decl>(&prev)) {
     if (Function_decl* f2 = as<Function_decl>(&given))
-      return can_declare_overload(*f1, *f2);
+      return can_overload(*f1, *f2);
   }
 
   // Only functions and funtion templates can be overloaded.
@@ -95,19 +95,6 @@ can_declare_overload(Decl& prev, Decl& given)
   return true;
 }
 
-
-// Returns if the given declaration can be overloaded with each
-// declaration in the overload set. See comments on the functions
-// below for cases.
-void
-declare_overload(Overload_set& ovl, Decl& given)
-{
-  for (Decl& prev : ovl) {
-    if (!can_declare_overload(prev, given))
-      throw Translation_error("invalid declaration");
-  }
-  ovl.insert(given);
-}
 
 
 } // namespace banjo
