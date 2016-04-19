@@ -148,21 +148,17 @@ Parser::declaration()
 
 // Parse a super type (inheritance declaration)
 
-// right now this is just a basic variable declared with keyword super
 //
 // Super declaration:
 //
 //  explicit identifier:
 //
 //    super <identifier> : Type_name;
-//                       := <initialzer>;
-//                       : Type_name = <initializer>;
 //
 //  implicit identifier:
 //
 //    super : Type_name;
-//          := <initializer>;
-//          : Type_name = <initializer>;
+
 Decl&
 Parser::super_declaration()
 {
@@ -176,12 +172,7 @@ Parser::super_declaration()
   }
   else
   {
-    // Ok so this is a little dirty BUT
-    // We make an anonymous identifier for the super class and then build up
-    // a symbol, and then get a name for it.
-    std::string identifier = "_base_subobject_" + std::to_string(cxt.get_unique_id());
-    Symbol* sym = cxt.symbols().put_identifier(identifier_tok,  identifier.c_str());
-    name = &build.get_id(sym);
+    name = &build.get_id();
   }
 
   // The rest of this is exactly the same as a variable declarataion
@@ -193,7 +184,6 @@ Parser::super_declaration()
   Type& type = unparsed_variable_type();
 
   // Match the "name : type ;" form.
-  // TODO: Should supers be default initializable?
   match(semicolon_tok);
   return on_super_declaration(*name, type);
 

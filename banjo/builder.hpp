@@ -139,7 +139,7 @@ struct Builder
   Declaration_stmt& make_declaration_statement(Decl&);
 
   // Supers
-  Super_decl&  make_super_declaration(Name&, Type&);
+  Super_decl&  make_super_declaration(Type&);
 
   // Variables
   Variable_decl&  make_variable_declaration(Name&, Type&);

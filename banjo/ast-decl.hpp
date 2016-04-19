@@ -6,7 +6,7 @@
 
 #include "ast-base.hpp"
 #include "specifier.hpp"
-#include "ast-def.hpp"
+
 
 
 namespace banjo
@@ -131,8 +131,8 @@ struct Super_decl : Object_decl
   Type const& type() const { return *type_; }
   Type&       type()       { return *type_; }
 
-  Def const& initializer() const  { return *def_; }
-  Def&       initializer()        { return *def_; }
+  Def const& initializer() const { return *def_; }
+  Def&       initializer()       { return *def_; }
 
   Type * type_;
   Def* def_;
