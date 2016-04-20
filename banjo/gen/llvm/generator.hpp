@@ -7,16 +7,32 @@
 // An LLVM code generator based on the LLVM IR builder.
 
 #include <banjo/language.hpp>
+#include <banjo/ast.hpp>
 
 #include <lingo/environment.hpp>
 
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/IRBuilder.h>
+
 #include <stack>
 
 
 namespace banjo
 {
+
+namespace ll
+{
+
+
+// The three different kinds of contexts in which
+// declarations can appear.
+enum {
+  invalid_cxt,
+  global_cxt,
+  function_cxt,
+  type_cxt,
+};
+
 
 // Used to maintain a mapping of Beaker declarations to their corresponding
 // LLVM declarations. This is used to track the names of globals and
@@ -34,7 +50,7 @@ struct Generator
 {
   Generator();
 
-  llvm::Module* operator()(Decl const&);
+  llvm::Module* operator()(Stmt const&);
 
   String get_name(Decl const&);
 
@@ -43,6 +59,7 @@ struct Generator
   llvm::Type* get_type(Integer_type const&);
   llvm::Type* get_type(Float_type const&);
   llvm::Type* get_type(Function_type const&);
+  llvm::Type* get_type(Auto_type const&);
 
   llvm::Value* gen(Expr const&);
   llvm::Value* gen(Boolean_expr const&);
@@ -68,6 +85,7 @@ struct Generator
   llvm::Value* gen(Call_expr const&);
 
   void gen(Stmt const&);
+  void gen(Empty_stmt const&);
   void gen(Translation_stmt const&);
   void gen(Member_stmt const&);
   void gen(Compound_stmt const&);
@@ -77,12 +95,12 @@ struct Generator
 
   void gen(Decl const&);
   void gen(Variable_decl const&);
+  void gen_local_variable(Variable_decl const&);
+  void gen_global_variable(Variable_decl const&);
   void gen(Function_decl const&);
   void gen(Type_decl const&);
   void gen(Object_parm const&);
 
-  void gen_local(Variable_decl const*);
-  void gen_global(Variable_decl const*);
 
   // The context and default IR builder.
   llvm::LLVMContext cxt;
@@ -100,38 +118,45 @@ struct Generator
   llvm::BasicBlock* bottom; // Loop bottom
 
   // Environment.
-  Symbol_stack      stack;
-  Type_env          types;
+  int           declcxt; // The current declaration context
+  Symbol_stack  stack;   // Local symbol names
+  Type_env      types;   // Declared types
 
-  struct Enter_scope;
+  struct Enter_context;
 };
 
 
 inline
 Generator::Generator()
-  : cxt(), build(cxt), mod(nullptr)
+  : cxt(), build(cxt), mod(nullptr), declcxt(invalid_cxt)
 { }
 
 
 // An RAII class used to manage the registration and
 // removal of name-to-value bindings for code generation.
-struct Generator::Enter_scope
+struct Generator::Enter_context
 {
-  Enter_scope(Generator& g)
-    : gen(g)
+  Enter_context(Generator& g, int c)
+    : gen(g), prev(g.declcxt)
   {
+    gen.declcxt = c;
     gen.stack.push();
   }
 
-  ~Enter_scope()
+  ~Enter_context()
   {
+    gen.declcxt = prev;
     gen.stack.pop();
   }
 
   Generator& gen;
+  int        prev;
 };
 
 
+} // namespace ll
+
 } // namespace banjo
+
 
 #endif

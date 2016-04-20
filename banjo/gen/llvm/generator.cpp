@@ -11,11 +11,15 @@
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Module.h>
+#include <llvm/Support/raw_ostream.h>
 
 #include <iostream>
 
 
 namespace banjo
+{
+
+namespace ll
 {
 
 // -------------------------------------------------------------------------- //
@@ -50,6 +54,7 @@ Generator::get_type(Type const& t)
     llvm::Type* operator()(Integer_type const& t)  { return g.get_type(t); }
     llvm::Type* operator()(Float_type const& t)    { return g.get_type(t); }
     llvm::Type* operator()(Function_type const& t) { return g.get_type(t); }
+    llvm::Type* operator()(Auto_type const& t)     { return g.get_type(t); }
   };
   return apply(t, fn{*this});
 }
@@ -89,6 +94,15 @@ Generator::get_type(Function_type const& t)
     parms.push_back(get_type(pt));
   llvm::Type* ret = get_type(t.return_type());
   return llvm::FunctionType::get(ret, parms, false);
+}
+
+
+// FIXME: This shouldn't exist. We cannot generate code from a
+// non-deduced type.
+llvm::Type*
+Generator::get_type(Auto_type const& t)
+{
+  return build.getInt32Ty();
 }
 
 
@@ -630,6 +644,9 @@ Generator::gen_init(llvm::Value* ptr, Reference_init const* e)
 }
 
 
+#endif
+
+
 // -------------------------------------------------------------------------- //
 // Code generation for statements
 //
@@ -637,32 +654,68 @@ Generator::gen_init(llvm::Value* ptr, Reference_init const* e)
 // the generation of statements at block scope.
 
 void
-Generator::gen(Stmt const* s)
+Generator::gen(Stmt const& s)
 {
   struct Fn
   {
     Generator& g;
-    void operator()(Empty_stmt const* s) { g.gen(s); }
-    void operator()(Block_stmt const* s) { g.gen(s); }
-    void operator()(Assign_stmt const* s) { g.gen(s); }
-    void operator()(Return_stmt const* s) { g.gen(s); }
-    void operator()(If_then_stmt const* s) { g.gen(s); }
-    void operator()(If_else_stmt const* s) { g.gen(s); }
-    void operator()(While_stmt const* s) { g.gen(s); }
-    void operator()(Break_stmt const* s) { g.gen(s); }
-    void operator()(Continue_stmt const* s) { g.gen(s); }
-    void operator()(Expression_stmt const* s) { g.gen(s); }
-    void operator()(Declaration_stmt const* s) { g.gen(s); }
+    void operator()(Stmt const& s)             { lingo_unhandled(s); }
+    void operator()(Empty_stmt const& s)       { g.gen(s); }
+    void operator()(Translation_stmt const& s) { g.gen(s); }
+    void operator()(Declaration_stmt const& s) { g.gen(s); }
+
+    // void operator()(Block_stmt const* s) { g.gen(s); }
+    // void operator()(Assign_stmt const* s) { g.gen(s); }
+    // void operator()(Return_stmt const* s) { g.gen(s); }
+    // void operator()(If_then_stmt const* s) { g.gen(s); }
+    // void operator()(If_else_stmt const* s) { g.gen(s); }
+    // void operator()(While_stmt const* s) { g.gen(s); }
+    // void operator()(Break_stmt const* s) { g.gen(s); }
+    // void operator()(Continue_stmt const* s) { g.gen(s); }
+    // void operator()(Expression_stmt const* s) { g.gen(s); }
   };
   apply(s, Fn{*this});
 }
 
 
 void
-Generator::gen(Empty_stmt const* s)
+Generator::gen(Empty_stmt const& s)
 {
   // Do nothing.
 }
+
+
+void 
+Generator::gen(Translation_stmt const& s)
+{
+  Enter_context dc(*this, global_cxt);
+
+  // Build the module. Name it "a.ll" by default.
+  //
+  // TODO: Get the output module from the program options.
+  lingo_assert(!mod);
+  mod = new llvm::Module("a.ll", cxt);
+
+  for (Stmt const& stmt : s.statements())
+    gen(stmt);
+
+  // Dump the code to stdout.
+  //
+  // FIXME: This is stupid. Actually dump it to a file.
+  std::error_code err;
+  llvm::raw_fd_ostream ofs(0, false);
+  ofs << *mod;
+}
+
+
+void
+Generator::gen(Declaration_stmt const& s)
+{
+  gen(s.declaration());
+}
+
+
+#if 0
 
 
 // Generate code for a sequence of statements.
@@ -805,105 +858,78 @@ Generator::gen(Expression_stmt const* s)
 }
 
 
-void
-Generator::gen(Declaration_stmt const* s)
-{
-  gen(s->declaration());
-}
-
+#endif
 
 // -------------------------------------------------------------------------- //
 // Code generation for declarations
-//
-// TODO: We can't generate all of the code for a module
-// in a single pass. We probably need to break this up
-// into a number of smaller declaration generators. For
-// example, generators that:
-//
-//    - produce declarations
-//    - produce global initializers
-//    - produce global destructors
-//    - other stuff
-//
-// In, it might not be worthwhile to have a number
-// of sub-generators that refer to the top-level
-// generator.
 
 void
-Generator::gen(Decl const* d)
+Generator::gen(Decl const& d)
 {
   struct Fn
   {
     Generator& g;
-    void operator()(Super_decl const* d)  { return g.gen(d); }
-    void operator()(Variable_decl const* d) { return g.gen(d); }
-    void operator()(Function_decl const* d) { return g.gen(d); }
-    void operator()(Parameter_decl const* d) { return g.gen(d); }
-    void operator()(Record_decl const* d) { return g.gen(d); }
-    void operator()(Field_decl const* d) { return g.gen(d); }
-    void operator()(Method_decl const* d) { return g.gen(d); }
-    void operator()(Module_decl const* d) { return g.gen(d); }
+    void operator()(Decl const& d)           { lingo_unhandled(d); }
+    void operator()(Variable_decl const& d)  { return g.gen(d); }
+
+    // void operator()(Function_decl const& d)  { return g.gen(d); }
+    // void operator()(Parameter_decl const& d) { return g.gen(d); }
+    // void operator()(Record_decl const& d)    { return g.gen(d); }
+    // void operator()(Field_decl const& d)     { return g.gen(d); }
+    // void operator()(Method_decl const& d)    { return g.gen(d); }
   };
   return apply(d, Fn{*this});
 }
 
-void
-Generator::gen(Super_decl const* d)
-{
-  // TODO Do something here...
-}
 
 void
-Generator::gen_local(Variable_decl const* d)
+Generator::gen_local_variable(Variable_decl const& d)
 {
-  // Create the alloca instruction at the beginning of
-  // the function. Not at the point where we get it.
-  llvm::BasicBlock& b = fn->getEntryBlock();
-  llvm::IRBuilder<> tmp(&b, b.begin());
-  llvm::Type* type = get_type(d->type());
-  String name = d->name()->spelling();
-  llvm::Value* ptr = tmp.CreateAlloca(type, nullptr, name);
+  lingo_unimplemented("local variables");
 
-  // Save the decl binding.
-  stack.top().bind(d, ptr);
+  // // Create the alloca instruction at the beginning of
+  // // the function. Not at the point where we get it.
+  // llvm::BasicBlock& b = fn->getEntryBlock();
+  // llvm::IRBuilder<> tmp(&b, b.begin());
+  // llvm::Type* type = get_type(d->type());
+  // String name = d->name()->spelling();
+  // llvm::Value* ptr = tmp.CreateAlloca(type, nullptr, name);
 
-  // Generate the initializer.
-  gen_init(ptr, d->init());
+  // // Save the decl binding.
+  // stack.top().bind(d, ptr);
 
-  // If the variable has polymorphic record type,
-  // initialize its vref to the appropriate table.
-  //
-  // FIXME: This is totally broken if it doesn't
-  // happen before initialization. Also, note that
-  // polymorphic types cannot be zero-initialized.
-  // Only member-wise initialized.
-  if (Record_type const* rt = as<Record_type>(d->type())) {
-    Record_decl const* rec = rt->declaration();
-    llvm::Value* vtbl = vtables.find(rec)->second;
-    llvm::Value* vref = gen_vref(rec, ptr);
-    build.CreateStore(vtbl, vref);
-  }
+  // // Generate the initializer.
+  // gen_init(ptr, d->init());
+
+  // // If the variable has polymorphic record type,
+  // // initialize its vref to the appropriate table.
+  // //
+  // // FIXME: This is totally broken if it doesn't
+  // // happen before initialization. Also, note that
+  // // polymorphic types cannot be zero-initialized.
+  // // Only member-wise initialized.
+  // if (Record_type const* rt = as<Record_type>(d->type())) {
+  //   Record_decl const* rec = rt->declaration();
+  //   llvm::Value* vtbl = vtables.find(rec)->second;
+  //   llvm::Value* vref = gen_vref(rec, ptr);
+  //   build.CreateStore(vtbl, vref);
+  // }
 }
 
 
 void
-Generator::gen_global(Variable_decl const* d)
+Generator::gen_global_variable(Variable_decl const& d)
 {
   String      name = get_name(d);
-  llvm::Type* type = get_type(d->type());
+  llvm::Type* type = get_type(d.type());
 
-  // Try to generate a constant initializer.
+  // Generate a null constant initializer for the global. Note that this 
+  // might be overritten by a static initializer later.
   //
-  // FIXME: If the initializer can be reduced to a value,
-  // then generate that constant. If not, we need dynamic
-  // initialization of global variables.
-  llvm::Constant* init = nullptr;
-  if (!d->is_foreign())
-    init = llvm::Constant::getNullValue(type);
+  // TODO: Check the variable definition. If it's non-constant, then
+  // add it to a static initialization queue for later.
+  llvm::Constant* init = llvm::Constant::getNullValue(type);
 
-
-  // Note that the aggregate 0 only applies to aggregate
-  // types. We can't apply it to initializers for scalars.
 
   // Build the global variable, automatically adding
   // it to the module.
@@ -917,7 +943,7 @@ Generator::gen_global(Variable_decl const* d)
   );
 
   // Create a binding for the new variable.
-  stack.top().bind(d, var);
+  stack.top().bind(&d, var);
 }
 
 
@@ -928,14 +954,16 @@ Generator::gen_global(Variable_decl const* d)
 // TODO: If we add class/record types, then we also
 // need to handle member variables as well. Maybe.
 void
-Generator::gen(Variable_decl const* d)
+Generator::gen(Variable_decl const& d)
 {
-  if (is_global_variable(d))
-    return gen_global(d);
+  if (declcxt == global_cxt)
+    return gen_global_variable(d);
   else
-    return gen_local(d);
+    return gen_local_variable(d);
 }
 
+
+#if 0
 
 void
 Generator::gen(Function_decl const* d)
@@ -1200,14 +1228,17 @@ Generator::gen_vref(Record_decl const* r, llvm::Value* obj)
 }
 
 
+#endif
+
 llvm::Module*
-Generator::operator()(Decl const* d)
+Generator::operator()(Stmt const& s)
 {
-  assert(is<Module_decl>(d));
-  gen(d);
+  assert(is<Translation_stmt>(s));
+  gen(s);
   return mod;
 }
 
-#endif
 
-} // namespace
+} // namespace ll
+
+} // namespace banjo
