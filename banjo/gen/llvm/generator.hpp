@@ -55,11 +55,18 @@ struct Generator
   String get_name(Decl const&);
 
   llvm::Type* get_type(Type const&);
+  llvm::Type* get_type(Void_type const&);
   llvm::Type* get_type(Boolean_type const&);
   llvm::Type* get_type(Integer_type const&);
   llvm::Type* get_type(Float_type const&);
   llvm::Type* get_type(Function_type const&);
   llvm::Type* get_type(Auto_type const&);
+  llvm::Type* get_type(In_type const&);
+  llvm::Type* get_type(Out_type const&);
+  llvm::Type* get_type(Mutable_type const&);
+  llvm::Type* get_type(Consume_type const&);
+  llvm::Type* get_type(Forward_type const&);
+
 
   llvm::Value* gen(Expr const&);
   llvm::Value* gen(Boolean_expr const&);
@@ -101,6 +108,9 @@ struct Generator
   void gen(Type_decl const&);
   void gen(Object_parm const&);
 
+  // Name bindings
+  void declare(Decl const&, llvm::Value*);
+  llvm::Value* lookup(Decl const&);
 
   // The context and default IR builder.
   llvm::LLVMContext cxt;
@@ -130,6 +140,20 @@ inline
 Generator::Generator()
   : cxt(), build(cxt), mod(nullptr), declcxt(invalid_cxt)
 { }
+
+
+inline void 
+Generator::declare(Decl const& d, llvm::Value* v)
+{
+  stack.top().bind(&d, v);
+}
+
+
+inline llvm::Value*
+Generator::lookup(Decl const& d)
+{
+  return stack.top().get(&d).second;
+}
 
 
 // An RAII class used to manage the registration and

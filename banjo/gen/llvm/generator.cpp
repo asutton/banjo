@@ -50,13 +50,26 @@ Generator::get_type(Type const& t)
   {
     Generator& g;
     llvm::Type* operator()(Type const& t)          { lingo_unhandled(t); }
+    llvm::Type* operator()(Void_type const& t)     { return g.get_type(t); }
     llvm::Type* operator()(Boolean_type const& t)  { return g.get_type(t); }
     llvm::Type* operator()(Integer_type const& t)  { return g.get_type(t); }
     llvm::Type* operator()(Float_type const& t)    { return g.get_type(t); }
     llvm::Type* operator()(Function_type const& t) { return g.get_type(t); }
     llvm::Type* operator()(Auto_type const& t)     { return g.get_type(t); }
+    llvm::Type* operator()(In_type const& t)       { return g.get_type(t); }
+    llvm::Type* operator()(Out_type const& t)      { return g.get_type(t); }
+    llvm::Type* operator()(Mutable_type const& t)  { return g.get_type(t); }
+    llvm::Type* operator()(Consume_type const& t)  { return g.get_type(t); }
+    llvm::Type* operator()(Forward_type const& t)  { return g.get_type(t); }
   };
   return apply(t, fn{*this});
+}
+
+
+llvm::Type*
+Generator::get_type(Void_type const&)
+{
+  return build.getVoidTy();
 }
 
 
@@ -102,6 +115,52 @@ Generator::get_type(Function_type const& t)
 llvm::Type*
 Generator::get_type(Auto_type const& t)
 {
+  return build.getInt32Ty();
+}
+
+
+// FIXME: Input parameters denote adaptable functions, so we should never 
+// actually get here. Assume pass-by-value.
+llvm::Type*
+Generator::get_type(In_type const& t)
+{
+  return get_type(t.type());
+}
+
+
+// Out reference types are always references.
+llvm::Type*
+Generator::get_type(Out_type const& t)
+{
+  llvm::Type* type = get_type(t.type());
+  return llvm::PointerType::getUnqual(type);
+}
+
+
+// Mutable referene types are always references.
+llvm::Type*
+Generator::get_type(Mutable_type const& t)
+{
+  llvm::Type* type = get_type(t.type());
+  return llvm::PointerType::getUnqual(type);
+}
+
+
+// FIXME: Consume parameters denote adaptable functions, so we should never 
+// actually get here. Assume pass-by-value.
+llvm::Type*
+Generator::get_type(Consume_type const& t)
+{
+  return get_type(t.type());
+}
+
+
+// FIXME: Forward parameters denote adaptable functions, so we should never 
+// actually get here. Assume pass-by-value.
+llvm::Type*
+Generator::get_type(Forward_type const& t)
+{
+  // return get_type(t.type());
   return build.getInt32Ty();
 }
 
@@ -869,11 +928,10 @@ Generator::gen(Decl const& d)
   struct Fn
   {
     Generator& g;
-    void operator()(Decl const& d)           { lingo_unhandled(d); }
-    void operator()(Variable_decl const& d)  { return g.gen(d); }
+    void operator()(Decl const& d)          { lingo_unhandled(d); }
+    void operator()(Variable_decl const& d) { return g.gen(d); }
+    void operator()(Function_decl const& d) { return g.gen(d); }
 
-    // void operator()(Function_decl const& d)  { return g.gen(d); }
-    // void operator()(Parameter_decl const& d) { return g.gen(d); }
     // void operator()(Record_decl const& d)    { return g.gen(d); }
     // void operator()(Field_decl const& d)     { return g.gen(d); }
     // void operator()(Method_decl const& d)    { return g.gen(d); }
@@ -963,14 +1021,12 @@ Generator::gen(Variable_decl const& d)
 }
 
 
-#if 0
 
 void
-Generator::gen(Function_decl const* d)
+Generator::gen(Function_decl const& d)
 {
-
   String name = get_name(d);
-  llvm::Type* type = get_type(d->type());
+  llvm::Type* type = get_type(d.type());
 
   // Build the function.
   llvm::FunctionType* ftype = llvm::cast<llvm::FunctionType>(type);
@@ -981,30 +1037,24 @@ Generator::gen(Function_decl const* d)
     mod);                            // owning module
 
   // Create a new binding for the variable.
-  stack.top().bind(d, fn);
+  declare(d, fn);
 
-  // If the declaration is not defined, then don't
-  // do any of this stuff...
-  if (!d->body())
-    return;
 
-  // Establish a new binding environment for declarations
-  // related to this function.
-  Symbol_sentinel scope(*this);
+  // Establish a new environment for declarations within this 
+  // function's scope.
+  Enter_context scope(*this, function_cxt);
 
-  // Build the argument list. Note that
+  // Assign names to each parameter.
   {
     auto ai = fn->arg_begin();
-    auto pi = d->parameters().begin();
+    auto pi = d.parameters().begin();
     while (ai != fn->arg_end()) {
-      Decl const* p = *pi;
-      llvm::Argument* a = &*ai;
-      a->setName(p->name()->spelling());
+      Decl const& p = *pi;
+      llvm::Argument* arg = &*ai;
 
-      // Create an initial name binding for the function
-      // parameter. Note that we're going to overwrite
-      // this when we create locals for each parameter.
-      stack.top().bind(p, a);
+      // Set the name.
+      Simple_id const& id = cast<Simple_id>(p.name());
+      arg->setName(id.symbol().spelling());
 
       ++ai;
       ++pi;
@@ -1019,10 +1069,33 @@ Generator::gen(Function_decl const* d)
   // Build the return value.
   ret = build.CreateAlloca(fn->getReturnType());
 
-  // Generate a local variable for each of the variables.
-  for (Decl const* p : d->parameters())
-    gen(p);
-  gen(d->body());
+  // Allocate storage for each parameter and cause its argument value
+  // to be copied to storage.
+  {
+    auto ai = fn->arg_begin();
+    auto pi = d.parameters().begin();
+    while (ai != fn->arg_end()) {
+      Decl const& p = *pi;
+      llvm::Argument* arg = &*ai;
+
+      // Create a local variable for the argument, and store copy
+      // the argument into that storage.
+      llvm::Type* t = arg->getType();
+      llvm::Value* var = build.CreateAlloca(t);
+      build.CreateStore(arg, var);
+
+      // Bind the parameter to the allocated variable.
+      declare(p, var);
+
+      ++ai;
+      ++pi;
+    }
+  }
+  
+  // Generate the body.
+  // gen(d.definition());
+  
+  // Followed by an explicit branch to the exit, if needed.
   entry = build.GetInsertBlock();
   if (!entry->getTerminator())
     build.CreateBr(exit);
@@ -1039,15 +1112,9 @@ Generator::gen(Function_decl const* d)
 }
 
 
-void
-Generator::gen(Parameter_decl const* d)
-{
-  llvm::Type* t = get_type(d->type());
-  llvm::Value* a = stack.top().get(d).second;
-  llvm::Value* v = build.CreateAlloca(t);
-  stack.top().rebind(d, v);
-  build.CreateStore(a, v);
-}
+#if 0
+
+
 
 
 // Generate a new struct type.
