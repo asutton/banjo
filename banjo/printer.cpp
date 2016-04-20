@@ -1294,6 +1294,7 @@ Printer::declaration(Decl const& d)
     Printer& p;
 
     void operator()(Decl const& d)           { lingo_unhandled(d); }
+    void operator()(Super_decl const& d)     { p.super_declaration(d); }
     void operator()(Variable_decl const& d)  { p.variable_declaration(d); }
     void operator()(Function_decl const& d)  { p.function_declaration(d); }
     void operator()(Type_decl const& d)      { p.type_declaration(d); }
@@ -1321,6 +1322,21 @@ Printer::declaration_seq(Decl_list const& ds)
   }
 }
 
+// -------------------------------------------------------------------------- //
+// Super declarations
+
+void
+Printer::super_declaration(Super_decl const& d)
+{
+  token(super_tok);
+  space();
+  //identifier(d);
+  binary_operator(colon_tok);
+  space();
+  type(d.type());
+  token(semicolon_tok);
+
+}
 
 // Write the specifier token followed by a space.
 void

@@ -835,6 +835,7 @@ Generator::gen(Decl const* d)
   struct Fn
   {
     Generator& g;
+    void operator()(Super_decl const* d)  { return g.gen(d); }
     void operator()(Variable_decl const* d) { return g.gen(d); }
     void operator()(Function_decl const* d) { return g.gen(d); }
     void operator()(Parameter_decl const* d) { return g.gen(d); }
@@ -846,6 +847,11 @@ Generator::gen(Decl const* d)
   return apply(d, Fn{*this});
 }
 
+void
+Generator::gen(Super_decl const* d)
+{
+  // TODO Do something here...
+}
 
 void
 Generator::gen_local(Variable_decl const* d)

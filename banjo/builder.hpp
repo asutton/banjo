@@ -138,6 +138,9 @@ struct Builder
   Expression_stmt&  make_expression_statement(Expr&);
   Declaration_stmt& make_declaration_statement(Decl&);
 
+  // Supers
+  Super_decl&  make_super_declaration(Type&);
+
   // Variables
   Variable_decl&  make_variable_declaration(Name&, Type&);
   Variable_decl&  make_variable_declaration(Name&, Type&, Expr&);

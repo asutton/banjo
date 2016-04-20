@@ -128,6 +128,8 @@ Parser::declaration()
   specifier_seq();
 
   switch (lookahead()) {
+    case super_tok:
+      return super_declaration();
     case var_tok:
       return variable_declaration();
     case def_tok:
@@ -142,7 +144,50 @@ Parser::declaration()
   throw Syntax_error("invalid declaration");
 }
 
+// -------------------------------------------------------------------------- //
 
+// Parse a super type (inheritance declaration)
+
+//
+// Super declaration:
+//
+//  explicit identifier:
+//
+//    super <identifier> : Type_name;
+//
+//  implicit identifier:
+//
+//    super : Type_name;
+
+Decl&
+Parser::super_declaration()
+{
+  require(super_tok);
+
+  Name* name;
+
+  if(next_token_is(identifier_tok)) // If the user optionally named the super class
+  {
+    name = &identifier();
+  }
+  else
+  {
+    name = &build.get_id();
+  }
+
+  // The rest of this is exactly the same as a variable declarataion
+  // and it even calls on_variable_declaration
+
+  match(colon_tok);
+
+  // Match the type.
+  Type& type = unparsed_variable_type();
+
+  // Match the "name : type ;" form.
+  match(semicolon_tok);
+  return on_super_declaration(*name, type);
+
+}
 // -------------------------------------------------------------------------- //
 // Variable declarations
 
@@ -540,8 +585,10 @@ Parser::type_declaration()
   require(type_tok);
   Name& name = identifier();
 
+
   match_if(colon_tok);
   Type& kind = next_token_is(lbrace_tok) ? cxt.get_type_type() : unparsed_type_kind();
+
 
   Stmt& body = unparsed_type_body();
 

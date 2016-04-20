@@ -37,6 +37,7 @@ Parser::statement()
     case private_tok:
     case protected_tok:
     // Declaration introducers.
+    case super_tok:
     case var_tok:
     case def_tok:
     case type_tok:

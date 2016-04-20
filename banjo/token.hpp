@@ -103,6 +103,7 @@ enum Token_kind
   return_tok,
   static_tok,
   struct_tok,
+  super_tok,
   switch_tok,
   template_tok,
   true_tok,

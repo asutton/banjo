@@ -160,6 +160,9 @@ struct Printer
   void specifier(Token_kind);
   void specifier_seq(Specifier_set);
 
+  // Supers
+  void super_declaration(Super_decl const&);
+
   // Variables
   void variable_declaration(Variable_decl const&);
   void variable_initializer(Def const&);
