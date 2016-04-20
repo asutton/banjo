@@ -762,7 +762,7 @@ Generator::gen(Translation_stmt const& s)
   //
   // FIXME: This is stupid. Actually dump it to a file.
   std::error_code err;
-  llvm::raw_fd_ostream ofs(0, false);
+  llvm::raw_fd_ostream ofs(STDOUT_FILENO, false);
   ofs << *mod;
 }
 
@@ -1066,8 +1066,11 @@ Generator::gen(Function_decl const& d)
   exit = llvm::BasicBlock::Create(cxt, "exit");
   build.SetInsertPoint(entry);
 
-  // Build the return value.
-  ret = build.CreateAlloca(fn->getReturnType());
+  // Build storage for the return value if non-void.
+  if (!is<Void_type>(d.return_type()))
+    ret = build.CreateAlloca(fn->getReturnType());
+  else
+    ret = nullptr;
 
   // Allocate storage for each parameter and cause its argument value
   // to be copied to storage.
@@ -1104,7 +1107,12 @@ Generator::gen(Function_decl const& d)
   // return statement,
   fn->getBasicBlockList().push_back(exit);
   build.SetInsertPoint(exit);
-  build.CreateRet(build.CreateLoad(ret));
+
+  // Load and return the returned value.
+  if (ret)
+    build.CreateRet(build.CreateLoad(ret));
+  else
+    build.CreateRetVoid();
 
   // Reset stateful info.
   ret = nullptr;
