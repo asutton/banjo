@@ -21,6 +21,10 @@ namespace banjo
 // give some more specific kind of error (like fatal?).
 struct Compiler_error : std::runtime_error
 {
+  Compiler_error()
+    : Compiler_error(error_diag, String("compiler error"))
+  { }
+
   Compiler_error(Diagnostic d)
     : std::runtime_error(""), diag(d)
   { }
@@ -121,6 +125,13 @@ struct Lookup_error : Translation_error
 // Represets a type error. Type errors occur when one type (or kind
 // of type) is expected, but another type is given.
 struct Type_error : Translation_error
+{
+  using Translation_error::Translation_error;
+};
+
+
+// Represets an error resulting from an invalid declaration of a name.
+struct Declaration_error : Translation_error
 {
   using Translation_error::Translation_error;
 };

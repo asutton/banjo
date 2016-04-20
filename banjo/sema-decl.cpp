@@ -145,7 +145,7 @@ Decl&
 Parser::on_type_declaration(Name& n, Type& t, Stmt& s)
 {
   Decl& d = build.make_type_declaration(n, t, s);
-  declare(cxt, current_scope(), d);
+  remember(cxt, current_scope(), d);
   return d;
 }
 

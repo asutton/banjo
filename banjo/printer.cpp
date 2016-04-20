@@ -1484,8 +1484,6 @@ Printer::function_definition(Defaulted_def const&)
 }
 
 
-
-
 void
 Printer::type_declaration(Type_decl const& d)
 {
@@ -1493,10 +1491,7 @@ Printer::type_declaration(Type_decl const& d)
   space();
   identifier(d);
   binary_operator(colon_tok);
-
-  // FIXME: This looks weird, but it's right.
-  token(type_tok);
-
+  type(d.type());
   type_definition(d.definition());
 }
 
@@ -1521,7 +1516,6 @@ Printer::type_definition(Type_def const& d)
   newline();
   statement(d.body());
 }
-
 
 
 void

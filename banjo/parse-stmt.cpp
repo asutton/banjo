@@ -223,13 +223,7 @@ Parser::statement_seq()
     Stmt& s = statement();
     ss.push_back(s);
   } while (!is_eof() && next_token_is_not(rbrace_tok));
-
-  // Second pass: Resolve declared types.
-  elaborate_declarations(ss);
-
-  // Third pass: Resolve definitions.
-  elaborate_definitions(ss);
-
+  on_statement_seq(ss);
   return ss;
 }
 

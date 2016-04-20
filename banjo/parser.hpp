@@ -196,6 +196,14 @@ struct Parser
   void elaborate_type_declaration(Type_decl&);
   Type& elaborate_type(Type&);
 
+  // Overloading
+  void elaborate_overloads(Stmt_list&);
+  void elaborate_overloads(Stmt&);
+  void elaborate_overloads(Decl&);
+
+  // Partial definitions
+  void elaborate_partials(Stmt_list&);
+
   // Definition elaboration
   void elaborate_definitions(Stmt_list&);
   void elaborate_definition(Stmt&);
@@ -301,6 +309,7 @@ struct Parser
   Stmt& on_declaration_statement(Decl&);
   Stmt& on_expression_statement(Expr&);
   Stmt& on_unparsed_statement(Token_seq&&);
+  void on_statement_seq(Stmt_list&);
 
   // Super declarations
   Decl& on_super_declaration(Name&, Type&);

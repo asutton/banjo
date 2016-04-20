@@ -27,6 +27,8 @@ add_library(banjo
   sema-req.cpp
   elab-decl.cpp
   elab-def.cpp
+  elab-overloads.cpp
+  elab-partials.cpp
   printer.cpp
 
   # Core facilities
