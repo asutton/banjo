@@ -129,9 +129,6 @@ struct Parser
   // Specifiers
   Specifier_set specifier_seq();
 
-  // Super
-  Decl& super_declaration();
-
   // Variables
   Decl& variable_declaration();
   Type& unparsed_variable_type();
@@ -157,6 +154,9 @@ struct Parser
   Decl& type_declaration();
   Type& unparsed_type_kind();
   Stmt& unparsed_type_body();
+
+  // Base classes.
+  Decl& super_declaration();
 
   // Templates
   Decl& template_declaration();
@@ -190,8 +190,7 @@ struct Parser
   void elaborate_declarations(Stmt_list&);
   void elaborate_declaration(Stmt&);
   void elaborate_declaration(Decl&);
-  void elaborate_super_declaration(Super_decl&);
-  void elaborate_variable_declaration(Variable_decl&);
+  void elaborate_object_declaration(Object_decl&);
   void elaborate_function_declaration(Function_decl&);
   void elaborate_type_declaration(Type_decl&);
   Type& elaborate_type(Type&);

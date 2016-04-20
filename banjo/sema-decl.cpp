@@ -18,7 +18,7 @@ Decl&
 Parser::on_super_declaration(Name& n, Type& t)
 {
   Decl& d = cxt.make_super_declaration(t);
-  remember(cxt, current_scope(), d);
+  declare(cxt, d);
   return d;
 }
 
@@ -47,7 +47,7 @@ Parser::on_variable_declaration(Name& n, Type& t)
     ret = &cxt.make_variable_declaration(n, t);
   ret->spec_ = take_decl_specs();
 
-  remember(cxt, current_scope(), *ret);
+  declare(cxt, *ret);
   return *ret;
 }
 
@@ -62,7 +62,7 @@ Parser::on_variable_declaration(Name& n, Type& t, Expr& e)
   else
     ret = &cxt.make_variable_declaration(n, t, e);
   ret->spec_ = take_decl_specs();
-  remember(cxt, current_scope(), *ret);
+  declare(cxt, *ret);
   return *ret;
 }
 
@@ -79,7 +79,7 @@ Parser::on_function_declaration(Name& n, Decl_list& p, Type& t, Expr& e)
   else
     ret = &cxt.make_function_declaration(n, p, t, e);
   ret->spec_ = take_decl_specs();
-  remember(cxt, current_scope(), *ret);
+  declare(cxt, *ret);
   return *ret;
 }
 
@@ -93,13 +93,13 @@ Parser::on_function_declaration(Name& n, Decl_list& p, Type& t, Stmt& s)
   else
     ret = &cxt.make_function_declaration(n, p, t, s);
   ret->spec_ = take_decl_specs();
-  remember(cxt, current_scope(), *ret);
+  declare(cxt, *ret);
   return *ret;
 }
 
 
 // In the first pass, just create the parameter. We'll declare it
-// during elaboration.
+// during elaboration of the function's definition.
 Decl&
 Parser::on_function_parameter(Name& n, Type& t)
 {
@@ -145,7 +145,7 @@ Decl&
 Parser::on_type_declaration(Name& n, Type& t, Stmt& s)
 {
   Decl& d = build.make_type_declaration(n, t, s);
-  remember(cxt, current_scope(), d);
+  declare(cxt, current_scope(), d);
   return d;
 }
 

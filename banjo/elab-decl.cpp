@@ -37,23 +37,18 @@ Parser::elaborate_declaration(Decl& d)
   struct fn
   {
     Parser& p;
-    void operator()(Decl& d) { lingo_unhandled(d); }
-    void operator()(Super_decl& d) { p.elaborate_super_declaration(d); }
-    void operator()(Variable_decl& d) { p.elaborate_variable_declaration(d); }
+    void operator()(Decl& d)          { lingo_unhandled(d); }
+    void operator()(Object_decl& d)   { p.elaborate_object_declaration(d); }
     void operator()(Function_decl& d) { p.elaborate_function_declaration(d); }
     void operator()(Type_decl& d)     { p.elaborate_type_declaration(d); }
   };
   apply(d, fn{*this});
 }
 
-void
-Parser::elaborate_super_declaration(Super_decl& d)
-{
-  d.type_ = &elaborate_type(d.type());
-}
+
 
 void
-Parser::elaborate_variable_declaration(Variable_decl& d)
+Parser::elaborate_object_declaration(Object_decl& d)
 {
   d.type_ = &elaborate_type(d.type());
 }

@@ -7,5 +7,7 @@
 // type t1 { }
 // var t1 : int;
 
-type t2 : int { }
-type t2 { }
+// type t2 : int { }
+// type t2 { }
+
+def f0 : (x, x) -> void { }

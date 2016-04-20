@@ -39,38 +39,15 @@ Parser::elaborate_definition(Decl& d)
   {
     Parser& p;
     void operator()(Decl& d)          { lingo_unhandled(d); }
-    void operator()(Super_decl& d)    { p.elaborate_super_declaration(d);}
     void operator()(Variable_decl& d) { p.elaborate_variable_initializer(d); }
     void operator()(Function_decl& d) { p.elaborate_function_definition(d); }
     void operator()(Type_decl& d)     { p.elaborate_type_definition(d); }
+    void operator()(Super_decl& d)    { /* Nothing to do. */ }
   };
   apply(d, fn{*this});
 }
 
-void
-Parser::elaborate_super_initializer(Super_decl& d)
-{
-  struct fn
-  {
-    Parser& p;
-    Super_decl& super;
-    void operator()(Def& d)             { lingo_unhandled(d); }
-    void operator()(Empty_def& d)       { p.elaborate_super_initializer(super, d); }
-    void operator()(Expression_def& d)  { p.elaborate_super_initializer(super, d); }
-  };
-  apply(d.initializer(), fn{*this, d});
-}
 
-// TODO: Is there anything that needs to be done here? Like something with a constructor
-void
-Parser::elaborate_super_initializer(Super_decl& decl, Empty_def& def)
-{ }
-
-void
-Parser::elaborate_super_initializer(Super_decl& decl, Expression_def& def)
-{
-  lingo_unimplemented("You cannot presently default initialize a super declaration");
-}
 
 void
 Parser::elaborate_variable_initializer(Variable_decl& d)
