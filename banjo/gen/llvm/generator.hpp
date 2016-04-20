@@ -96,15 +96,24 @@ struct Generator
   void gen(Translation_stmt const&);
   void gen(Member_stmt const&);
   void gen(Compound_stmt const&);
+  void gen(Return_stmt const&);
+  void gen(If_then_stmt const&);
+  void gen(If_else_stmt const&);
+  void gen(While_stmt const&);
+  void gen(Break_stmt const&);
+  void gen(Continue_stmt const&);
   void gen(Expression_stmt const&);
   void gen(Declaration_stmt const&);
-  void gen(Return_stmt const&);
+  void gen(Stmt_list const&);
+
 
   void gen(Decl const&);
   void gen(Variable_decl const&);
   void gen_local_variable(Variable_decl const&);
   void gen_global_variable(Variable_decl const&);
   void gen(Function_decl const&);
+  void gen_function_definition(Def const&);
+  void gen_function_definition(Function_def const&);
   void gen(Type_decl const&);
   void gen(Object_parm const&);
 
@@ -122,10 +131,10 @@ struct Generator
   // Information about the current function.
   llvm::Function*   fn;
   llvm::Value*      ret;
-  llvm::BasicBlock* entry;  // Function entry
-  llvm::BasicBlock* exit;   // Function exit
-  llvm::BasicBlock* top;    // Loop top
-  llvm::BasicBlock* bottom; // Loop bottom
+  llvm::BasicBlock* entry; // Function entry
+  llvm::BasicBlock* exit;  // Function exit
+  llvm::BasicBlock* top;   // Loop top
+  llvm::BasicBlock* bot;   // Loop bottom
 
   // Environment.
   int           declcxt; // The current declaration context
@@ -133,6 +142,7 @@ struct Generator
   Type_env      types;   // Declared types
 
   struct Enter_context;
+  struct Enter_loop;
 };
 
 
@@ -176,6 +186,30 @@ struct Generator::Enter_context
   Generator& gen;
   int        prev;
 };
+
+
+
+// An RAII class that manages the top and bottom
+// blocks of loops. These are the current jump
+// targets for the break and continue statements.
+struct Generator::Enter_loop
+{
+  Enter_loop(Generator& g)
+    : gen(g), top(gen.top), bot(gen.bot)
+  {
+  }
+
+  ~Enter_loop()
+  {
+    gen.top = top;
+    gen.bot = bot;
+  }
+
+  Generator& gen;
+  llvm::BasicBlock* top;  // Pevious loop top
+  llvm::BasicBlock* bot;  // Previos loop bottom
+};
+
 
 
 } // namespace ll

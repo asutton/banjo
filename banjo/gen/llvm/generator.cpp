@@ -4,6 +4,7 @@
 #include "generator.hpp"
 
 #include <banjo/ast.hpp>
+#include <banjo/printer.hpp>
 
 #include <llvm/IR/Type.h>
 #include <llvm/IR/GlobalVariable.h>
@@ -165,7 +166,6 @@ Generator::get_type(Forward_type const& t)
 }
 
 
-#if 0
 // -------------------------------------------------------------------------- //
 // Code generation for expressions
 //
@@ -173,45 +173,68 @@ Generator::get_type(Forward_type const& t)
 // intermediate results are saved in registers.
 
 llvm::Value*
-Generator::gen(Expr const* e)
+Generator::gen(Expr const& e)
 {
-  struct Fn
+  struct fn
   {
     Generator& g;
-    llvm::Value* operator()(Literal_expr const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Id_expr const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Decl_expr const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Lambda_expr const* e) const { lingo_unreachable(); }
-    llvm::Value* operator()(Add_expr const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Sub_expr const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Mul_expr const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Div_expr const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Rem_expr const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Neg_expr const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Pos_expr const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Eq_expr const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Ne_expr const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Lt_expr const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Gt_expr const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Le_expr const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Ge_expr const* e) const { return g.gen(e); }
-    llvm::Value* operator()(And_expr const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Or_expr const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Not_expr const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Call_expr const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Dot_expr const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Field_expr const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Method_expr const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Index_expr const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Value_conv const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Promote_conv const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Block_conv const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Base_conv const* e) const { return g.gen(e); }
-    llvm::Value* operator()(Init const* e) const { lingo_unreachable(); }
+    llvm::Value* operator()(Expr const& e) { lingo_unhandled(e); }
+    llvm::Value* operator()(Boolean_expr const& e) { return g.gen(e); }
+    llvm::Value* operator()(Integer_expr const& e) { return g.gen(e); }
+    
+    // llvm::Value* operator()(Id_expr const* e) const { return g.gen(e); }
+    // llvm::Value* operator()(Decl_expr const* e) const { return g.gen(e); }
+    // llvm::Value* operator()(Lambda_expr const* e) const { lingo_unreachable(); }
+    // llvm::Value* operator()(Add_expr const* e) const { return g.gen(e); }
+    // llvm::Value* operator()(Sub_expr const* e) const { return g.gen(e); }
+    // llvm::Value* operator()(Mul_expr const* e) const { return g.gen(e); }
+    // llvm::Value* operator()(Div_expr const* e) const { return g.gen(e); }
+    // llvm::Value* operator()(Rem_expr const* e) const { return g.gen(e); }
+    // llvm::Value* operator()(Neg_expr const* e) const { return g.gen(e); }
+    // llvm::Value* operator()(Pos_expr const* e) const { return g.gen(e); }
+    // llvm::Value* operator()(Eq_expr const* e) const { return g.gen(e); }
+    // llvm::Value* operator()(Ne_expr const* e) const { return g.gen(e); }
+    // llvm::Value* operator()(Lt_expr const* e) const { return g.gen(e); }
+    // llvm::Value* operator()(Gt_expr const* e) const { return g.gen(e); }
+    // llvm::Value* operator()(Le_expr const* e) const { return g.gen(e); }
+    // llvm::Value* operator()(Ge_expr const* e) const { return g.gen(e); }
+    // llvm::Value* operator()(And_expr const* e) const { return g.gen(e); }
+    // llvm::Value* operator()(Or_expr const* e) const { return g.gen(e); }
+    // llvm::Value* operator()(Not_expr const* e) const { return g.gen(e); }
+    // llvm::Value* operator()(Call_expr const* e) const { return g.gen(e); }
+    // llvm::Value* operator()(Dot_expr const* e) const { return g.gen(e); }
+    // llvm::Value* operator()(Field_expr const* e) const { return g.gen(e); }
+    // llvm::Value* operator()(Method_expr const* e) const { return g.gen(e); }
+    // llvm::Value* operator()(Index_expr const* e) const { return g.gen(e); }
+    // llvm::Value* operator()(Value_conv const* e) const { return g.gen(e); }
+    // llvm::Value* operator()(Promote_conv const* e) const { return g.gen(e); }
+    // llvm::Value* operator()(Block_conv const* e) const { return g.gen(e); }
+    // llvm::Value* operator()(Base_conv const* e) const { return g.gen(e); }
+    // llvm::Value* operator()(Init const* e) const { lingo_unreachable(); }
   };
 
-  return apply(e, Fn{*this});
+  std::cout << "EXPR: " << e << '\n';
+  return apply(e, fn{*this});
 }
+
+
+llvm::Value*
+Generator::gen(Boolean_expr const& e)
+{
+  return build.getInt1(e.value());
+}
+
+
+// TODO: Respect the precision of the integer type.
+llvm::Value*
+Generator::gen(Integer_expr const& e)
+{
+  return build.getInt(e.value().impl());
+}
+
+
+
+#if 0
 
 
 namespace
@@ -708,9 +731,6 @@ Generator::gen_init(llvm::Value* ptr, Reference_init const* e)
 
 // -------------------------------------------------------------------------- //
 // Code generation for statements
-//
-// The statement generator is responsible for
-// the generation of statements at block scope.
 
 void
 Generator::gen(Stmt const& s)
@@ -721,17 +741,15 @@ Generator::gen(Stmt const& s)
     void operator()(Stmt const& s)             { lingo_unhandled(s); }
     void operator()(Empty_stmt const& s)       { g.gen(s); }
     void operator()(Translation_stmt const& s) { g.gen(s); }
+    void operator()(Compound_stmt const& s)    { g.gen(s); }
+    void operator()(Return_stmt const& s)      { g.gen(s); }
+    void operator()(If_then_stmt const& s)     { g.gen(s); }
+    void operator()(If_else_stmt const& s)     { g.gen(s); }
+    void operator()(While_stmt const& s)       { g.gen(s); }
+    void operator()(Break_stmt const& s)       { g.gen(s); }
+    void operator()(Continue_stmt const& s)    { g.gen(s); }
     void operator()(Declaration_stmt const& s) { g.gen(s); }
-
-    // void operator()(Block_stmt const* s) { g.gen(s); }
-    // void operator()(Assign_stmt const* s) { g.gen(s); }
-    // void operator()(Return_stmt const* s) { g.gen(s); }
-    // void operator()(If_then_stmt const* s) { g.gen(s); }
-    // void operator()(If_else_stmt const* s) { g.gen(s); }
-    // void operator()(While_stmt const* s) { g.gen(s); }
-    // void operator()(Break_stmt const* s) { g.gen(s); }
-    // void operator()(Continue_stmt const* s) { g.gen(s); }
-    // void operator()(Expression_stmt const* s) { g.gen(s); }
+    // void operator()(Expression_stmt const& s) { g.gen(s); }
   };
   apply(s, Fn{*this});
 }
@@ -755,8 +773,7 @@ Generator::gen(Translation_stmt const& s)
   lingo_assert(!mod);
   mod = new llvm::Module("a.ll", cxt);
 
-  for (Stmt const& stmt : s.statements())
-    gen(stmt);
+  gen(s.statements());
 
   // Dump the code to stdout.
   //
@@ -767,57 +784,38 @@ Generator::gen(Translation_stmt const& s)
 }
 
 
-void
-Generator::gen(Declaration_stmt const& s)
-{
-  gen(s.declaration());
-}
-
-
-#if 0
-
-
-// Generate code for a sequence of statements.
-// Note that this does not correspond to a basic
-// block since we don't need any terminators
+// Generate code for a sequence of statements. Note that this does not 
+// correspond to a basic block since we don't need any terminators
 // in the following program.
 //
 //    {
 //      { ; }
 //    }
 //
-// We only need new blocks for specific control
-// flow concepts.
+// We only need new blocks for specific control flow concepts.
 void
-Generator::gen(Block_stmt const* s)
+Generator::gen(Compound_stmt const& s)
 {
-  for (Stmt const* s1 : s->statements())
-    gen(s1);
+  gen(s.statements());
 }
 
 
+// Generate a return statement. Note that this does not return diretctly. 
+// We store the return value and then branch to the exit block. This strategy 
+// allows us to execute destructors in the exit block.
 void
-Generator::gen(Assign_stmt const* s)
+Generator::gen(Return_stmt const& s)
 {
-  llvm::Value* lhs = gen(s->object());
-  llvm::Value* rhs = gen(s->value());
-  build.CreateStore(rhs, lhs);
-}
-
-
-void
-Generator::gen(Return_stmt const* s)
-{
-  llvm::Value* v = gen(s->value());
+  llvm::Value* v = gen(s.expression());
   build.CreateStore(v, ret);
   build.CreateBr(exit);
 }
 
 
 void
-Generator::gen(If_then_stmt const* s)
+Generator::gen(If_then_stmt const& s)
 {
-  llvm::Value* cond = gen(s->condition());
+  llvm::Value* cond = gen(s.condition());
 
   llvm::BasicBlock* then = llvm::BasicBlock::Create(cxt, "if.then", fn);
   llvm::BasicBlock* done = llvm::BasicBlock::Create(cxt, "if.done", fn);
@@ -825,7 +823,7 @@ Generator::gen(If_then_stmt const* s)
 
   // Emit the 'then' block
   build.SetInsertPoint(then);
-  gen(s->body());
+  gen(s.true_branch());
   then = build.GetInsertBlock();
   if (!then->getTerminator())
     build.CreateBr(done);
@@ -836,9 +834,9 @@ Generator::gen(If_then_stmt const* s)
 
 
 void
-Generator::gen(If_else_stmt const* s)
+Generator::gen(If_else_stmt const& s)
 {
-  llvm::Value* cond = gen(s->condition());
+  llvm::Value* cond = gen(s.condition());
 
   llvm::BasicBlock* then = llvm::BasicBlock::Create(cxt, "if.then", fn);
   llvm::BasicBlock* other = llvm::BasicBlock::Create(cxt, "if.else", fn);
@@ -847,14 +845,14 @@ Generator::gen(If_else_stmt const* s)
 
   // Emit the then block.
   build.SetInsertPoint(then);
-  gen(s->true_branch());
+  gen(s.true_branch());
   then = build.GetInsertBlock();
   if (!then->getTerminator())
     build.CreateBr(done);
 
   // Emit the else block.
   build.SetInsertPoint(other);
-  gen(s->false_branch());
+  gen(s.false_branch());
   other = build.GetInsertBlock();
   if (!other->getTerminator())
     build.CreateBr(done);
@@ -865,49 +863,79 @@ Generator::gen(If_else_stmt const* s)
 
 
 void
-Generator::gen(While_stmt const* s)
+Generator::gen(While_stmt const& s)
 {
   // Save the current loop information, to be restored
   // on scope exit.
-  Loop_sentinel loop(*this);
+  Enter_loop loop(*this);
 
   // Create the new loop blocks.
   top = llvm::BasicBlock::Create(cxt, "while.top", fn);
-  bottom = llvm::BasicBlock::Create(cxt, "while.bottom", fn);
-  llvm::BasicBlock* body = llvm::BasicBlock::Create(cxt, "while.body", fn, bottom);
+  bot = llvm::BasicBlock::Create(cxt, "while.bot", fn);
+  llvm::BasicBlock* body = llvm::BasicBlock::Create(cxt, "while.body", fn, bot);
   build.CreateBr(top);
 
   // Emit the condition test.
   build.SetInsertPoint(top);
-  llvm::Value* cond = gen(s->condition());
-  build.CreateCondBr(cond, body, bottom);
+  llvm::Value* cond = gen(s.condition());
+  build.CreateCondBr(cond, body, bot);
 
   // Emit the loop body.
   build.SetInsertPoint(body);
-  gen(s->body());
+  gen(s.body());
   body = build.GetInsertBlock();
   if (!body->getTerminator())
     build.CreateBr(top);
 
   // Emit the bottom block.
-  build.SetInsertPoint(bottom);
+  build.SetInsertPoint(bot);
 }
 
 
 // Branch to the bottom of the current loop.
 void
-Generator::gen(Break_stmt const* s)
+Generator::gen(Break_stmt const& s)
 {
-  build.CreateBr(bottom);
+  build.CreateBr(bot);
 }
 
 
 // Branch to the top of the current loop.
 void
-Generator::gen(Continue_stmt const* s)
+Generator::gen(Continue_stmt const& s)
 {
   build.CreateBr(top);
 }
+
+
+void
+Generator::gen(Declaration_stmt const& s)
+{
+  gen(s.declaration());
+}
+
+
+
+void
+Generator::gen(Stmt_list const& s)
+{
+  for (Stmt const& stmt : s)
+    gen(stmt);
+}
+
+
+#if 0
+
+
+
+void
+Generator::gen(Assign_stmt const* s)
+{
+  llvm::Value* lhs = gen(s->object());
+  llvm::Value* rhs = gen(s->value());
+  build.CreateStore(rhs, lhs);
+}
+
 
 
 void
@@ -943,35 +971,23 @@ Generator::gen(Decl const& d)
 void
 Generator::gen_local_variable(Variable_decl const& d)
 {
-  lingo_unimplemented("local variables");
+  // Create the alloca instruction at the beginning of
+  // the function. Not at the point where we get it.
+  llvm::BasicBlock& b = fn->getEntryBlock();
+  llvm::IRBuilder<> tmp(&b, b.begin());
+  llvm::Type* type = get_type(d.type());
 
-  // // Create the alloca instruction at the beginning of
-  // // the function. Not at the point where we get it.
-  // llvm::BasicBlock& b = fn->getEntryBlock();
-  // llvm::IRBuilder<> tmp(&b, b.begin());
-  // llvm::Type* type = get_type(d->type());
-  // String name = d->name()->spelling();
-  // llvm::Value* ptr = tmp.CreateAlloca(type, nullptr, name);
+  // TODO: Between this and parameter names, I'm convinced I need
+  // an easier way to get non-mangled ids.
+  Simple_id const& id = cast<Simple_id>(d.name());
+  String name = id.symbol().spelling();
+  llvm::Value* ptr = tmp.CreateAlloca(type, nullptr, name);
 
-  // // Save the decl binding.
-  // stack.top().bind(d, ptr);
+  // Save the decl binding.
+  declare(d, ptr);
 
-  // // Generate the initializer.
+  // Generate the initializer.
   // gen_init(ptr, d->init());
-
-  // // If the variable has polymorphic record type,
-  // // initialize its vref to the appropriate table.
-  // //
-  // // FIXME: This is totally broken if it doesn't
-  // // happen before initialization. Also, note that
-  // // polymorphic types cannot be zero-initialized.
-  // // Only member-wise initialized.
-  // if (Record_type const* rt = as<Record_type>(d->type())) {
-  //   Record_decl const* rec = rt->declaration();
-  //   llvm::Value* vtbl = vtables.find(rec)->second;
-  //   llvm::Value* vref = gen_vref(rec, ptr);
-  //   build.CreateStore(vtbl, vref);
-  // }
 }
 
 
@@ -1096,7 +1112,7 @@ Generator::gen(Function_decl const& d)
   }
   
   // Generate the body.
-  // gen(d.definition());
+  gen_function_definition(d.definition());
   
   // Followed by an explicit branch to the exit, if needed.
   entry = build.GetInsertBlock();
@@ -1117,6 +1133,23 @@ Generator::gen(Function_decl const& d)
   // Reset stateful info.
   ret = nullptr;
   fn = nullptr;
+}
+
+
+void 
+Generator::gen_function_definition(Def const& d)
+{
+  // At this point, we only have function definitions.
+  if (Function_def const* f = as<Function_def>(&d))
+    return gen_function_definition(*f);
+  lingo_unreachable();
+}
+
+
+void
+Generator::gen_function_definition(Function_def const& d)
+{
+  gen(d.statement());
 }
 
 
