@@ -316,9 +316,9 @@ Builder::get_reference_type(Type& t)
 
 
 Array_type&
-Builder::get_array_type(Type&, Expr&)
+Builder::get_array_type(Type& t, Expr& e)
 {
-  lingo_unimplemented("array-type");
+  return make<Array_type>(t,e);
 }
 
 
@@ -330,9 +330,9 @@ Builder::get_slice_type(Type& t)
 
 
 Dynarray_type&
-Builder::get_dynarray_type(Type&, Expr&)
+Builder::get_dynarray_type(Type& t, Expr& e)
 {
-  lingo_unimplemented("dynarray-type");
+  return make<Dynarray_type>(t,e);
 }
 
 

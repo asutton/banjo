@@ -78,7 +78,10 @@ make_pointer_type(Context& cxt, Type& t)
 Type&
 make_array_type(Context& cxt, Type& t, Expr& e)
 {
-  return cxt.get_array_type(t, e);
+  if(is<Integer_type>(e.type())) {
+    return cxt.get_array_type(t, e);
+  }
+  return cxt.get_dynarray_type(t,e);
 }
 
 
