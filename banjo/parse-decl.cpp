@@ -227,33 +227,48 @@ Parser::function_declaration()
     }
   }
 
+  // Parse Coroutine definition
+  Parser::coroutine_declaration()
+  {
+    require(coroutine_tok); // co_def
+    Name& name = identifier(); // Name of coroutine
+    match(colon_tok);
+
+    Decl_list parms = parameter_clause();
+
+    // -> type function-definition.
+    if (match_if(arrow_tok)) {
+      Type& yield = unparsed_return_type();
+
+      // = expression ;
+      if (match_if(eq_tok)) {
+        Expr& body = unparsed_expression_body();
+        match(semicolon_tok);
+        return on_function_declaration(name, parms, yield, body);
+      }
+
+        // { ... }
+      else {
+        Stmt& body = unparsed_function_body();
+        return on_function_declaration(name, parms, yield, body);
+      }
+    }
+
   // Otherwise, the return type is unspecified, allowing for
   // anonymous expressions.
-  Type& ret = cxt.get_auto_type();
+  Type& yield = cxt.get_auto_type();
 
   // { ... }
   if (next_token_is(lbrace_tok)) {
     Stmt& body = unparsed_function_body();
-    return on_function_declaration(name, parms, ret, body);
+    return on_function_declaration(name, parms, yield, body);
   }
 
   // ''= expression ;' or 'expression ;'
   match_if(eq_tok);
   Expr& body = unparsed_expression_body();
   match(semicolon_tok);
-  return on_function_declaration(name, parms, ret, body);
-}
-
-Decl&
-Parser::coroutine_declaration()
-{
-  require(coroutine_tok);
-  Name& name = identifier();
-  match(colon_tok);
-
-
-
-  lingo_unimplemented("coroutine_declaration");
+  return on_function_declaration(name, parms, yield, body);
 }
 
 // Parse a parameter clause.
