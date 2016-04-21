@@ -92,9 +92,9 @@ struct Integer_type : Type
   int  prec;
 };
 
-// Byte type.
-// Not sure if we should have precision? Are all bytes going to be 8 bits or is
-// it architecture dependent? Also are we going to have signed bytes?
+
+// Represents the type of a byte. A byte is the fundamental unit of storage 
+// and is comprised of an implementation defined sequence of bits. 
 struct Byte_type : Type
 {
   void accept(Visitor& v) const { v.visit(*this); }
@@ -167,6 +167,30 @@ struct Declauto_type : Type
 };
 
 
+// A user-defined type refers to its declaration.
+//
+// FIXME: Rename to Record_type.
+struct User_type : Type
+{
+  User_type(Decl& d)
+    : decl_(&d)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the name of the user-defined type.
+  Name const& name() const;
+  Name&       name();
+
+  // Returns the declaration of the user-defined type.
+  Type_decl const& declaration() const;
+  Type_decl&       declaration();
+
+  Decl* decl_;
+};
+
+
 // A function type.
 struct Function_type : Type
 {
@@ -188,20 +212,32 @@ struct Function_type : Type
 };
 
 
-struct Qualified_type : Type
+// The base class of all unary type constructors.
+struct Unary_type : Type
+{
+  Unary_type(Type& t)
+    : type_(&t)
+  { }
+
+  Type const& type() const { return *type_; }
+  Type&       type()       { return *type_; }
+
+  Type* type_;
+};
+
+
+// A qualified type.
+struct Qualified_type : Unary_type
 {
   Qualified_type(Type& t, Qualifier_set q)
-    : ty(&t), qual(q)
+    : Unary_type(t), qual(q)
   {
     lingo_assert(q != empty_qual);
-    lingo_assert(!is<Qualified_type>(ty));
+    lingo_assert(!is<Qualified_type>(t));
   }
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-
-  Type const& type() const { return *ty; }
-  Type&       type()       { return *ty; }
 
   // Returns the qualifier for this type. Note that these
   // override functions in type.
@@ -209,48 +245,34 @@ struct Qualified_type : Type
   bool          is_const() const    { return qual & const_qual; }
   bool          is_volatile() const { return qual & volatile_qual; }
 
-  // Returns the unqualfiied version of this type.
+  // Returns the unqualified version of this type.
   Type const& unqualified_type() const { return type(); }
   Type&       unqualified_type()       { return type(); }
 
-  Type*         ty;
   Qualifier_set qual;
 };
 
 
-struct Pointer_type : Type
+struct Pointer_type : Unary_type
 {
-  Pointer_type(Type& t)
-    : ty(&t)
-  { }
+  using Unary_type::Unary_type;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-
-  Type const& type() const { return *ty; }
-  Type&       type()       { return *ty; }
-
-  Type* ty;
 };
 
 
-struct Reference_type : Type
+// Represents a reference to an object.
+struct Reference_type : Unary_type
 {
-  Reference_type(Type& t)
-    : ty(&t)
-  { }
+  using Unary_type::Unary_type;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-
-  Type const& type() const { return *ty; }
-  Type&       type()       { return *ty; }
 
   // Returns the non-reference version of this type.
   Type const& non_reference_type() const { return type(); }
   Type&       non_reference_type()       { return type(); }
-
-  Type* ty;
 };
 
 
@@ -269,6 +291,24 @@ struct Array_type : Type
   Expr* ext;
 };
 
+
+// The type of an unspecified slice of an array. This is essentially a
+// pointer to a subset of an array. This type does not contain information
+// related to offset, length, and stride.
+//
+// TODO: This type could contain information about offset, length, and
+// stride based on its construction from e.g., an array. In fact, that's
+// probably an excellent idea. We just need an expression that can construct
+// these objects.
+struct Slice_type : Unary_type
+{
+  using Unary_type::Unary_type;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
 struct Dynarray_type : Type
 {
   void accept(Visitor& v) const { v.visit(*this); }
@@ -284,67 +324,87 @@ struct Dynarray_type : Type
   Expr* ext;
 };
 
-// The type of an unspecified sequence of objects. An array
-// of unknown bound.
-struct Sequence_type : Type
+
+// The type of an input parameter.
+struct In_type : Unary_type
 {
-  Sequence_type(Type& t)
-    : ty(&t)
-  { }
+  using Unary_type::Unary_type;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-
-  Type const& type() const { return *ty; }
-  Type&       type()       { return *ty; }
-
-  Type* ty;
 };
 
 
-// The base class of all user-defined types.
-struct User_defined_type : Type
+// The type of an output parameter.
+struct Out_type : Unary_type
 {
-  User_defined_type(Decl& d)
-    : decl(&d)
-  { }
+  using Unary_type::Unary_type;
 
-  // Returns the name of the user-defined type.
-  Name const& name() const;
-  Name&       name();
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
 
-  // Returns the declaration of the user-defined type.
-  Decl const& declaration() const { return *decl; }
-  Decl&       declaration()       { return *decl; }
 
-  Decl* decl;
+// The type of a mutable parameter.
+struct Mutable_type : Unary_type
+{
+  using Unary_type::Unary_type;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// The type of a consuming parameter.
+struct Consume_type : Unary_type
+{
+  using Unary_type::Unary_type;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// The type of a forwarding parameter.
+struct Forward_type : Unary_type
+{
+  using Unary_type::Unary_type;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// The type of a parameter pack.
+struct Pack_type : Unary_type
+{
+  using Unary_type::Unary_type;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
 // The type of a type parameter declaration.
 //
-// FIXME: Guarantee that d is a Type_parm.
-struct Typename_type : User_defined_type
+// FIXME: This should probably go away.
+struct Typename_type : User_type
 {
-  using User_defined_type::User_defined_type;
+  using User_type::User_type;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the declaration of the typename type.
-  Type_parm const& declaration() const;
-  Type_parm&       declaration();
 };
 
 
-// Represents a unique, ininterpreted type. The synthetic type
+// Represents a unique, uninterpreted type. The synthetic type
 // refers to the declaration from which it was synthesized.
 //
 // TODO: Do we always need a declaration, or can we just synthesize
 // types from thin air?
-struct Synthetic_type : User_defined_type
+struct Synthetic_type : User_type
 {
-  using User_defined_type::User_defined_type;
+  using User_type::User_type;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
@@ -439,18 +499,12 @@ is_array_type(Type const& t)
   return is<Array_type>(&t);
 }
 
-// Returns tru if `t` is a Dynarray type.
+
+// Returns tru if `t` is a dynarray type.
 inline bool
 is_dynarray_type(Type const& t)
 {
   return is<Dynarray_type>(&t);
-}
-
-// Returns true if `t` is a sequence type.
-inline bool
-is_sequence_type(Type const& t)
-{
-  return is<Sequence_type>(&t);
 }
 
 
@@ -461,8 +515,7 @@ is_scalar_type(Type const& t)
   return is_boolean_type(t)
       || is_integer_type(t)
       || is_floating_point_type(t)
-      || is_pointer_type(t)
-      || is_sequence_type(t);
+      || is_pointer_type(t);
 }
 
 

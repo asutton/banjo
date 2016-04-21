@@ -183,6 +183,15 @@ Parser::on_call_expression(Expr& e, Expr_list& es)
 }
 
 
+// Returns type declaration associated with the type of the expression.
+// If e does not have user-defined type, the program is ill-formed.
+Expr&
+Parser::on_dot_expression(Expr& e, Name& n)
+{
+  return make_member_reference(cxt, e, n);
+}
+
+
 Expr&
 Parser::on_id_expression(Name& n)
 {

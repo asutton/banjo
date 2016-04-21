@@ -37,6 +37,14 @@ struct Stmt::Mutator
 };
 
 
+// An empty statement.
+struct Empty_stmt : Stmt
+{
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
 // A helper node that represents all kinds of statement sequences.
 struct Multiple_stmt : Stmt
 {
@@ -108,7 +116,7 @@ struct Expression_stmt : Stmt
 };
 
 
-// A statemnt that declares a variable.
+// A statement that declares a variable.
 struct Declaration_stmt : Stmt
 {
   Declaration_stmt(Decl& d)
@@ -141,6 +149,89 @@ struct Return_stmt : Stmt
   Expr&       expression()       { return *expr; }
 
   Expr* expr;
+};
+
+
+// An if-then statement.
+struct If_then_stmt : Stmt
+{
+  If_then_stmt(Expr& e, Stmt& s)
+    : cond_(&e), then_(&s)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  Expr const& condition() const { return *cond_; }
+  Expr&       condition()       { return *cond_; }
+
+  Stmt const& true_branch() const { return *then_; }
+  Stmt&       true_branch()       { return *then_; }
+
+  Expr* cond_;
+  Stmt* then_;
+};
+
+
+// An if-then-else statement.
+struct If_else_stmt : Stmt
+{
+  If_else_stmt(Expr& e, Stmt& s1, Stmt& s2)
+    : cond_(&e), true_(&s1), false_(&s2)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  Expr const& condition() const { return *cond_; }
+  Expr&       condition()       { return *cond_; }
+
+  Stmt const& true_branch() const { return *true_; }
+  Stmt&       true_branch()       { return *true_; }
+
+  Stmt const& false_branch() const { return *false_; }
+  Stmt&       false_branch()       { return *false_; }
+
+  Expr* cond_;
+  Stmt* true_;
+  Stmt* false_;
+};
+
+
+// A while statement.
+struct While_stmt : Stmt
+{
+  While_stmt(Expr& e, Stmt& s)
+    : cond_(&e), body_(&s)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  Expr const& condition() const { return *cond_; }
+  Expr&       condition()       { return *cond_; }
+
+  Stmt const& body() const { return *body_; }
+  Stmt&       body()       { return *body_; }
+
+  Expr* cond_;
+  Stmt* body_;
+};
+
+
+// A break statement.
+struct Break_stmt : Stmt
+{
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// A continue statement.
+struct Continue_stmt : Stmt
+{
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -186,7 +277,7 @@ struct Generic_stmt_mutator : Stmt::Mutator, Generic_mutator<F, T>
 
 
 // Apply a function to the given statement.
-template<typename F, typename T = typename std::result_of<F(Translation_stmt const&)>::type>
+template<typename F, typename T = typename std::result_of<F(Empty_stmt const&)>::type>
 inline T
 apply(Stmt const& s, F fn)
 {
@@ -196,7 +287,7 @@ apply(Stmt const& s, F fn)
 
 
 // Apply a function to the given statement.
-template<typename F, typename T = typename std::result_of<F(Translation_stmt&)>::type>
+template<typename F, typename T = typename std::result_of<F(Empty_stmt&)>::type>
 inline T
 apply(Stmt& s, F fn)
 {

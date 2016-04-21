@@ -308,8 +308,9 @@ Parser::unary_expression()
 //
 //    postfix-expression:
 //      primary-expression
+//      postfix-expression '.' id
 //      postfix-expression '(' [expression-list] ')'
-//      postfix-expression '[' [expression-list] ']'
+//      postfix-expression '[' expression ']'
 //
 // TODO: Add lots of stuff here.
 Expr&
@@ -317,8 +318,12 @@ Parser::postfix_expression()
 {
   Expr* e = &primary_expression();
   while (true) {
-    if (lookahead() == lparen_tok)
+    if (lookahead() == dot_tok)
+      e = &dot_expression(*e);
+    else if (lookahead() == lparen_tok)
       e = &call_expression(*e);
+    else if (lookahead() == lbracket_tok)
+      e = &subscript_expression(*e);
     else
       break;
   }
@@ -340,6 +345,25 @@ Parser::call_expression(Expr& e)
     es = expression_list();
   match(rparen_tok);
   return on_call_expression(e, es);
+}
+
+
+Expr&
+Parser::dot_expression(Expr& e)
+{
+  require(dot_tok);
+  Name& n = id();
+  return on_dot_expression(e, n);
+}
+
+
+Expr&
+Parser::subscript_expression(Expr& e)
+{
+  require(lbracket_tok);
+  // Expr& index = expression();
+  match(rbracket_tok);
+  lingo_unreachable();
 }
 
 
@@ -432,7 +456,7 @@ Parser::requires_expression()
   }
 
   // Parse parameters in a new block scope.
-  Enter_scope scope(cxt, cxt.make_requires_scope());
+  // Enter_scope scope(cxt, cxt.make_requires_scope());
   Decl_list parms;
   if (match_if(lparen_tok)) {
     parms = parameter_list();
@@ -444,6 +468,7 @@ Parser::requires_expression()
   match(rbrace_tok);
 
   return on_requires_expression(tok, tparms, parms, reqs);
+
 }
 
 

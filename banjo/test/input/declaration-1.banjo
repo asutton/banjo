@@ -1,0 +1,13 @@
+
+// Check for a broad set of declaration errors.
+
+// var f : int;
+// def f : () -> void { }
+
+// type t1 { }
+// var t1 : int;
+
+// type t2 : int { }
+// type t2 { }
+
+def f0 : (x, x) -> void { }

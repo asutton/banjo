@@ -28,6 +28,8 @@ struct Braces : Token_seq
 // tokens. This supports the resolution of source code locations.
 struct Parser
 {
+  using Specs = Specifier_set; // For brevity
+
   Parser(Context& cxt, Token_stream& ts)
     : cxt(cxt), build(cxt), tokens(ts), state()
   { }
@@ -54,40 +56,30 @@ struct Parser
   Name& qualified_id();
 
   // Name helpers
-  Name& simple_template_id();
   Term_list template_argument_list();
   Term& template_argument();
 
   // Nested name specifiers
-  Decl& leading_name_specifier();
   Decl& nested_name_specifier();
-  Decl* nested_name_specifier_opt();
 
   // Resolved names
-  Type& class_name();
-  Type& union_name();
-  Type& enum_name();
-  Type& type_name();
-  Type& type_alias();
-  Decl& namespace_name();
-  Decl& namespace_alias();
   Decl& template_name();
   Decl& concept_name();
 
+  // Specifiers
+
   // Types
   Type& type();
-  Type& primary_type();
-  Type& decltype_type();
-  Type& function_type();
-  Type& grouped_type();
+  Type& suffix_type();
+  Type& prefix_type();
+  Type& unary_type();
   Type& postfix_type();
-  Type& sequence_type();
-  Type& reference_type();
-  Type& array_type();
-  Type& dynarray_type();
-
-  // Type helpers
-  Type& return_type();
+  Type& array_type(Type&);
+  Type& primary_type();
+  Type& id_type();
+  Type& grouped_type();
+  Type& function_type();
+  Type& decltype_type();
   Type_list type_list();
 
   // Expressions
@@ -105,6 +97,7 @@ struct Parser
   Expr& unary_expression();
   Expr& postfix_expression();
   Expr& call_expression(Expr&);
+  Expr& dot_expression(Expr&);
   Expr& subscript_expression(Expr&);
   Expr& primary_expression();
   Expr& id_expression();
@@ -117,7 +110,12 @@ struct Parser
   Stmt& statement();
   Stmt& compound_statement();
   Stmt& member_statement();
+  Stmt& empty_statement();
   Stmt& return_statement();
+  Stmt& if_statement();
+  Stmt& while_statement();
+  Stmt& break_statement();
+  Stmt& continue_statement();
   Stmt& declaration_statement();
   Stmt& expression_statement();
   Stmt_list statement_seq();
@@ -127,6 +125,9 @@ struct Parser
   Decl& declaration();
   Decl_list declaration_seq();
   Decl& empty_declaration();
+
+  // Specifiers
+  Specifier_set specifier_seq();
 
   // Variables
   Decl& variable_declaration();
@@ -147,7 +148,6 @@ struct Parser
   Type& unparsed_return_type();
   Expr& unparsed_expression_body();
   Stmt& unparsed_function_body();
-
   Def& function_definition(Decl&);
 
   // Types
@@ -155,6 +155,8 @@ struct Parser
   Type& unparsed_type_kind();
   Stmt& unparsed_type_body();
 
+  // Base classes.
+  Decl& super_declaration();
 
   // Templates
   Decl& template_declaration();
@@ -188,15 +190,26 @@ struct Parser
   void elaborate_declarations(Stmt_list&);
   void elaborate_declaration(Stmt&);
   void elaborate_declaration(Decl&);
-  void elaborate_variable_declaration(Variable_decl&);
+  void elaborate_object_declaration(Object_decl&);
   void elaborate_function_declaration(Function_decl&);
   void elaborate_type_declaration(Type_decl&);
   Type& elaborate_type(Type&);
+
+  // Overloading
+  void elaborate_overloads(Stmt_list&);
+  void elaborate_overloads(Stmt&);
+  void elaborate_overloads(Decl&);
+
+  // Partial definitions
+  void elaborate_partials(Stmt_list&);
 
   // Definition elaboration
   void elaborate_definitions(Stmt_list&);
   void elaborate_definition(Stmt&);
   void elaborate_definition(Decl&);
+  void elaborate_super_initializer(Super_decl&);
+  void elaborate_super_initializer(Super_decl&, Empty_def&);
+  void elaborate_super_initializer(Super_decl&, Expression_def&);
   void elaborate_variable_initializer(Variable_decl&);
   void elaborate_variable_initializer(Variable_decl&, Empty_def&);
   void elaborate_variable_initializer(Variable_decl&, Expression_def&);
@@ -209,7 +222,6 @@ struct Parser
   Stmt& elaborate_compound_statement(Stmt&);
   Stmt& elaborate_member_statement(Stmt&);
 
-
   // Semantics actions
 
   // Identifiers
@@ -218,31 +230,11 @@ struct Parser
   Name& on_operator_id(Token, Operator_kind);
   Name& on_conversion_id();
   Name& on_literal_id();
-  Name& on_template_id(Token, Decl&, Term_list const&);
+  Name& on_template_id(Decl&, Term_list const&);
   Name& on_concept_id(Decl&, Term_list const&);
   Name& on_qualified_id(Decl&, Name&);
 
-  Decl& on_nested_name_specifier();
-  Decl& on_nested_name_specifier(Decl&);
-  Decl& on_nested_name_specifier(Type&);
-  Decl& on_nested_name_specifier(Decl&, Token);
-  Decl& on_nested_name_specifier(Decl&, Name&);
-
   // Names
-  Type& on_class_name(Token);
-  Type& on_class_name(Name&);
-  Type& on_union_name(Token);
-  Type& on_union_name(Name&);
-  Type& on_enum_name(Token);
-  Type& on_enum_name(Name&);
-  Type& on_type_alias(Token);
-  Type& on_type_alias(Name&);
-  Type& on_type_name(Token);
-  Type& on_type_name(Name&);
-  Decl& on_namespace_name(Token);
-  Decl& on_namespace_name(Name&);
-  Decl& on_namespace_alias(Token);
-  Decl& on_namespace_alias(Name&);
   Decl& on_template_name(Token);
   Decl& on_concept_name(Token);
 
@@ -252,14 +244,21 @@ struct Parser
   Type& on_bool_type(Token);
   Type& on_int_type(Token);
   Type& on_byte_type(Token);
+  Type& on_id_type(Name&);
   Type& on_decltype_type(Token, Expr&);
   Type& on_function_type(Type_list&, Type&);
-  Type& on_pointer_type(Token, Type&);
-  Type& on_qualified_type(Token, Type&, Qualifier_set);
-  Type& on_const_type(Token, Type&);
-  Type& on_volatile_type(Token, Type&);
-  Type& on_sequence_type(Type&);
-  Type& on_reference_type(Token, Type&);
+  Type& on_slice_type(Type&);
+  Type& on_array_type(Type&, Expr&);
+  Type& on_pointer_type(Type&);
+  Type& on_const_type(Type&);
+  Type& on_volatile_type(Type&);
+  Type& on_reference_type(Type&);
+  Type& on_in_type(Type&);
+  Type& on_out_type(Type&);
+  Type& on_mutable_type(Type&);
+  Type& on_consume_type(Type&);
+  Type& on_forward_type(Type&);
+  Type& on_pack_type(Type&);
   Type& on_unparsed_type(Token_seq&&);
   Type& on_array_type(Type&, Expr&);
   Type& on_dynarray_type(Type&, Expr&);
@@ -268,14 +267,12 @@ struct Parser
   Expr& on_logical_and_expression(Token, Expr&, Expr&);
   Expr& on_logical_or_expression(Token, Expr&, Expr&);
   Expr& on_logical_not_expression(Token, Expr&);
-
   Expr& on_or_expression(Token, Expr&, Expr&);
   Expr& on_xor_expression(Token, Expr&, Expr&);
   Expr& on_and_expression(Token, Expr&, Expr&);
   Expr& on_lsh_expression(Token, Expr&, Expr&);
   Expr& on_rsh_expression(Token, Expr&, Expr&);
   Expr& on_compl_expression(Token, Expr&);
-
   Expr& on_eq_expression(Token, Expr&, Expr&);
   Expr& on_ne_expression(Token, Expr&, Expr&);
   Expr& on_lt_expression(Token, Expr&, Expr&);
@@ -283,7 +280,6 @@ struct Parser
   Expr& on_le_expression(Token, Expr&, Expr&);
   Expr& on_ge_expression(Token, Expr&, Expr&);
   Expr& on_cmp_expression(Token, Expr&, Expr&);
-
   Expr& on_add_expression(Token, Expr&, Expr&);
   Expr& on_sub_expression(Token, Expr&, Expr&);
   Expr& on_mul_expression(Token, Expr&, Expr&);
@@ -291,8 +287,8 @@ struct Parser
   Expr& on_rem_expression(Token, Expr&, Expr&);
   Expr& on_neg_expression(Token, Expr&);
   Expr& on_pos_expression(Token, Expr&);
-
   Expr& on_call_expression(Expr&, Expr_list&);
+  Expr& on_dot_expression(Expr&, Name&);
   Expr& on_id_expression(Name&);
   Expr& on_boolean_literal(Token, bool);
   Expr& on_integer_literal(Token);
@@ -304,10 +300,20 @@ struct Parser
   Stmt& on_translation_statement(Stmt_list&&);
   Stmt& on_member_statement(Stmt_list&&);
   Stmt& on_compound_statement(Stmt_list&&);
-  Return_stmt& on_return_statement(Token, Expr&);
-  Declaration_stmt& on_declaration_statement(Decl&);
-  Expression_stmt& on_expression_statement(Expr&);
+  Stmt& on_empty_statement();
+  Stmt& on_return_statement(Token, Expr&);
+  Stmt& on_if_statement(Expr&, Stmt&);
+  Stmt& on_if_statement(Expr&, Stmt&, Stmt&);
+  Stmt& on_while_statement(Expr&, Stmt&);
+  Stmt& on_break_statement();
+  Stmt& on_continue_statement();
+  Stmt& on_declaration_statement(Decl&);
+  Stmt& on_expression_statement(Expr&);
   Stmt& on_unparsed_statement(Token_seq&&);
+  void on_statement_seq(Stmt_list&);
+
+  // Super declarations
+  Decl& on_super_declaration(Name&, Type&);
 
   // Variable declarations
   Decl& on_variable_declaration(Name&, Type&);
@@ -324,11 +330,11 @@ struct Parser
   Decl& on_concept_declaration(Token, Name&, Decl_list&);
 
   // Function parameters
-  Object_parm& on_function_parameter(Name&, Type&);
+  Decl& on_function_parameter(Name&, Type&);
 
   // Template parameters
-  Type_parm& on_type_template_parameter(Name&, Type&);
-  Type_parm& on_type_template_parameter(Name&);
+  Decl& on_type_template_parameter(Name&, Type&);
+  Decl& on_type_template_parameter(Name&);
 
   // Initializers
   Expr& on_default_initialization(Decl&);
@@ -343,7 +349,7 @@ struct Parser
   Def& on_deleted_definition(Decl&);
   Def& on_defaulted_definition(Decl&);
 
-  // Reqirements
+  // Requirements
   Req& on_type_requirement(Expr&);
   Req& on_syntactic_requirement(Expr&);
   Req& on_semantic_requirement(Decl&);
@@ -374,12 +380,17 @@ struct Parser
 
   bool next_token_is_one_of();
 
-  // Enclosures
+  // Braces
   void open_brace(Token);
   void close_brace(Token);
   bool in_braces() const;
   bool in_level(int) const;
   int  brace_level() const;
+
+  // Specifiers
+  Specs  decl_specs() const { return state.specs; }
+  Specs& decl_specs()       { return state.specs; }
+  Specs  take_decl_specs();
 
   // Tree matching.
   template<typename T> T* match_if(T& (Parser::* p)());
@@ -390,7 +401,6 @@ struct Parser
 
   // Scope management
   Scope& current_scope();
-  Decl&  current_context();
 
   // Declarations
   Decl& templatize_declaration(Decl&);
@@ -400,18 +410,18 @@ struct Parser
   // and restoring parse state.
   struct State
   {
+    State()
+      : braces(), specs(), template_parms(), template_cons()
+    { }
+
     Braces  braces;
+    Specs   specs;
 
-    Decl_list* template_parms = nullptr; // The current (innermost) template parameters
-    Expr*      template_cons = nullptr;  // The current (innermost) template constraints
-
-    // Parsing flags.
-    bool parsing_declarator = false; // True if parsing a declarator.
-    bool assume_typename = false;    // True if the following term is a type.
-    bool assume_template = false;    // True if the next identifier is a template.
+    // FIXME: Do I need these?
+    Decl_list* template_parms; // The current (innermost) template parameters
+    Expr*      template_cons;  // The current (innermost) template constraints
   };
 
-  struct Assume_template;
   struct Parsing_template;
 
   Context&      cxt;
@@ -439,25 +449,15 @@ Parser::next_token_is_one_of()
 }
 
 
-// An RAII helper that sets or clears the flag controlling
-// whether or not the 'template' keyword was seen before
-// a template-name.
-struct Parser::Assume_template
+// Return the current specifiers, resetting them to
+// their default value.
+inline Parser::Specs
+Parser::take_decl_specs()
 {
-  Assume_template(Parser& p, bool b)
-    : parser(p), saved(p.state.assume_template)
-  {
-    parser.state.assume_template = b;
-  }
-
-  ~Assume_template()
-  {
-    parser.state.assume_template = saved;
-  }
-
-  Parser& parser;
-  bool    saved;
-};
+  Specs s = decl_specs();
+  decl_specs() = Specs();
+  return s;
+}
 
 
 // An RAII helper that manages parsing state related to the parsing
@@ -561,7 +561,6 @@ Parser::match_if(R& (Parser::* f)())
   }
   return nullptr;
 }
-
 
 
 // This class defines a predicate that can be tested to determine if the

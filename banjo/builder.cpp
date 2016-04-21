@@ -176,6 +176,13 @@ Builder::get_global_id()
 // -------------------------------------------------------------------------- //
 // Types
 
+User_type&
+Builder::get_type(Type_decl& d)
+{
+  return make<User_type>(d);
+}
+
+
 Void_type&
 Builder::get_void_type()
 {
@@ -314,17 +321,60 @@ Builder::get_array_type(Type&, Expr&)
   lingo_unimplemented("array-type");
 }
 
-Dynarray_type&
-Builder::get_dynarray_type(Type&, Expr&)
+
+Slice_type&
+Builder::get_slice_type(Type& t)
 {
-  lingo_unimplemented("Dynarray-type");
+  return make<Slice_type>(t);
 }
 
 
-Sequence_type&
-Builder::get_sequence_type(Type& t)
+Dynarray_type&
+Builder::get_dynarray_type(Type&, Expr&)
 {
-  return make<Sequence_type>(t);
+  lingo_unimplemented("dynarray-type");
+}
+
+
+In_type&
+Builder::get_in_type(Type& t)
+{
+  return make<In_type>(t);
+}
+
+
+Out_type&
+Builder::get_out_type(Type& t)
+{
+  return make<Out_type>(t);
+}
+
+
+Mutable_type&
+Builder::get_mutable_type(Type& t)
+{
+  return make<Mutable_type>(t);
+}
+
+
+Consume_type&
+Builder::get_consume_type(Type& t)
+{
+  return make<Consume_type>(t);
+}
+
+
+Forward_type&
+Builder::get_forward_type(Type& t)
+{
+  return make<Forward_type>(t);
+}
+
+
+Pack_type&
+Builder::get_pack_type(Type& t)
+{
+  return make<Pack_type>(t);
 }
 
 
@@ -410,34 +460,60 @@ Builder::get_uint(Integer const& n)
 }
 
 
-// Get an expression that refers to a variable. The type
-// is a reference to the declared type of the variable.
-Reference_expr&
+// Get an expression that refers to a variable. The type is a reference to 
+// the declared type of the variable.
+Object_expr&
 Builder::make_reference(Variable_decl& d)
 {
-  return make<Reference_expr>(get_reference_type(d.type()), d);
+  Type& t = get_reference_type(d.type());
+  Name& n = d.name();
+  return make<Object_expr>(t, n, d);
 }
 
 
-Reference_expr&
-Builder::make_reference(Function_decl& d)
-{
-  return make<Reference_expr>(get_reference_type(d.type()), d);
-}
-
-
-Template_ref&
-Builder::make_reference(Template_decl& d)
-{
-  Type& t = declared_type(d);
-  return make<Template_ref>(t, d);
-}
-
-
-Reference_expr&
+// Get an expression that refers to a parameter. The type is a reference to 
+// the declared type of the parameter.
+Object_expr&
 Builder::make_reference(Object_parm& d)
 {
-  return make<Reference_expr>(get_reference_type(d.type()), d);
+  Type& t = get_reference_type(d.type());
+  Name& n = d.name();
+  return make<Object_expr>(t, n, d);
+}
+
+
+// FIXME: Do I want functions to be references or not?
+Function_expr&
+Builder::make_reference(Function_decl& d)
+{
+  Type& t = get_reference_type(d.type());
+  Name& n = d.name();
+  return make<Function_expr>(t, n, d);
+}
+
+
+Field_expr&
+Builder::make_member_reference(Expr& e, Field_decl& d)
+{
+  Type& t = get_reference_type(d.type());
+  Name& n = d.name();
+  return make<Field_expr>(t, e, n, d);
+}
+
+
+Method_expr&
+Builder::make_member_reference(Expr& e, Method_decl& d)
+{
+  Type& t = get_reference_type(d.type());
+  Name& n = d.name();
+  return make<Method_expr>(t, e, n, d);
+}
+
+
+Member_expr&
+Builder::make_member_reference(Expr& e, Overload_set& ovl)
+{
+  lingo_unimplemented("");
 }
 
 
@@ -655,10 +731,52 @@ Builder::make_compound_statement(Stmt_list&& ss)
 }
 
 
+Empty_stmt&
+Builder::make_empty_statement()
+{
+  return make<Empty_stmt>();
+}
+
+
 Return_stmt&
 Builder::make_return_statement(Expr& e)
 {
   return make<Return_stmt>(e);
+}
+
+
+If_then_stmt&
+Builder::make_if_statement(Expr& e, Stmt& s)
+{
+  return make<If_then_stmt>(e, s);
+}
+
+
+If_else_stmt&
+Builder::make_if_statement(Expr& e, Stmt& s1, Stmt& s2)
+{
+  return make<If_else_stmt>(e, s1, s2);
+}
+
+
+While_stmt&
+Builder::make_while_statement(Expr& e, Stmt& s)
+{
+  return make<While_stmt>(e, s);
+}
+
+
+Break_stmt&
+Builder::make_break_statement()
+{
+  return make<Break_stmt>();
+}
+
+
+Continue_stmt&
+Builder::make_continue_statement()
+{
+  return make<Continue_stmt>();
 }
 
 
@@ -717,6 +835,12 @@ Builder::make_aggregate_init(Type& t, Expr_list const& es)
 // -------------------------------------------------------------------------- //
 // Declarations
 
+Super_decl&
+Builder::make_super_declaration(Type& t)
+{
+  Def& d = make_empty_definition();
+  return make<Super_decl>(get_id(), t, d);
+}
 
 Variable_decl&
 Builder::make_variable_declaration(Name& n, Type& t)
@@ -765,28 +889,47 @@ Builder::make_function_declaration(Name& n, Decl_list const& p, Type& t, Stmt& s
 }
 
 
-// Creates an undefined function with parameters ps and return type r.
-Function_decl&
-Builder::make_function_declaration(Name& n, Decl_list const& p, Type& t)
-{
-  Type& r = get_function_type(p, t);
-  return make<Function_decl>(n, r, p);
-}
-
-
-Function_decl&
-Builder::make_function_declaration(char const* s, Decl_list const& ps, Type& r)
-{
-  return make_function_declaration(get_id(s), ps, r);
-}
-
-
 Type_decl&
 Builder::make_type_declaration(Name& n, Type& t, Stmt& s)
 {
   Def& d = make_type_definition(s);
   return make<Type_decl>(n, t, d);
 }
+
+
+Field_decl&
+Builder::make_field_declaration(Name& n, Type& t)
+{
+  Def& d = make_empty_definition();
+  return make<Field_decl>(n, t, d);
+}
+
+
+Field_decl&
+Builder::make_field_declaration(Name& n, Type& t, Expr& e)
+{
+  Def& d = make_expression_definition(e);
+  return make<Field_decl>(n, t, d);
+}
+
+
+Method_decl&
+Builder::make_method_declaration(Name& n, Decl_list const& p, Type& t, Expr& e)
+{
+  Type& r = get_function_type(p, t);
+  Def& d = make_expression_definition(e);
+  return make<Method_decl>(n, r, p, d);
+}
+
+
+Method_decl&
+Builder::make_method_declaration(Name& n, Decl_list const& p, Type& t, Stmt& s)
+{
+  Type& r = get_function_type(p, t);
+  Def& d = make_function_definition(s);
+  return make<Method_decl>(n, r, p, d);
+}
+
 
 
 Template_decl&
@@ -850,8 +993,7 @@ Builder::make_object_parm(char const* s, Type& t)
 Value_parm&
 Builder::make_value_parm(Name& n, Type& t)
 {
-  Index x = cxt.make_template_parameter_index();
-  return make<Value_parm>(x, n, t);
+  return make<Value_parm>(Index {}, n, t);
 }
 
 
@@ -865,8 +1007,7 @@ Builder::make_value_parm(char const* s, Type& t)
 Type_parm&
 Builder::make_type_parameter(Name& n)
 {
-  Index x = cxt.make_template_parameter_index();
-  return make<Type_parm>(x, n);
+  return make<Type_parm>(Index {}, n);
 }
 
 
@@ -881,8 +1022,7 @@ Builder::make_type_parameter(char const* n)
 Type_parm&
 Builder::make_type_parameter(Name& n, Type& t)
 {
-  Index x = cxt.make_template_parameter_index();
-  return make<Type_parm>(x, n, t);
+  return make<Type_parm>(Index {}, n, t);
 }
 
 
@@ -900,8 +1040,7 @@ Typename_type&
 Builder::make_placeholder_type()
 {
   Name& n = get_id();
-  Index x = cxt.make_placeholder_index();
-  Decl& d = make<Type_parm>(x, n);
+  Decl& d = make<Type_parm>(Index {}, n);
   return get_typename_type(d);
 }
 

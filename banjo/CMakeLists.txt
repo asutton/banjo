@@ -27,6 +27,8 @@ add_library(banjo
   sema-req.cpp
   elab-decl.cpp
   elab-def.cpp
+  elab-overloads.cpp
+  elab-partials.cpp
   printer.cpp
 
   # Core facilities
@@ -63,14 +65,14 @@ add_library(banjo
   initialization.cpp
   call.cpp
   inheritance.cpp
-  template.cpp
-  substitution.cpp
-  deduction.cpp
-  requirement.cpp
-  constraint.cpp
-  normalization.cpp
-  satisfaction.cpp
-  subsumption.cpp
+  # template.cpp
+  # substitution.cpp
+  # deduction.cpp
+  # requirement.cpp
+  # constraint.cpp
+  # normalization.cpp
+  # satisfaction.cpp
+  # subsumption.cpp
   evaluation.cpp
   inspection.cpp
 

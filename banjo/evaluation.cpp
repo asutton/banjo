@@ -99,11 +99,11 @@ Evaluator::evaluate(Expr const& e)
     Value operator()(Expr const& e) { banjo_unhandled_case(e); }
     Value operator()(Boolean_expr const& e) { return self.evaluate_boolean(e); }
     Value operator()(Integer_expr const& e) { return self.evaluate_integer(e); }
-    Value operator()(Reference_expr const& e) { return self.evaluate_reference(e); }
-    Value operator()(Call_expr const& e) { return self.evaluate_call(e); }
-    Value operator()(And_expr const& e) { return self.evaluate_and(e); }
-    Value operator()(Or_expr const& e) { return self.evaluate_or(e); }
-    Value operator()(Not_expr const& e) { return self.evaluate_not(e); }
+    Value operator()(Decl_expr const& e)    { return self.evaluate_reference(e); }
+    Value operator()(Call_expr const& e)    { return self.evaluate_call(e); }
+    Value operator()(And_expr const& e)     { return self.evaluate_and(e); }
+    Value operator()(Or_expr const& e)      { return self.evaluate_or(e); }
+    Value operator()(Not_expr const& e)     { return self.evaluate_not(e); }
   };
   return apply(e, fn{*this});
 }
@@ -128,7 +128,7 @@ Evaluator::evaluate_integer(Integer_expr const& e)
 // Returns the object or function referred to by the
 // given declaration.
 Value
-Evaluator::evaluate_reference(Reference_expr const& e)
+Evaluator::evaluate_reference(Decl_expr const& e)
 {
   return alias(e.declaration());
 }

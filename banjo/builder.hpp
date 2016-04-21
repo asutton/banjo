@@ -48,6 +48,7 @@ struct Builder
   Global_id&      get_global_id();
 
   // Types
+  User_type&      get_type(Type_decl&);
   Void_type&      get_void_type();
   Boolean_type&   get_bool_type();
   Byte_type&      get_byte_type();
@@ -66,8 +67,14 @@ struct Builder
   Pointer_type&   get_pointer_type(Type&);
   Reference_type& get_reference_type(Type&);
   Array_type&     get_array_type(Type&, Expr&);
+  Slice_type&     get_slice_type(Type&);
   Dynarray_type&  get_dynarray_type(Type&, Expr&);
-  Sequence_type&  get_sequence_type(Type&);
+  In_type&        get_in_type(Type&);
+  Out_type&       get_out_type(Type&);
+  Mutable_type&   get_mutable_type(Type&);
+  Consume_type&   get_consume_type(Type&);
+  Forward_type&   get_forward_type(Type&);
+  Pack_type&      get_pack_type(Type&);
   Typename_type&  get_typename_type(Decl&);
   Type_type&      get_type_type();
 
@@ -81,10 +88,13 @@ struct Builder
   Integer_expr&   get_zero(Type&);
   Integer_expr&   get_int(Integer const&);
   Integer_expr&   get_uint(Integer const&);
-  Reference_expr& make_reference(Variable_decl&);
-  Reference_expr& make_reference(Function_decl&);
-  Template_ref&   make_reference(Template_decl&);
-  Reference_expr& make_reference(Object_parm&);
+  Object_expr&    make_reference(Variable_decl&);
+  Object_expr&    make_reference(Object_parm&);
+  Function_expr&  make_reference(Function_decl&);
+  Overload_expr&  make_reference(Overload_set&);
+  Field_expr&     make_member_reference(Expr&, Field_decl&);
+  Method_expr&    make_member_reference(Expr&, Method_decl&);
+  Member_expr&    make_member_reference(Expr&, Overload_set&);
   Check_expr&     make_check(Concept_decl&, Term_list const&);
 
   And_expr&       make_and(Type&, Expr&, Expr&);
@@ -118,9 +128,18 @@ struct Builder
   Translation_stmt& make_translation_statement(Stmt_list&&);
   Member_stmt&      make_member_statement(Stmt_list&&);
   Compound_stmt&    make_compound_statement(Stmt_list&&);
+  Empty_stmt&       make_empty_statement();
   Return_stmt&      make_return_statement(Expr&);
+  If_then_stmt&     make_if_statement(Expr&, Stmt&);
+  If_else_stmt&     make_if_statement(Expr&, Stmt&, Stmt&);
+  While_stmt&       make_while_statement(Expr&, Stmt&);
+  Break_stmt&       make_break_statement();
+  Continue_stmt&    make_continue_statement();
   Expression_stmt&  make_expression_statement(Expr&);
   Declaration_stmt& make_declaration_statement(Decl&);
+
+  // Supers
+  Super_decl&  make_super_declaration(Type&);
 
   // Variables
   Variable_decl&  make_variable_declaration(Name&, Type&);
@@ -130,11 +149,13 @@ struct Builder
   // Functions
   Function_decl&  make_function_declaration(Name&, Decl_list const&, Type&, Expr&);
   Function_decl&  make_function_declaration(Name&, Decl_list const&, Type&, Stmt&);
-  Function_decl&  make_function_declaration(Name&, Decl_list const&, Type&);
-  Function_decl&  make_function_declaration(char const*, Decl_list const&, Type&);
 
-  // Types
+  // Types and members
   Type_decl&      make_type_declaration(Name&, Type&, Stmt&);
+  Field_decl&     make_field_declaration(Name&, Type&);
+  Field_decl&     make_field_declaration(Name&, Type&, Expr&);
+  Method_decl&    make_method_declaration(Name&, Decl_list const&, Type&, Expr&);
+  Method_decl&    make_method_declaration(Name&, Decl_list const&, Type&, Stmt&);
 
   // Templates
   Template_decl&  make_template(Decl_list const&, Decl&);
@@ -184,7 +205,7 @@ struct Builder
 
   // Constraints
   // Note that constraints are canonicalized in order
-  // ensure efficient hashingn and equivalence comparison.
+  // ensure efficient hashing and equivalence comparison.
   Concept_cons&       get_concept_constraint(Decl&, Term_list const&);
   Predicate_cons&     get_predicate_constraint(Expr&);
   Expression_cons&    get_expression_constraint(Expr&, Type&);

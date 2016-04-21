@@ -42,9 +42,11 @@ Parser::elaborate_definition(Decl& d)
     void operator()(Variable_decl& d) { p.elaborate_variable_initializer(d); }
     void operator()(Function_decl& d) { p.elaborate_function_definition(d); }
     void operator()(Type_decl& d)     { p.elaborate_type_definition(d); }
+    void operator()(Super_decl& d)    { /* Nothing to do. */ }
   };
   apply(d, fn{*this});
 }
+
 
 
 void
@@ -133,6 +135,7 @@ Parser::elaborate_function_definition(Function_decl& decl, Function_def& def)
 }
 
 
+// Elaborate the definition of a type.
 void
 Parser::elaborate_type_definition(Type_decl& d)
 {
@@ -147,14 +150,12 @@ Parser::elaborate_type_definition(Type_decl& d)
 }
 
 
+// The type is defined by its body.
 void
 Parser::elaborate_type_definition(Type_decl& decl, Type_def& def)
 {
-  // Enter into the type of the scope.
-  //
-  // FIXME: The type should have an associated scope, and we should
-  // just enter that.
-  Enter_scope scope(cxt);
+  // Enter the scope associated with the declaration.
+  Enter_scope scope(cxt, cxt.saved_scope(decl));
 
   // Elaborate the definition's statement, possibly parsing it.
   Stmt& stmt = elaborate_member_statement(def.body());

@@ -11,19 +11,7 @@
 namespace banjo
 {
 
-Name const&
-Decl::declared_name() const
-{
-  return id->unqualified_name();
-}
-
-
-Name&
-Decl::declared_name()
-{
-  return id->unqualified_name();
-}
-
+// Function_decl
 
 Function_type const&
 Function_decl::type() const
@@ -60,7 +48,7 @@ Function_decl::return_type()
 // references.
 //
 // FIXME: This is kind of dumb. We should have a base class that
-// contributes a type to the declaration hiearchy (Typed_decl).
+// contributes a type to the declaration hierarchy (Typed_decl).
 Type&
 declared_type(Decl& decl)
 {

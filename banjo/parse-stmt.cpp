@@ -13,28 +13,73 @@ namespace banjo
 // Parse a statement.
 //
 //    statement:
-//      compound-statement
+//      empty-statement
 //      return-statement
-//      ...
+//      if-statement
+//      while-statement
+//      break-statement
+//      continue-statement
+//      compound-statement
 //      declaration-statement
+//      expression-statement
 Stmt&
 Parser::statement()
 {
   switch (lookahead()) {
+    // Declaration specifiers start declarations.
+    case virtual_tok:
+    case abstract_tok:
+    case static_tok:
+    case inline_tok:
+    case explicit_tok:
+    case implicit_tok:
+    case public_tok:
+    case private_tok:
+    case protected_tok:
+    // Declaration introducers.
+    case super_tok:
     case var_tok:
     case def_tok:
     case type_tok:
     case concept_tok:
       return declaration_statement();
 
-    case lbrace_tok:
-      return compound_statement();
     case return_tok:
       return return_statement();
+
+    case if_tok:
+      return if_statement();
+
+    case while_tok:
+      return while_statement();
+
+    case break_tok:
+      return break_statement();
+
+    case continue_tok:
+      return continue_statement();
+
+    case lbrace_tok:
+      return compound_statement();
+
+    case semicolon_tok:
+      return empty_statement();
 
     default:
       return expression_statement();
   }
+}
+
+
+// Parse the empty statement.
+//
+//    empty-statement:
+//      ';'
+Stmt&
+Parser::empty_statement()
+{
+  require(semicolon_tok);
+  return on_empty_statement();
 }
 
 
@@ -47,7 +92,7 @@ Parser::statement()
 Stmt&
 Parser::compound_statement()
 {
-  Enter_scope scope(cxt, cxt.make_block_scope());
+  Enter_scope scope(cxt);
   Stmt_list ss;
   match(lbrace_tok);
   if (lookahead() != rbrace_tok)
@@ -83,6 +128,58 @@ Parser::return_statement()
   Expr& e = expression();
   match(semicolon_tok);
   return on_return_statement(tok, e);
+}
+
+
+// Parse an if statement.
+//
+//    if-statement:
+//      'if' '(' expression ')' statement
+//      'if' '(' expression ')' statement 'else' statement
+Stmt&
+Parser::if_statement()
+{
+  require(if_tok);
+  match(lparen_tok);
+  Expr& cond = expression();
+  match(rparen_tok);
+  Stmt& branch1 = statement();
+  if (match_if(else_tok)) {
+    Stmt& branch2 = statement();
+    return on_if_statement(cond, branch1, branch2);
+  } else {
+    return on_if_statement(cond, branch1);
+  }
+}
+
+
+Stmt&
+Parser::while_statement()
+{
+  require(while_tok);
+  match(lparen_tok);
+  Expr& cond = expression();
+  match(rparen_tok);
+  Stmt& body = statement();
+  return on_while_statement(cond, body);
+}
+
+
+Stmt&
+Parser::break_statement()
+{
+  require(break_tok);
+  match(semicolon_tok);
+  return on_break_statement();
+}
+
+
+Stmt&
+Parser::continue_statement()
+{
+  require(continue_tok);
+  match(semicolon_tok);
+  return on_continue_statement();
 }
 
 
@@ -126,13 +223,7 @@ Parser::statement_seq()
     Stmt& s = statement();
     ss.push_back(s);
   } while (!is_eof() && next_token_is_not(rbrace_tok));
-
-  // Second pass: Resolve declared types.
-  elaborate_declarations(ss);
-
-  // Third pass: Resolve definitions.
-  elaborate_definitions(ss);
-
+  on_statement_seq(ss);
   return ss;
 }
 

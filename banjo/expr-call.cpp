@@ -20,6 +20,7 @@
 namespace banjo
 {
 
+#if 0
 // Attempt to resolve a dependent call to a (single) function template.
 Expr&
 make_dependent_template_call(Context& cxt, Template_ref& e, Expr_list& args)
@@ -61,14 +62,7 @@ make_dependent_template_call(Context& cxt, Template_ref& e, Expr_list& args)
       throw Type_error("no matching call to 'e'");
     }
   }
-  banjo_unhandled_case(pd);
-}
-
-
-Expr&
-make_dependent_function_call(Context& cxt, Reference_expr& e, Expr_list& args)
-{
-  lingo_unreachable();
+  lingo_unimplemented("dependent function call");
 }
 
 
@@ -105,6 +99,7 @@ make_dependent_call(Context& cxt, Expr& e, Expr_list& args)
 
   banjo_unhandled_case(e);
 }
+#endif
 
 
 // Make a non-dependent call expression.
@@ -119,7 +114,7 @@ make_dependent_call(Context& cxt, Expr& e, Expr_list& args)
 Expr&
 make_regular_call(Context& cxt, Expr& e, Expr_list& args)
 {
-  if (Reference_expr* ref = as<Reference_expr>(&e)) {
+  if (Decl_expr* ref = as<Decl_expr>(&e)) {
     Decl& d = ref->declaration();
     Type& t = declared_type(d);
 
@@ -136,10 +131,11 @@ make_regular_call(Context& cxt, Expr& e, Expr_list& args)
 Expr&
 make_call(Context& cxt, Expr& e, Expr_list& args)
 {
-  if (is_type_dependent(e) || is_type_dependent(args))
-    return make_dependent_call(cxt, e, args);
-  else
-    return make_regular_call(cxt, e, args);
+  // if (is_type_dependent(e) || is_type_dependent(args))
+  //   return make_dependent_call(cxt, e, args);
+  // else
+  //   return make_regular_call(cxt, e, args);
+  return make_regular_call(cxt, e, args);
 }
 
 

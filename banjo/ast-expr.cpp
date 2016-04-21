@@ -9,17 +9,31 @@
 namespace banjo
 {
 
-Template_decl const&
-Template_ref::declaration() const
+Object_decl const&
+Object_expr::declaration() const
 {
-  return cast<Template_decl>(*decl);
+  return cast<Object_decl>(*decl_);
 }
 
 
-Template_decl&
-Template_ref::declaration()
+Object_decl&
+Object_expr::declaration()
 {
-  return cast<Template_decl>(*decl);
+  return cast<Object_decl>(*decl_);
+}
+
+
+Function_decl const&
+Function_expr::declaration() const
+{
+  return cast<Function_decl>(*decl_);
+}
+
+
+Function_decl&
+Function_expr::declaration()
+{
+  return cast<Function_decl>(*decl_);
 }
 
 
@@ -108,15 +122,14 @@ is_type_dependent(Expr_list const& es)
 // -------------------------------------------------------------------------- //
 // Declared type of an expression
 
-// Returns the declared type of an expression. In general, this
-// turns out to be the type of the expression. However, for
-// id-expressions, we actually use the declared type of the
-// referenced declaration.
+// Returns the declared type of an expression. In general, this is type of 
+// the expression. However, for id-expressions, we actually use the declared 
+// type of the referenced declaration.
 Type&
 declared_type(Expr& e)
 {
-  if (Reference_expr* r = as<Reference_expr>(&e))
-    return declared_type(r->declaration());
+  if (Decl_expr* d = as<Decl_expr>(&e))
+    return declared_type(d->declaration());
   else
     return e.type();
 }

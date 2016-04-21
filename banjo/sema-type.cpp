@@ -3,6 +3,7 @@
 
 #include "parser.hpp"
 #include "ast-type.hpp"
+#include "type.hpp"
 
 #include <iostream>
 
@@ -26,6 +27,13 @@ Parser::on_void_type(Token)
 
 
 Type&
+Parser::on_byte_type(Token)
+{
+  return build.get_byte_type();
+}
+
+
+Type&
 Parser::on_bool_type(Token)
 {
   return build.get_bool_type();
@@ -38,11 +46,13 @@ Parser::on_int_type(Token)
   return build.get_int_type();
 }
 
+
 Type&
-Parser::on_byte_type(Token)
+Parser::on_id_type(Name& n)
 {
-  return build.get_byte_type();
+  return make_type(cxt, n);
 }
+
 
 Type&
 Parser::on_decltype_type(Token, Expr&)
@@ -51,6 +61,8 @@ Parser::on_decltype_type(Token, Expr&)
 }
 
 
+// FIXME: Verify that all the component types are actually valid.
+// For example, '() -> int...' is probably not valid.
 Type&
 Parser::on_function_type(Type_list& p, Type& r)
 {
@@ -58,58 +70,89 @@ Parser::on_function_type(Type_list& p, Type& r)
 }
 
 
-Type&
-Parser::on_reference_type(Token, Type& t)
-{
-  return build.get_reference_type(t);
-}
-
-
-// Returns a type with the quaification that includes `q`.
-// If `t` is already qualified, union `q` into the qualifier
-// of `t`.
-//
-// TODO: Verify that we can actually qualify this type.
-Type&
-Parser::on_qualified_type(Token, Type& t, Qualifier_set q)
-{
-  if (Qualified_type* qt = as<Qualified_type>(&t)) {
-    qt->qual |= q;
-    return *qt;
-  } else {
-    return build.get_qualified_type(t, q);
-  }
-}
-
-
 // Returns a const-qualified type.
 Type&
-Parser::on_const_type(Token tok, Type& t)
+Parser::on_const_type(Type& t)
 {
-  return on_qualified_type(tok, t, const_qual);
+  return make_qualified_type(cxt, t, const_qual);
 }
 
 
 // Returns a volatile-qualified type.
 Type&
-Parser::on_volatile_type(Token tok, Type& t)
+Parser::on_volatile_type(Type& t)
 {
-  return on_qualified_type(tok, t, volatile_qual);
-}
-
-
-// TODO: Verify that we can point to t.
-Type&
-Parser::on_pointer_type(Token, Type& t)
-{
-  return build.get_pointer_type(t);
+  return make_qualified_type(cxt, t, volatile_qual);
 }
 
 
 Type&
-Parser::on_sequence_type(Type& t)
+Parser::on_pointer_type(Type& t)
 {
-  return build.get_sequence_type(t);
+  return make_pointer_type(cxt, t);
+}
+
+
+Type&
+Parser::on_array_type(Type& t, Expr& e)
+{
+  return make_array_type(cxt, t, e);
+}
+
+
+Type&
+Parser::on_slice_type(Type& t)
+{
+  return make_slice_type(cxt, t);
+}
+
+
+Type&
+Parser::on_reference_type(Type& t)
+{
+  return make_reference_type(cxt, t);
+}
+
+
+Type&
+Parser::on_in_type(Type& t)
+{
+  return make_in_type(cxt, t);
+}
+
+
+Type&
+Parser::on_out_type(Type& t)
+{
+  return make_out_type(cxt, t);
+}
+
+
+Type&
+Parser::on_mutable_type(Type& t)
+{
+  return make_mutable_type(cxt, t);
+}
+
+
+Type&
+Parser::on_consume_type(Type& t)
+{
+  return make_consume_type(cxt, t);
+}
+
+
+Type&
+Parser::on_forward_type(Type& t)
+{
+  return make_forward_type(cxt, t);
+}
+
+
+Type&
+Parser::on_pack_type(Type& t)
+{
+  return make_pack_type(cxt, t);
 }
 
 

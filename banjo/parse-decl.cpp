@@ -13,14 +13,123 @@ namespace banjo
 {
 
 // -------------------------------------------------------------------------- //
+// Declaration specifiers
+//
+// Declaration specifiers are an optional sequence of terms parsed
+// before a declaration's type. They look like part of the type but
+// are distinct.
+
+namespace
+{
+
+inline void
+accept_specifier(Parser& p, Specifier_set s)
+{
+  p.accept();
+  p.decl_specs() |= s;
+}
+
+} // namespace
+
+
+// Parse a declaration specifier.
+//
+//    specifier:
+//      storage-specifier
+//      function-specifier
+//      parameter-specifier
+//      access-specifier
+//
+//    storage-specifier:
+//      static
+//
+//    parameter-specifier:
+//      in
+//      out
+//      mutable
+//      consume
+//      forward
+//
+//    function-specifier:
+//      implicit
+//      explicit
+//      inline
+//
+// TODO: Figure out how we want to write foreign and extern functions.
+Specifier_set
+Parser::specifier_seq()
+{
+  // Reset the declaration specifiers (they should be empty).
+  decl_specs() = Specs();
+
+  while (true) {
+    switch (lookahead()) {
+      case virtual_tok:
+        accept_specifier(*this, virtual_spec);
+        break;
+
+      case abstract_tok:
+        accept_specifier(*this, abstract_spec);
+        break;
+
+      case static_tok:
+        accept_specifier(*this, static_spec);
+        break;
+
+      case inline_tok:
+        accept_specifier(*this, inline_spec);
+        break;
+
+      case explicit_tok:
+        accept_specifier(*this, explicit_spec);
+        break;
+
+      case implicit_tok:
+        accept_specifier(*this, implicit_spec);
+        break;
+
+      case public_tok:
+        accept_specifier(*this, public_spec);
+        break;
+
+      case private_tok:
+        accept_specifier(*this, private_spec);
+        break;
+
+      case protected_tok:
+        accept_specifier(*this, protected_spec);
+        break;
+
+      default:
+        return decl_specs();
+    }
+  }
+  lingo_unreachable();
+}
+
+
+// -------------------------------------------------------------------------- //
 // Declarations
 
-
-
+// Parse a declaration.
+//
+//    declaration:
+//      [specifier-seq] basic-declaration
+//
+//    basic-declaration:
+//      variable-declaration
+//      function-declarattion
+//      type-declaration
+//      concept-declaration
 Decl&
 Parser::declaration()
 {
+  // Parse and cache the specifier sequences.
+  specifier_seq();
+
   switch (lookahead()) {
+    case super_tok:
+      return super_declaration();
     case var_tok:
       return variable_declaration();
     case def_tok:
@@ -35,7 +144,50 @@ Parser::declaration()
   throw Syntax_error("invalid declaration");
 }
 
+// -------------------------------------------------------------------------- //
 
+// Parse a super type (inheritance declaration)
+
+//
+// Super declaration:
+//
+//  explicit identifier:
+//
+//    super <identifier> : Type_name;
+//
+//  implicit identifier:
+//
+//    super : Type_name;
+
+Decl&
+Parser::super_declaration()
+{
+  require(super_tok);
+
+  Name* name;
+
+  if(next_token_is(identifier_tok)) // If the user optionally named the super class
+  {
+    name = &identifier();
+  }
+  else
+  {
+    name = &build.get_id();
+  }
+
+  // The rest of this is exactly the same as a variable declarataion
+  // and it even calls on_variable_declaration
+
+  match(colon_tok);
+
+  // Match the type.
+  Type& type = unparsed_variable_type();
+
+  // Match the "name : type ;" form.
+  match(semicolon_tok);
+  return on_super_declaration(*name, type);
+
+}
 // -------------------------------------------------------------------------- //
 // Variable declarations
 
@@ -116,13 +268,15 @@ Parser::unparsed_variable_initializer()
 //
 // Note that C++ refers to the equal-initializer form of initialization
 // as copy-initialization. This term also applies to object initialization
-// that occurs in argument passing, initialiation of condition variables,
+// that occurs in argument passing, initialization of condition variables,
 // exception construction and catching and aggregate member initialization.
 // Copy initialization may invoke a move.
 //
-// The paren- and brace-initializer foms are called direct initialization.
+// The paren- and brace-initializer forms are called direct initialization.
 // This term also applies to object initialization in new expressions,
 // static casts, functional conversion, and member initializers.
+//
+// TODO: Am I using this or not?
 Expr&
 Parser::initializer(Decl& d)
 {
@@ -186,7 +340,10 @@ Parser::brace_initializer(Decl&)
 //
 //    function-body:
 //      compound-statement
+//      '=' delete
 //      '=' expression-statement
+//
+// TODO: Implement deleted functions.
 //
 // TODO: Allow named return types. That would change the grammar for return
 // types to a return declaration.
@@ -284,14 +441,17 @@ Parser::parameter_list()
 // Parse a parameter declaration.
 //
 //    parameter-declaration:
-//      identifier [':' type] ['=' expression]
-//      identifier [':=' expression]
+//      [specifier-seq] identifier [':' type] ['=' expression]
+//      [specifier-seq] identifier [':=' expression]
 //
 // TODO: Extend the grammar to support (named?) variadics and function
 // argument packs.
 Decl&
 Parser::parameter_declaration()
 {
+  // Parse and cache the specifier sequence.
+  specifier_seq();
+
   Name& name = identifier();
 
   if (match_if(colon_tok)) {
@@ -425,8 +585,10 @@ Parser::type_declaration()
   require(type_tok);
   Name& name = identifier();
 
+
   match_if(colon_tok);
   Type& kind = next_token_is(lbrace_tok) ? cxt.get_type_type() : unparsed_type_kind();
+
 
   Stmt& body = unparsed_type_body();
 
@@ -477,18 +639,19 @@ Parser::unparsed_type_body()
 //    tempate-declaration:
 //      'template' '<' template-parameter-list '>' [requires-clause] declaration
 //
-// FIXME: Support explicit template instantations in one way or
+// FIXME: Support explicit template instantiations in one way or
 // another.
 Decl&
 Parser::template_declaration()
 {
+  #if 0
   require(template_tok);
 
   // Build a psuedo-scope.
   //
   // FIXME: Merge this with template parameter scope. I don't think
   // that it's serving a very useful purpose.
-  Template_scope& tmp = cxt.make_template_scope();
+  // Template_scope& tmp = cxt.make_template_scope();
   Enter_scope tscope(cxt, tmp);
 
   // TODO: Allow >> to close the template parameter list in the
@@ -503,13 +666,15 @@ Parser::template_declaration()
   if (next_token_is(requires_tok)) {
     // TODO: How are dependent names resolved in a requires clause?
     tmp.cons = &requires_clause();
-    Enter_scope cscope(cxt, cxt.make_constrained_scope(*tmp.cons));
+    // Enter_scope cscope(cxt, cxt.make_constrained_scope(*tmp.cons));
     Parsing_template save(*this, &tmp.parms, tmp.cons);
     return declaration();
   } else {
     Parsing_template save(*this, &tmp.parms);
     return declaration();
   }
+  #endif
+  lingo_unreachable();
 }
 
 
@@ -644,7 +809,7 @@ Parser::concept_declaration()
   Token tok = require(concept_tok);
   Name& n = declarator();
 
-  Enter_template_parameter_scope pscope(cxt);
+  // Enter_template_parameter_scope pscope(cxt);
   match(lt_tok);
   Decl_list ps = template_parameter_list();
   match(gt_tok);
@@ -652,7 +817,7 @@ Parser::concept_declaration()
   // Point of declaration. Enter the associated context prior
   // to defininging the concept.
   Decl& con = on_concept_declaration(tok, n, ps);
-  Enter_scope cscope(cxt, cxt.make_concept_scope(con));
+  // Enter_scope cscope(cxt, cxt.make_concept_scope(con));
   concept_definition(con);
   return con;
 }

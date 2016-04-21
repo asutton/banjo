@@ -294,7 +294,7 @@ Printer::nested_name_specifier(Decl const& d)
   // Print out the nested name specifier.
   for (auto iter = scopes.rbegin(); iter != scopes.rend(); ++iter) {
     Decl const* d = *iter;
-    unqualified_id(d->declared_name());
+    id(d->name());
     token(colon_colon_tok);
   }
 }
@@ -315,7 +315,7 @@ Printer::type(Type const& t)
 {
   if (Unparsed_type const* t1 = as<Unparsed_type>(&t))
     return type(*t1);
-  return primary_type(t);
+  return suffix_type(t);
 }
 
 
@@ -331,12 +331,183 @@ Printer::type(Unparsed_type const& t)
 
 
 void
+Printer::suffix_type(Type const& t)
+{
+  if (Pack_type const* t1 = as<Pack_type>(&t))
+    suffix_type(*t1);
+  prefix_type(t);
+}
+
+
+void
+Printer::suffix_type(Pack_type const& t)
+{
+  type(t.type());
+  token(ellipsis_tok);
+}
+
+
+void
+Printer::prefix_type(Type const& t)
+{
+  struct fn
+  {
+    Printer& p;
+    void operator()(Type const& t)           { p.unary_type(t); }
+    void operator()(Reference_type const& t) { p.prefix_type(t); }
+    void operator()(In_type const& t)        { p.prefix_type(t); }
+    void operator()(Out_type const& t)       { p.prefix_type(t); }
+    void operator()(Mutable_type const& t)   { p.prefix_type(t); }
+    void operator()(Consume_type const& t)   { p.prefix_type(t); }
+    void operator()(Forward_type const& t)   { p.prefix_type(t); }
+  };
+  return apply(t, fn{*this});
+}
+
+
+void
+Printer::prefix_type(Reference_type const& t)
+{
+  token(amp_tok);
+  unary_type(t.type());
+}
+
+
+void
+Printer::prefix_type(In_type const& t)
+{
+  token(in_tok);
+  space();
+  unary_type(t.type());
+}
+
+
+void
+Printer::prefix_type(Out_type const& t)
+{
+  token(out_tok);
+  space();
+  unary_type(t.type());
+}
+
+
+void
+Printer::prefix_type(Mutable_type const& t)
+{
+  token(mutable_tok);
+  space();
+  unary_type(t.type());
+}
+
+
+void
+Printer::prefix_type(Consume_type const& t)
+{
+  token(consume_tok);
+  space();
+  unary_type(t.type());
+
+}
+
+
+void
+Printer::prefix_type(Forward_type const& t)
+{
+  token(forward_tok);
+  space();
+  unary_type(t.type());
+}
+
+
+void
+Printer::unary_type(Type const& t)
+{
+  struct fn
+  {
+    Printer& p;
+    void operator()(Type const& t)           { p.postfix_type(t); }
+    void operator()(Pointer_type const& t)   { p.unary_type(t); }
+    void operator()(Qualified_type const& t) { p.unary_type(t); }
+  };
+  return apply(t, fn{*this});
+}
+
+
+void
+Printer::unary_type(Pointer_type const& t)
+{
+  token(star_tok);
+  unary_type(t.type());
+}
+
+
+void
+Printer::unary_type(Qualified_type const& t)
+{
+  if (t.is_const()) {
+    token(const_tok);
+    space();
+  }
+  if (t.is_volatile()) {
+    token(volatile_tok);
+    space();
+  }
+  unary_type(t.type());
+}
+
+
+void
+Printer::postfix_type(Type const& t)
+{
+  struct fn
+  {
+    Printer& p;
+    void operator()(Type const& t)          { p.primary_type(t); }
+    void operator()(Array_type const& t)    { p.postfix_type(t); }
+    void operator()(Slice_type const& t)    { p.postfix_type(t); }
+    void operator()(Dynarray_type const& t) { p.postfix_type(t); }
+  };
+  return apply(t, fn{*this});
+}
+
+
+void
+Printer::postfix_type(Array_type const& t)
+{
+  postfix_type(t.type());
+  token(lbracket_tok);
+  expression(t.extent());
+  token(rbracket_tok);
+}
+
+
+void
+Printer::postfix_type(Slice_type const& t)
+{
+  postfix_type(t.type());
+  token(lbracket_tok);
+  token(rbracket_tok);
+}
+
+
+// FIXME: Unify with array-type.
+void
+Printer::postfix_type(Dynarray_type const& t)
+{
+  postfix_type(t.type());
+  token(lbracket_tok);
+  expression(t.extent());
+  token(rbracket_tok);
+}
+
+
+void
 Printer::primary_type(Type const& t)
 {
   struct fn
   {
     Printer& p;
-    void operator()(Type const& t)           { lingo_unhandled(t); }
+    void operator()(Type const& t)           { p.grouped_type(t); }
     void operator()(Void_type const& t)      { p.primary_type(t); }
     void operator()(Boolean_type const& t)   { p.primary_type(t); }
     void operator()(Byte_type const& t)      { p.primary_type(t); }
@@ -344,7 +515,7 @@ Printer::primary_type(Type const& t)
     void operator()(Float_type const& t)     { p.primary_type(t); }
     void operator()(Auto_type const& t)      { p.primary_type(t); }
     void operator()(Function_type const& t)  { p.primary_type(t); }
-    void operator()(Unparsed_type const& t)  { p.primary_type(t); }
+    void operator()(User_type const& t)      { p.id_type(t); }
   };
   apply(t, fn{*this});
 }
@@ -416,6 +587,23 @@ void
 Printer::primary_type(Type_type const& t)
 {
   token(type_tok);
+}
+
+
+// Print the name of the user-defined type.
+void
+Printer::id_type(User_type const& t)
+{
+  identifier(t.declaration());
+}
+
+
+void
+Printer::grouped_type(Type const& t)
+{
+  token(lparen_tok);
+  type(t);
+  token(rparen_tok);
 }
 
 
@@ -661,8 +849,8 @@ Printer::postfix_expression(Expr const& e)
   struct fn
   {
     Printer& p;
-
     void operator()(Expr const& e)               { p.primary_expression(e); }
+    void operator()(Dot_expr const& e)           { p.postfix_expression(e); }
     void operator()(Call_expr const& e)          { p.postfix_expression(e); }
     void operator()(Value_conv const& e)         { p.postfix_expression(e); }
     void operator()(Qualification_conv const& e) { p.postfix_expression(e); }
@@ -674,6 +862,17 @@ Printer::postfix_expression(Expr const& e)
     void operator()(Ellipsis_conv const& e)      { p.postfix_expression(e); }
   };
   apply(e, fn{*this});
+}
+
+
+// TODO: We may need to specialize the printing for resolved declarations
+// in case of ambiguous names from different base classes.
+void
+Printer::postfix_expression(Dot_expr const& e)
+{
+  postfix_expression(e.object());
+  token(dot_tok);
+  id(e.member());
 }
 
 
@@ -787,7 +986,8 @@ Printer::primary_expression(Expr const& e)
     void operator()(Boolean_expr const& e)   { p.literal(e); }
     void operator()(Integer_expr const& e)   { p.literal(e); }
     void operator()(Real_expr const& e)      { p.literal(e); }
-    void operator()(Reference_expr const& e) { p.id_expression(e); }
+    void operator()(Id_expr const& e)        { p.id_expression(e); }
+    void operator()(Decl_expr const& e)      { p.id_expression(e); }
     void operator()(Check_expr const& e)     { p.id_expression(e); }
     void operator()(Synthetic_expr const& e) { p.id_expression(e); }
     void operator()(Requires_expr const& e)  { p.requires_expression(e); }
@@ -835,8 +1035,17 @@ Printer::literal(Real_expr const& e)
 }
 
 
+// Write the identifier used in the unresolved id-expression.
 void
-Printer::id_expression(Reference_expr const& e)
+Printer::id_expression(Id_expr const& e)
+{
+  id(e.id());
+}
+
+
+// Write the qualified name of the referenced declaration.
+void
+Printer::id_expression(Decl_expr const& e)
 {
   id(e.declaration().name());
 }
@@ -884,8 +1093,7 @@ Printer::requires_expression(Requires_expr const& e)
 
 
 // -------------------------------------------------------------------------- //
-// Definitions
-
+// Printing of statements
 
 void
 Printer::statement(Stmt const& s)
@@ -899,6 +1107,11 @@ Printer::statement(Stmt const& s)
     void operator()(Member_stmt const& s)      { p.member_statement(s); }
     void operator()(Compound_stmt const& s)    { p.compound_statement(s); }
     void operator()(Return_stmt const& s)      { p.return_statement(s); }
+    void operator()(If_then_stmt const& s)     { p.if_statement(s); }
+    void operator()(If_else_stmt const& s)     { p.if_statement(s); }
+    void operator()(While_stmt const& s)       { p.while_statement(s); }
+    void operator()(Break_stmt const& s)       { p.break_statement(s); }
+    void operator()(Continue_stmt const& s)    { p.continue_statement(s); }
     void operator()(Expression_stmt const& s)  { p.expression_statement(s); }
     void operator()(Declaration_stmt const& s) { p.declaration_statement(s); }
   };
@@ -929,6 +1142,13 @@ Printer::statement_seq(Stmt_list const& ss)
 
 
 void
+Printer::empty_statement(Empty_stmt const& s)
+{
+  token(semicolon_tok);
+}
+
+
+void
 Printer::translation_statement(Translation_stmt const& s)
 {
   statement_seq(s.statements());
@@ -950,9 +1170,11 @@ void
 Printer::compound_statement(Compound_stmt const& s)
 {
   token(lbrace_tok);
-  newline_and_indent();
-  statement_seq(s.statements());
-  newline_and_undent();
+  if (!s.statements().empty()) {
+    newline_and_indent();
+    statement_seq(s.statements());
+    newline_and_undent();
+  }
   token(rbrace_tok);
 }
 
@@ -963,6 +1185,71 @@ Printer::return_statement(Return_stmt const& s)
   token(return_tok);
   space();
   expression(s.expression());
+  token(semicolon_tok);
+}
+
+
+// TODO: If the branch is not compound statement, then drop to the next
+// line and indent, so it prints like this:
+//
+//    if (expr)
+//      stmt;
+void
+Printer::if_statement(If_then_stmt const& s)
+{
+  token(if_tok);
+  space();
+  token(lparen_tok);
+  expression(s.condition());
+  token(rparen_tok);
+  space();
+  statement(s.true_branch());
+}
+
+
+// TODO: See notes above.
+void
+Printer::if_statement(If_else_stmt const& s)
+{
+  token(if_tok);
+  space();
+  token(lparen_tok);
+  expression(s.condition());
+  token(rparen_tok);
+  space();
+  statement(s.true_branch());
+  newline();
+  token(else_tok);
+  space();
+  statement(s.false_branch());
+}
+
+
+void
+Printer::while_statement(While_stmt const& s)
+{
+  token(while_tok);
+  space();
+  token(lparen_tok);
+  expression(s.condition());
+  token(rparen_tok);
+  space();
+  statement(s.body());
+}
+
+
+void
+Printer::break_statement(Break_stmt const& s)
+{
+  token(break_tok);
+  token(semicolon_tok);
+}
+
+
+void
+Printer::continue_statement(Continue_stmt const& s)
+{
+  token(continue_tok);
   token(semicolon_tok);
 }
 
@@ -1007,6 +1294,7 @@ Printer::declaration(Decl const& d)
     Printer& p;
 
     void operator()(Decl const& d)           { lingo_unhandled(d); }
+    void operator()(Super_decl const& d)     { p.super_declaration(d); }
     void operator()(Variable_decl const& d)  { p.variable_declaration(d); }
     void operator()(Function_decl const& d)  { p.function_declaration(d); }
     void operator()(Type_decl const& d)      { p.type_declaration(d); }
@@ -1018,6 +1306,9 @@ Printer::declaration(Decl const& d)
     void operator()(Type_parm const& d)      { p.type_template_parameter(d); }
     void operator()(Template_parm const& d)  { p.template_template_parameter(d); }
   };
+
+  // Print specifiers before the declaration.
+  specifier_seq(d.specifiers());
   apply(d, fn{*this});
 }
 
@@ -1029,6 +1320,56 @@ Printer::declaration_seq(Decl_list const& ds)
     declaration(d);
     newline();
   }
+}
+
+// -------------------------------------------------------------------------- //
+// Super declarations
+
+void
+Printer::super_declaration(Super_decl const& d)
+{
+  token(super_tok);
+  space();
+  //identifier(d);
+  binary_operator(colon_tok);
+  space();
+  type(d.type());
+  token(semicolon_tok);
+
+}
+
+// Write the specifier token followed by a space.
+void
+Printer::specifier(Token_kind k)
+{
+  token(k);
+  space();
+}
+
+
+void
+Printer::specifier_seq(Specifier_set s)
+{
+  if (s & static_spec)
+    specifier(static_tok);
+  if (s & dynamic_spec)
+    specifier(dynamic_tok);
+  if (s & implicit_spec)
+    specifier(implicit_tok);
+  if (s & explicit_spec)
+    specifier(explicit_tok);
+  if (s & virtual_spec)
+    specifier(virtual_tok);
+  if (s & abstract_spec)
+    specifier(abstract_tok);
+  if (s & inline_spec)
+    specifier(inline_tok);
+  if (s & public_spec)
+    specifier(public_tok);
+  if (s & private_spec)
+    specifier(private_tok);
+  if (s & protected_spec)
+    specifier(protected_tok);
 }
 
 
@@ -1143,8 +1484,6 @@ Printer::function_definition(Defaulted_def const&)
 }
 
 
-
-
 void
 Printer::type_declaration(Type_decl const& d)
 {
@@ -1152,10 +1491,7 @@ Printer::type_declaration(Type_decl const& d)
   space();
   identifier(d);
   binary_operator(colon_tok);
-
-  // FIXME: This looks weird, but it's right.
-  token(type_tok);
-
+  type(d.type());
   type_definition(d.definition());
 }
 
@@ -1180,7 +1516,6 @@ Printer::type_definition(Type_def const& d)
   newline();
   statement(d.body());
 }
-
 
 
 void
@@ -1272,26 +1607,20 @@ Printer::requires_clause(Expr const& e)
 }
 
 
-// Dispatch function for printing parameters. This combines
-// the printing of all parameters into the same framework
-// for convenience.
-struct parameter_fn
-{
-  Printer& p;
-
-  template<typename T>
-  void operator()(T const&) { lingo_unreachable(); }
-
-  void operator()(Object_parm const& d)   { p.parameter(d); }
-  void operator()(Value_parm const& d)    { p.value_template_parameter(d); }
-  void operator()(Type_parm const& d)     { p.type_template_parameter(d); }
-  void operator()(Template_parm const& d) { p.template_template_parameter(d); }
-};
-
-
 void
 Printer::parameter(Decl const& d)
 {
+  struct parameter_fn
+  {
+    Printer& p;
+    void operator()(Decl const& d) { lingo_unhandled(d); }
+    void operator()(Object_parm const& d)   { p.parameter(d); }
+    void operator()(Value_parm const& d)    { p.value_template_parameter(d); }
+    void operator()(Type_parm const& d)     { p.type_template_parameter(d); }
+    void operator()(Template_parm const& d) { p.template_template_parameter(d); }
+  };
+
+  specifier_seq(d.specifiers());
   apply(d, parameter_fn{*this});
 }
 
@@ -1322,7 +1651,8 @@ Printer::parameter_list(Decl_list const& d)
 void
 Printer::template_parameter(Decl const& d)
 {
-  apply(d, parameter_fn{*this});
+  // FIXME: This is a bit odd.
+  parameter(d);
 }
 
 

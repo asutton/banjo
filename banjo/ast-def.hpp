@@ -47,6 +47,9 @@ struct Def::Mutator
 //
 // TODO: Are there other kinds of declarations that can have empty
 // definitions.
+//
+// ANSWER: User defined types as base_subobjects(Supers) (before code gen)
+
 struct Empty_def : Def
 {
   void accept(Visitor& v) const { return v.visit(*this); }

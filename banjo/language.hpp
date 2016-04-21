@@ -14,6 +14,7 @@
 #include "ast-eq.hpp"
 #include "ast-hash.hpp"
 
+#include "overload.hpp"
 #include "operator.hpp"
 #include "qualifier.hpp"
 #include "specifier.hpp"

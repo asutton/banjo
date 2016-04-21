@@ -36,6 +36,14 @@ is_equivalent(List<T> const& a, List<T> const& b)
 }
 
 
+// Returns true when type t1 differs from type t2.
+inline bool
+is_different(Type const& t1, Type const& t2)
+{
+  return !is_equivalent(t1, t2);
+}
+
+
 // Equality comparison for pointers.
 template<typename T>
 struct Term_eq
