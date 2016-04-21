@@ -137,6 +137,8 @@ Parser::postfix_type()
   while (true) {
     if (match_if(lbracket_tok))
       t = &array_type(*t);   
+    else if (match_if(lbrace_tok))
+      t = &tuple_type(*t);
     else
       break;
   }
@@ -146,16 +148,26 @@ Parser::postfix_type()
 
 // Parse an array of slice type.
 Type&
- Parser::array_type(Type& t)
- {
-   match(lbracket_tok);
-   if (match_if(rbracket_tok))
-      return on_slice_type(t);
-   Expr& e = expression();
-   match(rbracket_tok);
-   return on_array_type(t, e);
- }
+Parser::array_type(Type& t)
+{
+ match(lbracket_tok);
+ if (match_if(rbracket_tok))
+    return on_slice_type(t);
+ Expr& e = expression();
+ match(rbracket_tok);
+ return on_array_type(t, e);
+}
+
  
+Type&
+Parser::tuple_type(Type& t)
+{
+ match(lbracket_tok);
+ Expr& e = expression();
+ match(rbracket_tok);
+ return on_tuple_type(t, e);
+}
+
 
 // Parse a primary type.
 //

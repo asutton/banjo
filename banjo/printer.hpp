@@ -73,6 +73,7 @@ struct Printer
   void unary_type(Qualified_type const&);
   void postfix_type(Type const&);
   void postfix_type(Array_type const&);
+  void postfix_type(Tuple_type const&);
   void postfix_type(Slice_type const&);
   void postfix_type(Dynarray_type const&);
   void primary_type(Type const&);

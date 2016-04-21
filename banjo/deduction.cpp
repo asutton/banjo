@@ -113,6 +113,7 @@ deduce_from_type(Type& p, Type& a, Substitution& sub)
     bool operator()(Qualified_type& p) { return deduce_from_type(p, a, sub); }
     bool operator()(Pointer_type& p)   { return deduce_from_type(p, a, sub); }
     bool operator()(Array_type& p)     { lingo_unreachable(); }
+    bool operator()(Tuple& p)          { lingo_unreachable(); }
     bool operator()(Dynarray_type& p)  { lingo_unreachable(); }
     bool operator()(Sequence_type& p)  { return deduce_from_type(p, a, sub); }
     bool operator()(Typename_type& p)  { return deduce_from_type(p, a, sub); }
@@ -177,6 +178,7 @@ select_template_parameters(Type& t, Substitution& init, Substitution& ret)
     void operator()(Qualified_type& t) { select_template_parameters(t.type(), init, ret); }
     void operator()(Pointer_type& t)   { select_template_parameters(t.type(), init, ret); }
     void operator()(Array_type& t)     { select_template_parameters(t.type(), init, ret); }
+    void operator()(Tuple& t)          { select_template_parameters(t.type(), init, ret); }
     void operator()(Dynarray_type& t)  { select_template_parameters(t.type(), init, ret); }
     void operator()(Sequence_type& t)  { select_template_parameters(t.type(), init, ret); }
     void operator()(Typename_type& t)  { select_template_parameter(t, init, ret); }

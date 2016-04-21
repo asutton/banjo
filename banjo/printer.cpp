@@ -464,6 +464,7 @@ Printer::postfix_type(Type const& t)
     Printer& p;
     void operator()(Type const& t)          { p.primary_type(t); }
     void operator()(Array_type const& t)    { p.postfix_type(t); }
+    void operator()(Tuple_type const& t)    { p.postfix_type(t); }
     void operator()(Slice_type const& t)    { p.postfix_type(t); }
     void operator()(Dynarray_type const& t) { p.postfix_type(t); }
   };
@@ -473,6 +474,17 @@ Printer::postfix_type(Type const& t)
 
 void
 Printer::postfix_type(Array_type const& t)
+{
+  postfix_type(t.type());
+  token(lbracket_tok);
+  expression(t.extent());
+  token(rbracket_tok);
+}
+
+
+// FIXME: Change syntax
+void
+Printer::postfix_type(Tuple_type const& t)
 {
   postfix_type(t.type());
   token(lbracket_tok);

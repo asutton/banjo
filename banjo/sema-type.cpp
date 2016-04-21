@@ -99,6 +99,12 @@ Parser::on_array_type(Type& t, Expr& e)
   return make_array_type(cxt, t, e);
 }
 
+Type&
+Parser::on_tuple_type(Type& t, Expr& e)
+{
+  return make_tuple_type(cxt, t, e);
+}
+
 
 Type&
 Parser::on_slice_type(Type& t)

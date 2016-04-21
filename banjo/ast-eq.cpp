@@ -227,6 +227,13 @@ is_equivalent(Array_type const&, Array_type const&)
 
 
 bool
+is_equivalent(Tuple_type const&, Tuple_type const&)
+{
+  lingo_unreachable();
+}
+
+
+bool
 is_equivalent(Dynarray_type const&, Dynarray_type const&)
 {
   lingo_unreachable();
@@ -271,6 +278,7 @@ is_equivalent(Type const& t1, Type const& t2)
     bool operator()(Qualified_type const& t1) const { return is_equivalent(t1, cast<Qualified_type>(t2)); }
     bool operator()(Unary_type const& t1) const     { return is_equivalent(t1, cast<Unary_type>(t2)); }
     bool operator()(Array_type const& t1) const     { return is_equivalent(t1, cast<Array_type>(t2)); }
+    bool operator()(Tuple_type const& t1) const     { return is_equivalent(t1, cast<Tuple_type>(t2)); }
     bool operator()(Dynarray_type const& t1) const  { return is_equivalent(t1, cast<Dynarray_type>(t2)); }
     bool operator()(User_type const& t1) const      { return is_equivalent(t1, cast<User_type>(t2)); }
   };
