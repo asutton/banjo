@@ -278,6 +278,8 @@ struct Reference_type : Unary_type
 
 struct Array_type : Type
 {
+  Array_type(Type& t, Expr& e) : ty(&t),ext(&e) {} 
+  
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
@@ -311,6 +313,8 @@ struct Slice_type : Unary_type
 
 struct Dynarray_type : Type
 {
+  Dynarray_type(Type& t, Expr& e) : ty(&t),ext(&e) {} 
+  
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
