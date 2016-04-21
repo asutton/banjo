@@ -296,19 +296,24 @@ struct Array_type : Type
 
 struct Tuple_type : Type
 {
-  Tuple_type(Type& t, Expr& e) : ty(&t),ext(&e) {} 
+  Tuple_type(Type_list& t) : ty(&t) {} 
   
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
   
-  Type const& type() const { return *ty; }
-  Type&       type()       { return *ty; }
+  Type_list const& type_list() const { return *ty; }
+  Type_list&       type_list()       { return *ty; }
+  
+  Type const& type() const { return *t; }
+  Type&       type()       { return *t; }
   
   Expr const& extent() const { return *ext; }
   Expr&       extent()       { return *ext; }
   
-  Type* ty;
+  Type_list* ty;
   Expr* ext;
+  //FIXME: for printer...probably should be used somewhere
+  Type* t;
 };
 
 

@@ -84,9 +84,9 @@ make_array_type(Context& cxt, Type& t, Expr& e)
 
 
 Type&
-make_tuple_type(Context& cxt, Type& t, Expr& e)
+make_tuple_type(Context& cxt, Type_list& t)
 {
-  return cxt.get_tuple_type(t, e);
+  return cxt.get_tuple_type(t);
 }
 
 

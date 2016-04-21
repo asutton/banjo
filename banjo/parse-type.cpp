@@ -137,8 +137,6 @@ Parser::postfix_type()
   while (true) {
     if (match_if(lbracket_tok))
       t = &array_type(*t);   
-    else if (match_if(lbrace_tok))
-      t = &tuple_type(*t);
     else
       break;
   }
@@ -160,12 +158,13 @@ Parser::array_type(Type& t)
 
  
 Type&
-Parser::tuple_type(Type& t)
+Parser::tuple_type()
 {
- match(lbracket_tok);
- Expr& e = expression();
- match(rbracket_tok);
- return on_tuple_type(t, e);
+ match(lbrace_tok);
+ //FIXME: Needs to be a list of types? Not Expr
+ Type_list tl = type_list();
+ match(rbrace_tok);
+ return on_tuple_type(tl);
 }
 
 
@@ -183,6 +182,7 @@ Parser::tuple_type(Type& t)
 //      decltype-type
 //      function-type
 //      '( unary-type )'
+//      '{ Type_list }'
 //
 // FIXME: Design a better integer and FP type suite.
 Type&
@@ -220,6 +220,9 @@ Parser::primary_type()
         return *t;
       return grouped_type();
     }
+    
+    case lbrace_tok:
+      return tuple_type();
 
     default:
       return id_type();

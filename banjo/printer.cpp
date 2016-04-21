@@ -482,14 +482,14 @@ Printer::postfix_type(Array_type const& t)
 }
 
 
-// FIXME: Change syntax
+// FIXME: This is most likely very wrong
 void
 Printer::postfix_type(Tuple_type const& t)
 {
   postfix_type(t.type());
-  token(lbracket_tok);
+  token(lbrace_tok);
   expression(t.extent());
-  token(rbracket_tok);
+  token(rbrace_tok);
 }
 
 

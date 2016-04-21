@@ -100,9 +100,9 @@ Parser::on_array_type(Type& t, Expr& e)
 }
 
 Type&
-Parser::on_tuple_type(Type& t, Expr& e)
+Parser::on_tuple_type(Type_list& t)
 {
-  return make_tuple_type(cxt, t, e);
+  return make_tuple_type(cxt, t);
 }
 
 
