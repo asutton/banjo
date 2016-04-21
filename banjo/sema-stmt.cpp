@@ -43,6 +43,20 @@ Parser::on_yield_statement(Token, Expr& e)
  return build.make_yield_statement(e);
 }
 
+Break_stmt&
+Parser::on_break_statement()
+{
+  return build.make_break_statement();
+}
+
+
+Continue_stmt&
+Parser::on_continue_statement()
+{
+  return build.make_continue_statement();
+}
+
+
 Declaration_stmt&
 Parser::on_declaration_statement(Decl& d)
 {

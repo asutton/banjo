@@ -35,8 +35,14 @@ struct Expr : Term
   virtual void accept(Visitor&) const = 0;
   virtual void accept(Mutator&) = 0;
 
+  // Returns the type of the expression. 
+  // This is valid only when  is_typed() returns true.
   Type const& type() const { return *type_; }
   Type&       type()       { return *type_; }
+
+  // Returns true when the expression has a type. This is generally
+  // the case.
+  bool is_typed() const { return type_; }
 
   Type* type_;
 };
@@ -140,47 +146,83 @@ struct Real_expr : Literal_expr<lingo::Real>
 };
 
 
-// A reference to a single declaration.
-//
-// TODO: Subclass for variables, constants, and functions.
-// Unresolved identifiers are also interesting. These should be
-// called Variable_expr, Constant_expr, and Function_expr,
-// respectively.
-struct Reference_expr : Expr
+// The base class of all id that refer to declarations. 
+struct Id_expr : Expr
 {
-  Reference_expr(Type& t, Decl& d)
-    : Expr(t), decl(&d)
+  Id_expr(Name& n)
+    : Expr(untyped), name_(&n)
   { }
 
+  Id_expr(Type& t, Name& n)
+    : Expr(t), name_(&n)
+  { }
+
+  // Returns the original id of the expression.
+  Name const& id() const { return *name_; }
+  Name&       id()       { return *name_; }
+
+  Name* name_;
+};
+
+
+// The base class of all identifiers that resolved to a single declaration.
+struct Decl_expr : Id_expr
+{
+  Decl_expr(Type& t, Name& n, Decl& d)
+    : Id_expr(t, n), decl_(&d)
+  { }
+  
+  // Returns the referenced declaration.
+  Decl const& declaration() const { return *decl_; }
+  Decl&       declaration()       { return *decl_; }
+
+  Decl* decl_;
+};
+
+
+// A name that refers to a variable or parameter.
+struct Object_expr : Decl_expr
+{
+  using Decl_expr::Decl_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the referenced variable or parameter.
+  Object_decl const& declaration() const;
+  Object_decl&       declaration();
+};
+
+
+// A name that refers to a function.
+struct Function_expr : Decl_expr
+{
+  using Decl_expr::Decl_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the referenced function.
+  Function_decl const& declaration() const;
+  Function_decl&       declaration();
+};
+
+
+// A name that refers to a set of declarations.
+struct Overload_expr : Id_expr
+{
+  Overload_expr(Name& n, Overload_set& o)
+    : Id_expr(n), ovl_(&o)
+  { }
+  
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the referenced declaration.
-  Decl const& declaration() const { return *decl; }
-  Decl&       declaration()       { return *decl; }
+  Overload_set const& declarations() const { return *ovl_; }
+  Overload_set&       declarations()       { return *ovl_; }
 
-  Decl* decl;
-};
-
-
-// Represents an id-expression that refers to a template declaration.
-// These primarily occur in call expresssions:
-//
-//    template<typename T> def f(T) -> void;
-//
-//    f(0);
-//
-// In the call f(0), f is a template reference.
-struct Template_ref : Reference_expr
-{
-  using Reference_expr::Reference_expr;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the referenced templaet declaration.
-  Template_decl const& declaration() const;
-  Template_decl&       declaration();
+  Overload_set* ovl_;
 };
 
 

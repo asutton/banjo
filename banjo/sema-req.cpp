@@ -22,7 +22,8 @@ Parser::on_type_requirement(Expr&)
 Req&
 Parser::on_syntactic_requirement(Expr& e)
 {
-  return make_syntactic_requirement(cxt, e);
+  lingo_unimplemented("requirements");
+  // return make_syntactic_requirement(cxt, e);
 }
 
 
@@ -43,28 +44,32 @@ Parser::on_expression_requirement(Expr&)
 Req&
 Parser::on_basic_requirement(Expr& e)
 {
-  return make_basic_requirement(cxt, e);
+  lingo_unimplemented("requirements");
+  // return make_basic_requirement(cxt, e);
 }
 
 
 Req&
 Parser::on_basic_requirement(Expr& e, Type& t)
 {
-  return make_basic_requirement(cxt, e, t);
+  lingo_unimplemented("requirements");
+  // return make_basic_requirement(cxt, e, t);
 }
 
 
 Req&
 Parser::on_conversion_requirement(Expr& e, Type& t)
 {
-  return make_conversion_requirement(cxt, e, t);
+  lingo_unimplemented("requirements");
+  // return make_conversion_requirement(cxt, e, t);
 }
 
 
 Req&
 Parser::on_deduction_requirement(Expr& e, Type& t)
 {
-  return make_deduction_requirement(cxt, e, t);
+  lingo_unimplemented("requirements");
+  // return make_deduction_requirement(cxt, e, t);
 }
 
 

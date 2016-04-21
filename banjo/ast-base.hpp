@@ -25,6 +25,8 @@ struct Term;
 struct Name;
 struct Type;
 struct Expr;
+struct Id_expr;
+struct Decl_expr;
 struct Unary_expr;
 struct Binary_expr;
 struct Conv;
@@ -32,8 +34,10 @@ struct Init;
 struct Req;
 struct Stmt;
 struct Decl;
+struct Object_decl;
 struct Def;
 struct Cons;
+
 
 #define define_node(Node) struct Node;
 #include "ast-name.def"
@@ -47,7 +51,9 @@ struct Cons;
 #undef define_node
 
 
+// Secondary structures.
 struct Scope;
+struct Overload_set;
 
 using lingo::Integer;
 

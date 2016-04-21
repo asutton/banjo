@@ -12,8 +12,7 @@ namespace banjo
 using Binding = Scope::Binding;
 
 
-// Construct a scope enclosed by that of its surrounding
-// declaration.
+// Construct a scope enclosed by that of its surrounding declaration.
 Scope::Scope(Decl& cxt, Decl& d)
   : parent(cxt.scope()), decl(&d)
 { }
@@ -23,7 +22,7 @@ Scope::Scope(Decl& cxt, Decl& d)
 Binding&
 Scope::bind(Decl& d)
 {
-  return bind(d.declared_name(), d);
+  return bind(d.name(), d);
 }
 
 

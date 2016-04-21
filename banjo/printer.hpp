@@ -60,6 +60,22 @@ struct Printer
   // Types
   void type(Type const&);
   void type(Unparsed_type const&);
+  void suffix_type(Type const&);
+  void suffix_type(Pack_type const&);
+  void prefix_type(Type const&);
+  void prefix_type(Reference_type const&);
+  void prefix_type(In_type const&);
+  void prefix_type(Out_type const&);
+  void prefix_type(Mutable_type const&);
+  void prefix_type(Consume_type const&);
+  void prefix_type(Forward_type const&);
+  void unary_type(Type const&);
+  void unary_type(Pointer_type const&);
+  void unary_type(Qualified_type const&);
+  void postfix_type(Type const&);
+  void postfix_type(Array_type const&);
+  void postfix_type(Slice_type const&);
+  void postfix_type(Dynarray_type const&);
   void primary_type(Type const&);
   void primary_type(Void_type const&);
   void primary_type(Boolean_type const&);
@@ -69,6 +85,7 @@ struct Printer
   void primary_type(Auto_type const&);
   void primary_type(Function_type const&);
   void primary_type(Type_type const&);
+  void id_type(User_type const&);
 
   // Expressions
   void expression(Expr const&);
@@ -101,8 +118,8 @@ struct Printer
   void literal(Boolean_expr const&);
   void literal(Integer_expr const&);
   void literal(Real_expr const&);
-
-  void id_expression(Reference_expr const&);
+  void id_expression(Id_expr const&);
+  void id_expression(Decl_expr const&);
   void id_expression(Check_expr const&);
   void id_expression(Synthetic_expr const&);
 
@@ -134,6 +151,8 @@ struct Printer
   // Declarations
   void declaration(Decl const&);
   void declaration_seq(Decl_list const&);
+  void specifier(Token_kind);
+  void specifier_seq(Specifier_set);
 
   // Variables
   void variable_declaration(Variable_decl const&);

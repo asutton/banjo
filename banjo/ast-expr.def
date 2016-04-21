@@ -4,9 +4,13 @@
 define_node(Boolean_expr)
 define_node(Integer_expr)
 define_node(Real_expr)
-define_node(Reference_expr)
-define_node(Template_ref)
+
+// References to declarations
+define_node(Object_expr)
+define_node(Function_expr)
+define_node(Overload_expr)
 define_node(Check_expr)
+
 
 // Arithmetic expressions
 define_node(Add_expr)

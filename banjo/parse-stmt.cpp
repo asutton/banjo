@@ -21,6 +21,17 @@ Stmt&
 Parser::statement()
 {
   switch (lookahead()) {
+    // Declaration specifiers start declarations.
+    case virtual_tok:
+    case abstract_tok:
+    case static_tok:
+    case inline_tok:
+    case explicit_tok:
+    case implicit_tok:
+    case public_tok:
+    case private_tok:
+    case protected_tok:
+    // Declaration introducers.
     case var_tok:
     case def_tok:
     case coroutine_tok: // co_def
@@ -30,10 +41,23 @@ Parser::statement()
 
     case lbrace_tok:
       return compound_statement();
+
     case return_tok:
       return return_statement();
     case yield_tok:
       return yield_statement();
+
+    case if_tok:
+      lingo_unimplemented("if");
+
+    case while_tok:
+      lingo_unimplemented("while");
+
+    case break_tok:
+      return break_statement();
+
+    case continue_tok:
+      return continue_statement();
 
     default:
       return expression_statement();
@@ -50,7 +74,7 @@ Parser::statement()
 Stmt&
 Parser::compound_statement()
 {
-  Enter_scope scope(cxt, cxt.make_block_scope());
+  Enter_scope scope(cxt);
   Stmt_list ss;
   match(lbrace_tok);
   if (lookahead() != rbrace_tok)
@@ -96,6 +120,24 @@ Parser::yield_statement()
   match(semicolon_tok);
   return on_yield_statement(tok, e);
 }
+
+Stmt&
+Parser::break_statement()
+{
+  require(break_tok);
+  match(semicolon_tok);
+  return on_break_statement();
+}
+
+
+Stmt&
+Parser::continue_statement()
+{
+  require(continue_tok);
+  match(semicolon_tok);
+  return on_continue_statement();
+}
+
 
 // Parse a declaration-statement.
 Stmt&

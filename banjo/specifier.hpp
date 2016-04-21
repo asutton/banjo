@@ -12,8 +12,16 @@ namespace banjo
 enum Specifier_set
 {
   empty_spec    = 0,
-  virtual_spec  = 1 << 5,
-  abstract_spec = 1 << 6
+  static_spec    = 1 << 0,
+  dynamic_spec   = 1 << 1,  // TODO: Find a use.
+  implicit_spec  = 1 << 2,  // TODO: Find a use.
+  explicit_spec  = 1 << 3,
+  virtual_spec   = 1 << 4,
+  abstract_spec  = 1 << 5,
+  inline_spec    = 1 << 6,
+  public_spec    = 1 << 7,
+  private_spec   = 1 << 8,
+  protected_spec = 1 << 9
 };
 
 
@@ -24,6 +32,6 @@ operator|=(Specifier_set& a, Specifier_set b)
 }
 
 
-} // namesapce banjo
+} // namespace banjo
 
 #endif

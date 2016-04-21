@@ -31,25 +31,9 @@ unqualified_lookup(Context& cxt, Scope& scope, Simple_id const& id)
     if (Overload_set* ovl = p->lookup(id))
       return *ovl;
 
-    // Depending on current scope, we might re-direct the scope
-    // to search different things.
-
-    if (Function_scope* s = as<Function_scope>(p)) {
-      Decl& f = s->declaration();
-      (void)f;
-
-      // TODO: If fn is defined by a qualified-id, then we should
-      // should search the scope(s) named in the id before resuming
-      // the search.
-    }
-
-    else if (Initializer_scope* s = as<Initializer_scope>(p)) {
-      Decl& v = s->declaration();
-      (void)v;
-
-      // TODO: If v is declared by a qualified-id, then re-direct
-      // to the scope of v before working outwards.
-    }
+    // TODO: The "advanced" search rules depend on the declaration
+    // associated with the current scope. For example, unqualified
+    // lookup within a class searches base classes.
 
     p = p->enclosing_scope();
   }
@@ -94,31 +78,6 @@ argument_dependent_lookup(Scope&, Expr_list&)
 */
 
 
-static Type_list
-get_operand_types(Call_expr& e)
-{
-  Type_list ts;
-  ts.push_back(e.function().type());
-  for (Expr& a : e.arguments())
-    ts.push_back(a.type());
-  return ts;
-}
-
-
-static Type_list
-get_operand_types(Expr& e)
-{
-  struct fn
-  {
-    Type_list operator()(Expr& e)        { banjo_unhandled_case(e); }
-    Type_list operator()(Unary_expr& e)  { return {&e.operand().type()}; }
-    Type_list operator()(Binary_expr& e) { return {&e.left().type(), &e.right().type()}; }
-    Type_list operator()(Call_expr& e)   { return get_operand_types(e); }
-  };
-  return apply(e, fn{});
-}
-
-
 // Lookup the expression in the current requirement scope. This
 // returns the expressions whose operands have equivalent type or
 // nullptr if they no such expression has been declared.
@@ -129,6 +88,7 @@ get_operand_types(Expr& e)
 Expr*
 requirement_lookup(Context& cxt, Expr& e)
 {
+  #if 0
   Requires_scope& s = *cxt.current_requires_scope();
 
   Type_list t1 = get_operand_types(e); // Yuck.
@@ -143,6 +103,7 @@ requirement_lookup(Context& cxt, Expr& e)
       return &e;
     }
   }
+  #endif
   return nullptr;
 }
 

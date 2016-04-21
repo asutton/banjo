@@ -28,6 +28,8 @@ struct Braces : Token_seq
 // tokens. This supports the resolution of source code locations.
 struct Parser
 {
+  using Specs = Specifier_set; // For brevity
+
   Parser(Context& cxt, Token_stream& ts)
     : cxt(cxt), build(cxt), tokens(ts), state()
   { }
@@ -54,38 +56,30 @@ struct Parser
   Name& qualified_id();
 
   // Name helpers
-  Name& simple_template_id();
   Term_list template_argument_list();
   Term& template_argument();
 
   // Nested name specifiers
-  Decl& leading_name_specifier();
   Decl& nested_name_specifier();
-  Decl* nested_name_specifier_opt();
 
   // Resolved names
-  Type& class_name();
-  Type& union_name();
-  Type& enum_name();
-  Type& type_name();
-  Type& type_alias();
-  Decl& namespace_name();
-  Decl& namespace_alias();
   Decl& template_name();
   Decl& concept_name();
 
+  // Specifiers
+
   // Types
   Type& type();
-  Type& primary_type();
-  Type& decltype_type();
-  Type& function_type();
-  Type& grouped_type();
+  Type& suffix_type();
+  Type& prefix_type();
+  Type& unary_type();
   Type& postfix_type();
-  Type& sequence_type();
-  Type& reference_type();
-
-  // Type helpers
-  Type& return_type();
+  Type& array_type(Type&);
+  Type& primary_type();
+  Type& id_type();
+  Type& grouped_type();
+  Type& function_type();
+  Type& decltype_type();
   Type_list type_list();
 
   // Expressions
@@ -115,10 +109,14 @@ struct Parser
   Stmt& statement();
   Stmt& compound_statement();
   Stmt& member_statement();
-  Stmt& return_statement();
-  Stmt& yield_statement();
   Stmt& declaration_statement();
   Stmt& expression_statement();
+  Stmt& return_statement();
+  Stmt& yield_statement();
+  Stmt& if_statement();
+  Stmt& while_statement();
+  Stmt& break_statement();
+  Stmt& continue_statement();
   Stmt_list statement_seq();
 
   // Declarations
@@ -126,6 +124,9 @@ struct Parser
   Decl& declaration();
   Decl_list declaration_seq();
   Decl& empty_declaration();
+
+  // Specifiers
+  Specifier_set specifier_seq();
 
   // Variables
   Decl& variable_declaration();
@@ -147,14 +148,12 @@ struct Parser
   Type& unparsed_return_type();
   Expr& unparsed_expression_body();
   Stmt& unparsed_function_body();
-
   Def& function_definition(Decl&);
 
   // Types
   Decl& type_declaration();
   Type& unparsed_type_kind();
   Stmt& unparsed_type_body();
-
 
   // Templates
   Decl& template_declaration();
@@ -209,7 +208,6 @@ struct Parser
   Stmt& elaborate_compound_statement(Stmt&);
   Stmt& elaborate_member_statement(Stmt&);
 
-
   // Semantics actions
 
   // Identifiers
@@ -218,31 +216,11 @@ struct Parser
   Name& on_operator_id(Token, Operator_kind);
   Name& on_conversion_id();
   Name& on_literal_id();
-  Name& on_template_id(Token, Decl&, Term_list const&);
+  Name& on_template_id(Decl&, Term_list const&);
   Name& on_concept_id(Decl&, Term_list const&);
   Name& on_qualified_id(Decl&, Name&);
 
-  Decl& on_nested_name_specifier();
-  Decl& on_nested_name_specifier(Decl&);
-  Decl& on_nested_name_specifier(Type&);
-  Decl& on_nested_name_specifier(Decl&, Token);
-  Decl& on_nested_name_specifier(Decl&, Name&);
-
   // Names
-  Type& on_class_name(Token);
-  Type& on_class_name(Name&);
-  Type& on_union_name(Token);
-  Type& on_union_name(Name&);
-  Type& on_enum_name(Token);
-  Type& on_enum_name(Name&);
-  Type& on_type_alias(Token);
-  Type& on_type_alias(Name&);
-  Type& on_type_name(Token);
-  Type& on_type_name(Name&);
-  Decl& on_namespace_name(Token);
-  Decl& on_namespace_name(Name&);
-  Decl& on_namespace_alias(Token);
-  Decl& on_namespace_alias(Name&);
   Decl& on_template_name(Token);
   Decl& on_concept_name(Token);
 
@@ -252,14 +230,21 @@ struct Parser
   Type& on_bool_type(Token);
   Type& on_int_type(Token);
   Type& on_byte_type(Token);
+  Type& on_id_type(Name&);
   Type& on_decltype_type(Token, Expr&);
   Type& on_function_type(Type_list&, Type&);
-  Type& on_pointer_type(Token, Type&);
-  Type& on_qualified_type(Token, Type&, Qualifier_set);
-  Type& on_const_type(Token, Type&);
-  Type& on_volatile_type(Token, Type&);
-  Type& on_sequence_type(Type&);
-  Type& on_reference_type(Token, Type&);
+  Type& on_slice_type(Type&);
+  Type& on_array_type(Type&, Expr&);
+  Type& on_pointer_type(Type&);
+  Type& on_const_type(Type&);
+  Type& on_volatile_type(Type&);
+  Type& on_reference_type(Type&);
+  Type& on_in_type(Type&);
+  Type& on_out_type(Type&);
+  Type& on_mutable_type(Type&);
+  Type& on_consume_type(Type&);
+  Type& on_forward_type(Type&);
+  Type& on_pack_type(Type&);
   Type& on_unparsed_type(Token_seq&&);
 
   // Expressions
@@ -302,10 +287,12 @@ struct Parser
   Stmt& on_translation_statement(Stmt_list&&);
   Stmt& on_member_statement(Stmt_list&&);
   Stmt& on_compound_statement(Stmt_list&&);
-  Return_stmt& on_return_statement(Token, Expr&);
   Yield_stmt& on_yield_statement(Token, Expr&);
   Declaration_stmt& on_declaration_statement(Decl&);
   Expression_stmt& on_expression_statement(Expr&);
+  Return_stmt& on_return_statement(Token, Expr&);
+  Break_stmt& on_break_statement();
+  Continue_stmt& on_continue_statement();
   Stmt& on_unparsed_statement(Token_seq&&);
 
   // Variable declarations
@@ -323,11 +310,11 @@ struct Parser
   Decl& on_concept_declaration(Token, Name&, Decl_list&);
 
   // Function parameters
-  Object_parm& on_function_parameter(Name&, Type&);
+  Decl& on_function_parameter(Name&, Type&);
 
   // Template parameters
-  Type_parm& on_type_template_parameter(Name&, Type&);
-  Type_parm& on_type_template_parameter(Name&);
+  Decl& on_type_template_parameter(Name&, Type&);
+  Decl& on_type_template_parameter(Name&);
 
   // Initializers
   Expr& on_default_initialization(Decl&);
@@ -373,12 +360,17 @@ struct Parser
 
   bool next_token_is_one_of();
 
-  // Enclosures
+  // Braces
   void open_brace(Token);
   void close_brace(Token);
   bool in_braces() const;
   bool in_level(int) const;
   int  brace_level() const;
+
+  // Specifiers
+  Specs  decl_specs() const { return state.specs; }
+  Specs& decl_specs()       { return state.specs; }
+  Specs  take_decl_specs();
 
   // Tree matching.
   template<typename T> T* match_if(T& (Parser::* p)());
@@ -389,7 +381,6 @@ struct Parser
 
   // Scope management
   Scope& current_scope();
-  Decl&  current_context();
 
   // Declarations
   Decl& templatize_declaration(Decl&);
@@ -399,18 +390,18 @@ struct Parser
   // and restoring parse state.
   struct State
   {
+    State()
+      : braces(), specs(), template_parms(), template_cons()
+    { }
+
     Braces  braces;
+    Specs   specs;
 
-    Decl_list* template_parms = nullptr; // The current (innermost) template parameters
-    Expr*      template_cons = nullptr;  // The current (innermost) template constraints
-
-    // Parsing flags.
-    bool parsing_declarator = false; // True if parsing a declarator.
-    bool assume_typename = false;    // True if the following term is a type.
-    bool assume_template = false;    // True if the next identifier is a template.
+    // FIXME: Do I need these?
+    Decl_list* template_parms; // The current (innermost) template parameters
+    Expr*      template_cons;  // The current (innermost) template constraints
   };
 
-  struct Assume_template;
   struct Parsing_template;
 
   Context&      cxt;
@@ -438,25 +429,15 @@ Parser::next_token_is_one_of()
 }
 
 
-// An RAII helper that sets or clears the flag controlling
-// whether or not the 'template' keyword was seen before
-// a template-name.
-struct Parser::Assume_template
+// Return the current specifiers, resetting them to
+// their default value.
+inline Parser::Specs
+Parser::take_decl_specs()
 {
-  Assume_template(Parser& p, bool b)
-    : parser(p), saved(p.state.assume_template)
-  {
-    parser.state.assume_template = b;
-  }
-
-  ~Assume_template()
-  {
-    parser.state.assume_template = saved;
-  }
-
-  Parser& parser;
-  bool    saved;
-};
+  Specs s = decl_specs();
+  decl_specs() = Specs();
+  return s;
+}
 
 
 // An RAII helper that manages parsing state related to the parsing
@@ -560,7 +541,6 @@ Parser::match_if(R& (Parser::* f)())
   }
   return nullptr;
 }
-
 
 
 // This class defines a predicate that can be tested to determine if the

@@ -20,6 +20,7 @@ Decl&
 Parser::on_variable_declaration(Name& n, Type& t)
 {
   Decl& d = cxt.make_variable_declaration(n, t);
+  d.spec_ = take_decl_specs();
   remember(cxt, current_scope(), d);
   return d;
 }
@@ -29,6 +30,7 @@ Decl&
 Parser::on_variable_declaration(Name& n, Type& t, Expr& e)
 {
   Decl& d = cxt.make_variable_declaration(n, t, e);
+  d.spec_ = take_decl_specs();
   remember(cxt, current_scope(), d);
   return d;
 }
@@ -41,6 +43,7 @@ Decl&
 Parser::on_function_declaration(Name& n, Decl_list& p, Type& t, Expr& e)
 {
   Decl& d = cxt.make_function_declaration(n, p, t, e);
+  d.spec_ = take_decl_specs();
   remember(cxt, current_scope(), d);
   return d;
 }
@@ -50,6 +53,7 @@ Decl&
 Parser::on_function_declaration(Name& n, Decl_list& p, Type& t, Stmt& s)
 {
   Decl& d = cxt.make_function_declaration(n, p, t, s);
+  d.spec_ = take_decl_specs();
   remember(cxt, current_scope(), d);
   return d;
 }
@@ -57,10 +61,12 @@ Parser::on_function_declaration(Name& n, Decl_list& p, Type& t, Stmt& s)
 
 // In the first pass, just create the parameter. We'll declare it
 // during elaboration.
-Object_parm&
+Decl&
 Parser::on_function_parameter(Name& n, Type& t)
 {
-  return build.make_object_parm(n, t);
+  Decl& d = build.make_object_parm(n, t);
+  d.spec_ = take_decl_specs();
+  return d;
 }
 
 
@@ -108,19 +114,19 @@ Parser::on_type_declaration(Name& n, Type& t, Stmt& s)
 // -------------------------------------------------------------------------- //
 // Templates
 
-Type_parm&
+Decl&
 Parser::on_type_template_parameter(Name& n)
 {
-  Type_parm& parm = build.make_type_parameter(n);
+  Decl& parm = build.make_type_parameter(n);
   declare(cxt, current_scope(), parm);
   return parm;
 }
 
 
-Type_parm&
+Decl&
 Parser::on_type_template_parameter(Name& n, Type& t)
 {
-  Type_parm& parm = build.make_type_parameter(n, t);
+  Decl& parm = build.make_type_parameter(n, t);
   declare(cxt, current_scope(), parm);
   return parm;
 }

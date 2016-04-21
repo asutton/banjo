@@ -34,12 +34,14 @@ make_reference(Context& cxt, Decl& d)
 
   // If it's a template name, then it must almost certainly
   // refer to a function template.
+  #if 0
   if (Template_decl* t = as<Template_decl>(&d)) {
     Decl& p = t->parameterized_declaration();
     if (is<Function_decl>(&p))
       return cxt.make_reference(*t);
     throw Type_error("'{}' cannot be used as an expression");
   }
+  #endif
 
   // Here are some things that lookup can find that are not
   // valid expressions.
@@ -68,6 +70,8 @@ make_reference(Context& cxt, Simple_id& id)
 Expr&
 make_reference(Context& cxt, Template_id& id)
 {
+  lingo_unreachable();
+  
   // FIXME: Validate that this is actually a referrable entity.
   // Basically, we're going to perform the same analysis as we
   // do above on the resolved declaration (is it a var, fn, etc.?).
@@ -76,10 +80,11 @@ make_reference(Context& cxt, Template_id& id)
   // and not an arbitrarily created declaration. When the arguments
   // are dependent, this could be the same as the primary template
   // declaration -- or it could be something else altogether.
-  Template_decl& tmp = id.declaration();
-  Term_list& args = id.arguments();
-  Decl& d = specialize_template(cxt, tmp, args);
-  return make_reference(cxt, d);
+
+  // Template_decl& tmp = id.declaration();
+  // Term_list& args = id.arguments();
+  // Decl& d = specialize_template(cxt, tmp, args);
+  // return make_reference(cxt, d);
 }
 
 

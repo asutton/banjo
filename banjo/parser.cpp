@@ -291,15 +291,6 @@ Parser::current_scope()
 }
 
 
-// Find the innermost declaration context. This is the first
-// scope associatd with a declaration.
-Decl&
-Parser::current_context()
-{
-  return cxt.current_context();
-}
-
-
 // -------------------------------------------------------------------------- //
 // Miscellaneous parsing
 

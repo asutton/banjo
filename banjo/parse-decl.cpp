@@ -13,13 +13,120 @@ namespace banjo
 {
 
 // -------------------------------------------------------------------------- //
+// Declaration specifiers
+//
+// Declaration specifiers are an optional sequence of terms parsed
+// before a declaation's type. They look like part of the type but
+// are distinct.
+
+namespace
+{
+
+inline void
+accept_specifier(Parser& p, Specifier_set s)
+{
+  p.accept();
+  p.decl_specs() |= s;
+}
+
+} // namespace
+
+
+// Parse a declaration specifier.
+//
+//    specifier:
+//      storage-specifier
+//      function-specifier
+//      parameter-specifier
+//      access-specifier
+//
+//    storage-specifier:
+//      static
+//
+//    parameter-specifier:
+//      in
+//      out
+//      mutable
+//      consume
+//      forward
+//
+//    function-specifier:
+//      implicit
+//      explicit
+//      inline
+//
+// TODO: Figure out how we want to write foreign and extern functions.
+Specifier_set
+Parser::specifier_seq()
+{
+  // Reset the declaration specifiers (they should be empty).
+  decl_specs() = Specs();
+
+  while (true) {
+    switch (lookahead()) {
+      case virtual_tok:
+        accept_specifier(*this, virtual_spec);
+        break;
+
+      case abstract_tok:
+        accept_specifier(*this, abstract_spec);
+        break;
+
+      case static_tok:
+        accept_specifier(*this, static_spec);
+        break;
+
+      case inline_tok:
+        accept_specifier(*this, inline_spec);
+        break;
+
+      case explicit_tok:
+        accept_specifier(*this, explicit_spec);
+        break;
+
+      case implicit_tok:
+        accept_specifier(*this, implicit_spec);
+        break;
+
+      case public_tok:
+        accept_specifier(*this, public_spec);
+        break;
+
+      case private_tok:
+        accept_specifier(*this, private_spec);
+        break;
+
+      case protected_tok:
+        accept_specifier(*this, protected_spec);
+        break;
+
+      default:
+        return decl_specs();
+    }
+  }
+  lingo_unreachable();
+}
+
+
+// -------------------------------------------------------------------------- //
 // Declarations
 
-
-
+// Parse a declaration.
+//
+//    declaration:
+//      [specifier-seq] basic-declaration
+//
+//    basic-declaration:
+//      variable-declaration
+//      function-declarattion
+//      type-declaration
+//      concept-declaration
 Decl&
 Parser::declaration()
 {
+  // Parse and cache the specifier sequences.
+  specifier_seq();
+
   switch (lookahead()) {
     case var_tok:
       return variable_declaration();
@@ -312,14 +419,17 @@ Parser::parameter_list()
 // Parse a parameter declaration.
 //
 //    parameter-declaration:
-//      identifier [':' type] ['=' expression]
-//      identifier [':=' expression]
+//      [specifier-seq] identifier [':' type] ['=' expression]
+//      [specifier-seq] identifier [':=' expression]
 //
 // TODO: Extend the grammar to support (named?) variadics and function
 // argument packs.
 Decl&
 Parser::parameter_declaration()
 {
+  // Parse and cache the specifier sequence.
+  specifier_seq();
+
   Name& name = identifier();
 
   if (match_if(colon_tok)) {
@@ -505,18 +615,19 @@ Parser::unparsed_type_body()
 //    tempate-declaration:
 //      'template' '<' template-parameter-list '>' [requires-clause] declaration
 //
-// FIXME: Support explicit template instantations in one way or
+// FIXME: Support explicit template instantiations in one way or
 // another.
 Decl&
 Parser::template_declaration()
 {
+  #if 0
   require(template_tok);
 
   // Build a psuedo-scope.
   //
   // FIXME: Merge this with template parameter scope. I don't think
   // that it's serving a very useful purpose.
-  Template_scope& tmp = cxt.make_template_scope();
+  // Template_scope& tmp = cxt.make_template_scope();
   Enter_scope tscope(cxt, tmp);
 
   // TODO: Allow >> to close the template parameter list in the
@@ -531,13 +642,15 @@ Parser::template_declaration()
   if (next_token_is(requires_tok)) {
     // TODO: How are dependent names resolved in a requires clause?
     tmp.cons = &requires_clause();
-    Enter_scope cscope(cxt, cxt.make_constrained_scope(*tmp.cons));
+    // Enter_scope cscope(cxt, cxt.make_constrained_scope(*tmp.cons));
     Parsing_template save(*this, &tmp.parms, tmp.cons);
     return declaration();
   } else {
     Parsing_template save(*this, &tmp.parms);
     return declaration();
   }
+  #endif
+  lingo_unreachable();
 }
 
 
@@ -672,7 +785,7 @@ Parser::concept_declaration()
   Token tok = require(concept_tok);
   Name& n = declarator();
 
-  Enter_template_parameter_scope pscope(cxt);
+  // Enter_template_parameter_scope pscope(cxt);
   match(lt_tok);
   Decl_list ps = template_parameter_list();
   match(gt_tok);
@@ -680,7 +793,7 @@ Parser::concept_declaration()
   // Point of declaration. Enter the associated context prior
   // to defininging the concept.
   Decl& con = on_concept_declaration(tok, n, ps);
-  Enter_scope cscope(cxt, cxt.make_concept_scope(con));
+  // Enter_scope cscope(cxt, cxt.make_concept_scope(con));
   concept_definition(con);
   return con;
 }
