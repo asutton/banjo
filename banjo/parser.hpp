@@ -248,7 +248,6 @@ struct Parser
   Type& on_decltype_type(Token, Expr&);
   Type& on_function_type(Type_list&, Type&);
   Type& on_slice_type(Type&);
-  Type& on_array_type(Type&, Expr&);
   Type& on_pointer_type(Type&);
   Type& on_const_type(Type&);
   Type& on_volatile_type(Type&);

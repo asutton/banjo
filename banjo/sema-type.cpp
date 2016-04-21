@@ -163,10 +163,5 @@ Parser::on_unparsed_type(Token_seq&& toks)
   return *new Unparsed_type(std::move(toks));
 }
 
-Type& Parser::on_array_type(Type& t, Expr& e)
-{
-  return build.get_array_type(t,e);
-}
-
 
 } // namespace banjo
