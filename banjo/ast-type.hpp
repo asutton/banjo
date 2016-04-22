@@ -304,16 +304,7 @@ struct Tuple_type : Type
   Type_list const& type_list() const { return *ty; }
   Type_list&       type_list()       { return *ty; }
   
-  Type const& type() const { return *t; }
-  Type&       type()       { return *t; }
-  
-  Expr const& extent() const { return *ext; }
-  Expr&       extent()       { return *ext; }
-  
   Type_list* ty;
-  Expr* ext;
-  //FIXME: for printer...probably should be used somewhere
-  Type* t;
 };
 
 

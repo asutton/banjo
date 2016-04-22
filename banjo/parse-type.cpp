@@ -160,11 +160,14 @@ Parser::array_type(Type& t)
 Type&
 Parser::tuple_type()
 {
- match(lbrace_tok);
- //FIXME: Needs to be a list of types? Not Expr
- Type_list tl = type_list();
- match(rbrace_tok);
- return on_tuple_type(tl);
+  Type_list types;
+  match(lbrace_tok);
+  do {
+    Type& t = type();
+    types.push_back(t);
+  } while(match_if(comma_tok));
+  match(rbrace_tok);
+  return on_tuple_type(types);
 }
 
 
@@ -182,7 +185,7 @@ Parser::tuple_type()
 //      decltype-type
 //      function-type
 //      '( unary-type )'
-//      '{ Type_list }'
+//      '{ type-list }'
 //
 // FIXME: Design a better integer and FP type suite.
 Type&
