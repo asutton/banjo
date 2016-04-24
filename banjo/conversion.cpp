@@ -211,6 +211,19 @@ is_similar(Array_type const& a, Array_type const& b)
 
 
 bool
+is_similar(Tuple_type const& a, Tuple_type const& b)
+{
+  auto ita = a.type_list().begin();
+  auto itb = b.type_list().begin();
+  do {
+    if(!is_similar(*ita,*itb)) return false;
+    ita++;itb++;
+  } while(ita != a.type_list().end() && itb != b.type_list().end());
+  return true;
+}
+
+
+bool
 is_similar(Slice_type const& a, Slice_type const& b)
 {
   return is_similar(a.type(), b.type());
@@ -234,6 +247,7 @@ is_similar(Type const& a, Type const& b)
     bool operator()(Qualified_type const&)   { lingo_unreachable(); }
     bool operator()(Pointer_type const& a)   { return is_similar(a, cast<Pointer_type>(b)); }
     bool operator()(Array_type const& a)     { return is_similar(a, cast<Array_type>(b)); }
+    bool operator()(Tuple_type const& a)     { return is_similar(a, cast<Tuple_type>(b)); }
     bool operator()(Slice_type const& a)     { return is_similar(a, cast<Slice_type>(b)); }
     bool operator()(Dynarray_type const& a)  { return is_similar(a, cast<Dynarray_type>(b)); }
   };
