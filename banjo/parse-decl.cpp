@@ -334,7 +334,7 @@ Parser::brace_initializer(Decl&)
       }
     }
 
-    // Othersise, the return type is unspecified, allowing for
+    // Otherwise, the return type is unspecified, allowing for
     // anonymous expressions.
     Type& ret = cxt.get_auto_type();
 
@@ -771,6 +771,27 @@ Parser::concept_declaration()
   return con;
 }
 
+// Coroutine Declaration
+// co_def Name:(params) -> ret_value {
+// ...
+// yield 5
+// }
+Decl&
+Parser::coroutine_declaration()
+{
+  Token tok = require(coroutine_tok); // co_def
+  Name& n = identifier(); // Name of coroutine
+  match(colon_tok); // :
+
+
+  Decl_list parms = parameter_clause(); // (...)
+
+  if(match_if(arrow_tok)) {
+    Type& yield = unparsed_return_type();
+  }
+
+  lingo_unimplemented("coroutine def");
+}
 
 // Parse a concept definition.
 //
