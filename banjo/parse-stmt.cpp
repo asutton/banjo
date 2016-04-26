@@ -13,10 +13,15 @@ namespace banjo
 // Parse a statement.
 //
 //    statement:
-//      compound-statement
+//      empty-statement
 //      return-statement
-//      ...
+//      if-statement
+//      while-statement
+//      break-statement
+//      continue-statement
+//      compound-statement
 //      declaration-statement
+//      expression-statement
 Stmt&
 Parser::statement()
 {
@@ -32,6 +37,7 @@ Parser::statement()
     case private_tok:
     case protected_tok:
     // Declaration introducers.
+    case super_tok:
     case var_tok:
     case def_tok:
     case coroutine_tok: // co_def
@@ -39,19 +45,16 @@ Parser::statement()
     case concept_tok:
       return declaration_statement();
 
-    case lbrace_tok:
-      return compound_statement();
-
     case return_tok:
       return return_statement();
     case yield_tok:
       return yield_statement();
 
     case if_tok:
-      lingo_unimplemented("if");
+      return if_statement();
 
     case while_tok:
-      lingo_unimplemented("while");
+      return while_statement();
 
     case break_tok:
       return break_statement();
@@ -59,9 +62,27 @@ Parser::statement()
     case continue_tok:
       return continue_statement();
 
+    case lbrace_tok:
+      return compound_statement();
+
+    case semicolon_tok:
+      return empty_statement();
+
     default:
       return expression_statement();
   }
+}
+
+
+// Parse the empty statement.
+//
+//    empty-statement:
+//      ';'
+Stmt&
+Parser::empty_statement()
+{
+  require(semicolon_tok);
+  return on_empty_statement();
 }
 
 
@@ -121,6 +142,40 @@ Parser::yield_statement()
   return on_yield_statement(tok, e);
 }
 
+// Parse an if statement.
+//
+//    if-statement:
+//      'if' '(' expression ')' statement
+//      'if' '(' expression ')' statement 'else' statement
+Stmt&
+Parser::if_statement()
+{
+  require(if_tok);
+  match(lparen_tok);
+  Expr& cond = expression();
+  match(rparen_tok);
+  Stmt& branch1 = statement();
+  if (match_if(else_tok)) {
+    Stmt& branch2 = statement();
+    return on_if_statement(cond, branch1, branch2);
+  } else {
+    return on_if_statement(cond, branch1);
+  }
+}
+
+
+Stmt&
+Parser::while_statement()
+{
+  require(while_tok);
+  match(lparen_tok);
+  Expr& cond = expression();
+  match(rparen_tok);
+  Stmt& body = statement();
+  return on_while_statement(cond, body);
+}
+
+
 Stmt&
 Parser::break_statement()
 {
@@ -179,13 +234,7 @@ Parser::statement_seq()
     Stmt& s = statement();
     ss.push_back(s);
   } while (!is_eof() && next_token_is_not(rbrace_tok));
-
-  // Second pass: Resolve declared types.
-  elaborate_declarations(ss);
-
-  // Third pass: Resolve definitions.
-  elaborate_definitions(ss);
-
+  on_statement_seq(ss);
   return ss;
 }
 

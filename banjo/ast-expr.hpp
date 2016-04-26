@@ -146,7 +146,7 @@ struct Real_expr : Literal_expr<lingo::Real>
 };
 
 
-// The base class of all id that refer to declarations. 
+// The base class of all ids that refer to declarations. 
 struct Id_expr : Expr
 {
   Id_expr(Name& n)
@@ -223,6 +223,78 @@ struct Overload_expr : Id_expr
   Overload_set&       declarations()       { return *ovl_; }
 
   Overload_set* ovl_;
+};
+
+
+// The base class of all dot expressions. 
+struct Dot_expr : Expr
+{
+  Dot_expr(Expr& e, Name& n)
+    : Expr(untyped), obj_(&e), mem_(&n)
+  { }
+
+  Dot_expr(Type& t, Expr& e, Name& n)
+    : Expr(t), obj_(&e), mem_(&n)
+  { }
+
+  // Returns the object enclosing the member name.
+  Expr const& object() const { return *obj_; }
+  Expr&       object()       { return *obj_; }
+
+
+  // Returns the requested member name.
+  Name const& member() const { return *mem_; }
+  Name&       member()       { return *mem_; }
+  
+  Expr* obj_;
+  Name* mem_;
+};
+
+
+// The base class of resolved dot-expressions. This stores the resolved
+// declaration of the member name.
+struct Nested_decl_expr : Dot_expr
+{
+  Nested_decl_expr(Type& t, Expr& e, Name& n, Decl& d)
+    : Dot_expr(t, e, n), decl_(&d)
+  { }
+
+  Decl const& declaration() const { return *decl_; }
+  Decl&       declaration()       { return *decl_; }
+
+  Decl* decl_;
+};
+
+
+// A dot-expression that has been resolved to a member variable 
+// (or field) of a record type.
+struct Field_expr : Nested_decl_expr
+{
+  using Nested_decl_expr::Nested_decl_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// A dot-expression that has been resolved to a member function
+// (or method) of a record type.
+struct Method_expr : Nested_decl_expr
+{
+  using Nested_decl_expr::Nested_decl_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// An unresolved dot-expression that refers to a overload set.
+struct Member_expr : Dot_expr
+{
+  using Dot_expr::Dot_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 

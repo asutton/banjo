@@ -316,9 +316,9 @@ Builder::get_reference_type(Type& t)
 
 
 Array_type&
-Builder::get_array_type(Type&, Expr&)
+Builder::get_array_type(Type& t, Expr& e)
 {
-  lingo_unimplemented("array-type");
+  return make<Array_type>(t,e);
 }
 
 
@@ -330,9 +330,9 @@ Builder::get_slice_type(Type& t)
 
 
 Dynarray_type&
-Builder::get_dynarray_type(Type&, Expr&)
+Builder::get_dynarray_type(Type& t, Expr& e)
 {
-  lingo_unimplemented("dynarray-type");
+  return make<Dynarray_type>(t,e);
 }
 
 
@@ -460,8 +460,8 @@ Builder::get_uint(Integer const& n)
 }
 
 
-// Get an expression that refers to a variable. The type
-// is a reference to the declared type of the variable.
+// Get an expression that refers to a variable. The type is a reference to 
+// the declared type of the variable.
 Object_expr&
 Builder::make_reference(Variable_decl& d)
 {
@@ -471,8 +471,8 @@ Builder::make_reference(Variable_decl& d)
 }
 
 
-// Get an expression that refers to a parameter. The type
-// is a reference to the declared type of the parameter.
+// Get an expression that refers to a parameter. The type is a reference to 
+// the declared type of the parameter.
 Object_expr&
 Builder::make_reference(Object_parm& d)
 {
@@ -482,12 +482,38 @@ Builder::make_reference(Object_parm& d)
 }
 
 
+// FIXME: Do I want functions to be references or not?
 Function_expr&
 Builder::make_reference(Function_decl& d)
 {
   Type& t = get_reference_type(d.type());
   Name& n = d.name();
   return make<Function_expr>(t, n, d);
+}
+
+
+Field_expr&
+Builder::make_member_reference(Expr& e, Field_decl& d)
+{
+  Type& t = get_reference_type(d.type());
+  Name& n = d.name();
+  return make<Field_expr>(t, e, n, d);
+}
+
+
+Method_expr&
+Builder::make_member_reference(Expr& e, Method_decl& d)
+{
+  Type& t = get_reference_type(d.type());
+  Name& n = d.name();
+  return make<Method_expr>(t, e, n, d);
+}
+
+
+Member_expr&
+Builder::make_member_reference(Expr& e, Overload_set& ovl)
+{
+  lingo_unimplemented("");
 }
 
 
@@ -705,6 +731,13 @@ Builder::make_compound_statement(Stmt_list&& ss)
 }
 
 
+Empty_stmt&
+Builder::make_empty_statement()
+{
+  return make<Empty_stmt>();
+}
+
+
 Return_stmt&
 Builder::make_return_statement(Expr& e)
 {
@@ -716,6 +749,27 @@ Builder::make_yield_statement(Expr& e)
 {
   return make<Yield_stmt>(e);
 }
+
+If_then_stmt&
+Builder::make_if_statement(Expr& e, Stmt& s)
+{
+  return make<If_then_stmt>(e, s);
+}
+
+
+If_else_stmt&
+Builder::make_if_statement(Expr& e, Stmt& s1, Stmt& s2)
+{
+  return make<If_else_stmt>(e, s1, s2);
+}
+
+
+While_stmt&
+Builder::make_while_statement(Expr& e, Stmt& s)
+{
+  return make<While_stmt>(e, s);
+}
+
 
 Break_stmt&
 Builder::make_break_statement()
@@ -786,6 +840,12 @@ Builder::make_aggregate_init(Type& t, Expr_list const& es)
 // -------------------------------------------------------------------------- //
 // Declarations
 
+Super_decl&
+Builder::make_super_declaration(Type& t)
+{
+  Def& d = make_empty_definition();
+  return make<Super_decl>(get_id(), t, d);
+}
 
 Variable_decl&
 Builder::make_variable_declaration(Name& n, Type& t)
@@ -840,6 +900,41 @@ Builder::make_type_declaration(Name& n, Type& t, Stmt& s)
   Def& d = make_type_definition(s);
   return make<Type_decl>(n, t, d);
 }
+
+
+Field_decl&
+Builder::make_field_declaration(Name& n, Type& t)
+{
+  Def& d = make_empty_definition();
+  return make<Field_decl>(n, t, d);
+}
+
+
+Field_decl&
+Builder::make_field_declaration(Name& n, Type& t, Expr& e)
+{
+  Def& d = make_expression_definition(e);
+  return make<Field_decl>(n, t, d);
+}
+
+
+Method_decl&
+Builder::make_method_declaration(Name& n, Decl_list const& p, Type& t, Expr& e)
+{
+  Type& r = get_function_type(p, t);
+  Def& d = make_expression_definition(e);
+  return make<Method_decl>(n, r, p, d);
+}
+
+
+Method_decl&
+Builder::make_method_declaration(Name& n, Decl_list const& p, Type& t, Stmt& s)
+{
+  Type& r = get_function_type(p, t);
+  Def& d = make_function_definition(s);
+  return make<Method_decl>(n, r, p, d);
+}
+
 
 
 Template_decl&

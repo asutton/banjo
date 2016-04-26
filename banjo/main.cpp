@@ -6,6 +6,8 @@
 #include "parser.hpp"
 #include "printer.hpp"
 
+#include "gen/llvm/generator.hpp"
+
 #include <lingo/file.hpp>
 #include <lingo/io.hpp>
 #include <lingo/error.hpp>
@@ -20,22 +22,81 @@ using namespace banjo;
 using File_seq = std::vector<File*>;
 
 
+struct Options
+{
+  ~Options();
+
+  String   emit    = "bano";
+  File_seq inputs  = {};
+};
+
+
+
+Options::~Options()
+{
+  for (File* f : inputs)
+    delete f;
+}
+
+
+
+using Parse_fn = void (*)(int&, int, char**, Options&);
+using Options_map = std::unordered_map<String, Parse_fn>;
+
+
+void
+parse_emit(int& argn, int argc, char* argv[], Options& opts)
+{
+  if (argn == argc) {
+    error("expected one of 'banjo|cxx|llvm' after '-emit'");
+    exit(1);
+  }
+  opts.emit = argv[++argn];
+}
+
+
+void
+parse_positional(int& argn, int argc, char* argv[], Options& opts)
+{
+  opts.inputs.push_back(new File(argv[argn]));
+}
+
+
+void
+parse_args(int argc, char* argv[], Options& opts)
+{
+  static Options_map all {
+    {"-emit", parse_emit}
+  };
+
+
+  for (int i = 1; i < argc; ++i) {
+    char const* arg = argv[i];
+    if (arg[0] == '-') {
+      auto iter = all.find(arg);
+      if (iter == all.end()) {
+        error("unknown option '{}'", argv[i]);
+        exit(1);
+      }
+      iter->second(i, argc, argv, opts);
+    } else {
+      parse_positional(i, argc, argv, opts);
+    }
+  }
+}
+
+
+
 int
 main(int argc, char* argv[])
 {
   Context cxt;
 
-  // Parse arguments and collect inputs.
-  File_seq inputs;
-  for (int i = 1; i < argc; ++i) {
-    String s = argv[i];
-    if (s[0] == '-') {
-      error("unknown option '{}'", s);
-    }
-    inputs.emplace_back(new File(s));
-  }
+  Options opts;
+  parse_args(argc, argv, opts);
 
-  if (inputs.empty()) {
+  // Check post-configuration options.
+  if (opts.inputs.empty()) {
     error("no input files given");
     return -1;
   }
@@ -44,7 +105,7 @@ main(int argc, char* argv[])
 
   // Perform character and lexical analysis.
   Token_seq toks;
-  for (File* f : inputs) {
+  for (File* f : opts.inputs) {
     Character_stream cs(*f);
     Token_stream ts;
     Lexer lex(cxt, cs, ts);
@@ -60,10 +121,13 @@ main(int argc, char* argv[])
   Token_stream ts(toks);
   Parser parse(cxt, ts);
   Stmt& stmt = parse();
-  std::cout << stmt << '\n';
 
+  if (opts.emit == "banjo") {
+    std::cout << stmt << '\n';
+  }
+  else if (opts.emit == "llvm") {
+    ll::Generator gen;
+    gen(stmt);
+  }
 
-  // FIXME: This is inelegant. Use scoped resource management.
-  for (File* f : inputs)
-    delete f;
 }

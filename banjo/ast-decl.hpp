@@ -8,6 +8,7 @@
 #include "specifier.hpp"
 
 
+
 namespace banjo
 {
 
@@ -83,11 +84,6 @@ struct Decl : Term
   virtual Decl const& parameterized_declaration() const { return *this; }
   virtual Decl&       parameterized_declaration()       { return *this; }
 
-  // Returns the saved scope associated with the declaration, if any.
-  // Not all declarations have an associated scope.
-  virtual Scope const* scope() const { return nullptr; }
-  virtual Scope*       scope()       { return nullptr; }
-
   Decl*         cxt_;
   Name*         name_;
   Type*         type_;
@@ -121,7 +117,30 @@ struct Object_decl : Decl
 };
 
 
-// Represents a variable declaration.
+// Declares a base_subobject(henceforth called a "Super")
+struct Super_decl : Object_decl
+{
+  Super_decl(Name& n, Type& t, Def& d)
+    : Object_decl(n), type_(&t), def_(&d)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the declared type of the super
+  Type const& type() const { return *type_; }
+  Type&       type()       { return *type_; }
+
+  Def const& initializer() const { return *def_; }
+  Def&       initializer()       { return *def_; }
+
+  Type * type_;
+  Def* def_;
+
+};
+
+
+// Declares a variable.
 struct Variable_decl : Object_decl
 {
   Variable_decl(Name& n, Type& t, Def& d)
@@ -190,12 +209,14 @@ struct Function_decl : Decl
 // Represents the declaration of a user-defined type.
 //
 // TODO: Support kinds and/or metatypes.
+//
+// TODO: Rename this to Record_decl, and also its corresponding type.
 struct Type_decl : Decl
 {
   Type_decl(Name& n, Type& t, Def& d)
     : Decl(n, t), def_(&d)
   { }
-
+  
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
@@ -207,8 +228,39 @@ struct Type_decl : Decl
   Def const& definition() const { return *def_; }
   Def&       definition()       { return *def_; }
 
-  Type* kind_;
-  Def*  def_;
+  Type*  kind_;
+  Def*   def_;
+};
+
+
+// Declares a field of a record. This stores the index of the field within
+// the class, which is used to support code generation and compile-time
+// evaluation.
+struct Field_decl : Variable_decl
+{
+  using Variable_decl::Variable_decl;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the index of the field within the class.
+  int index() const { return index_; }
+
+  int index_;
+};
+
+
+// Declares a method of a record.
+//
+// TODO: I think that the type of a method is the same as that of a function,
+// except that the first parameter type must always be a (possibly qualified) 
+// reference to this. That could be enforced in the constructor, I suppose.
+struct Method_decl : Function_decl
+{
+  using Function_decl::Function_decl;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 

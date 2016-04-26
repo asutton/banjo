@@ -97,6 +97,7 @@ struct Parser
   Expr& unary_expression();
   Expr& postfix_expression();
   Expr& call_expression(Expr&);
+  Expr& dot_expression(Expr&);
   Expr& subscript_expression(Expr&);
   Expr& primary_expression();
   Expr& id_expression();
@@ -109,14 +110,15 @@ struct Parser
   Stmt& statement();
   Stmt& compound_statement();
   Stmt& member_statement();
-  Stmt& declaration_statement();
-  Stmt& expression_statement();
+  Stmt& empty_statement();
   Stmt& return_statement();
   Stmt& yield_statement();
   Stmt& if_statement();
   Stmt& while_statement();
   Stmt& break_statement();
   Stmt& continue_statement();
+  Stmt& declaration_statement();
+  Stmt& expression_statement();
   Stmt_list statement_seq();
 
   // Declarations
@@ -155,6 +157,9 @@ struct Parser
   Type& unparsed_type_kind();
   Stmt& unparsed_type_body();
 
+  // Base classes.
+  Decl& super_declaration();
+
   // Templates
   Decl& template_declaration();
   Decl& template_parameter();
@@ -187,15 +192,26 @@ struct Parser
   void elaborate_declarations(Stmt_list&);
   void elaborate_declaration(Stmt&);
   void elaborate_declaration(Decl&);
-  void elaborate_variable_declaration(Variable_decl&);
+  void elaborate_object_declaration(Object_decl&);
   void elaborate_function_declaration(Function_decl&);
   void elaborate_type_declaration(Type_decl&);
   Type& elaborate_type(Type&);
+
+  // Overloading
+  void elaborate_overloads(Stmt_list&);
+  void elaborate_overloads(Stmt&);
+  void elaborate_overloads(Decl&);
+
+  // Partial definitions
+  void elaborate_partials(Stmt_list&);
 
   // Definition elaboration
   void elaborate_definitions(Stmt_list&);
   void elaborate_definition(Stmt&);
   void elaborate_definition(Decl&);
+  void elaborate_super_initializer(Super_decl&);
+  void elaborate_super_initializer(Super_decl&, Empty_def&);
+  void elaborate_super_initializer(Super_decl&, Expression_def&);
   void elaborate_variable_initializer(Variable_decl&);
   void elaborate_variable_initializer(Variable_decl&, Empty_def&);
   void elaborate_variable_initializer(Variable_decl&, Expression_def&);
@@ -234,7 +250,6 @@ struct Parser
   Type& on_decltype_type(Token, Expr&);
   Type& on_function_type(Type_list&, Type&);
   Type& on_slice_type(Type&);
-  Type& on_array_type(Type&, Expr&);
   Type& on_pointer_type(Type&);
   Type& on_const_type(Type&);
   Type& on_volatile_type(Type&);
@@ -246,19 +261,19 @@ struct Parser
   Type& on_forward_type(Type&);
   Type& on_pack_type(Type&);
   Type& on_unparsed_type(Token_seq&&);
+  Type& on_array_type(Type&, Expr&);
+  Type& on_dynarray_type(Type&, Expr&);
 
   // Expressions
   Expr& on_logical_and_expression(Token, Expr&, Expr&);
   Expr& on_logical_or_expression(Token, Expr&, Expr&);
   Expr& on_logical_not_expression(Token, Expr&);
-
   Expr& on_or_expression(Token, Expr&, Expr&);
   Expr& on_xor_expression(Token, Expr&, Expr&);
   Expr& on_and_expression(Token, Expr&, Expr&);
   Expr& on_lsh_expression(Token, Expr&, Expr&);
   Expr& on_rsh_expression(Token, Expr&, Expr&);
   Expr& on_compl_expression(Token, Expr&);
-
   Expr& on_eq_expression(Token, Expr&, Expr&);
   Expr& on_ne_expression(Token, Expr&, Expr&);
   Expr& on_lt_expression(Token, Expr&, Expr&);
@@ -266,7 +281,6 @@ struct Parser
   Expr& on_le_expression(Token, Expr&, Expr&);
   Expr& on_ge_expression(Token, Expr&, Expr&);
   Expr& on_cmp_expression(Token, Expr&, Expr&);
-
   Expr& on_add_expression(Token, Expr&, Expr&);
   Expr& on_sub_expression(Token, Expr&, Expr&);
   Expr& on_mul_expression(Token, Expr&, Expr&);
@@ -274,8 +288,8 @@ struct Parser
   Expr& on_rem_expression(Token, Expr&, Expr&);
   Expr& on_neg_expression(Token, Expr&);
   Expr& on_pos_expression(Token, Expr&);
-
   Expr& on_call_expression(Expr&, Expr_list&);
+  Expr& on_dot_expression(Expr&, Name&);
   Expr& on_id_expression(Name&);
   Expr& on_boolean_literal(Token, bool);
   Expr& on_integer_literal(Token);
@@ -288,12 +302,21 @@ struct Parser
   Stmt& on_member_statement(Stmt_list&&);
   Stmt& on_compound_statement(Stmt_list&&);
   Yield_stmt& on_yield_statement(Token, Expr&);
-  Declaration_stmt& on_declaration_statement(Decl&);
-  Expression_stmt& on_expression_statement(Expr&);
-  Return_stmt& on_return_statement(Token, Expr&);
   Break_stmt& on_break_statement();
   Continue_stmt& on_continue_statement();
+
+  Stmt& on_empty_statement();
+  Stmt& on_return_statement(Token, Expr&);
+  Stmt& on_if_statement(Expr&, Stmt&);
+  Stmt& on_if_statement(Expr&, Stmt&, Stmt&);
+  Stmt& on_while_statement(Expr&, Stmt&);
+  Stmt& on_declaration_statement(Decl&);
+  Stmt& on_expression_statement(Expr&);
   Stmt& on_unparsed_statement(Token_seq&&);
+  void on_statement_seq(Stmt_list&);
+
+  // Super declarations
+  Decl& on_super_declaration(Name&, Type&);
 
   // Variable declarations
   Decl& on_variable_declaration(Name&, Type&);
@@ -329,7 +352,7 @@ struct Parser
   Def& on_deleted_definition(Decl&);
   Def& on_defaulted_definition(Decl&);
 
-  // Reqirements
+  // Requirements
   Req& on_type_requirement(Expr&);
   Req& on_syntactic_requirement(Expr&);
   Req& on_semantic_requirement(Decl&);

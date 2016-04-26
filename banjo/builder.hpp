@@ -93,6 +93,9 @@ struct Builder
   Object_expr&    make_reference(Object_parm&);
   Function_expr&  make_reference(Function_decl&);
   Overload_expr&  make_reference(Overload_set&);
+  Field_expr&     make_member_reference(Expr&, Field_decl&);
+  Method_expr&    make_member_reference(Expr&, Method_decl&);
+  Member_expr&    make_member_reference(Expr&, Overload_set&);
   Check_expr&     make_check(Concept_decl&, Term_list const&);
 
   And_expr&       make_and(Type&, Expr&, Expr&);
@@ -126,12 +129,19 @@ struct Builder
   Translation_stmt& make_translation_statement(Stmt_list&&);
   Member_stmt&      make_member_statement(Stmt_list&&);
   Compound_stmt&    make_compound_statement(Stmt_list&&);
+  Empty_stmt&       make_empty_statement();
   Return_stmt&      make_return_statement(Expr&);
   Yield_stmt&       make_yield_statement(Expr&);
+  If_then_stmt&     make_if_statement(Expr&, Stmt&);
+  If_else_stmt&     make_if_statement(Expr&, Stmt&, Stmt&);
+  While_stmt&       make_while_statement(Expr&, Stmt&);
   Break_stmt&       make_break_statement();
   Continue_stmt&    make_continue_statement();
   Expression_stmt&  make_expression_statement(Expr&);
   Declaration_stmt& make_declaration_statement(Decl&);
+
+  // Supers
+  Super_decl&  make_super_declaration(Type&);
 
   // Variables
   Variable_decl&  make_variable_declaration(Name&, Type&);
@@ -142,8 +152,12 @@ struct Builder
   Function_decl&  make_function_declaration(Name&, Decl_list const&, Type&, Expr&);
   Function_decl&  make_function_declaration(Name&, Decl_list const&, Type&, Stmt&);
 
-  // Types
+  // Types and members
   Type_decl&      make_type_declaration(Name&, Type&, Stmt&);
+  Field_decl&     make_field_declaration(Name&, Type&);
+  Field_decl&     make_field_declaration(Name&, Type&, Expr&);
+  Method_decl&    make_method_declaration(Name&, Decl_list const&, Type&, Expr&);
+  Method_decl&    make_method_declaration(Name&, Decl_list const&, Type&, Stmt&);
 
   // Templates
   Template_decl&  make_template(Decl_list const&, Decl&);

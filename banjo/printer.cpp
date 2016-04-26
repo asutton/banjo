@@ -507,7 +507,7 @@ Printer::primary_type(Type const& t)
   struct fn
   {
     Printer& p;
-    void operator()(Type const& t)           { lingo_unhandled(t); }
+    void operator()(Type const& t)           { p.grouped_type(t); }
     void operator()(Void_type const& t)      { p.primary_type(t); }
     void operator()(Boolean_type const& t)   { p.primary_type(t); }
     void operator()(Byte_type const& t)      { p.primary_type(t); }
@@ -516,7 +516,6 @@ Printer::primary_type(Type const& t)
     void operator()(Auto_type const& t)      { p.primary_type(t); }
     void operator()(Function_type const& t)  { p.primary_type(t); }
     void operator()(User_type const& t)      { p.id_type(t); }
-    void operator()(Unparsed_type const& t)  { p.primary_type(t); }
   };
   apply(t, fn{*this});
 }
@@ -596,6 +595,15 @@ void
 Printer::id_type(User_type const& t)
 {
   identifier(t.declaration());
+}
+
+
+void
+Printer::grouped_type(Type const& t)
+{
+  token(lparen_tok);
+  type(t);
+  token(rparen_tok);
 }
 
 
@@ -841,8 +849,8 @@ Printer::postfix_expression(Expr const& e)
   struct fn
   {
     Printer& p;
-
     void operator()(Expr const& e)               { p.primary_expression(e); }
+    void operator()(Dot_expr const& e)           { p.postfix_expression(e); }
     void operator()(Call_expr const& e)          { p.postfix_expression(e); }
     void operator()(Value_conv const& e)         { p.postfix_expression(e); }
     void operator()(Qualification_conv const& e) { p.postfix_expression(e); }
@@ -854,6 +862,17 @@ Printer::postfix_expression(Expr const& e)
     void operator()(Ellipsis_conv const& e)      { p.postfix_expression(e); }
   };
   apply(e, fn{*this});
+}
+
+
+// TODO: We may need to specialize the printing for resolved declarations
+// in case of ambiguous names from different base classes.
+void
+Printer::postfix_expression(Dot_expr const& e)
+{
+  postfix_expression(e.object());
+  token(dot_tok);
+  id(e.member());
 }
 
 
@@ -1074,8 +1093,7 @@ Printer::requires_expression(Requires_expr const& e)
 
 
 // -------------------------------------------------------------------------- //
-// Definitions
-
+// Printing of statements
 
 void
 Printer::statement(Stmt const& s)
@@ -1090,6 +1108,11 @@ Printer::statement(Stmt const& s)
     void operator()(Compound_stmt const& s)    { p.compound_statement(s); }
     void operator()(Return_stmt const& s)      { p.return_statement(s); }
     void operator()(Yield_stmt const& s)       { p.yield_statement(s); }
+    void operator()(If_then_stmt const& s)     { p.if_statement(s); }
+    void operator()(If_else_stmt const& s)     { p.if_statement(s); }
+    void operator()(While_stmt const& s)       { p.while_statement(s); }
+    void operator()(Break_stmt const& s)       { p.break_statement(s); }
+    void operator()(Continue_stmt const& s)    { p.continue_statement(s); }
     void operator()(Expression_stmt const& s)  { p.expression_statement(s); }
     void operator()(Declaration_stmt const& s) { p.declaration_statement(s); }
   };
@@ -1116,6 +1139,13 @@ Printer::statement_seq(Stmt_list const& ss)
     if (std::next(iter) != ss.end())
       newline();
   }
+}
+
+
+void
+Printer::empty_statement(Empty_stmt const& s)
+{
+  token(semicolon_tok);
 }
 
 
@@ -1168,6 +1198,71 @@ Printer::yield_statement(Yield_stmt const& s)
   token(semicolon_tok);
 }
 
+// TODO: If the branch is not compound statement, then drop to the next
+// line and indent, so it prints like this:
+//
+//    if (expr)
+//      stmt;
+void
+Printer::if_statement(If_then_stmt const& s)
+{
+  token(if_tok);
+  space();
+  token(lparen_tok);
+  expression(s.condition());
+  token(rparen_tok);
+  space();
+  statement(s.true_branch());
+}
+
+
+// TODO: See notes above.
+void
+Printer::if_statement(If_else_stmt const& s)
+{
+  token(if_tok);
+  space();
+  token(lparen_tok);
+  expression(s.condition());
+  token(rparen_tok);
+  space();
+  statement(s.true_branch());
+  newline();
+  token(else_tok);
+  space();
+  statement(s.false_branch());
+}
+
+
+void
+Printer::while_statement(While_stmt const& s)
+{
+  token(while_tok);
+  space();
+  token(lparen_tok);
+  expression(s.condition());
+  token(rparen_tok);
+  space();
+  statement(s.body());
+}
+
+
+void
+Printer::break_statement(Break_stmt const& s)
+{
+  token(break_tok);
+  token(semicolon_tok);
+}
+
+
+void
+Printer::continue_statement(Continue_stmt const& s)
+{
+  token(continue_tok);
+  token(semicolon_tok);
+}
+
+
 void
 Printer::expression_statement(Expression_stmt const& s)
 {
@@ -1208,6 +1303,7 @@ Printer::declaration(Decl const& d)
     Printer& p;
 
     void operator()(Decl const& d)           { lingo_unhandled(d); }
+    void operator()(Super_decl const& d)     { p.super_declaration(d); }
     void operator()(Variable_decl const& d)  { p.variable_declaration(d); }
     void operator()(Function_decl const& d)  { p.function_declaration(d); }
     void operator()(Type_decl const& d)      { p.type_declaration(d); }
@@ -1235,6 +1331,21 @@ Printer::declaration_seq(Decl_list const& ds)
   }
 }
 
+// -------------------------------------------------------------------------- //
+// Super declarations
+
+void
+Printer::super_declaration(Super_decl const& d)
+{
+  token(super_tok);
+  space();
+  //identifier(d);
+  binary_operator(colon_tok);
+  space();
+  type(d.type());
+  token(semicolon_tok);
+
+}
 
 // Write the specifier token followed by a space.
 void
@@ -1382,8 +1493,6 @@ Printer::function_definition(Defaulted_def const&)
 }
 
 
-
-
 void
 Printer::type_declaration(Type_decl const& d)
 {
@@ -1391,10 +1500,7 @@ Printer::type_declaration(Type_decl const& d)
   space();
   identifier(d);
   binary_operator(colon_tok);
-
-  // FIXME: This looks weird, but it's right.
-  token(type_tok);
-
+  type(d.type());
   type_definition(d.definition());
 }
 
@@ -1419,7 +1525,6 @@ Printer::type_definition(Type_def const& d)
   newline();
   statement(d.body());
 }
-
 
 
 void

@@ -86,6 +86,7 @@ struct Printer
   void primary_type(Function_type const&);
   void primary_type(Type_type const&);
   void id_type(User_type const&);
+  void grouped_type(Type const&);
 
   // Expressions
   void expression(Expr const&);
@@ -103,6 +104,7 @@ struct Printer
   void unary_expression(Expr const&);
   void postfix_expression(Expr const&);
   void postfix_expression(Call_expr const&);
+  void postfix_expression(Dot_expr const&);
   void postfix_expression(Value_conv const&);
   void postfix_expression(Qualification_conv const&);
   void postfix_expression(Boolean_conv const&);
@@ -132,11 +134,17 @@ struct Printer
   void statement(Stmt const&);
   void statement(Unparsed_stmt const&);
   void statement_seq(Stmt_list const&);
+  void empty_statement(Empty_stmt const&);
   void translation_statement(Translation_stmt const&);
   void member_statement(Member_stmt const&);
   void compound_statement(Compound_stmt const&);
   void return_statement(Return_stmt const&);
   void yield_statement(Yield_stmt const&);
+  void if_statement(If_then_stmt const&);
+  void if_statement(If_else_stmt const&);
+  void while_statement(While_stmt const&);
+  void break_statement(Break_stmt const&);
+  void continue_statement(Continue_stmt const&);
   void expression_statement(Expression_stmt const&);
   void declaration_statement(Declaration_stmt const&);
 
@@ -153,6 +161,9 @@ struct Printer
   void declaration_seq(Decl_list const&);
   void specifier(Token_kind);
   void specifier_seq(Specifier_set);
+
+  // Supers
+  void super_declaration(Super_decl const&);
 
   // Variables
   void variable_declaration(Variable_decl const&);
@@ -224,6 +235,9 @@ struct Printer
   std::ostream& os;     // Output stream
   int           indent; // The current indentation
 };
+
+
+
 
 
 std::ostream& operator<<(std::ostream&, Term const&);

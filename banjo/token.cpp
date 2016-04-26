@@ -117,6 +117,7 @@ init_tokens(Symbol_table& syms)
   init_token(syms, do_tok, "do");
   init_token(syms, double_tok, "double");
   init_token(syms, dynamic_tok, "dynamic");
+  init_token(syms, else_tok, "else");
   init_token(syms, enum_tok, "enum");
   init_token(syms, explicit_tok, "explicit");
   init_token(syms, export_tok, "export");
@@ -141,6 +142,7 @@ init_tokens(Symbol_table& syms)
   init_token(syms, return_tok, "return");
   init_token(syms, static_tok, "static");
   init_token(syms, struct_tok, "struct");
+  init_token(syms, super_tok, "super");
   init_token(syms, switch_tok, "switch");
   init_token(syms, template_tok, "template");
   init_token(syms, true_tok, "true");

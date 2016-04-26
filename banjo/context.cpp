@@ -30,5 +30,27 @@ Context::Context()
 }
 
 
+// Returns the context associated with the current scope or nullptr if
+// there is none.
+Decl*
+Context::immediate_context()
+{
+  return scope->context();
+}
+
+
+// Returns the innermost declaration context, or nullptr if there is none.
+Decl*
+Context::current_context()
+{
+  Scope* p = scope;
+  while (p) {
+    if (Decl* d = p->context())
+      return d;
+    p = p->enclosing_scope();
+  }
+  return nullptr;
+}
+
 
 } // namespace banjo

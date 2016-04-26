@@ -29,6 +29,7 @@ struct Id_expr;
 struct Decl_expr;
 struct Unary_expr;
 struct Binary_expr;
+struct Dot_expr;
 struct Conv;
 struct Init;
 struct Req;
@@ -254,6 +255,6 @@ struct Index : std::pair<int, int>
 };
 
 
-} // namesapce banjo
+} // namespace banjo
 
 #endif

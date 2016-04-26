@@ -19,7 +19,7 @@ namespace
 Type&
 make_type(Context& cxt, Simple_id& id)
 {
-  Decl& d = simple_lookup(cxt, cxt.current_scope(), id);
+  Decl& d = simple_lookup(cxt, id);
   if (!is<Type_decl>(d)) {
     error(cxt, "'{}' does not name a type", d);
     throw Type_error("not a type");
@@ -78,7 +78,10 @@ make_pointer_type(Context& cxt, Type& t)
 Type&
 make_array_type(Context& cxt, Type& t, Expr& e)
 {
-  return cxt.get_array_type(t, e);
+  if(is<Integer_type>(e.type())) {
+    return cxt.get_array_type(t, e);
+  }
+  return cxt.get_dynarray_type(t,e);
 }
 
 
