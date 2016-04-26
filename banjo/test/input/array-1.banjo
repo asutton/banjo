@@ -1,0 +1,4 @@
+var a : int[5];
+var b : int[];
+var c : int;
+var d : int[c];

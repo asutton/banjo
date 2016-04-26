@@ -148,7 +148,7 @@ Parser::postfix_type()
 Type&
 Parser::array_type(Type& t)
 {
- match(lbracket_tok);
+ //match(lbracket_tok);
  if (match_if(rbracket_tok))
     return on_slice_type(t);
  Expr& e = expression();
