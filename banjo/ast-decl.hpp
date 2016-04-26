@@ -232,7 +232,20 @@ struct Type_decl : Decl
   Def*   def_;
 };
 
+struct Coroutine_decl :Decl
+{
+  Coroutine_decl(Name& n, Type& t, Def& d)
+    : Decl(n, t), def_(&d)
+  {}
 
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  Def const& definition() const { return *def_; }
+  Def&       definition()       { return *def_; }
+
+  Def* def_;
+};
 // Declares a field of a record. This stores the index of the field within
 // the class, which is used to support code generation and compile-time
 // evaluation.

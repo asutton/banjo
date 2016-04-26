@@ -24,6 +24,7 @@ define_node(Consume_type)
 define_node(Forward_type)
 define_node(Pack_type)
 define_node(Synthetic_type)
+define_node(Coroutine_type)
 
 // TODO: Am I actually using this anywhere? Or have I subsumed the use
 // of this with auto types. Or is it still useful...

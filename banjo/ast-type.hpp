@@ -190,6 +190,20 @@ struct User_type : Type
   Decl* decl_;
 };
 
+struct Coroutine_type : Type
+{
+  Coroutine_type(Decl& d)
+    : decl_(&d)
+  {}
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  Coroutine_decl const& declaration() const;
+  Coroutine_decl&       declaration();
+
+  Decl* decl_;
+};
 
 // A function type.
 struct Function_type : Type

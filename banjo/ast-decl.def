@@ -9,6 +9,7 @@ define_node(Field_decl);
 define_node(Method_decl);
 define_node(Concept_decl);
 define_node(Template_decl);
+define_node(Coroutine_decl);
 
 define_node(Object_parm);
 define_node(Value_parm);

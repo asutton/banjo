@@ -44,6 +44,7 @@ is_value_type(Type const& t)
     bool operator()(Dynarray_type const&)    { return true; }
     bool operator()(Slice_type const&)       { return true; }
     bool operator()(Typename_type const&)    { lingo_unreachable(); }
+    bool operator()(Coroutine_type const&)   { return false; }
   };
   return apply(t, fn{});
 }
