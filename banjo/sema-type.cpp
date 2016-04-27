@@ -121,41 +121,6 @@ Parser::on_reference_type(Type& t)
 
 
 Type&
-Parser::on_in_type(Type& t)
-{
-  return make_in_type(cxt, t);
-}
-
-
-Type&
-Parser::on_out_type(Type& t)
-{
-  return make_out_type(cxt, t);
-}
-
-
-Type&
-Parser::on_mutable_type(Type& t)
-{
-  return make_mutable_type(cxt, t);
-}
-
-
-Type&
-Parser::on_consume_type(Type& t)
-{
-  return make_consume_type(cxt, t);
-}
-
-
-Type&
-Parser::on_forward_type(Type& t)
-{
-  return make_forward_type(cxt, t);
-}
-
-
-Type&
 Parser::on_pack_type(Type& t)
 {
   return make_pack_type(cxt, t);

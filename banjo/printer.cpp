@@ -355,11 +355,6 @@ Printer::prefix_type(Type const& t)
     Printer& p;
     void operator()(Type const& t)           { p.unary_type(t); }
     void operator()(Reference_type const& t) { p.prefix_type(t); }
-    void operator()(In_type const& t)        { p.prefix_type(t); }
-    void operator()(Out_type const& t)       { p.prefix_type(t); }
-    void operator()(Mutable_type const& t)   { p.prefix_type(t); }
-    void operator()(Consume_type const& t)   { p.prefix_type(t); }
-    void operator()(Forward_type const& t)   { p.prefix_type(t); }
   };
   return apply(t, fn{*this});
 }
@@ -369,52 +364,6 @@ void
 Printer::prefix_type(Reference_type const& t)
 {
   token(amp_tok);
-  unary_type(t.type());
-}
-
-
-void
-Printer::prefix_type(In_type const& t)
-{
-  token(in_tok);
-  space();
-  unary_type(t.type());
-}
-
-
-void
-Printer::prefix_type(Out_type const& t)
-{
-  token(out_tok);
-  space();
-  unary_type(t.type());
-}
-
-
-void
-Printer::prefix_type(Mutable_type const& t)
-{
-  token(mutable_tok);
-  space();
-  unary_type(t.type());
-}
-
-
-void
-Printer::prefix_type(Consume_type const& t)
-{
-  token(consume_tok);
-  space();
-  unary_type(t.type());
-
-}
-
-
-void
-Printer::prefix_type(Forward_type const& t)
-{
-  token(forward_tok);
-  space();
   unary_type(t.type());
 }
 

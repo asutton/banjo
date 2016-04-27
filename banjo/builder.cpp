@@ -343,41 +343,6 @@ Builder::get_dynarray_type(Type& t, Expr& e)
 }
 
 
-In_type&
-Builder::get_in_type(Type& t)
-{
-  return make<In_type>(t);
-}
-
-
-Out_type&
-Builder::get_out_type(Type& t)
-{
-  return make<Out_type>(t);
-}
-
-
-Mutable_type&
-Builder::get_mutable_type(Type& t)
-{
-  return make<Mutable_type>(t);
-}
-
-
-Consume_type&
-Builder::get_consume_type(Type& t)
-{
-  return make<Consume_type>(t);
-}
-
-
-Forward_type&
-Builder::get_forward_type(Type& t)
-{
-  return make<Forward_type>(t);
-}
-
-
 Pack_type&
 Builder::get_pack_type(Type& t)
 {

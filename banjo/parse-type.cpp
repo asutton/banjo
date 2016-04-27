@@ -42,12 +42,6 @@ Parser::suffix_type()
 //    unary-type:
 //      unary-type
 //      '&' unary-type
-//      '&&' unary-type
-//      'in' unary-type
-//      'out' unary-type
-//      'mutable' unary-type
-//      'consume' unary-type
-//      'forward' unary-type
 //
 // FIXME: Rvalue references have not been implemented. Do we actually
 // need them, or can we get by with parameter passing types.
@@ -64,31 +58,6 @@ Parser::prefix_type()
       accept();
       Type& t = unary_type();
       return on_reference_type(t);
-    }
-    case in_tok: {
-      accept();
-      Type& t = unary_type();
-      return on_in_type(t);
-    }
-    case out_tok: {
-      accept();
-      Type& t = unary_type();
-      return on_out_type(t);
-    }
-    case mutable_tok: {
-      accept();
-      Type& t = unary_type();
-      return on_mutable_type(t);
-    }
-    case forward_tok: {
-      accept();
-      Type& t = unary_type();
-      return on_forward_type(t);
-    }
-    case consume_tok: {
-      accept();
-      Type& t = unary_type();
-      return on_consume_type(t);
     }
     default:
       break;

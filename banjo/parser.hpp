@@ -253,11 +253,6 @@ struct Parser
   Type& on_const_type(Type&);
   Type& on_volatile_type(Type&);
   Type& on_reference_type(Type&);
-  Type& on_in_type(Type&);
-  Type& on_out_type(Type&);
-  Type& on_mutable_type(Type&);
-  Type& on_consume_type(Type&);
-  Type& on_forward_type(Type&);
   Type& on_pack_type(Type&);
   Type& on_unparsed_type(Token_seq&&);
   Type& on_array_type(Type&, Expr&);

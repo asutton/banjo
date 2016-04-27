@@ -109,48 +109,6 @@ make_reference_type(Context& cxt, Type& t)
 }
 
 
-// Returns an input type for T.
-Type&
-make_in_type(Context& cxt, Type& t)
-{
-  return cxt.get_in_type(t);
-}
-
-
-// NOTE: This is really just the same as an lvalue reference to T.
-Type&
-make_out_type(Context& cxt, Type& t)
-{
-  return cxt.get_out_type(t);
-}
-
-
-// NOTE: This is really just the same as an lvalue reference to T.
-Type&
-make_mutable_type(Context& cxt, Type& t)
-{
-  return cxt.get_mutable_type(t);
-}
-
-
-// NOTE: This isn't quite the same as an rvalue reference because it
-// implies a lvalue-to-temporary conversion at the call site.
-Type&
-make_consume_type(Context& cxt, Type& t)
-{
-  return cxt.get_consume_type(t);
-}
-
-
-// NOTE: This is a forwarding reference, which means that the actual type
-// is deduced. Forwarding references effectively 
-Type&
-make_forward_type(Context& cxt, Type& t)
-{
-  return cxt.get_forward_type(t);
-}
-
-
 // Returns a pack type of T.
 Type&
 make_pack_type(Context& cxt, Type& t)

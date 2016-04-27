@@ -63,11 +63,6 @@ struct Printer
   void suffix_type(Pack_type const&);
   void prefix_type(Type const&);
   void prefix_type(Reference_type const&);
-  void prefix_type(In_type const&);
-  void prefix_type(Out_type const&);
-  void prefix_type(Mutable_type const&);
-  void prefix_type(Consume_type const&);
-  void prefix_type(Forward_type const&);
   void unary_type(Type const&);
   void unary_type(Pointer_type const&);
   void unary_type(Qualified_type const&);

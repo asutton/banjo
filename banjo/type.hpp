@@ -20,11 +20,6 @@ Type& make_array_type(Context&, Type&, Expr&);
 Type& make_tuple_type(Context&, Type_list&);
 Type& make_slice_type(Context&, Type&);
 Type& make_reference_type(Context&, Type&);
-Type& make_in_type(Context&, Type&);
-Type& make_out_type(Context&, Type&);
-Type& make_mutable_type(Context&, Type&);
-Type& make_consume_type(Context&, Type&);
-Type& make_forward_type(Context&, Type&);
 Type& make_pack_type(Context&, Type&);
 Type& make_fresh_type(Context&);
 

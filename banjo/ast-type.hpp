@@ -343,56 +343,6 @@ struct Dynarray_type : Type
 };
 
 
-// The type of an input parameter.
-struct In_type : Unary_type
-{
-  using Unary_type::Unary_type;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-};
-
-
-// The type of an output parameter.
-struct Out_type : Unary_type
-{
-  using Unary_type::Unary_type;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-};
-
-
-// The type of a mutable parameter.
-struct Mutable_type : Unary_type
-{
-  using Unary_type::Unary_type;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-};
-
-
-// The type of a consuming parameter.
-struct Consume_type : Unary_type
-{
-  using Unary_type::Unary_type;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-};
-
-
-// The type of a forwarding parameter.
-struct Forward_type : Unary_type
-{
-  using Unary_type::Unary_type;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-};
-
-
 // The type of a parameter pack.
 struct Pack_type : Unary_type
 {
