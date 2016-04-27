@@ -1,0 +1,6 @@
+
+def f(in x) { return x; }
+
+def g() {
+  f(0);
+}
