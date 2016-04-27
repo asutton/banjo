@@ -465,6 +465,7 @@ Printer::primary_type(Type const& t)
     void operator()(Auto_type const& t)      { p.primary_type(t); }
     void operator()(Function_type const& t)  { p.primary_type(t); }
     void operator()(Tuple_type const& t)     { p.primary_type(t); }
+    void operator()(Type_type const& t)      { p.primary_type(t); }
     void operator()(User_type const& t)      { p.id_type(t); }
   };
   apply(t, fn{*this});
