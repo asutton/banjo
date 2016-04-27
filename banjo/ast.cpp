@@ -41,8 +41,9 @@ is_value_type(Type const& t)
     bool operator()(Pointer_type const&)     { return true; }
     bool operator()(Reference_type const&)   { return false; }
     bool operator()(Array_type const&)       { return true; }
-    bool operator()(Dynarray_type const&)    { return true; }
+    bool operator()(Tuple_type const&)       { return true; }
     bool operator()(Slice_type const&)       { return true; }
+    bool operator()(Dynarray_type const&)    { return true; }
     bool operator()(Typename_type const&)    { lingo_unreachable(); }
     bool operator()(Coroutine_type const&)   { return false; }
   };

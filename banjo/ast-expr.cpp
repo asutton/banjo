@@ -95,6 +95,13 @@ has_array_type(Expr const& e)
 }
 
 
+// Returns trhe if `e` has tuple type.
+bool
+has_tuple_type(Expr const& e)
+{
+  return is_tuple_type(e.type());
+}
+
 // -------------------------------------------------------------------------- //
 // Depdendent expressions
 

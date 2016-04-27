@@ -74,6 +74,7 @@ struct Printer
   void unary_type(Qualified_type const&);
   void postfix_type(Type const&);
   void postfix_type(Array_type const&);
+  void postfix_type(Tuple_type const&);
   void postfix_type(Slice_type const&);
   void postfix_type(Dynarray_type const&);
   void primary_type(Type const&);
@@ -84,6 +85,7 @@ struct Printer
   void primary_type(Float_type const&);
   void primary_type(Auto_type const&);
   void primary_type(Function_type const&);
+  void primary_type(Tuple_type const&);
   void primary_type(Type_type const&);
   void id_type(User_type const&);
   void grouped_type(Type const&);

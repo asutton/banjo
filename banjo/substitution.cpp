@@ -96,6 +96,7 @@ Type& substitute_type(Context&, Reference_type&, Substitution&);
 Type& substitute_type(Context&, Qualified_type&, Substitution&);
 Type& substitute_type(Context&, Pointer_type&, Substitution&);
 Type& substitute_type(Context&, Array_type&, Substitution&);
+Type& substitute_type(Context&, Tuple_type&, Substitution&);
 Type& substitute_type(Context&, Dynarray_type&, Substitution&);
 Type& substitute_type(Context&, Sequence_type&, Substitution&);
 Type& substitute_type(Context&, Typename_type&, Substitution&);
@@ -122,6 +123,7 @@ substitute(Context& cxt, Type& t, Substitution& sub)
     Type& operator()(Qualified_type& t) { return substitute_type(cxt, t, sub); }
     Type& operator()(Pointer_type& t)   { return substitute_type(cxt, t, sub); }
     Type& operator()(Array_type& t)     { return substitute_type(cxt, t, sub); }
+    Type& operator()(Tuple_type& t)     { return substitute_type(cxt, t, sub); }
     Type& operator()(Dynarray_type& t)  { return substitute_type(cxt, t, sub); }
     Type& operator()(Sequence_type& t)  { return substitute_type(cxt, t, sub); }
     Type& operator()(Typename_type& t)  { return substitute_type(cxt, t, sub); }
@@ -168,6 +170,14 @@ substitute_type(Context& cxt, Array_type& t, Substitution& sub)
 {
   lingo_unreachable();
 }
+
+
+Type&
+substitute_type(Context& cxt, Tuple_type& t, Substitution& sub)
+{
+  lingo_unreachable();
+}
+
 
 Type&
 substitute_type(Context& cxt, Dynarray_type& t, Substitution& sub)

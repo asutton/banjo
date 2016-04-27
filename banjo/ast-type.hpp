@@ -308,6 +308,20 @@ struct Array_type : Type
 };
 
 
+struct Tuple_type : Type
+{
+  Tuple_type(Type_list const& t) : ty(t) {} 
+  
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+  
+  Type_list const& type_list() const { return ty; }
+  Type_list&       type_list()       { return ty; }
+  
+  Type_list ty;
+};
+
+
 // The type of an unspecified slice of an array. This is essentially a
 // pointer to a subset of an array. This type does not contain information
 // related to offset, length, and stride.
@@ -518,7 +532,15 @@ is_array_type(Type const& t)
 }
 
 
-// Returns tru if `t` is a dynarray type.
+// Returns true if `t` is a tuple type.
+inline bool
+is_tuple_type(Type const& t)
+{
+  return is<Tuple_type>(&t);
+}
+
+
+// Returns true if `t` is a dynarray type.
 inline bool
 is_dynarray_type(Type const& t)
 {

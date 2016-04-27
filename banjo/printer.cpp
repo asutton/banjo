@@ -515,6 +515,7 @@ Printer::primary_type(Type const& t)
     void operator()(Float_type const& t)     { p.primary_type(t); }
     void operator()(Auto_type const& t)      { p.primary_type(t); }
     void operator()(Function_type const& t)  { p.primary_type(t); }
+    void operator()(Tuple_type const& t)     { p.primary_type(t); }
     void operator()(User_type const& t)      { p.id_type(t); }
   };
   apply(t, fn{*this});
@@ -580,6 +581,20 @@ Printer::primary_type(Function_type const& t)
   token(arrow_tok);
   space();
   type(t.return_type());
+}
+
+
+void
+Printer::primary_type(Tuple_type const& t)
+{
+  token(lbrace_tok);
+  Type_list const& p = t.type_list();
+  for (auto iter = p.begin(); iter != p.end(); ++iter) {
+    type(*iter);
+    if (std::next(iter) != p.end())
+      token(comma_tok);
+  }
+  token(rbrace_tok);
 }
 
 
