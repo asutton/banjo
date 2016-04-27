@@ -75,6 +75,7 @@ struct Parser
   Type& unary_type();
   Type& postfix_type();
   Type& array_type(Type&);
+  Type& tuple_type();
   Type& primary_type();
   Type& id_type();
   Type& grouped_type();
@@ -260,6 +261,7 @@ struct Parser
   Type& on_pack_type(Type&);
   Type& on_unparsed_type(Token_seq&&);
   Type& on_array_type(Type&, Expr&);
+  Type& on_tuple_type(Type_list&);
   Type& on_dynarray_type(Type&, Expr&);
 
   // Expressions

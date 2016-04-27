@@ -916,6 +916,7 @@ bool has_integer_type(Expr const&);
 bool has_floating_point_type(Expr const&);
 bool has_reference_type(Expr const&);
 bool has_array_type(Expr const&);
+bool has_tuple_type(Expr const&);
 bool has_class_type(Expr const&);
 bool has_union_type(Expr const&);
 

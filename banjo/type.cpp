@@ -73,8 +73,6 @@ make_pointer_type(Context& cxt, Type& t)
 // FIXME: Verify that we can can actually form an array-of-T.  For example, 
 // is this valid? T[][N]. Perhaps.
 //
-// FIXME: Determine if this is an array or dynarray type by evaluating
-// the expression.
 Type&
 make_array_type(Context& cxt, Type& t, Expr& e)
 {
@@ -82,6 +80,13 @@ make_array_type(Context& cxt, Type& t, Expr& e)
     return cxt.get_array_type(t, e);
   }
   return cxt.get_dynarray_type(t,e);
+}
+
+
+Type&
+make_tuple_type(Context& cxt, Type_list& t)
+{
+  return cxt.get_tuple_type(t);
 }
 
 

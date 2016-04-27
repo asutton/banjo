@@ -322,6 +322,13 @@ Builder::get_array_type(Type& t, Expr& e)
 }
 
 
+Tuple_type&
+Builder::get_tuple_type(Type_list const& t)
+{
+  return make<Tuple_type>(t);
+}
+
+
 Slice_type&
 Builder::get_slice_type(Type& t)
 {
