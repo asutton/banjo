@@ -149,6 +149,13 @@ Parser::on_type_declaration(Name& n, Type& t, Stmt& s)
   return d;
 }
 
+// -------------------------------------------------------------------------- //
+// Coroutine
+Decl&
+Parser::on_coroutine_declaration(Name& n, Type& t, Stmt& s)
+{
+  lingo_unimplemented("coroutine");
+}
 
 // -------------------------------------------------------------------------- //
 // Templates

@@ -331,6 +331,9 @@ struct Parser
   // Type declarations
   Decl& on_type_declaration(Name&, Type&, Stmt&);
 
+  // Coroutine declarations
+  Decl& on_coroutine_declaration(Name&, Type&, Stmt&);
+
   // Concept declarations
   Decl& on_concept_declaration(Token, Name&, Decl_list&);
 

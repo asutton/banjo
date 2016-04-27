@@ -908,6 +908,11 @@ Builder::make_type_declaration(Name& n, Type& t, Stmt& s)
   return make<Type_decl>(n, t, d);
 }
 
+Coroutine_decl&
+Builder::make_coroutine_declaration(Name&n, Type& t, Stmt& s){
+  Def& d = make_coroutine_definition(s);
+  lingo_unimplemented("decl");
+}
 
 Field_decl&
 Builder::make_field_declaration(Name& n, Type& t)
@@ -1105,6 +1110,11 @@ Builder::make_type_definition(Stmt& s)
   return make<Type_def>(s);
 }
 
+Coroutine_def&
+Builder::make_coroutine_definition(Stmt& s)
+{
+  return make<Coroutine_def>(s);
+}
 
 Concept_def&
 Builder::make_concept_definition(Req_list const& ss)

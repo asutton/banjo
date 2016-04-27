@@ -244,6 +244,8 @@ struct Coroutine_decl :Decl
   Def const& definition() const { return *def_; }
   Def&       definition()       { return *def_; }
 
+
+  // Hold paramters, and return type
   Def* def_;
 };
 // Declares a field of a record. This stores the index of the field within

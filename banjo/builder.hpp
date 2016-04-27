@@ -9,6 +9,8 @@
 #include "token.hpp"
 #include "language.hpp"
 #include "ast-stmt.hpp"
+#include "ast-def.hpp"
+#include "ast-decl.hpp"
 
 #include <lingo/token.hpp>
 
@@ -153,6 +155,9 @@ struct Builder
   Function_decl&  make_function_declaration(Name&, Decl_list const&, Type&, Expr&);
   Function_decl&  make_function_declaration(Name&, Decl_list const&, Type&, Stmt&);
 
+  // Coroutine
+  Coroutine_decl& make_coroutine_declaration(Name&, Type&, Stmt&);
+
   // Types and members
   Type_decl&      make_type_declaration(Name&, Type&, Stmt&);
   Field_decl&     make_field_declaration(Name&, Type&);
@@ -184,6 +189,7 @@ struct Builder
   Expression_def& make_expression_definition(Expr&);
   Function_def&   make_function_definition(Stmt&);
   Type_def&       make_type_definition(Stmt&);
+  Coroutine_def&  make_coroutine_definition(Stmt&);
   Concept_def&    make_concept_definition(Req_list const&);
 
   // Parameters
