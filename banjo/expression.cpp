@@ -37,4 +37,11 @@ make_requirements(Context& cxt,
   return cxt.make_requires(tparms, parms, reqs);
 }
 
+Expr& make_tuple_expr(Context& cxt, Expr_list& l)
+{
+  Type* t;    
+  return cxt.make_tuple_expr(*t, l);
+}
+
+
 } // namespace banjo
