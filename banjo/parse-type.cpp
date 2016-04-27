@@ -160,12 +160,19 @@ Parser::array_type(Type& t)
 Type&
 Parser::tuple_type()
 {
+  // Type_list types;
+  // match(lbrace_tok);
+  // do {
+  //   Type* t = &primary_type();
+  //   types.push_back(t);
+  // } while(match_if(comma_tok));
+  // match(rbrace_tok);
+  // return on_tuple_type(types);
+  
   Type_list types;
   match(lbrace_tok);
-  do {
-    Type& t = type();
-    types.push_back(t);
-  } while(match_if(comma_tok));
+  if (lookahead() != rbrace_tok)
+    types = type_list();
   match(rbrace_tok);
   return on_tuple_type(types);
 }
