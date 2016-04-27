@@ -35,7 +35,6 @@ is_value_type(Type const& t)
     bool operator()(Integer_type const&)     { return true; }
     bool operator()(Float_type const&)       { return true; }
     bool operator()(Auto_type const&)        { lingo_unreachable(); }
-    bool operator()(Declauto_type const&)    { lingo_unreachable(); }
     bool operator()(Function_type const&)    { return false; }
     bool operator()(Qualified_type const& t) { return is_value_type(t.type()); }
     bool operator()(Pointer_type const&)     { return true; }
@@ -44,7 +43,6 @@ is_value_type(Type const& t)
     bool operator()(Tuple_type const&)       { return true; }
     bool operator()(Slice_type const&)       { return true; }
     bool operator()(Dynarray_type const&)    { return true; }
-    bool operator()(Typename_type const&)    { lingo_unreachable(); }
     bool operator()(Coroutine_type const&)   { return false; }
   };
   return apply(t, fn{});

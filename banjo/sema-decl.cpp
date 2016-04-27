@@ -142,9 +142,9 @@ Parser::on_defaulted_definition(Decl& d)
 // Types
 
 Decl&
-Parser::on_type_declaration(Name& n, Type& t, Stmt& s)
+Parser::on_class_declaration(Name& n, Type& t, Stmt& s)
 {
-  Decl& d = build.make_type_declaration(n, t, s);
+  Decl& d = build.make_class_declaration(n, t, s);
   declare(cxt, current_scope(), d);
   return d;
 }

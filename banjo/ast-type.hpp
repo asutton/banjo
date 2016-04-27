@@ -118,66 +118,36 @@ struct Float_type : Type
 };
 
 
-// The auto type.
-//
-// TODO: Allow a deduction constraint on placeholder types.
-// This would be checked after deduction. Extend this for
-// decltype(auto) types as well.
-//
-// FIXME: The model for auto types works like this:
-//
-//    auto x = e;
-//
-// Is essentially shorthand for writing:
-//
-//    typename T;
-//    T x = e;
-//
-// So x would have typename-type and not auto-type. If we
-// add constraints, we might represent that internally as
-// this.
-//
-//    typename T;
-//    T|C x = e;  // |C means give C.
-//
-// We could eliminate this node entirely, and the declauto
-// node, except that we would to encode the deduction mechanism
-// into the tree somehow. Maybe make deduction a property of
-// of the typename declaration (i.e., a decltype decl).
-struct Auto_type : Type
+
+// A function type.
+struct Function_type : Type
 {
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-};
-
-
-// The type decltype(e).
-struct Decltype_type : Type
-{
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-};
-
-
-// The type decltype(auto).
-struct Declauto_type : Type
-{
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-};
-
-
-// A user-defined type refers to its declaration.
-//
-// FIXME: Rename to Record_type.
-struct User_type : Type
-{
-  User_type(Decl& d)
-    : decl_(&d)
+  Function_type(Type_list const& p, Type& r)
+    : parms(p), ret(&r)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
+
+  Type_list const& parameter_types() const { return parms; }
+  Type_list&       parameter_types()       { return parms; }
+
+  Type const&      return_type() const     { return *ret; }
+  Type&            return_type()           { return *ret; }
+
+  Type_list parms;
+  Type*     ret;
+};
+
+
+// Represents any type that has a declaration (i.e., not a built-in)
+// type. Note that placeholders and type variables are also declared
+// types.
+struct Declared_type : Type
+{
+  Declared_type(Decl& d)
+    : decl_(&d)
+  { }
 
   // Returns the name of the user-defined type.
   Name const& name() const;
@@ -205,24 +175,15 @@ struct Coroutine_type : Type
   Decl* decl_;
 };
 
-// A function type.
-struct Function_type : Type
+// A user-defined type refers to its declaration.
+//
+// FIXME: Rename to Class_type.
+struct Class_type : Declared_type
 {
-  Function_type(Type_list const& p, Type& r)
-    : parms(p), ret(&r)
-  { }
+  using Declared_type::Declared_type;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-
-  Type_list const& parameter_types() const { return parms; }
-  Type_list&       parameter_types()       { return parms; }
-
-  Type const&      return_type() const     { return *ret; }
-  Type&            return_type()           { return *ret; }
-
-  Type_list parms;
-  Type*     ret;
 };
 
 
@@ -357,56 +318,6 @@ struct Dynarray_type : Type
 };
 
 
-// The type of an input parameter.
-struct In_type : Unary_type
-{
-  using Unary_type::Unary_type;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-};
-
-
-// The type of an output parameter.
-struct Out_type : Unary_type
-{
-  using Unary_type::Unary_type;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-};
-
-
-// The type of a mutable parameter.
-struct Mutable_type : Unary_type
-{
-  using Unary_type::Unary_type;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-};
-
-
-// The type of a consuming parameter.
-struct Consume_type : Unary_type
-{
-  using Unary_type::Unary_type;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-};
-
-
-// The type of a forwarding parameter.
-struct Forward_type : Unary_type
-{
-  using Unary_type::Unary_type;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-};
-
-
 // The type of a parameter pack.
 struct Pack_type : Unary_type
 {
@@ -417,16 +328,48 @@ struct Pack_type : Unary_type
 };
 
 
-// The type of a type parameter declaration.
+// The auto type.
 //
-// FIXME: This should probably go away.
-struct Typename_type : User_type
+// TODO: Allow a deduction constraint on placeholder types.
+// This would be checked after deduction. Extend this for
+// decltype(auto) types as well.
+//
+// FIXME: The model for auto types works like this:
+//
+//    auto x = e;
+//
+// Is essentially shorthand for writing:
+//
+//    typename T;
+//    T x = e;
+//
+// So x would have typename-type and not auto-type. If we
+// add constraints, we might represent that internally as
+// this.
+//
+//    typename T;
+//    T|C x = e;  // |C means give C.
+//
+// FIXME: Do we need decltype(auto) or something similar? That could act
+// as a specifier that affects deduction of a type. The rules are close to
+// forwarding, but can give different results... I think.
+struct Auto_type : Declared_type
 {
-  using User_type::User_type;
+  using Declared_type::Declared_type;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 };
+
+
+// The type decltype(e). The actual type is deduced from the
+// expression.
+struct Decltype_type : Type
+{
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
 
 
 // Represents a unique, uninterpreted type. The synthetic type
@@ -434,9 +377,9 @@ struct Typename_type : User_type
 //
 // TODO: Do we always need a declaration, or can we just synthesize
 // types from thin air?
-struct Synthetic_type : User_type
+struct Synthetic_type : Declared_type
 {
-  using User_type::User_type;
+  using Declared_type::Declared_type;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }

@@ -1,10 +1,9 @@
 
-type T {
+class T {
   def f : (virtual this : T&) -> void { }
 }
 
 static var x : int;
 
-inline 
-def f : () -> int { return 0; }
+inline def f : () -> int { return 0; }
 

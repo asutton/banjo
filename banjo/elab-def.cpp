@@ -41,7 +41,7 @@ Parser::elaborate_definition(Decl& d)
     void operator()(Decl& d)          { lingo_unhandled(d); }
     void operator()(Variable_decl& d) { p.elaborate_variable_initializer(d); }
     void operator()(Function_decl& d) { p.elaborate_function_definition(d); }
-    void operator()(Type_decl& d)     { p.elaborate_type_definition(d); }
+    void operator()(Class_decl& d)    { p.elaborate_class_definition(d); }
     void operator()(Super_decl& d)    { /* Nothing to do. */ }
   };
   apply(d, fn{*this});
@@ -137,14 +137,14 @@ Parser::elaborate_function_definition(Function_decl& decl, Function_def& def)
 
 // Elaborate the definition of a type.
 void
-Parser::elaborate_type_definition(Type_decl& d)
+Parser::elaborate_class_definition(Class_decl& d)
 {
   struct fn
   {
     Parser& p;
-    Type_decl& type;
+    Class_decl& decl;
     void operator()(Def& d)      { lingo_unhandled(d); }
-    void operator()(Type_def& d) { p.elaborate_type_definition(type, d); }
+    void operator()(Class_def& d) { p.elaborate_class_definition(decl, d); }
   };
   apply(d.definition(), fn{*this, d});
 }
@@ -152,7 +152,7 @@ Parser::elaborate_type_definition(Type_decl& d)
 
 // The type is defined by its body.
 void
-Parser::elaborate_type_definition(Type_decl& decl, Type_def& def)
+Parser::elaborate_class_definition(Class_decl& decl, Class_def& def)
 {
   // Enter the scope associated with the declaration.
   Enter_scope scope(cxt, cxt.saved_scope(decl));

@@ -355,11 +355,6 @@ Printer::prefix_type(Type const& t)
     Printer& p;
     void operator()(Type const& t)           { p.unary_type(t); }
     void operator()(Reference_type const& t) { p.prefix_type(t); }
-    void operator()(In_type const& t)        { p.prefix_type(t); }
-    void operator()(Out_type const& t)       { p.prefix_type(t); }
-    void operator()(Mutable_type const& t)   { p.prefix_type(t); }
-    void operator()(Consume_type const& t)   { p.prefix_type(t); }
-    void operator()(Forward_type const& t)   { p.prefix_type(t); }
   };
   return apply(t, fn{*this});
 }
@@ -369,52 +364,6 @@ void
 Printer::prefix_type(Reference_type const& t)
 {
   token(amp_tok);
-  unary_type(t.type());
-}
-
-
-void
-Printer::prefix_type(In_type const& t)
-{
-  token(in_tok);
-  space();
-  unary_type(t.type());
-}
-
-
-void
-Printer::prefix_type(Out_type const& t)
-{
-  token(out_tok);
-  space();
-  unary_type(t.type());
-}
-
-
-void
-Printer::prefix_type(Mutable_type const& t)
-{
-  token(mutable_tok);
-  space();
-  unary_type(t.type());
-}
-
-
-void
-Printer::prefix_type(Consume_type const& t)
-{
-  token(consume_tok);
-  space();
-  unary_type(t.type());
-
-}
-
-
-void
-Printer::prefix_type(Forward_type const& t)
-{
-  token(forward_tok);
-  space();
   unary_type(t.type());
 }
 
@@ -516,7 +465,8 @@ Printer::primary_type(Type const& t)
     void operator()(Auto_type const& t)      { p.primary_type(t); }
     void operator()(Function_type const& t)  { p.primary_type(t); }
     void operator()(Tuple_type const& t)     { p.primary_type(t); }
-    void operator()(User_type const& t)      { p.id_type(t); }
+    void operator()(Type_type const& t)      { p.primary_type(t); }
+    void operator()(Class_type const& t)     { p.id_type(t); }
   };
   apply(t, fn{*this});
 }
@@ -598,16 +548,16 @@ Printer::primary_type(Tuple_type const& t)
 }
 
 
+// FIXME: We can't really spell this type, so leave it empty.
 void
 Printer::primary_type(Type_type const& t)
 {
-  token(type_tok);
 }
 
 
-// Print the name of the user-defined type.
+// Print the name of the class type.
 void
-Printer::id_type(User_type const& t)
+Printer::id_type(Class_type const& t)
 {
   identifier(t.declaration());
 }
@@ -1321,7 +1271,7 @@ Printer::declaration(Decl const& d)
     void operator()(Super_decl const& d)     { p.super_declaration(d); }
     void operator()(Variable_decl const& d)  { p.variable_declaration(d); }
     void operator()(Function_decl const& d)  { p.function_declaration(d); }
-    void operator()(Type_decl const& d)      { p.type_declaration(d); }
+    void operator()(Class_decl const& d)     { p.class_declaration(d); }
 
     // Support emitting these here so we can print parameters without
     // an appropriate context.
@@ -1394,6 +1344,16 @@ Printer::specifier_seq(Specifier_set s)
     specifier(private_tok);
   if (s & protected_spec)
     specifier(protected_tok);
+  if (s & in_spec)
+    specifier(in_tok);
+  if (s & out_spec)
+    specifier(out_tok);
+  if (s & mutable_spec)
+    specifier(mutable_tok);
+  if (s & consume_spec)
+    specifier(consume_tok);
+  if (s & const_spec)
+    specifier(const_tok);
 }
 
 
@@ -1509,33 +1469,33 @@ Printer::function_definition(Defaulted_def const&)
 
 
 void
-Printer::type_declaration(Type_decl const& d)
+Printer::class_declaration(Class_decl const& d)
 {
-  token(type_tok);
+  token(class_tok);
   space();
   identifier(d);
   binary_operator(colon_tok);
   type(d.type());
-  type_definition(d.definition());
+  class_definition(d.definition());
 }
 
 
 void
-Printer::type_definition(Def const& d)
+Printer::class_definition(Def const& d)
 {
   struct fn
   {
     Printer& p;
     void operator()(Def const& d)         { lingo_unhandled(d); }
-    void operator()(Type_def const& d)    { p.type_definition(d); }
-    void operator()(Deleted_def const& d) { p.type_definition(d); }
+    void operator()(Class_def const& d)   { p.class_definition(d); }
+    void operator()(Deleted_def const& d) { p.class_definition(d); }
   };
   apply(d, fn{*this});
 }
 
 
 void
-Printer::type_definition(Type_def const& d)
+Printer::class_definition(Class_def const& d)
 {
   newline();
   statement(d.body());

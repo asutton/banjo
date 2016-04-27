@@ -32,47 +32,44 @@ accept_specifier(Parser& p, Specifier_set s)
 } // namespace
 
 
-// Parse a declaration specifier.
+// Parse a sequence of declaration specifiers.
 //
 //    specifier:
 //      storage-specifier
 //      function-specifier
-//      parameter-specifier
 //      access-specifier
 //
 //    storage-specifier:
 //      static
-//
-//    parameter-specifier:
-//      in
-//      out
-//      mutable
-//      consume
-//      forward
+//      dynamic
 //
 //    function-specifier:
 //      implicit
 //      explicit
 //      inline
 //
-// TODO: Figure out how we want to write foreign and extern functions.
+//    access-specifier:
+//      public
+//      private
+//      protected
+//
+// TODO: Implement external storage? Note that foreign declarations
+// should be a declaration kind because they parse a little differently
+// than a simple specifier.
 Specifier_set
 Parser::specifier_seq()
 {
   // Reset the declaration specifiers (they should be empty).
   decl_specs() = Specs();
 
+  // Match specifiers.
   while (true) {
     switch (lookahead()) {
-      case virtual_tok:
-        accept_specifier(*this, virtual_spec);
-        break;
-
-      case abstract_tok:
-        accept_specifier(*this, abstract_spec);
-        break;
-
       case static_tok:
+        accept_specifier(*this, static_spec);
+        break;
+
+      case dynamic_tok:
         accept_specifier(*this, static_spec);
         break;
 
@@ -108,6 +105,61 @@ Parser::specifier_seq()
 }
 
 
+// Parse a sequence of parameter specifiers.
+//
+//    parameter-specifier:
+//      in
+//      out
+//      mutable
+//      consume
+//      forward
+//      virtual
+//      const
+Specifier_set
+Parser::parameter_specifier_seq()
+{
+  // Reset the declaration specifiers (they should be empty).
+  decl_specs() = Specs();
+
+  // Match specifiers.
+  while (true) {
+    switch (lookahead()) {
+      case in_tok:
+        accept_specifier(*this, in_spec);
+        break;
+
+      case out_tok:
+        accept_specifier(*this, out_spec);
+        break;
+
+      case mutable_tok:
+        accept_specifier(*this, mutable_spec);
+        break;
+
+      case consume_tok:
+        accept_specifier(*this, consume_spec);
+        break;
+
+      case forward_tok:
+        accept_specifier(*this, forward_spec);
+        break;
+
+      case virtual_tok:
+        accept_specifier(*this, virtual_spec);
+        break;
+
+      case const_tok:
+        accept_specifier(*this, const_spec);
+        break;
+
+      default:
+        return decl_specs();
+    }
+  }
+  lingo_unreachable();
+}
+
+
 // -------------------------------------------------------------------------- //
 // Declarations
 
@@ -128,68 +180,28 @@ Parser::declaration()
   specifier_seq();
 
   switch (lookahead()) {
-    case super_tok:
-      return super_declaration();
     case var_tok:
       return variable_declaration();
     case def_tok:
       return function_declaration();
+
     case coroutine_tok:
       coroutine_declaration();
-    case type_tok:
-      return type_declaration();
+
+    case class_tok:
+      return class_declaration();
+
     case concept_tok:
       lingo_unreachable();
+    case super_tok:
+      return super_declaration();
     default:
       break;
   }
   throw Syntax_error("invalid declaration");
 }
 
-// -------------------------------------------------------------------------- //
 
-// Parse a super type (inheritance declaration)
-
-//
-// Super declaration:
-//
-//  explicit identifier:
-//
-//    super <identifier> : Type_name;
-//
-//  implicit identifier:
-//
-//    super : Type_name;
-
-Decl&
-Parser::super_declaration()
-{
-  require(super_tok);
-
-  Name* name;
-
-  if(next_token_is(identifier_tok)) // If the user optionally named the super class
-  {
-    name = &identifier();
-  }
-  else
-  {
-    name = &build.get_id();
-  }
-
-  // The rest of this is exactly the same as a variable declarataion
-  // and it even calls on_variable_declaration
-
-  match(colon_tok);
-
-  // Match the type.
-  Type& type = unparsed_variable_type();
-
-  // Match the "name : type ;" form.
-  match(semicolon_tok);
-  return on_super_declaration(*name, type);
-
-}
 // -------------------------------------------------------------------------- //
 // Variable declarations
 
@@ -210,7 +222,7 @@ Parser::variable_declaration()
 
   // Match the ":=" form.
   if (match_if(eq_tok)) {
-    Type& type = cxt.get_auto_type();
+    Type& type = cxt.make_auto_type();
     Expr& init = unparsed_variable_initializer();
     match(semicolon_tok);
     return on_variable_declaration(name, type, init);
@@ -327,6 +339,31 @@ Parser::brace_initializer(Decl&)
 }
 
 
+// Parse a base class declaration.
+//
+//    super-declaration:
+//      super [identifier] : type;
+Decl&
+Parser::super_declaration()
+{
+  require(super_tok);
+
+  // Match the optional identifier.
+  Name* name;
+  if (next_token_is(identifier_tok))
+    name = &identifier();
+  else
+    name = &build.get_id();
+
+  // Match type type.
+  match(colon_tok);
+  Type& type = unparsed_variable_type();
+  match(semicolon_tok);
+
+  return on_super_declaration(*name, type);
+}
+
+
 // -------------------------------------------------------------------------- //
 // Function declarations
 
@@ -355,51 +392,54 @@ Parser::brace_initializer(Decl&)
 // Note that not all functions can have named returns (e.g., void functions,
 // functions returning references, etc.). This also leaks implementation
 // details into the interface.
-  Decl&
-  Parser::function_declaration()
-  {
-    require(def_tok);
-    Name& name = identifier();
-    match(colon_tok);
+Decl&
+Parser::function_declaration()
+{
+  require(def_tok);
+  Name& name = identifier();
 
-    // NOTE: We don't have to enter a scope because we aren't doing
-    // lookup in the first pass.
-    Decl_list parms = parameter_clause();
+  // NOTE: I'm making the colon optional since it isn't actually necessary
+  // with this syntax.
+  match_if(colon_tok);
 
-    // -> type function-definition.
-    if (match_if(arrow_tok)) {
-      Type& ret = unparsed_return_type();
+  // NOTE: We don't have to enter a scope because we aren't doing
+  // lookup in the first pass.
+  Decl_list parms = parameter_clause();
 
-      // = expression ;
-      if (match_if(eq_tok)) {
-        Expr& body = unparsed_expression_body();
-        match(semicolon_tok);
-        return on_function_declaration(name, parms, ret, body);
-      }
+  // -> type function-definition.
+  if (match_if(arrow_tok)) {
+    Type& ret = unparsed_return_type();
 
-        // { ... }
-      else {
-        Stmt& body = unparsed_function_body();
-        return on_function_declaration(name, parms, ret, body);
-      }
-    }
-
-    // Otherwise, the return type is unspecified, allowing for
-    // anonymous expressions.
-    Type& ret = cxt.get_auto_type();
-
-    // { ... }
-    if (next_token_is(lbrace_tok)) {
-      Stmt& body = unparsed_function_body();
+    // = expression ;
+    if (match_if(eq_tok)) {
+      Expr& body = unparsed_expression_body();
+      match(semicolon_tok);
       return on_function_declaration(name, parms, ret, body);
     }
 
-    // ''= expression ;' or 'expression ;'
-    match_if(eq_tok);
-    Expr& body = unparsed_expression_body();
-    match(semicolon_tok);
+      // { ... }
+    else {
+      Stmt& body = unparsed_function_body();
+      return on_function_declaration(name, parms, ret, body);
+    }
+  }
+
+  // Othersise, the return type is unspecified, allowing for
+  // anonymous expressions.
+  Type& ret = cxt.make_auto_type();
+
+  // { ... }
+  if (next_token_is(lbrace_tok)) {
+    Stmt& body = unparsed_function_body();
     return on_function_declaration(name, parms, ret, body);
   }
+
+  // ''= expression ;' or 'expression ;'
+  match_if(eq_tok);
+  Expr& body = unparsed_expression_body();
+  match(semicolon_tok);
+  return on_function_declaration(name, parms, ret, body);
+}
 
 // Parse a parameter clause.
 //
@@ -442,16 +482,16 @@ Parser::parameter_list()
 // Parse a parameter declaration.
 //
 //    parameter-declaration:
-//      [specifier-seq] identifier [':' type] ['=' expression]
-//      [specifier-seq] identifier [':=' expression]
+//      [parameter-specifier] identifier [':' type] ['=' expression]
+//      [parameter-specifier] identifier [':=' expression]
 //
-// TODO: Extend the grammar to support (named?) variadics and function
-// argument packs.
+// Note that parameter packs and variadics are part of the type system
+// and can simply be parsed as part of that type.
 Decl&
 Parser::parameter_declaration()
 {
-  // Parse and cache the specifier sequence.
-  specifier_seq();
+  // Parse and cache the optional parameter specifier.
+  parameter_specifier_seq();
 
   Name& name = identifier();
 
@@ -467,7 +507,7 @@ Parser::parameter_declaration()
     return on_function_parameter(name, type);
   }
 
-  Type& type = cxt.get_auto_type();
+  Type& type = cxt.make_auto_type();
 
   if (next_token_is(eq_tok))
     lingo_unimplemented("default arguments");
@@ -571,7 +611,7 @@ Parser::function_definition(Decl& d)
 // Parse a type declaration.
 //
 //    type-declaration:
-//      'type' identifier [':' type] type-body
+//      'class' identifier [':' type] type-body
 //
 //    type-body:
 //      compound-statement
@@ -581,25 +621,31 @@ Parser::function_definition(Decl& d)
 //
 // TODO: We could use '=' notation in bodies to create new derived types.
 Decl&
-Parser::type_declaration()
+Parser::class_declaration()
 {
-  require(type_tok);
+  require(class_tok);
   Name& name = identifier();
 
-
+  // NOTE: The colon is made optional.
   match_if(colon_tok);
-  Type& kind = next_token_is(lbrace_tok) ? cxt.get_type_type() : unparsed_type_kind();
 
+  // Match the kind of the class.
+  Type* kind;
+  if (next_token_is(lbrace_tok))
+    kind = &cxt.get_type_type();
+  else
+    kind = &unparsed_class_kind();
 
-  Stmt& body = unparsed_type_body();
+  // Match tghe body.
+  Stmt& body = unparsed_class_body();
 
-  return on_type_declaration(name, kind, body);
+  return on_class_declaration(name, *kind, body);
 };
 
 
 // Return an unparsed type for the variable's type specification.
 Type&
-Parser::unparsed_type_kind()
+Parser::unparsed_class_kind()
 {
   Token_seq toks;
   while (!is_eof()) {
@@ -617,7 +663,7 @@ Parser::unparsed_type_kind()
 // but, because this is a type body, they will be interpreted as a
 // member statement.
 Stmt&
-Parser::unparsed_type_body()
+Parser::unparsed_class_body()
 {
   Token_seq toks;
   toks.push_back(match(lbrace_tok));

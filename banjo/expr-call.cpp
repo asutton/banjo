@@ -97,9 +97,22 @@ make_dependent_call(Context& cxt, Expr& e, Expr_list& args)
   if (Reference_expr* r = as<Reference_expr>(&e))
     return make_dependent_function_call(cxt, *r, args);
 
-  banjo_unhandled_case(e);
+  lingo_unhandled(e);
 }
 #endif
+
+
+
+Expr&
+make_regular_call(Context& cxt, Function_expr& e, Expr_list& args)
+{
+  Function_decl& fn = e.declaration();
+
+  // FIXME: check arguments.
+
+  Call_expr& call =  cxt.make_call(fn.return_type(), e, args);
+  return call;
+}
 
 
 // Make a non-dependent call expression.
@@ -114,17 +127,14 @@ make_dependent_call(Context& cxt, Expr& e, Expr_list& args)
 Expr&
 make_regular_call(Context& cxt, Expr& e, Expr_list& args)
 {
-  if (Decl_expr* ref = as<Decl_expr>(&e)) {
-    Decl& d = ref->declaration();
-    Type& t = declared_type(d);
-
-    if (Function_type* f = as<Function_type>(&t))
-      return cxt.make_call(f->return_type(), e, args);
-
-    throw Translation_error(cxt, "'{}' is not callable", e);
-  }
-
-  banjo_unhandled_case(e);
+  struct fn 
+  {
+    Context&    cxt;
+    Expr_list& args;
+    Expr& operator()(Expr& e)          { lingo_unhandled(e); }
+    Expr& operator()(Function_expr& e) { return make_regular_call(cxt, e, args); }
+  };
+  return apply(e, fn{cxt, args});
 }
 
 

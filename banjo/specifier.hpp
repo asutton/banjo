@@ -21,7 +21,13 @@ enum Specifier_set
   inline_spec    = 1 << 6,
   public_spec    = 1 << 7,
   private_spec   = 1 << 8,
-  protected_spec = 1 << 9
+  protected_spec = 1 << 9,
+  in_spec        = 1 << 10,
+  out_spec       = 1 << 11,
+  mutable_spec   = 1 << 12,
+  consume_spec   = 1 << 13,
+  forward_spec   = 1 << 14,
+  const_spec     = 1 << 15,
 };
 
 

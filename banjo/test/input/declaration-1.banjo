@@ -4,10 +4,10 @@
 // var f : int;
 // def f : () -> void { }
 
-// type t1 { }
+// class t1 { }
 // var t1 : int;
 
-// type t2 : int { }
-// type t2 { }
+// class t2 : int { }
+// class t2 { }
 
 def f0 : (x, x) -> void { }

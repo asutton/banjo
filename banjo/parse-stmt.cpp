@@ -41,7 +41,7 @@ Parser::statement()
     case var_tok:
     case def_tok:
     case coroutine_tok: // co_def
-    case type_tok:
+    case class_tok:
     case concept_tok:
       return declaration_statement();
 

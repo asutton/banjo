@@ -4,6 +4,7 @@
 #include "parser.hpp"
 #include "printer.hpp"
 #include "ast.hpp"
+#include "type.hpp"
 
 #include <iostream>
 
@@ -40,7 +41,7 @@ Parser::elaborate_declaration(Decl& d)
     void operator()(Decl& d)          { lingo_unhandled(d); }
     void operator()(Object_decl& d)   { p.elaborate_object_declaration(d); }
     void operator()(Function_decl& d) { p.elaborate_function_declaration(d); }
-    void operator()(Type_decl& d)     { p.elaborate_type_declaration(d); }
+    void operator()(Class_decl& d)    { p.elaborate_class_declaration(d); }
   };
   apply(d, fn{*this});
 }
@@ -60,10 +61,9 @@ Parser::elaborate_function_declaration(Function_decl& d)
   // Elaborate the type of each parameter in turn. Note that this does
   // not declare the parameters, it just checks their types.
   Decl_list& parms = d.parameters();
-  for (Decl& d : parms) {
-    Object_parm& p = as<Object_parm>(d);
-    p.type_ = &elaborate_type(p.type());
-  }
+  for (Decl& d : parms)
+    elaborate_parameter_declaration(cast<Object_parm>(d));
+
 
   // Elaborate the return type.
   Type& ret = elaborate_type(d.return_type());
@@ -75,9 +75,25 @@ Parser::elaborate_function_declaration(Function_decl& d)
 }
 
 
+void
+Parser::elaborate_parameter_declaration(Object_parm& p)
+{
+  p.type_ = &elaborate_type(p.type());
+
+  // Create template parameters for all of the placeholders in
+  // the type of the parameter.
+  //
+  // TODO: When can (should?) we unify placeholder types. Maybe this
+  // is something we should do when we actually elaborate types of
+  // the parameters (i.e., bind names to placeholders).
+  Type_list types = get_placeholders(p.type());
+  // std::cout << "HERE: " << p.name() << ' ' << types.size() << '\n';
+}
+
+
 // Elaborate the kind of a type.
 void
-Parser::elaborate_type_declaration(Type_decl& d)
+Parser::elaborate_class_declaration(Class_decl& d)
 {
   d.kind_ = &elaborate_type(d.kind());
 }

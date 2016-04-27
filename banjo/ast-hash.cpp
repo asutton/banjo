@@ -165,28 +165,7 @@ hash_float(Float_type const& t)
 
 
 inline std::size_t
-hash_value(Auto_type const& t)
-{
-  lingo_unreachable();
-}
-
-
-inline std::size_t
-hash_value(Decltype_type const&)
-{
-  lingo_unreachable();
-}
-
-
-inline std::size_t
-hash_value(Declauto_type const& t)
-{
-  lingo_unreachable();
-}
-
-
-inline std::size_t
-hash_value(Function_type const& t)
+hash_function_type(Function_type const& t)
 {
   std::size_t h = hash_type(t);
   boost::hash_combine(h, t.parameter_types());
@@ -197,7 +176,7 @@ hash_value(Function_type const& t)
 
 // The hash value of a user-defined type is that of its declaration.
 inline std::size_t
-hash_udt(User_type const& t)
+hash_declared_type(Declared_type const& t)
 {
   std::size_t h = hash_type(t);
   boost::hash_combine(h, t.declaration());
@@ -217,12 +196,8 @@ hash_value(Type const& t)
     std::size_t operator()(Byte_type const& t) const      { return hash_nullary_type(t); }
     std::size_t operator()(Integer_type const& t) const   { return hash_integer(t); }
     std::size_t operator()(Float_type const& t) const     { return hash_float(t); }
-    std::size_t operator()(Auto_type const& t) const      { return hash_value(t); }
-    std::size_t operator()(Decltype_type const& t) const  { return hash_value(t); }
-    std::size_t operator()(Declauto_type const& t) const  { return hash_value(t); }
-    std::size_t operator()(User_type const& t) const  { return hash_udt(t); }
-    std::size_t operator()(Function_type const& t) const  { return hash_value(t); }
-    std::size_t operator()(Synthetic_type const& t) const { banjo_unhandled_case(t); }
+    std::size_t operator()(Function_type const& t) const  { return hash_function_type(t); }
+    std::size_t operator()(Class_type const& t) const     { return hash_declared_type(t); }
   };
   return apply(t, fn{});
 }

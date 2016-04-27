@@ -57,11 +57,6 @@ Generator::get_type(Type const& t)
     llvm::Type* operator()(Float_type const& t)    { return g.get_type(t); }
     llvm::Type* operator()(Function_type const& t) { return g.get_type(t); }
     llvm::Type* operator()(Auto_type const& t)     { return g.get_type(t); }
-    llvm::Type* operator()(In_type const& t)       { return g.get_type(t); }
-    llvm::Type* operator()(Out_type const& t)      { return g.get_type(t); }
-    llvm::Type* operator()(Mutable_type const& t)  { return g.get_type(t); }
-    llvm::Type* operator()(Consume_type const& t)  { return g.get_type(t); }
-    llvm::Type* operator()(Forward_type const& t)  { return g.get_type(t); }
   };
   return apply(t, fn{*this});
 }
@@ -116,52 +111,6 @@ Generator::get_type(Function_type const& t)
 llvm::Type*
 Generator::get_type(Auto_type const& t)
 {
-  return build.getInt32Ty();
-}
-
-
-// FIXME: Input parameters denote adaptable functions, so we should never 
-// actually get here. Assume pass-by-value.
-llvm::Type*
-Generator::get_type(In_type const& t)
-{
-  return get_type(t.type());
-}
-
-
-// Out reference types are always references.
-llvm::Type*
-Generator::get_type(Out_type const& t)
-{
-  llvm::Type* type = get_type(t.type());
-  return llvm::PointerType::getUnqual(type);
-}
-
-
-// Mutable referene types are always references.
-llvm::Type*
-Generator::get_type(Mutable_type const& t)
-{
-  llvm::Type* type = get_type(t.type());
-  return llvm::PointerType::getUnqual(type);
-}
-
-
-// FIXME: Consume parameters denote adaptable functions, so we should never 
-// actually get here. Assume pass-by-value.
-llvm::Type*
-Generator::get_type(Consume_type const& t)
-{
-  return get_type(t.type());
-}
-
-
-// FIXME: Forward parameters denote adaptable functions, so we should never 
-// actually get here. Assume pass-by-value.
-llvm::Type*
-Generator::get_type(Forward_type const& t)
-{
-  // return get_type(t.type());
   return build.getInt32Ty();
 }
 
