@@ -47,6 +47,7 @@ Parser::statement()
 
     case return_tok:
       return return_statement();
+
     case yield_tok:
       return yield_statement();
 
