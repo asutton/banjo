@@ -5,4 +5,3 @@ def g() {
   f(0);
 }
 
-class C { }

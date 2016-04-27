@@ -140,39 +140,6 @@ struct Function_type : Type
 };
 
 
-// Represents any type that has a declaration (i.e., not a built-in)
-// type. Note that placeholders and type variables are also declared
-// types.
-struct Declared_type : Type
-{
-  Declared_type(Decl& d)
-    : decl_(&d)
-  { }
-
-  // Returns the name of the user-defined type.
-  Name const& name() const;
-  Name&       name();
-
-  // Returns the declaration of the user-defined type.
-  Type_decl const& declaration() const;
-  Type_decl&       declaration();
-
-  Decl* decl_;
-};
-
-
-// A user-defined type refers to its declaration.
-//
-// FIXME: Rename to Class_type.
-struct Class_type : Declared_type
-{
-  using Declared_type::Declared_type;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-};
-
-
 // The base class of all unary type constructors.
 struct Unary_type : Type
 {
@@ -202,7 +169,7 @@ struct Qualified_type : Unary_type
 
   // Returns the qualifier for this type. Note that these
   // override functions in type.
-  Qualifier_set qualifier() const   { return qual; }
+  Qualifier_set qualifiers() const   { return qual; }
   bool          is_const() const    { return qual & const_qual; }
   bool          is_volatile() const { return qual & volatile_qual; }
 
@@ -314,6 +281,48 @@ struct Pack_type : Unary_type
 };
 
 
+// Represents any type that has a declaration (i.e., not a built-in)
+// type. Note that placeholders and type variables are also declared
+// types.
+struct Declared_type : Type
+{
+  Declared_type(Decl& d)
+    : decl_(&d)
+  { }
+
+  // Returns the name of the user-defined type.
+  Name const& name() const;
+  Name&       name();
+
+  // Returns the declaration of the user-defined type.
+  Type_decl const& declaration() const;
+  Type_decl&       declaration();
+
+  Decl* decl_;
+};
+
+
+// A user-defined type refers to its declaration.
+//
+// FIXME: Rename to Class_type.
+struct Class_type : Declared_type
+{
+  using Declared_type::Declared_type;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+struct Typename_type : Declared_type
+{
+  using Declared_type::Declared_type;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
 // The auto type.
 //
 // TODO: Allow a deduction constraint on placeholder types.
@@ -372,7 +381,7 @@ struct Synthetic_type : Declared_type
 };
 
 
-// The type of types.
+// The type of types. This is the most general kind of type.
 struct Type_type : Type
 {
   void accept(Visitor& v) const { v.visit(*this); }
