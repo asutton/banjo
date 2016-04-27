@@ -296,15 +296,15 @@ struct Array_type : Type
 
 struct Tuple_type : Type
 {
-  Tuple_type(Type_list& t) : ty(&t) {} 
+  Tuple_type(Type_list const& t) : ty(t) {} 
   
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
   
-  Type_list const& type_list() const { return *ty; }
-  Type_list&       type_list()       { return *ty; }
+  Type_list const& type_list() const { return ty; }
+  Type_list&       type_list()       { return ty; }
   
-  Type_list* ty;
+  Type_list ty;
 };
 
 

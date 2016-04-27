@@ -589,13 +589,11 @@ Printer::primary_type(Tuple_type const& t)
 {
   token(lbrace_tok);
   Type_list const& p = t.type_list();
-  auto i = p.begin();
-  std::cout << "here\n";  
-  // for (auto iter = p.begin(); iter != p.end(); ++iter) {
-  //   type(*iter);
-  //   if (std::next(iter) != p.end())
-  //     token(comma_tok);
-  // }
+  for (auto iter = p.begin(); iter != p.end(); ++iter) {
+    type(*iter);
+    if (std::next(iter) != p.end())
+      token(comma_tok);
+  }
   token(rbrace_tok);
 }
 

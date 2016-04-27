@@ -323,7 +323,7 @@ Builder::get_array_type(Type& t, Expr& e)
 
 
 Tuple_type&
-Builder::get_tuple_type(Type_list& t)
+Builder::get_tuple_type(Type_list const& t)
 {
   return make<Tuple_type>(t);
 }
