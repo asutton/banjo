@@ -95,11 +95,11 @@ qualified_lookup(Context& cxt, Type& type, Name const& name)
   // not just &.
   Type& t1 = type.non_reference_type();
   
-  if (!is<User_type>(t1)) {
+  if (!is<Declared_type>(t1)) {
     error("'{}' is not a user-defined type");
     throw Lookup_error("wrong type");
   }
-  Decl& decl = cast<User_type>(t1).declaration();
+  Decl& decl = cast<Declared_type>(t1).declaration();
   
   // Start by searching this scope.
   Decl_list decls = qualified_lookup(cxt, cxt.saved_scope(decl), name);

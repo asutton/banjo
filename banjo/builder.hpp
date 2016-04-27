@@ -48,7 +48,6 @@ struct Builder
   Global_id&      get_global_id();
 
   // Types
-  User_type&      get_type(Type_decl&);
   Void_type&      get_void_type();
   Boolean_type&   get_bool_type();
   Byte_type&      get_byte_type();
@@ -56,12 +55,12 @@ struct Builder
   Integer_type&   get_int_type();
   Integer_type&   get_uint_type();
   Float_type&     get_float_type();
-  Auto_type&      get_auto_type();
   Decltype_type&  get_decltype_type(Expr&);
-  Declauto_type&  get_declauto_type();
   Function_type&  get_function_type(Decl_list const&, Type&);
   Function_type&  get_function_type(Type_list const&, Type&);
   Qualified_type& get_qualified_type(Type&, Qualifier_set);
+  Class_type&     get_class_type(Type_decl&);
+  Auto_type&      get_auto_type(Type_decl&);
   Qualified_type& get_const_type(Type&);
   Qualified_type& get_volatile_type(Type&);
   Pointer_type&   get_pointer_type(Type&);
@@ -71,8 +70,10 @@ struct Builder
   Slice_type&     get_slice_type(Type&);
   Dynarray_type&  get_dynarray_type(Type&, Expr&);
   Pack_type&      get_pack_type(Type&);
-  Typename_type&  get_typename_type(Decl&);
   Type_type&      get_type_type();
+
+  // Placeholder types
+  Auto_type&      make_auto_type();
 
   Synthetic_type& synthesize_type(Decl&);
 
@@ -134,9 +135,6 @@ struct Builder
   Expression_stmt&  make_expression_statement(Expr&);
   Declaration_stmt& make_declaration_statement(Decl&);
 
-  // Supers
-  Super_decl&  make_super_declaration(Type&);
-
   // Variables
   Variable_decl&  make_variable_declaration(Name&, Type&);
   Variable_decl&  make_variable_declaration(Name&, Type&, Expr&);
@@ -147,11 +145,12 @@ struct Builder
   Function_decl&  make_function_declaration(Name&, Decl_list const&, Type&, Stmt&);
 
   // Types and members
-  Type_decl&      make_type_declaration(Name&, Type&, Stmt&);
+  Class_decl&     make_class_declaration(Name&, Type&, Stmt&);
   Field_decl&     make_field_declaration(Name&, Type&);
   Field_decl&     make_field_declaration(Name&, Type&, Expr&);
   Method_decl&    make_method_declaration(Name&, Decl_list const&, Type&, Expr&);
   Method_decl&    make_method_declaration(Name&, Decl_list const&, Type&, Stmt&);
+  Super_decl&     make_super_declaration(Type&);
 
   // Templates
   Template_decl&  make_template(Decl_list const&, Decl&);
@@ -176,7 +175,7 @@ struct Builder
   Defaulted_def&  make_defaulted_definition();
   Expression_def& make_expression_definition(Expr&);
   Function_def&   make_function_definition(Stmt&);
-  Type_def&       make_type_definition(Stmt&);
+  Class_def&      make_class_definition(Stmt&);
   Concept_def&    make_concept_definition(Req_list const&);
 
   // Parameters
@@ -188,11 +187,6 @@ struct Builder
   Type_parm&   make_type_parameter(char const*);
   Type_parm&   make_type_parameter(Name&, Type&);
   Type_parm&   make_type_parameter(char const*, Type&);
-
-  // Placeholders
-  // A placeholder is essentially a type parameter whose declaration
-  // is implied by its use. Note, use the get_placeholder_type()
-  Typename_type& make_placeholder_type();
 
   // Requirements
   Basic_req&      make_basic_requirement(Expr&, Type&);

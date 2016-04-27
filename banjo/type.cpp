@@ -16,16 +16,17 @@ namespace banjo
 namespace
 {
 
+// FIXME: This could also match a type parameter.
 Type&
 make_type(Context& cxt, Simple_id& id)
 {
   Decl& d = simple_lookup(cxt, id);
-  if (!is<Type_decl>(d)) {
+  if (!is<Class_decl>(d)) {
     error(cxt, "'{}' does not name a type", d);
     throw Type_error("not a type");
   }
-  Type_decl& decl = cast<Type_decl>(d);
-  return cxt.get_type(decl);
+  Class_decl& decl = cast<Class_decl>(d);
+  return cxt.get_class_type(decl);
 }
 
 
@@ -121,7 +122,29 @@ make_pack_type(Context& cxt, Type& t)
 Type&
 make_fresh_type(Context& cxt)
 {
-  return cxt.make_placeholder_type();
+  return cxt.make_auto_type();
+}
+
+
+// -------------------------------------------------------------------------- //
+// Placeholders
+
+
+// Collect a list of placeholder types in the declared type t.
+//
+// TODO: Finish implementing me.
+Type_list 
+get_placeholders(Type& t)
+{
+  struct fn
+  {
+    Type_list& ts;
+    void operator()(Type& t) { }
+    void operator()(Auto_type& t) { ts.push_back(t); }
+  };
+  Type_list ts;
+  apply(t, fn{ts});
+  return ts;
 }
 
 

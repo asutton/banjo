@@ -176,12 +176,6 @@ Builder::get_global_id()
 // -------------------------------------------------------------------------- //
 // Types
 
-User_type&
-Builder::get_type(Type_decl& d)
-{
-  return make<User_type>(d);
-}
-
 
 Void_type&
 Builder::get_void_type()
@@ -233,13 +227,6 @@ Builder::get_float_type()
 }
 
 
-Auto_type&
-Builder::get_auto_type()
-{
-  return make<Auto_type>();
-}
-
-
 Decltype_type&
 Builder::get_decltype_type(Expr&)
 {
@@ -247,10 +234,19 @@ Builder::get_decltype_type(Expr&)
 }
 
 
-Declauto_type&
-Builder::get_declauto_type()
+// Returns class type for the given type declaration.
+Class_type&
+Builder::get_class_type(Type_decl& d)
 {
-  return make<Declauto_type>();
+  return make<Class_type>(d);
+}
+
+
+// Returns the auto type corresponding to the given declaration.
+Auto_type&
+Builder::get_auto_type(Type_decl& d)
+{
+  return make<Auto_type>(d);
 }
 
 
@@ -350,13 +346,6 @@ Builder::get_pack_type(Type& t)
 }
 
 
-Typename_type&
-Builder::get_typename_type(Decl& d)
-{
-  return make<Typename_type>(d);
-}
-
-
 Type_type&
 Builder::get_type_type()
 {
@@ -365,6 +354,22 @@ Builder::get_type_type()
 }
 
 
+// Create a new auto placeholder type. This creates a new, unique type
+// parameter and returns its associated type. Note that the type parameter
+// is unassociated with any context at the point of creation (it's an
+// unbound, unnamed type variable).
+Auto_type&
+Builder::make_auto_type()
+{
+  Name& n = get_id();
+  Type_parm& d = make<Type_parm>(Index {}, n);
+  return get_auto_type(d);
+}
+
+
+
+// Synthesize a type from the given parameter. This is used to generate
+// fake types corresponding to type parameters.
 Synthetic_type&
 Builder::synthesize_type(Decl& d)
 {
@@ -861,11 +866,11 @@ Builder::make_function_declaration(Name& n, Decl_list const& p, Type& t, Stmt& s
 }
 
 
-Type_decl&
-Builder::make_type_declaration(Name& n, Type& t, Stmt& s)
+Class_decl&
+Builder::make_class_declaration(Name& n, Type& t, Stmt& s)
 {
-  Def& d = make_type_definition(s);
-  return make<Type_decl>(n, t, d);
+  Def& d = make_class_definition(s);
+  return make<Class_decl>(n, t, d);
 }
 
 
@@ -1006,19 +1011,6 @@ Builder::make_type_parameter(char const* n, Type& t)
 }
 
 
-// Create a new placeholder type. This creates a new, uniqe type
-// parameter and returns its associated type.
-Typename_type&
-Builder::make_placeholder_type()
-{
-  Name& n = get_id();
-  Decl& d = make<Type_parm>(Index {}, n);
-  return get_typename_type(d);
-}
-
-
-
-
 // -------------------------------------------------------------------------- //
 // Definitions
 
@@ -1059,10 +1051,10 @@ Builder::make_function_definition(Stmt& s)
 }
 
 
-Type_def&
-Builder::make_type_definition(Stmt& s)
+Class_def&
+Builder::make_class_definition(Stmt& s)
 {
-  return make<Type_def>(s);
+  return make<Class_def>(s);
 }
 
 

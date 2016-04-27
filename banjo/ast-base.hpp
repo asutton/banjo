@@ -24,6 +24,7 @@ struct Term;
 
 struct Name;
 struct Type;
+struct Declared_type;
 struct Expr;
 struct Id_expr;
 struct Decl_expr;
@@ -36,6 +37,7 @@ struct Req;
 struct Stmt;
 struct Decl;
 struct Object_decl;
+struct Type_decl;
 struct Def;
 struct Cons;
 

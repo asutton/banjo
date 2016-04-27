@@ -81,7 +81,7 @@ struct Printer
   void primary_type(Function_type const&);
   void primary_type(Tuple_type const&);
   void primary_type(Type_type const&);
-  void id_type(User_type const&);
+  void id_type(Class_type const&);
   void grouped_type(Type const&);
 
   // Expressions
@@ -177,10 +177,10 @@ struct Printer
   void parameter(Object_parm const&);
   void parameter_list(Decl_list const&);
 
-  // Types
-  void type_declaration(Type_decl const&);
-  void type_definition(Def const&);
-  void type_definition(Type_def const&);
+  // Classes
+  void class_declaration(Class_decl const&);
+  void class_definition(Def const&);
+  void class_definition(Class_def const&);
 
   // Concepts
   void concept_declaration(Concept_decl const&);

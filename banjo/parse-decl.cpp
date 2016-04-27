@@ -184,8 +184,8 @@ Parser::declaration()
       return variable_declaration();
     case def_tok:
       return function_declaration();
-    case type_tok:
-      return type_declaration();
+    case class_tok:
+      return class_declaration();
     case concept_tok:
       lingo_unreachable();
     case super_tok:
@@ -217,7 +217,7 @@ Parser::variable_declaration()
 
   // Match the ":=" form.
   if (match_if(eq_tok)) {
-    Type& type = cxt.get_auto_type();
+    Type& type = cxt.make_auto_type();
     Expr& init = unparsed_variable_initializer();
     match(semicolon_tok);
     return on_variable_declaration(name, type, init);
@@ -421,7 +421,7 @@ Parser::function_declaration()
 
   // Othersise, the return type is unspecified, allowing for
   // anonymous expressions.
-  Type& ret = cxt.get_auto_type();
+  Type& ret = cxt.make_auto_type();
 
   // { ... }
   if (next_token_is(lbrace_tok)) {
@@ -503,7 +503,7 @@ Parser::parameter_declaration()
     return on_function_parameter(name, type);
   }
 
-  Type& type = cxt.get_auto_type();
+  Type& type = cxt.make_auto_type();
 
   if (next_token_is(eq_tok))
     lingo_unimplemented("default arguments");
@@ -607,7 +607,7 @@ Parser::function_definition(Decl& d)
 // Parse a type declaration.
 //
 //    type-declaration:
-//      'type' identifier [':' type] type-body
+//      'class' identifier [':' type] type-body
 //
 //    type-body:
 //      compound-statement
@@ -617,25 +617,31 @@ Parser::function_definition(Decl& d)
 //
 // TODO: We could use '=' notation in bodies to create new derived types.
 Decl&
-Parser::type_declaration()
+Parser::class_declaration()
 {
-  require(type_tok);
+  require(class_tok);
   Name& name = identifier();
 
-
+  // NOTE: The colon is made optional.
   match_if(colon_tok);
-  Type& kind = next_token_is(lbrace_tok) ? cxt.get_type_type() : unparsed_type_kind();
 
+  // Match the kind of the class.
+  Type* kind;
+  if (next_token_is(lbrace_tok))
+    kind = &cxt.get_type_type();
+  else
+    kind = &unparsed_class_kind();
 
-  Stmt& body = unparsed_type_body();
+  // Match tghe body.
+  Stmt& body = unparsed_class_body();
 
-  return on_type_declaration(name, kind, body);
+  return on_class_declaration(name, *kind, body);
 };
 
 
 // Return an unparsed type for the variable's type specification.
 Type&
-Parser::unparsed_type_kind()
+Parser::unparsed_class_kind()
 {
   Token_seq toks;
   while (!is_eof()) {
@@ -653,7 +659,7 @@ Parser::unparsed_type_kind()
 // but, because this is a type body, they will be interpreted as a
 // member statement.
 Stmt&
-Parser::unparsed_type_body()
+Parser::unparsed_class_body()
 {
   Token_seq toks;
   toks.push_back(match(lbrace_tok));

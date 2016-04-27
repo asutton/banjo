@@ -24,6 +24,9 @@ Type& make_pack_type(Context&, Type&);
 Type& make_fresh_type(Context&);
 
 
+Type_list get_placeholders(Type&);
+
+
 } // namespace banjo
 
 

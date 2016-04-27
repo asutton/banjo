@@ -153,9 +153,9 @@ struct Parser
   Def& function_definition(Decl&);
 
   // Types
-  Decl& type_declaration();
-  Type& unparsed_type_kind();
-  Stmt& unparsed_type_body();
+  Decl& class_declaration();
+  Type& unparsed_class_kind();
+  Stmt& unparsed_class_body();
 
   // Base classes.
   Decl& super_declaration();
@@ -194,7 +194,8 @@ struct Parser
   void elaborate_declaration(Decl&);
   void elaborate_object_declaration(Object_decl&);
   void elaborate_function_declaration(Function_decl&);
-  void elaborate_type_declaration(Type_decl&);
+  void elaborate_parameter_declaration(Object_parm&);
+  void elaborate_class_declaration(Class_decl&);
   Type& elaborate_type(Type&);
 
   // Overloading
@@ -218,8 +219,8 @@ struct Parser
   void elaborate_function_definition(Function_decl&);
   void elaborate_function_definition(Function_decl&, Expression_def&);
   void elaborate_function_definition(Function_decl&, Function_def&);
-  void elaborate_type_definition(Type_decl&);
-  void elaborate_type_definition(Type_decl&, Type_def&);
+  void elaborate_class_definition(Class_decl&);
+  void elaborate_class_definition(Class_decl&, Class_def&);
   Expr& elaborate_expression(Expr&);
   Stmt& elaborate_compound_statement(Stmt&);
   Stmt& elaborate_member_statement(Stmt&);
@@ -241,7 +242,7 @@ struct Parser
   Decl& on_concept_name(Token);
 
   // Types
-  Type& on_type_type(Token);
+  Type& on_class_type(Token);
   Type& on_void_type(Token);
   Type& on_bool_type(Token);
   Type& on_int_type(Token);
@@ -321,7 +322,7 @@ struct Parser
   Decl& on_function_declaration(Name&, Decl_list&, Type&, Stmt&);
 
   // Type declarations
-  Decl& on_type_declaration(Name&, Type&, Stmt&);
+  Decl& on_class_declaration(Name&, Type&, Stmt&);
 
   // Concept declarations
   Decl& on_concept_declaration(Token, Name&, Decl_list&);

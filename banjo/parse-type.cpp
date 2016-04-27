@@ -181,8 +181,8 @@ Parser::primary_type()
     case decltype_tok:
       return decltype_type();
 
-    case type_tok:
-      return on_type_type(accept());
+    case class_tok:
+      return on_class_type(accept());
 
     case lparen_tok: {
       // FIXME: We shouldn't need a tentative parse for this.

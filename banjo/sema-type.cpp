@@ -13,7 +13,7 @@ namespace banjo
 
 
 Type&
-Parser::on_type_type(Token)
+Parser::on_class_type(Token)
 {
   return build.get_type_type();
 }

@@ -173,29 +173,6 @@ is_equivalent(Float_type const& t1, Float_type const& t2)
 }
 
 
-// TODO: When are two placeholder types equivalent?
-bool
-is_equivalent(Auto_type const&, Auto_type const&)
-{
-  return false;
-}
-
-
-bool
-is_equivalent(Decltype_type const& a, Decltype_type const& b)
-{
-  lingo_unreachable();
-}
-
-
-// TODO: When are placeholder types equivalent?
-bool
-is_equivalent(Declauto_type const& t1, Declauto_type const& t2)
-{
-  return false;
-}
-
-
 bool
 is_equivalent(Function_type const& t1, Function_type const& t2)
 {
@@ -240,19 +217,12 @@ is_equivalent(Dynarray_type const&, Dynarray_type const&)
 }
 
 
+// Two declared types are equivalent when they have the same
+// declaration.
 bool
-is_equivalent(User_type const& t1, User_type const& t2)
+is_eq_declared_type(Declared_type const& t1, Declared_type const& t2)
 {
   return is_equivalent(t1.declaration(), t2.declaration());
-}
-
-
-// Two synthetic types are equivalent only when they are identical.
-// Here, t1 and t2 are known not to be identical.
-inline bool
-is_equivalent(Synthetic_type const& t1, Synthetic_type const& t2)
-{
-  return false;
 }
 
 
@@ -271,16 +241,13 @@ is_equivalent(Type const& t1, Type const& t2)
     bool operator()(Byte_type const& t1) const      { return always_equal(t1, cast<Byte_type>(t2)); }
     bool operator()(Integer_type const& t1) const   { return is_equivalent(t1, cast<Integer_type>(t2)); }
     bool operator()(Float_type const& t1) const     { return is_equivalent(t1, cast<Float_type>(t2)); }
-    bool operator()(Auto_type const& t1) const      { return is_equivalent(t1, cast<Auto_type>(t2)); }
-    bool operator()(Decltype_type const& t1) const  { return is_equivalent(t1, cast<Decltype_type>(t2)); }
-    bool operator()(Declauto_type const& t1) const  { return is_equivalent(t1, cast<Declauto_type>(t2)); }
     bool operator()(Function_type const& t1) const  { return is_equivalent(t1, cast<Function_type>(t2)); }
     bool operator()(Qualified_type const& t1) const { return is_equivalent(t1, cast<Qualified_type>(t2)); }
     bool operator()(Unary_type const& t1) const     { return is_equivalent(t1, cast<Unary_type>(t2)); }
     bool operator()(Array_type const& t1) const     { return is_equivalent(t1, cast<Array_type>(t2)); }
     bool operator()(Tuple_type const& t1) const     { return is_equivalent(t1, cast<Tuple_type>(t2)); }
     bool operator()(Dynarray_type const& t1) const  { return is_equivalent(t1, cast<Dynarray_type>(t2)); }
-    bool operator()(User_type const& t1) const      { return is_equivalent(t1, cast<User_type>(t2)); }
+    bool operator()(Declared_type const& t1) const  { return is_eq_declared_type(t1, cast_as(t1, t2)); }
   };
 
   // The same objects represent the same types.
