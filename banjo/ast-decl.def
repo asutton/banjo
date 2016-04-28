@@ -4,7 +4,7 @@
 define_node(Super_decl);
 define_node(Variable_decl);
 define_node(Function_decl);
-define_node(Type_decl);
+define_node(Class_decl);
 define_node(Field_decl);
 define_node(Method_decl);
 define_node(Concept_decl);

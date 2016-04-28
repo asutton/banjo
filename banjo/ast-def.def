@@ -1,10 +1,10 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-define_node(Empty_def);
-define_node(Defaulted_def);
-define_node(Deleted_def);
-define_node(Expression_def);
-define_node(Function_def);
-define_node(Type_def);
-define_node(Concept_def);
+define_node(Empty_def)
+define_node(Defaulted_def)
+define_node(Deleted_def)
+define_node(Expression_def)
+define_node(Function_def)
+define_node(Class_def)
+define_node(Concept_def)

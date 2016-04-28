@@ -1,5 +1,5 @@
 
-type T1 : type {
+class T1 {
   var x : int;
   static var y : int;
 }

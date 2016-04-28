@@ -9,28 +9,28 @@ namespace banjo
 {
 
 Name const&
-User_type::name() const
+Declared_type::name() const
 {
   return declaration().name();
 }
 
 
 Name&
-User_type::name()
+Declared_type::name()
 {
   return declaration().name();
 }
 
 
 Type_decl const&
-User_type::declaration() const
+Declared_type::declaration() const
 {
   return cast<Type_decl>(*decl_);
 }
 
 
 Type_decl&
-User_type::declaration()
+Declared_type::declaration()
 {
   return cast<Type_decl>(*decl_);
 }
@@ -71,7 +71,6 @@ is_dependent_type(Type const& t)
     bool operator()(Array_type const& t)     { return is_dependent_type(t.type()); }
     bool operator()(Tuple_type const& t)     { return any_dependent_type(t.type_list()); }
     bool operator()(Dynarray_type const& t)  { return is_dependent_type(t.type()); }
-    bool operator()(Typename_type const& t)  { return true; }
   };
   return apply(t, fn{});
 }

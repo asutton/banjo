@@ -1,18 +1,12 @@
 
-// def f0 : () -> void { }
-// def f1 : (x : int, y : int) -> int { return x; }
-// def f2 : (x, y) -> int { return x; }
-// def f3 : (x, y) -> int = x;
+def f0 : () -> void { }
+def f1 : (x : int, y : int) -> int { return x; }
+def f2 : (x, y) -> int { return x; }
+def f3 : (x, y) -> int = x;
 
-// def f4 : (x, y) { return x; }
-// def f5 : (x, y) = x;
-// def f6 : (x, y) x;
-
-// def f7 : (x : in int) x;
-// def f8 : (x : out int) x;
-// def f9 : (x : mutable int) x;
-// def f10 : (x : consume int) x;
-// def f11 : (x : forward int) x;
+def f4 : (x, y) { return x; }
+def f5 : (x, y) = x;
+def f6 : (x, y) x;
 
 
 def g : (x : int) -> int {
@@ -22,3 +16,4 @@ def g : (x : int) -> int {
   }
   return 0;
 }
+

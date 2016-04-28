@@ -117,29 +117,6 @@ struct Object_decl : Decl
 };
 
 
-// Declares a base_subobject(henceforth called a "Super")
-struct Super_decl : Object_decl
-{
-  Super_decl(Name& n, Type& t, Def& d)
-    : Object_decl(n), type_(&t), def_(&d)
-  { }
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the declared type of the super
-  Type const& type() const { return *type_; }
-  Type&       type()       { return *type_; }
-
-  Def const& initializer() const { return *def_; }
-  Def&       initializer()       { return *def_; }
-
-  Type * type_;
-  Def* def_;
-
-};
-
-
 // Declares a variable.
 struct Variable_decl : Object_decl
 {
@@ -206,25 +183,30 @@ struct Function_decl : Decl
 };
 
 
-// Represents the declaration of a user-defined type.
-//
-// TODO: Support kinds and/or metatypes.
-//
-// TODO: Rename this to Record_decl, and also its corresponding type.
+
+// Represents the declaration of a user-defined type. This is the base
+// class of class declarations and type parameters.
 struct Type_decl : Decl
 {
-  Type_decl(Name& n, Type& t, Def& d)
-    : Decl(n, t), def_(&d)
+  using Decl::Decl;
+
+  // Returns the kind of the type. This is the same as the type's type.
+  Type const& kind() const { return type(); }
+  Type&       kind()       { return type(); }
+};
+
+
+// Represents the declaration of a class type.
+struct Class_decl : Type_decl
+{
+  Class_decl(Name& n, Type& t, Def& d)
+    : Type_decl(n, t), def_(&d)
   { }
   
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
-  // Returns the kind of the type.
-  Type const& kind() const { return type(); }
-  Type&       kind()       { return type(); }
-
-  // Returns the definition of the type.
+  // Returns the definition of the class.
   Def const& definition() const { return *def_; }
   Def&       definition()       { return *def_; }
 
@@ -233,9 +215,9 @@ struct Type_decl : Decl
 };
 
 
-// Declares a field of a record. This stores the index of the field within
-// the class, which is used to support code generation and compile-time
-// evaluation.
+// Declares a field (member variable) of a class. This stores the index 
+// of the field within  the class, which is used to support code generation 
+// and compile-time evaluation.
 struct Field_decl : Variable_decl
 {
   using Variable_decl::Variable_decl;
@@ -250,7 +232,29 @@ struct Field_decl : Variable_decl
 };
 
 
-// Declares a method of a record.
+// Declares a base class subobject.
+struct Super_decl : Object_decl
+{
+  Super_decl(Name& n, Type& t, Def& d)
+    : Object_decl(n), type_(&t), def_(&d)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the declared type of the super
+  Type const& type() const { return *type_; }
+  Type&       type()       { return *type_; }
+
+  Def const& initializer() const { return *def_; }
+  Def&       initializer()       { return *def_; }
+
+  Type * type_;
+  Def* def_;
+};
+
+
+// Declares a method (member function) of a record.
 //
 // TODO: I think that the type of a method is the same as that of a function,
 // except that the first parameter type must always be a (possibly qualified) 
@@ -440,14 +444,14 @@ struct Value_parm : Parameter_decl<Object_decl>
 // A type parameter of a template.
 //
 // TODO: It would be nice to derive from type-decl.
-struct Type_parm : Parameter_decl<Decl>
+struct Type_parm : Parameter_decl<Type_decl>
 {
   Type_parm(Index x, Name& n)
-    : Parameter_decl<Decl>(x, n), def()
+    : Parameter_decl<Type_decl>(x, n), def()
   { }
 
   Type_parm(Index x, Name& n, Type& t)
-    : Parameter_decl<Decl>(x, n), def(&t)
+    : Parameter_decl<Type_decl>(x, n), def(&t)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }

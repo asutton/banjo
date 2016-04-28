@@ -40,7 +40,7 @@ Parser::statement()
     case super_tok:
     case var_tok:
     case def_tok:
-    case type_tok:
+    case class_tok:
     case concept_tok:
       return declaration_statement();
 

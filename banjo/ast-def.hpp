@@ -134,9 +134,9 @@ struct Function_def : Def
 // Note that the real distinction is in the syntactic form of the
 // definitions. In subsequent passes, these would be reduced to a single
 // kind of definition for each entity.
-struct Type_def : Def
+struct Class_def : Def
 {
-  Type_def(Stmt& s)
+  Class_def(Stmt& s)
     : body_(&s)
   { }
 

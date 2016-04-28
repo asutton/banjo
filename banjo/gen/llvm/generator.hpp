@@ -61,12 +61,6 @@ struct Generator
   llvm::Type* get_type(Float_type const&);
   llvm::Type* get_type(Function_type const&);
   llvm::Type* get_type(Auto_type const&);
-  llvm::Type* get_type(In_type const&);
-  llvm::Type* get_type(Out_type const&);
-  llvm::Type* get_type(Mutable_type const&);
-  llvm::Type* get_type(Consume_type const&);
-  llvm::Type* get_type(Forward_type const&);
-
 
   llvm::Value* gen(Expr const&);
   llvm::Value* gen(Boolean_expr const&);
