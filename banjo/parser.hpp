@@ -141,6 +141,7 @@ struct Parser
   Expr& equal_initializer(Decl&);
   Expr& paren_initializer(Decl&);
   Expr& brace_initializer(Decl&);
+  
 
   // Functions
   Decl& function_declaration();

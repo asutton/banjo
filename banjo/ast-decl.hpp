@@ -183,7 +183,6 @@ struct Function_decl : Decl
 };
 
 
-
 // Represents the declaration of a user-defined type. This is the base
 // class of class declarations and type parameters.
 struct Type_decl : Decl

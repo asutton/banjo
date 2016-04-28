@@ -1,4 +1,4 @@
 var a : int[5];
-var b : int[];
+var b : int[] = {1,2};
 var c : int = 5;
 var d : int[c];
