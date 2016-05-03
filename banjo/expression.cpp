@@ -3,6 +3,7 @@
 
 #include "expression.hpp"
 #include "ast-expr.hpp"
+#include "ast-type.hpp"
 #include "context.hpp"
 #include "lookup.hpp"
 
@@ -42,7 +43,13 @@ make_requirements(Context& cxt,
 Expr&
 make_tuple_expr(Context& cxt, Expr_list& l)
 {
-  Type& t = l.begin()->type();
+  Type_list tlist;
+  for(auto eli = l.begin(); eli != l.end(); eli++) {
+    tlist.push_back(eli->type());
+  }
+  
+  Tuple_type t(tlist);
+  
   return cxt.make_tuple_expr(t, l);
 }
 
