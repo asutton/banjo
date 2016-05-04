@@ -101,7 +101,8 @@ struct Printer
   void multiplicative_expression(Expr const&);
   void unary_expression(Expr const&);
   void postfix_expression(Expr const&);
-  void postfix_expression(Call_expr const&);
+  void postfix_expression(Call_expr const&);  
+  void postfix_expression(Tuple_expr const&);
   void postfix_expression(Dot_expr const&);
   void postfix_expression(Value_conv const&);
   void postfix_expression(Qualification_conv const&);

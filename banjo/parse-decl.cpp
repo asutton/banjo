@@ -170,7 +170,7 @@ Parser::parameter_specifier_seq()
 //
 //    basic-declaration:
 //      variable-declaration
-//      function-declarattion
+//      function-declaration
 //      type-declaration
 //      concept-declaration
 Decl&

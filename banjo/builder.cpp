@@ -673,6 +673,12 @@ Builder::make_call(Type& t, Function_decl& f, Expr_list const& a)
   return make_call(t, make_reference(f), a);
 }
 
+Tuple_expr&
+Builder::make_tuple_expr(Type& t, Expr_list const& l)
+{
+  return make<Tuple_expr>(t,l);
+}
+
 
 Requires_expr&
 Builder::make_requires(Decl_list const& tps, Decl_list const& ps, Req_list const& rs)

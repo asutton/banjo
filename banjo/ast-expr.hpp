@@ -584,6 +584,22 @@ struct Call_expr : Expr
 };
 
 
+struct Tuple_expr : Expr
+{
+  Tuple_expr(Type& t, Expr_list const& l)
+    : Expr(t), elems(l)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  Expr_list const& elements() const { return elems; }
+  Expr_list&       elements()       { return elems; }
+
+  Expr_list elems;
+};
+
+
 // An assignment expresion.
 struct Assign_expr : Binary_expr
 {

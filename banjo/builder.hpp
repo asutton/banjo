@@ -123,6 +123,7 @@ struct Builder
   Bit_not_expr&   make_bit_not(Type&, Expr&);
   Call_expr&      make_call(Type&, Expr&, Expr_list const&);
   Call_expr&      make_call(Type&, Function_decl&, Expr_list const&);
+  Tuple_expr&     make_tuple_expr(Type&, Expr_list const&);
   Requires_expr&  make_requires(Decl_list const&, Decl_list const&, Req_list const&);
   Synthetic_expr& synthesize_expression(Decl&);
 

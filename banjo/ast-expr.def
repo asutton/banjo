@@ -51,6 +51,9 @@ define_node(Assign_expr)
 // Function call
 define_node(Call_expr)
 
+// Tuple
+define_node(Tuple_expr)
+
 // Concept check
 define_node(Check_expr)
 

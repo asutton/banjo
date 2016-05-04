@@ -98,6 +98,7 @@ struct Parser
   Expr& unary_expression();
   Expr& postfix_expression();
   Expr& call_expression(Expr&);
+  Expr& tuple_expression();
   Expr& dot_expression(Expr&);
   Expr& subscript_expression(Expr&);
   Expr& primary_expression();
@@ -141,6 +142,7 @@ struct Parser
   Expr& equal_initializer(Decl&);
   Expr& paren_initializer(Decl&);
   Expr& brace_initializer(Decl&);
+  
 
   // Functions
   Decl& function_declaration();
@@ -289,6 +291,7 @@ struct Parser
   Expr& on_neg_expression(Token, Expr&);
   Expr& on_pos_expression(Token, Expr&);
   Expr& on_call_expression(Expr&, Expr_list&);
+  Expr& on_tuple_expression(Expr_list&);
   Expr& on_dot_expression(Expr&, Name&);
   Expr& on_id_expression(Name&);
   Expr& on_boolean_literal(Token, bool);
