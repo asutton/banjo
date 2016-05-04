@@ -412,6 +412,15 @@ standard_conversion(Expr& e, Type& t)
 }
 
 
+bool is_tuple_equiv_to_array(Tuple_type& t1, Array_type& t2)
+{
+  for(auto it = t1.type_list().begin(); it != t1.type_list().end(); it++) {
+    if(!is_equivalent(*it,t2.type())) return false;
+  }
+  return true;
+}
+
+
 // Try to find a conversion from a source expression `e` and
 // a destination type `t`.
 Expr&

@@ -132,8 +132,17 @@ copy_initialize(Context& cxt, Type& t, Expr& e)
   // If the destination type is T[N] or T[] and the initializer
   // is `= s` where `s` is a string literal, perform string
   // initialization.
-  if (is_array_type(t))
-    banjo_unhandled_case(t);
+  if (is_array_type(t)) {
+    Expr& a_expr = array_initialize(t, e);
+    return cxt.make_copy_init(t, a_expr);
+    // banjo_unhandled_case(t);
+  }
+  
+  if (is_tuple_type(t)) {
+    Expr& t_expr = tuple_initialize(t,e);
+    return cxt.make_copy_init(t,t_expr);
+  }
+  
 
   // If the initializer has a source type, then try to find a
   // user-defined conversion from s to the destination type, which
@@ -155,6 +164,54 @@ copy_initialize(Context& cxt, Type& t, Expr& e)
   return build.make_copy_init(t, c);
 }
 
+
+//Array compared with array
+Expr&
+array_initialize(Type& t, Expr& e)
+{
+  Type& et = e.type();
+  if(is_equivalent(t,et))
+    return e;
+    
+  if(is_tuple_type(e.type())) {
+    return array_tuple_init(t,e);
+  }
+}
+
+
+//tuple compared with tuple
+Expr&
+tuple_initialize(Type& t, Expr& e)
+{
+  Type& et = e.type();
+  if(is_equivalent(t,et))
+    return e;
+  
+  if(is_array_type(e.type())) {
+    return tuple_array_init(t,e);
+  }
+}
+
+
+//e has array type
+Expr&
+tuple_array_init(Type& t, Expr& e)
+{
+  if(is_tuple_equiv_to_array(t,e.type()))
+    return e;
+  throw std::runtime_error("cannot initialize tuple with array type");
+}
+
+
+//e has tuple type
+Expr&
+array_tuple_init(Type& t, Expr& e)
+{
+  if(is_tuple_equiv_to_array(e.type(),t) {
+    return e;
+  }
+  throw std::runtime_error("cannot initialize array with tuple type");
+}
 
 // Select a procedure to direct-initialize an object or reference of
 // type `t` by a paren-enclosed list of expressions `es`. This corresponds
