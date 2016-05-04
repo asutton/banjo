@@ -4,6 +4,7 @@
 #include "expression.hpp"
 #include "ast-expr.hpp"
 #include "ast-type.hpp"
+#include "type.hpp"
 #include "context.hpp"
 #include "lookup.hpp"
 
@@ -39,7 +40,7 @@ make_requirements(Context& cxt,
 }
 
 
-//TODO: Find a type for the Expr_list
+//Modeled after make_regular_call
 Expr&
 make_tuple_expr(Context& cxt, Expr_list& l)
 {
@@ -48,9 +49,10 @@ make_tuple_expr(Context& cxt, Expr_list& l)
     tlist.push_back(eli->type());
   }
   
-  Tuple_type t(tlist);
+  Type &t = make_tuple_type(cxt,tlist);
   
-  return cxt.make_tuple_expr(t, l);
+  Tuple_expr& te = cxt.make_tuple_expr(t, l);
+  return te;
 }
 
 
