@@ -42,6 +42,7 @@ Parser::elaborate_definition(Decl& d)
     void operator()(Variable_decl& d) { p.elaborate_variable_initializer(d); }
     void operator()(Function_decl& d) { p.elaborate_function_definition(d); }
     void operator()(Class_decl& d)    { p.elaborate_class_definition(d); }
+    void operator()(Coroutine_decl& d){ p.elaborate_coroutine_declaration(d); }
     void operator()(Super_decl& d)    { /* Nothing to do. */ }
   };
   apply(d, fn{*this});
@@ -147,6 +148,12 @@ Parser::elaborate_class_definition(Class_decl& d)
     void operator()(Class_def& d) { p.elaborate_class_definition(decl, d); }
   };
   apply(d.definition(), fn{*this, d});
+}
+
+void
+elaborate_coroutine_declaration(Coroutine_decl& d)
+{
+
 }
 
 

@@ -216,9 +216,9 @@ struct Class_decl : Type_decl
 
 struct Coroutine_decl :Decl
 {
-  Coroutine_decl(Name& n, Type& t, Def& d)
-    : Decl(n, t), def_(&d)
-  {}
+  Coroutine_decl(Name& n, Type& t, Decl_list const& p, Def& d)
+    : Decl(n, t), ret_(&t), def_(&d), parms_(p)
+  { }
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
@@ -227,9 +227,18 @@ struct Coroutine_decl :Decl
   Def const& definition() const { return *def_; }
   Def&       definition()       { return *def_; }
 
+  // Returns the return type of the coroutine.
+  Type const& return_type() const { return *ret_; };
+  Type&       return_type()       { return *ret_; }
 
-  // Hold paramters, and return type
+  // Returns the list of parameter declarations for the coroutine.
+  Decl_list const& parameters() const { return parms_; }
+  Decl_list&       parameters()       { return parms_; }
+
+  Type* ret_;
   Def* def_;
+  Decl_list parms_;
+
 };
 
 // Declares a field (member variable) of a class. This stores the index 

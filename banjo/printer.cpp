@@ -1272,6 +1272,7 @@ Printer::declaration(Decl const& d)
     void operator()(Variable_decl const& d)  { p.variable_declaration(d); }
     void operator()(Function_decl const& d)  { p.function_declaration(d); }
     void operator()(Class_decl const& d)     { p.class_declaration(d); }
+    void operator()(Coroutine_decl const& d) { p.coroutine_delcaration(d); }
 
     // Support emitting these here so we can print parameters without
     // an appropriate context.
@@ -1419,6 +1420,20 @@ Printer::function_declaration(Function_decl const& d)
   function_definition(d.definition());
 }
 
+void
+Printer::coroutine_delcaration(Coroutine_decl const& d)
+{
+  token(coroutine_tok);
+  space();
+  identifier(d);
+  binary_operator(colon_tok);
+  token(lparen_tok);
+  parameter_list(d.parameters());
+  token(rparen_tok);
+  binary_operator(arrow_tok);
+  type(d.return_type());
+  function_definition(d.definition());
+}
 
 void
 Printer::function_definition(Def const& d)

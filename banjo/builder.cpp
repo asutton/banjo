@@ -268,7 +268,11 @@ Builder::get_function_type(Type_list const& ts, Type& r)
   return make<Function_type>(ts, r);
 }
 
-
+Coroutine_type&
+Builder::get_coroutine_type(Type_decl& d)
+{
+  return make<Coroutine_type>(d);
+}
 // TODO: Do not build qualified types for functions or arrays.
 // Is that a hard error, or do we simply fold the const into
 // the return type and/or element type?
@@ -879,9 +883,9 @@ Builder::make_class_declaration(Name& n, Type& t, Stmt& s)
 }
 
 Coroutine_decl&
-Builder::make_coroutine_declaration(Name&n, Type& t, Stmt& s){
+Builder::make_coroutine_declaration(Name&n, Decl_list&p, Type& t, Stmt& s){
   Def& d = make_coroutine_definition(s);
-  lingo_unimplemented("decl");
+  return make<Coroutine_decl>(n,t,p,d);
 }
 
 Field_decl&

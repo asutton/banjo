@@ -7,6 +7,7 @@
 #include "token.hpp"
 #include "language.hpp"
 #include "ast-stmt.hpp"
+#include "ast-decl.hpp"
 
 #include <iosfwd>
 
@@ -183,6 +184,9 @@ struct Printer
   void class_declaration(Class_decl const&);
   void class_definition(Def const&);
   void class_definition(Class_def const&);
+
+  // Coroutine
+  void coroutine_delcaration(Coroutine_decl const&);
 
   // Concepts
   void concept_declaration(Concept_decl const&);

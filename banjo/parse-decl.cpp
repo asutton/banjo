@@ -186,7 +186,7 @@ Parser::declaration()
       return function_declaration();
 
     case coroutine_tok:
-      coroutine_declaration();
+      return coroutine_declaration();
 
     case class_tok:
       return class_declaration();
@@ -882,13 +882,15 @@ Parser::coroutine_declaration()
   match(colon_tok); // :
 
 
-  Decl_list parms = parameter_clause(); // (...)
+  Decl_list params = parameter_clause(); // (...)
 
-  if(match_if(arrow_tok)) {
+  require(arrow_tok);
     Type& yield = unparsed_return_type();
-  }
 
-  lingo_unimplemented("coroutine def");
+  Stmt& body = unparsed_function_body();
+
+  Decl& cor = on_coroutine_declaration(n, params, yield, body);
+  return cor;
 }
 
 // Parse a concept definition.

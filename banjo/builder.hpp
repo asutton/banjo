@@ -11,6 +11,7 @@
 #include "ast-stmt.hpp"
 #include "ast-def.hpp"
 #include "ast-decl.hpp"
+#include "ast-type.hpp"
 
 #include <lingo/token.hpp>
 
@@ -63,6 +64,7 @@ struct Builder
   Function_type&  get_function_type(Type_list const&, Type&);
   Qualified_type& get_qualified_type(Type&, Qualifier_set);
   Class_type&     get_class_type(Type_decl&);
+  Coroutine_type& get_coroutine_type(Type_decl&);
   Auto_type&      get_auto_type(Type_decl&);
   Qualified_type& get_const_type(Type&);
   Qualified_type& get_volatile_type(Type&);
@@ -149,7 +151,7 @@ struct Builder
   Function_decl&  make_function_declaration(Name&, Decl_list const&, Type&, Stmt&);
 
   // Coroutine
-  Coroutine_decl& make_coroutine_declaration(Name&, Type&, Stmt&);
+  Coroutine_decl& make_coroutine_declaration(Name&, Decl_list&, Type&, Stmt&);
 
   // Types and members
   Class_decl&     make_class_declaration(Name&, Type&, Stmt&);

@@ -198,6 +198,7 @@ struct Parser
   void elaborate_function_declaration(Function_decl&);
   void elaborate_parameter_declaration(Object_parm&);
   void elaborate_class_declaration(Class_decl&);
+  void elaborate_coroutine_declaration(Coroutine_decl&);
   Type& elaborate_type(Type&);
 
   // Overloading
@@ -329,7 +330,7 @@ struct Parser
   Decl& on_class_declaration(Name&, Type&, Stmt&);
 
   // Coroutine declarations
-  Decl& on_coroutine_declaration(Name&, Type&, Stmt&);
+  Decl& on_coroutine_declaration(Name&, Decl_list&, Type&, Stmt&);
 
   // Concept declarations
   Decl& on_concept_declaration(Token, Name&, Decl_list&);
