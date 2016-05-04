@@ -156,7 +156,7 @@ Parser::on_class_declaration(Name& n, Type& t, Stmt& s)
 Decl&
 Parser::on_coroutine_declaration(Name& n,Decl_list& p, Type& t, Stmt& s)
 {
-  Decl& d = build.make_coroutine_declaration(n,p,t,s);
+  Decl& d = cxt.make_coroutine_declaration(n,p,t,s);
   declare(cxt, current_scope(), d);
   return d;
 }

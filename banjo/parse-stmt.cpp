@@ -137,6 +137,11 @@ Parser::return_statement()
 Stmt&
 Parser::yield_statement()
 {
+
+  if(!is<Coroutine_decl>(cxt.current_context())){
+    std::cout << "ERROR\n";
+  }
+
   Token tok = require(yield_tok);
   Expr&e = expression();
   match(semicolon_tok);

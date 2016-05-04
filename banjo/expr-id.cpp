@@ -31,6 +31,8 @@ make_reference(Context& cxt, Decl& d)
     return cxt.make_reference(*p);
   if (Function_decl* f = as<Function_decl>(&d))
     return cxt.make_reference(*f);
+//  if (Coroutine_decl *c = as<Coroutine_decl>(&d))
+//    return cxt.make_reference(*c);
 
   // If it's a template name, then it must almost certainly
   // refer to a function template.

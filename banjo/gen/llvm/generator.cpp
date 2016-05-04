@@ -50,13 +50,14 @@ Generator::get_type(Type const& t)
   struct fn
   {
     Generator& g;
-    llvm::Type* operator()(Type const& t)          { lingo_unhandled(t); }
-    llvm::Type* operator()(Void_type const& t)     { return g.get_type(t); }
-    llvm::Type* operator()(Boolean_type const& t)  { return g.get_type(t); }
-    llvm::Type* operator()(Integer_type const& t)  { return g.get_type(t); }
-    llvm::Type* operator()(Float_type const& t)    { return g.get_type(t); }
-    llvm::Type* operator()(Function_type const& t) { return g.get_type(t); }
-    llvm::Type* operator()(Auto_type const& t)     { return g.get_type(t); }
+    llvm::Type* operator()(Type const& t)           { lingo_unhandled(t); }
+    llvm::Type* operator()(Void_type const& t)      { return g.get_type(t); }
+    llvm::Type* operator()(Boolean_type const& t)   { return g.get_type(t); }
+    llvm::Type* operator()(Integer_type const& t)   { return g.get_type(t); }
+    llvm::Type* operator()(Float_type const& t)     { return g.get_type(t); }
+    llvm::Type* operator()(Function_type const& t)  { return g.get_type(t); }
+    llvm::Type* operator()(Coroutine_type const& t) { return g.get_type(t); }
+    llvm::Type* operator()(Auto_type const& t)      { return g.get_type(t); }
   };
   return apply(t, fn{*this});
 }
@@ -105,6 +106,11 @@ Generator::get_type(Function_type const& t)
   return llvm::FunctionType::get(ret, parms, false);
 }
 
+llvm::Type*
+Generator::get_type(Coroutine_type const& t)
+{
+  lingo_unimplemented("coroutine type");
+}
 
 // FIXME: This shouldn't exist. We cannot generate code from a
 // non-deduced type.
@@ -749,7 +755,7 @@ Generator::gen(Compound_stmt const& s)
 }
 
 
-// Generate a return statement. Note that this does not return diretctly. 
+// Generate a return statement. Note that this does not return directly.
 // We store the return value and then branch to the exit block. This strategy 
 // allows us to execute destructors in the exit block.
 void
@@ -905,9 +911,11 @@ Generator::gen(Decl const& d)
   struct Fn
   {
     Generator& g;
-    void operator()(Decl const& d)          { lingo_unhandled(d); }
-    void operator()(Variable_decl const& d) { return g.gen(d); }
-    void operator()(Function_decl const& d) { return g.gen(d); }
+    void operator()(Decl const& d)           { lingo_unhandled(d); }
+    void operator()(Variable_decl const& d)  { return g.gen(d); }
+    void operator()(Function_decl const& d)  { return g.gen(d); }
+    void operator()(Coroutine_decl const& d) { return g.gen(d); }
+    void operator()(Class_decl const& d)     { return g.gen(d); }
 
     // void operator()(Record_decl const& d)    { return g.gen(d); }
     // void operator()(Field_decl const& d)     { return g.gen(d); }
@@ -1084,6 +1092,24 @@ Generator::gen(Function_decl const& d)
   fn = nullptr;
 }
 
+// TODO: Code gen coroutines
+void
+Generator::gen(Coroutine_decl const& d)
+{
+  String name = get_name(d);
+  llvm::Type* type = get_type(d.type());
+  lingo_unimplemented("Coroutines");
+}
+
+void
+Generator::gen(Class_decl const& d)
+{
+  // Check if class has already been declared
+  if (types.lookup(&d))
+    return;
+
+  // Genereate the definition
+}
 
 void 
 Generator::gen_function_definition(Def const& d)

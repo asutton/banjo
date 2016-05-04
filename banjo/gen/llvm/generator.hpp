@@ -61,6 +61,7 @@ struct Generator
   llvm::Type* get_type(Float_type const&);
   llvm::Type* get_type(Function_type const&);
   llvm::Type* get_type(Auto_type const&);
+  llvm::Type* get_type(Coroutine_type const&);
 
   llvm::Value* gen(Expr const&);
   llvm::Value* gen(Boolean_expr const&);
@@ -110,6 +111,8 @@ struct Generator
   void gen_function_definition(Function_def const&);
   void gen(Type_decl const&);
   void gen(Object_parm const&);
+  void gen(Coroutine_decl const&);
+  void gen(Class_decl const&);
 
   // Name bindings
   void declare(Decl const&, llvm::Value*);
