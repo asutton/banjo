@@ -872,7 +872,7 @@ Parser::concept_declaration()
 // Coroutine Declaration
 // co_def Name:(params) -> ret_value {
 // ...
-// yield 5
+// yield 5;
 // }
 Decl&
 Parser::coroutine_declaration()

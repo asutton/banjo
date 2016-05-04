@@ -305,15 +305,16 @@ struct Parser
   Stmt& on_translation_statement(Stmt_list&&);
   Stmt& on_member_statement(Stmt_list&&);
   Stmt& on_compound_statement(Stmt_list&&);
-  Yield_stmt& on_yield_statement(Token, Expr&);
-  Break_stmt& on_break_statement();
-  Continue_stmt& on_continue_statement();
+  Stmt& on_yield_statement(Token, Expr&);
+
 
   Stmt& on_empty_statement();
   Stmt& on_return_statement(Token, Expr&);
   Stmt& on_if_statement(Expr&, Stmt&);
   Stmt& on_if_statement(Expr&, Stmt&, Stmt&);
   Stmt& on_while_statement(Expr&, Stmt&);
+  Stmt& on_break_statement();
+  Stmt& on_continue_statement();
   Stmt& on_declaration_statement(Decl&);
   Stmt& on_expression_statement(Expr&);
   Stmt& on_unparsed_statement(Token_seq&&);

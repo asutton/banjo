@@ -150,21 +150,6 @@ struct Class_def : Def
   Stmt* body_;
 };
 
-//struct Coroutine_def :Def
-//{
-//  Coroutine_def(Stmt& s)
-//    : stmt_(&s)
-//  { }
-//
-//  void accept(Visitor& v) const { return v.visit(*this); }
-//  void accept(Mutator& v)       { return v.visit(*this); }
-//
-//  Stmt const& statement() const { return *stmt_; }
-//  Stmt&       statement()       { return *stmt_; }
-//
-//  Stmt* stmt_;
-//};
-
 // A concept body is a sequence of statements.
 struct Concept_def : Def
 {

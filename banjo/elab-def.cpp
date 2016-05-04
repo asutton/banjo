@@ -165,11 +165,6 @@ Parser::elaborate_class_definition(Class_decl& d)
   apply(d.definition(), fn{*this, d});
 }
 
-void
-elaborate_coroutine_declaration(Coroutine_decl& d)
-{
-
-}
 
 
 // The type is defined by its body.
