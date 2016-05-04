@@ -165,7 +165,7 @@ copy_initialize(Context& cxt, Type& t, Expr& e)
 }
 
 
-//Array compared with array
+//Array compared with array or tuple
 Expr&
 array_initialize(Type& t, Expr& e)
 {
@@ -176,10 +176,11 @@ array_initialize(Type& t, Expr& e)
   if(is_tuple_type(e.type())) {
     return array_tuple_init(t,e);
   }
+  throw std::runtime_error("cannot initialize array type");  
 }
 
 
-//tuple compared with tuple
+//tuple compared with tuple or array
 Expr&
 tuple_initialize(Type& t, Expr& e)
 {
@@ -190,6 +191,7 @@ tuple_initialize(Type& t, Expr& e)
   if(is_array_type(e.type())) {
     return tuple_array_init(t,e);
   }
+  throw std::runtime_error("cannot initialize tuple type");
 }
 
 
@@ -197,7 +199,9 @@ tuple_initialize(Type& t, Expr& e)
 Expr&
 tuple_array_init(Type& t, Expr& e)
 {
-  if(is_tuple_equiv_to_array(t,e.type()))
+  Tuple_type& tt = as<Tuple_type>(t);
+  Array_type& at = as<Array_type>(e.type());
+  if(is_tuple_equiv_to_array(tt,at))
     return e;
   throw std::runtime_error("cannot initialize tuple with array type");
 }
@@ -207,7 +211,9 @@ tuple_array_init(Type& t, Expr& e)
 Expr&
 array_tuple_init(Type& t, Expr& e)
 {
-  if(is_tuple_equiv_to_array(e.type(),t) {
+  Tuple_type& tt = as<Tuple_type>(e);
+  Array_type& at = as<Array_type>(e.type());
+  if(is_tuple_equiv_to_array(tt,at)) {
     return e;
   }
   throw std::runtime_error("cannot initialize array with tuple type");
