@@ -197,23 +197,23 @@ is_equivalent(Unary_type const& t1, Unary_type const& t2)
 
 // TODO: The extent of the arrays must be equivalent.
 bool
-is_equivalent(Array_type const&, Array_type const&)
+is_equivalent(Array_type const& t1, Array_type const& t2)
 {
-  lingo_unreachable();
+  return is_equivalent(t1.type(), t2.type());
 }
 
 
 bool
-is_equivalent(Tuple_type const&, Tuple_type const&)
+is_equivalent(Tuple_type const& t1, Tuple_type const& t2)
 {
-  lingo_unreachable();
+  return is_equivalent(t1.type_list(), t2.type_list());
 }
 
 
 bool
-is_equivalent(Dynarray_type const&, Dynarray_type const&)
+is_equivalent(Dynarray_type const& t1, Dynarray_type const& t2)
 {
-  lingo_unreachable();
+  return is_equivalent(t1.type(),t2.type());
 }
 
 

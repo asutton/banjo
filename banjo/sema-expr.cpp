@@ -183,6 +183,14 @@ Parser::on_call_expression(Expr& e, Expr_list& es)
 }
 
 
+// TODO: This is going to be non-trivial.
+Expr&
+Parser::on_tuple_expression(Expr_list& es)
+{
+  return make_tuple_expr(cxt, es);
+}
+
+
 // Returns type declaration associated with the type of the expression.
 // If e does not have user-defined type, the program is ill-formed.
 Expr&

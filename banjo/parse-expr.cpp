@@ -392,6 +392,7 @@ Parser::expression_list()
 //      requires-expression
 //      lambda-expression
 //      '(' expression ')'
+//      { Expr_list }
 Expr&
 Parser::primary_expression()
 {
@@ -412,6 +413,9 @@ Parser::primary_expression()
 
   if (lookahead() == lparen_tok)
     return grouped_expression();
+    
+  if(lookahead() == lbrace_tok)
+    return tuple_expression();
 
   error(tokens.location(), "expected primary-expression");
   throw Syntax_error("primary");
@@ -484,5 +488,16 @@ Parser::grouped_expression()
   return e;
 }
 
+
+Expr&
+Parser::tuple_expression()
+{
+  Expr_list es;
+  require(lbrace_tok);
+  if (lookahead() != rbrace_tok)
+    es = expression_list();
+  match(rbrace_tok);
+  return on_tuple_expression(es);
+}
 
 } // namespace banjo
