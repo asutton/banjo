@@ -226,6 +226,7 @@ struct Parser
   void elaborate_function_definition(Function_decl&, Function_def&);
   void elaborate_class_definition(Class_decl&);
   void elaborate_class_definition(Class_decl&, Class_def&);
+  void elaborate_coroutine_definition(Coroutine_decl&);
   Expr& elaborate_expression(Expr&);
   Stmt& elaborate_compound_statement(Stmt&);
   Stmt& elaborate_member_statement(Stmt&);

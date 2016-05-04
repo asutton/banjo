@@ -8,4 +8,3 @@ define_node(Expression_def)
 define_node(Function_def)
 define_node(Class_def)
 define_node(Concept_def)
-define_node(Coroutine_def);
