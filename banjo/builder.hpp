@@ -185,7 +185,8 @@ struct Builder
   Expression_def& make_expression_definition(Expr&);
   Function_def&   make_function_definition(Stmt&);
 
-  Coroutine_def&  make_coroutine_definition(Stmt&);
+  // Coroutines use function defs
+  Function_def&  make_coroutine_definition(Stmt&);
 
   Class_def&      make_class_definition(Stmt&);
 

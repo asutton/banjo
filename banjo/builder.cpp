@@ -1071,10 +1071,10 @@ Builder::make_class_definition(Stmt& s)
   return make<Class_def>(s);
 }
 
-Coroutine_def&
+Function_def&
 Builder::make_coroutine_definition(Stmt& s)
 {
-  return make<Coroutine_def>(s);
+  return make<Function_def>(s);
 }
 
 Concept_def&
