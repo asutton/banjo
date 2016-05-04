@@ -120,7 +120,7 @@ Parser::elaborate_coroutine_declaration(Coroutine_decl &d)
   for (Decl& d : parms)
     elaborate_parameter_declaration(cast<Object_parm>(d));
   // Elaborate the return type of the coroutine
-  Type& ret = elaborate_type(d.type());
+  d.ret_ = &elaborate_type(d.type());
 }
 
 } // namespace banjo

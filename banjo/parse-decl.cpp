@@ -885,7 +885,7 @@ Parser::coroutine_declaration()
   Decl_list params = parameter_clause(); // (...)
 
   require(arrow_tok);
-    Type& yield = unparsed_return_type();
+  Type& yield = unparsed_return_type();
 
   Stmt& body = unparsed_function_body();
 
