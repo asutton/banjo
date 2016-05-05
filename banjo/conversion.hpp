@@ -203,6 +203,10 @@ bool is_similar(Type const&, Type const&);
 Qualifier_list get_qualification_signature(Type const&);
 
 
+bool is_tuple_equiv_to_array(Tuple_type& t1, Array_type& t2);
+
+
+
 } // namespace banjo
 
 

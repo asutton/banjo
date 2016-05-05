@@ -5,6 +5,7 @@
 
 #include <banjo/ast.hpp>
 #include <banjo/printer.hpp>
+#include <banjo/evaluation.hpp>
 
 #include <llvm/IR/Type.h>
 #include <llvm/IR/GlobalVariable.h>
@@ -56,6 +57,8 @@ Generator::get_type(Type const& t)
     llvm::Type* operator()(Integer_type const& t)  { return g.get_type(t); }
     llvm::Type* operator()(Float_type const& t)    { return g.get_type(t); }
     llvm::Type* operator()(Function_type const& t) { return g.get_type(t); }
+    llvm::Type* operator()(Array_type const& t)    { return g.get_type(t); }
+    llvm::Type* operator()(Dynarray_type const& t) { return g.get_type(t); }
     llvm::Type* operator()(Auto_type const& t)     { return g.get_type(t); }
   };
   return apply(t, fn{*this});
@@ -103,6 +106,26 @@ Generator::get_type(Function_type const& t)
     parms.push_back(get_type(pt));
   llvm::Type* ret = get_type(t.return_type());
   return llvm::FunctionType::get(ret, parms, false);
+}
+
+
+//return an array type
+llvm::Type*
+Generator::get_type(Array_type const& t) 
+{
+  llvm::Type* t1 = get_type(t.type());
+  Value v = evaluate(t.extent());
+  return llvm::ArrayType::get(t1, v.get_integer());
+}
+
+
+//return an array type
+llvm::Type*
+Generator::get_type(Dynarray_type const& t) 
+{
+  llvm::Type* t1 = get_type(t.type());
+  Value v = evaluate(t.extent());
+  return llvm::ArrayType::get(t1, v.get_integer());
 }
 
 
