@@ -19,6 +19,7 @@ define_node(Pack_type)
 define_node(Auto_type)
 define_node(Decltype_type)
 define_node(Synthetic_type)
+define_node(Coroutine_type)
 
 // The type of types.
 define_node(Type_type)

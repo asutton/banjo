@@ -43,6 +43,7 @@ is_value_type(Type const& t)
     bool operator()(Tuple_type const&)       { return true; }
     bool operator()(Slice_type const&)       { return true; }
     bool operator()(Dynarray_type const&)    { return true; }
+    bool operator()(Coroutine_type const&)   { return false; }
   };
   return apply(t, fn{});
 }

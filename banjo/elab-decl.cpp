@@ -42,6 +42,7 @@ Parser::elaborate_declaration(Decl& d)
     void operator()(Object_decl& d)   { p.elaborate_object_declaration(d); }
     void operator()(Function_decl& d) { p.elaborate_function_declaration(d); }
     void operator()(Class_decl& d)    { p.elaborate_class_declaration(d); }
+    void operator()(Coroutine_decl& d) { p.elaborate_coroutine_declaration(d); }
   };
   apply(d, fn{*this});
 }
@@ -111,5 +112,15 @@ Parser::elaborate_type(Type& t)
   return t;
 }
 
+void
+Parser::elaborate_coroutine_declaration(Coroutine_decl &d)
+{
+  // Elaborate the parameters
+  Decl_list& parms = d.parameters();
+  for (Decl& d : parms)
+    elaborate_parameter_declaration(cast<Object_parm>(d));
+  // Elaborate the return type of the coroutine
+  d.ret_ = &elaborate_type(d.type());
+}
 
 } // namespace banjo

@@ -161,6 +161,7 @@ struct Declared_type : Type
 };
 
 
+
 // A user-defined type refers to its declaration.
 //
 // FIXME: Rename to Class_type.
@@ -172,6 +173,26 @@ struct Class_type : Declared_type
   void accept(Mutator& v)       { v.visit(*this); }
 };
 
+struct Coroutine_type : Class_type
+{
+  using Class_type::Class_type;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  Coroutine_decl const& declaration() const;
+  Coroutine_decl&       declaration();
+
+  Type_list const& parameter_types() const { return params; }
+  Type_list&       parameter_types()       { return params; }
+
+  Type const&      return_type() const     { return *ret; }
+  Type&            return_type()           { return *ret; }
+
+  Type_list params;
+  Type*     ret;
+
+};
 
 // The base class of all unary type constructors.
 struct Unary_type : Type

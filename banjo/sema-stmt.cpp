@@ -58,6 +58,11 @@ Parser::on_if_statement(Expr& e, Stmt& s1, Stmt& s2)
   return cxt.make_if_statement(e, s1, s2);
 }
 
+Stmt&
+Parser::on_yield_statement(Token, Expr& e)
+{
+ return build.make_yield_statement(e);
+}
 
 Stmt&
 Parser::on_while_statement(Expr& e, Stmt& s)

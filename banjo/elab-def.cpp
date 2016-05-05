@@ -42,6 +42,7 @@ Parser::elaborate_definition(Decl& d)
     void operator()(Variable_decl& d) { p.elaborate_variable_initializer(d); }
     void operator()(Function_decl& d) { p.elaborate_function_definition(d); }
     void operator()(Class_decl& d)    { p.elaborate_class_definition(d); }
+    void operator()(Coroutine_decl& d){ p.elaborate_coroutine_definition(d); }
     void operator()(Super_decl& d)    { /* Nothing to do. */ }
   };
   apply(d, fn{*this});
@@ -92,6 +93,21 @@ Parser::elaborate_function_definition(Function_decl& d)
   apply(d.definition(), fn{*this, d});
 }
 
+void
+Parser::elaborate_coroutine_definition(Coroutine_decl &decl){
+  Enter_scope scope(cxt);
+  for(Decl& d: decl.parameters())
+    declare(cxt, d);
+  Function_def* def = dynamic_cast<Function_def*>(&decl.definition());
+  if (def == nullptr){
+    std::cout << "ERROR\n";
+  }
+
+
+  Stmt& stmt = elaborate_compound_statement(def->statement());
+  def->stmt_ = &stmt;
+  decl.def_ = def;
+}
 
 void
 Parser::elaborate_function_definition(Function_decl& decl, Expression_def& def)
@@ -148,6 +164,7 @@ Parser::elaborate_class_definition(Class_decl& d)
   };
   apply(d.definition(), fn{*this, d});
 }
+
 
 
 // The type is defined by its body.

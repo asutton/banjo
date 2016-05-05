@@ -40,12 +40,16 @@ Parser::statement()
     case super_tok:
     case var_tok:
     case def_tok:
+    case coroutine_tok: // co_def
     case class_tok:
     case concept_tok:
       return declaration_statement();
 
     case return_tok:
       return return_statement();
+
+    case yield_tok:
+      return yield_statement();
 
     case if_tok:
       return if_statement();
@@ -130,6 +134,14 @@ Parser::return_statement()
   return on_return_statement(tok, e);
 }
 
+Stmt&
+Parser::yield_statement()
+{
+  Token tok = require(yield_tok);
+  Expr&e = expression();
+  match(semicolon_tok);
+  return on_yield_statement(tok, e);
+}
 
 // Parse an if statement.
 //
