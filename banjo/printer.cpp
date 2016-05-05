@@ -826,6 +826,7 @@ Printer::postfix_expression(Expr const& e)
     void operator()(Expr const& e)               { p.primary_expression(e); }
     void operator()(Dot_expr const& e)           { p.postfix_expression(e); }
     void operator()(Call_expr const& e)          { p.postfix_expression(e); }
+    void operator()(Tuple_expr const& e)         { p.postfix_expression(e); }
     void operator()(Value_conv const& e)         { p.postfix_expression(e); }
     void operator()(Qualification_conv const& e) { p.postfix_expression(e); }
     void operator()(Boolean_conv const& e)       { p.postfix_expression(e); }
@@ -862,6 +863,20 @@ Printer::postfix_expression(Call_expr const& e)
       token(comma_tok);
   }
   token(rparen_tok);
+}
+
+
+void
+Printer::postfix_expression(Tuple_expr const& e)
+{
+  token(lbrace_tok);
+  Expr_list const& p = e.elements();
+  for (auto iter = p.begin(); iter != p.end(); ++iter) {
+    expression(*iter);
+    if (std::next(iter) != p.end())
+      token(comma_tok);
+  }
+  token(rbrace_tok);
 }
 
 
@@ -974,6 +989,7 @@ void
 Printer::grouped_expression(Expr const& e)
 {
   token(lparen_tok);
+  std::cout << "HERE\n";
   expression(e);
   token(rparen_tok);
 }

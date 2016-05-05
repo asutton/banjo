@@ -3,6 +3,8 @@
 
 #include "expression.hpp"
 #include "ast-expr.hpp"
+#include "ast-type.hpp"
+#include "type.hpp"
 #include "context.hpp"
 #include "lookup.hpp"
 
@@ -36,5 +38,22 @@ make_requirements(Context& cxt,
 {
   return cxt.make_requires(tparms, parms, reqs);
 }
+
+
+//Modeled after make_regular_call
+Expr&
+make_tuple_expr(Context& cxt, Expr_list& l)
+{
+  Type_list tlist;
+  for(auto eli = l.begin(); eli != l.end(); eli++) {
+    tlist.push_back(eli->type());
+  }
+  
+  Type &t = make_tuple_type(cxt,tlist);
+  
+  Tuple_expr& te = cxt.make_tuple_expr(t, l);
+  return te;
+}
+
 
 } // namespace banjo

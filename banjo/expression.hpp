@@ -43,6 +43,8 @@ Expr& make_bit_not(Context&, Expr&);
 
 Expr& make_call(Context& cxt, Expr& e, Expr_list&);
 
+Expr& make_tuple_expr(Context& cxt, Expr_list&);
+
 Expr& make_reference(Context& cxt, Name&);
 Expr& make_member_reference(Context& cxt, Expr&, Name&);
 
