@@ -20,7 +20,7 @@ namespace banjo
 // Note that we could simply interpret a default argument as an optionally
 // specified definition.
 //
-// FIXME: Do I really need all of these declarations?
+// FIXME: Do I really need all of these constructors?
 struct Decl : Term
 {
   struct Visitor;

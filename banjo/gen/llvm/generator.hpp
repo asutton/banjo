@@ -107,6 +107,12 @@ struct Generator
   void gen(Variable_decl const&);
   void gen_local_variable(Variable_decl const&);
   void gen_global_variable(Variable_decl const&);
+  void gen_local_init(llvm::Value*, Def const&);
+  void gen_global_init(llvm::Value*, Def const&);
+  void gen_init(llvm::Value*, Empty_def const&);
+  void gen_init(llvm::Value*, Expression_def const&);
+
+
   void gen(Function_decl const&);
   void gen_function_definition(Def const&);
   void gen_function_definition(Function_def const&);
@@ -205,7 +211,6 @@ struct Generator::Enter_loop
   llvm::BasicBlock* top;  // Pevious loop top
   llvm::BasicBlock* bot;  // Previos loop bottom
 };
-
 
 
 } // namespace ll

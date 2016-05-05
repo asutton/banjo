@@ -50,8 +50,7 @@ define_node(Not_expr)
 define_node(Assign_expr)
 
 // Function call
-// TODO: Specialize call expression types for method call,
-// virtual call, etc.
+// TODO: Specialize call expression types for method call, virtual call, etc.
 define_node(Call_expr)
 
 // Conversions
@@ -64,18 +63,16 @@ define_node(Numeric_conv)
 define_node(Dependent_conv)
 define_node(Ellipsis_conv)
 
+// Initialization
+define_node(Trivial_init)
+define_node(Copy_init)
+define_node(Bind_init)
+define_node(Direct_init)
+define_node(Aggregate_init)
+
 // Concept check
 define_node(Check_expr)
 define_node(Requires_expr)
 define_node(Synthetic_expr)
 
 define_node(Unparsed_expr)
-
-
-// Initialization
-// TODO: Do something better with these.
-define_node(Trivial_init)
-define_node(Copy_init)
-define_node(Bind_init)
-define_node(Direct_init)
-define_node(Aggregate_init)
