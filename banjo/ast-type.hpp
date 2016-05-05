@@ -314,9 +314,19 @@ struct Class_type : Declared_type
 
 
 
+struct Typename_type : Declared_type
+{
+  using Declared_type::Declared_type;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
 // Represents the type of a coroutine.
 //
-// TODO: Do I really want a coroutine to be a class type.
+// TODO: Do I really want a coroutine to be a class type. These can't
+// have or act as base classes, etc.
 struct Coroutine_type : Class_type
 {
   using Class_type::Class_type;
@@ -327,25 +337,18 @@ struct Coroutine_type : Class_type
   Coroutine_decl const& declaration() const;
   Coroutine_decl&       declaration();
 
+  // Returns the list of parameters used to initialize the
+  // coroutine closure.
   Type_list const& parameter_types() const { return params; }
   Type_list&       parameter_types()       { return params; }
 
-  Type const&      return_type() const     { return *ret; }
-  Type&            return_type()           { return *ret; }
+  // Returns the type yielded by the coroutine in every evalation.
+  Type const& return_type() const     { return *ret; }
+  Type&       return_type()           { return *ret; }
 
   Type_list params;
   Type*     ret;
 
-};
-
-
-
-struct Typename_type : Declared_type
-{
-  using Declared_type::Declared_type;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 

@@ -50,7 +50,7 @@ define_node(Not_expr)
 define_node(Assign_expr)
 
 // Function call
-define_node(Convert_expr)
+// define_node(Convert_expr)
 define_node(Call_expr)
 
 // Concept check

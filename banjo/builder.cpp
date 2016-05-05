@@ -896,11 +896,14 @@ Builder::make_class_declaration(Name& n, Type& t, Stmt& s)
   return make<Class_decl>(n, t, d);
 }
 
+
 Coroutine_decl&
-Builder::make_coroutine_declaration(Name&n, Decl_list&p, Type& t, Stmt& s){
+Builder::make_coroutine_declaration(Name&n, Decl_list&p, Type& t, Stmt& s)
+{
   Def& d = make_coroutine_definition(s);
   return make<Coroutine_decl>(n,t,p,d);
 }
+
 
 Field_decl&
 Builder::make_field_declaration(Name& n, Type& t)
