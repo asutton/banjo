@@ -135,7 +135,6 @@ copy_initialize(Context& cxt, Type& t, Expr& e)
   if (is_array_type(t)) {
     Expr& a_expr = array_initialize(t, e);
     return cxt.make_copy_init(t, a_expr);
-    // banjo_unhandled_case(t);
   }
   
   if (is_tuple_type(t)) {
@@ -170,10 +169,10 @@ Expr&
 array_initialize(Type& t, Expr& e)
 {
   Type& et = e.type();
-  if(is_equivalent(t,et))
+  if (is_equivalent(t,et))
     return e;
     
-  if(is_tuple_type(e.type())) {
+  if (is_tuple_type(e.type())) {
     return array_tuple_init(t,e);
   }
   throw std::runtime_error("cannot initialize array type");  
@@ -218,6 +217,7 @@ array_tuple_init(Type& t, Expr& e)
   }
   throw std::runtime_error("cannot initialize array with tuple type");
 }
+
 
 // Select a procedure to direct-initialize an object or reference of
 // type `t` by a paren-enclosed list of expressions `es`. This corresponds

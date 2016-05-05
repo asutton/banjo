@@ -50,18 +50,11 @@ define_node(Not_expr)
 define_node(Assign_expr)
 
 // Function call
-// define_node(Convert_expr)
+// TODO: Specialize call expression types for method call,
+// virtual call, etc.
 define_node(Call_expr)
 
-// Concept check
-define_node(Check_expr)
-define_node(Requires_expr)
-define_node(Synthetic_expr)
-
-define_node(Unparsed_expr)
-
 // Conversions
-// TODO: Factor these into a single conversion expression.
 define_node(Value_conv)
 define_node(Qualification_conv)
 define_node(Boolean_conv)
@@ -70,6 +63,14 @@ define_node(Float_conv)
 define_node(Numeric_conv)
 define_node(Dependent_conv)
 define_node(Ellipsis_conv)
+
+// Concept check
+define_node(Check_expr)
+define_node(Requires_expr)
+define_node(Synthetic_expr)
+
+define_node(Unparsed_expr)
+
 
 // Initialization
 // TODO: Do something better with these.

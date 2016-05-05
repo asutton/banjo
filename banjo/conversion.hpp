@@ -155,6 +155,8 @@ union Conversion_seq_rep
 // TODO: Integrate knowledge of reference binding since that affects
 // how conversions are ordered. Also support aggregate initialization,
 // since those rules might also affect ordering.
+//
+// TODO: Rename to implicit conversion sequence?
 struct Conversion_seq
 {
   Conversion_seq(Standard_conversion_seq s)
