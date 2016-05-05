@@ -1,4 +1,8 @@
-var a : int[5];
-var b : int[] = {1,2};
-var c : int = 5;
-var d : int[c];
+
+
+def main : () -> int {
+	var a : int[5];
+	var b : bool[2] = {1,2};
+	var c : int = 5;
+	//var d : int[c];
+}
