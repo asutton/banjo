@@ -234,22 +234,6 @@ Builder::get_decltype_type(Expr&)
 }
 
 
-// Returns class type for the given type declaration.
-Class_type&
-Builder::get_class_type(Type_decl& d)
-{
-  return make<Class_type>(d);
-}
-
-
-// Returns the auto type corresponding to the given declaration.
-Auto_type&
-Builder::get_auto_type(Type_decl& d)
-{
-  return make<Auto_type>(d);
-}
-
-
 Function_type&
 Builder::get_function_type(Decl_list const& ps, Type& r)
 {
@@ -349,12 +333,52 @@ Builder::get_pack_type(Type& t)
   return make<Pack_type>(t);
 }
 
+// Returns class type for the given type declaration.
+Class_type&
+Builder::get_class_type(Type_decl& d)
+{
+  return make<Class_type>(d);
+}
+
+
+// Returns the type corresponding to the declaration of a type parameter.
+Typename_type&
+Builder::get_typename_type(Type_decl& d)
+{
+  return make<Typename_type>(d);
+}
+
+
+// Returns the auto type corresponding to the given declaration.
+Auto_type&
+Builder::get_auto_type(Type_decl& d)
+{
+  return make<Auto_type>(d);
+}
+
+
 
 Type_type&
 Builder::get_type_type()
 {
   static Type_type t;
   return t;
+}
+
+Coroutine_type&
+Builder::get_coroutine_type()
+{
+  static Coroutine_type t;
+  return t;
+}
+
+
+// Synthesize a type from the given parameter. This is used to generate
+// fake types corresponding to type parameters.
+Synthetic_type&
+Builder::synthesize_type(Decl& d)
+{
+  return make<Synthetic_type>(d);
 }
 
 
@@ -370,15 +394,6 @@ Builder::make_auto_type()
   return get_auto_type(d);
 }
 
-
-
-// Synthesize a type from the given parameter. This is used to generate
-// fake types corresponding to type parameters.
-Synthetic_type&
-Builder::synthesize_type(Decl& d)
-{
-  return make<Synthetic_type>(d);
-}
 
 
 // -------------------------------------------------------------------------- //
@@ -888,11 +903,14 @@ Builder::make_class_declaration(Name& n, Type& t, Stmt& s)
   return make<Class_decl>(n, t, d);
 }
 
+
 Coroutine_decl&
-Builder::make_coroutine_declaration(Name&n, Decl_list&p, Type& t, Stmt& s){
+Builder::make_coroutine_declaration(Name&n, Decl_list&p, Type& t, Stmt& s)
+{
   Def& d = make_coroutine_definition(s);
   return make<Coroutine_decl>(n,t,p,d);
 }
+
 
 Field_decl&
 Builder::make_field_declaration(Name& n, Type& t)

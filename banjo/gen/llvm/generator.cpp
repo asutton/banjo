@@ -5,6 +5,7 @@
 
 #include <banjo/ast.hpp>
 #include <banjo/printer.hpp>
+#include <banjo/evaluation.hpp>
 
 #include <llvm/IR/Type.h>
 #include <llvm/IR/GlobalVariable.h>
@@ -50,6 +51,7 @@ Generator::get_type(Type const& t)
   struct fn
   {
     Generator& g;
+
     llvm::Type* operator()(Type const& t)           { lingo_unhandled(t); }
     llvm::Type* operator()(Void_type const& t)      { return g.get_type(t); }
     llvm::Type* operator()(Boolean_type const& t)   { return g.get_type(t); }
@@ -58,6 +60,8 @@ Generator::get_type(Type const& t)
     llvm::Type* operator()(Function_type const& t)  { return g.get_type(t); }
     llvm::Type* operator()(Coroutine_type const& t) { return g.get_type(t); }
     llvm::Type* operator()(Auto_type const& t)      { return g.get_type(t); }
+    llvm::Type* operator()(Array_type const& t)    { return g.get_type(t); }
+    llvm::Type* operator()(Dynarray_type const& t) { return g.get_type(t); }
   };
   return apply(t, fn{*this});
 }
@@ -111,6 +115,26 @@ Generator::get_type(Coroutine_type const& t)
 {
   lingo_unimplemented("coroutine type");
 }
+
+//return an array type
+llvm::Type*
+Generator::get_type(Array_type const& t) 
+{
+  llvm::Type* t1 = get_type(t.type());
+  Value v = evaluate(t.extent());
+  return llvm::ArrayType::get(t1, v.get_integer());
+}
+
+
+//return an array type
+llvm::Type*
+Generator::get_type(Dynarray_type const& t) 
+{
+  llvm::Type* t1 = get_type(t.type());
+  Value v = evaluate(t.extent());
+  return llvm::ArrayType::get(t1, v.get_integer());
+}
+
 
 // FIXME: This shouldn't exist. We cannot generate code from a
 // non-deduced type.

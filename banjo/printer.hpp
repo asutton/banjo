@@ -84,6 +84,7 @@ struct Printer
   void primary_type(Tuple_type const&);
   void primary_type(Type_type const&);
   void id_type(Class_type const&);
+  void id_type(Typename_type const&);
   void grouped_type(Type const&);
 
   // Expressions

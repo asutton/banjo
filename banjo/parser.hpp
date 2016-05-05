@@ -81,6 +81,7 @@ struct Parser
   Type& grouped_type();
   Type& function_type();
   Type& decltype_type();
+  Type& coroutine_type();
   Type_list type_list();
 
   // Expressions
@@ -266,6 +267,7 @@ struct Parser
   Type& on_array_type(Type&, Expr&);
   Type& on_tuple_type(Type_list&);
   Type& on_dynarray_type(Type&, Expr&);
+  Type& on_coroutine_type(Token);
 
   // Expressions
   Expr& on_logical_and_expression(Token, Expr&, Expr&);
@@ -413,8 +415,6 @@ struct Parser
   // Scope management
   Scope& current_scope();
 
-  // Declarations
-  Decl& templatize_declaration(Decl&);
 
   // Maintains the current parse state. This is used to provide context for
   // various parsing routines, and is used by the trial parser for caching
@@ -422,15 +422,13 @@ struct Parser
   struct State
   {
     State()
-      : braces(), specs(), template_parms(), template_cons()
+      : braces(), specs()
     { }
 
     Braces  braces;
     Specs   specs;
 
-    // FIXME: Do I need these?
-    Decl_list* template_parms; // The current (innermost) template parameters
-    Expr*      template_cons;  // The current (innermost) template constraints
+    Decl_list implicit_parms; // Implicit template parameters
   };
 
   struct Parsing_template;
@@ -469,54 +467,6 @@ Parser::take_decl_specs()
   decl_specs() = Specs();
   return s;
 }
-
-
-// An RAII helper that manages parsing state related to the parsing
-// of a declaration nested within a template.
-//
-// TODO: This can probably be removed and templatize_declaration could
-// be implemented in terms of the template scope.
-struct Parser::Parsing_template
-{
-  Parsing_template(Parser&, Decl_list*);
-  Parsing_template(Parser&, Decl_list*, Expr*);
-  ~Parsing_template();
-
-  Parser&    parser;
-  Decl_list* saved_parms;
-  Expr*      saved_cons;
-};
-
-
-inline
-Parser::Parsing_template::Parsing_template(Parser& p, Decl_list* ps)
-  : parser(p)
-  , saved_parms(p.state.template_parms)
-  , saved_cons(p.state.template_cons)
-{
-  parser.state.template_parms = ps;
-  parser.state.template_cons = nullptr;
-}
-
-
-inline
-Parser::Parsing_template::Parsing_template(Parser& p, Decl_list* ps, Expr* c)
-  : parser(p)
-  , saved_parms(p.state.template_parms)
-  , saved_cons(p.state.template_cons)
-{
-  parser.state.template_parms = ps;
-  parser.state.template_cons = c;
-}
-
-
-inline
-Parser::Parsing_template::~Parsing_template()
-{
-  parser.state.template_parms = saved_parms;
-  parser.state.template_cons = saved_cons;
-}
-
 
 
 // The trial parser provides recovery information for the parser

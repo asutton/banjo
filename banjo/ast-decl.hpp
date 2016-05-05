@@ -213,10 +213,10 @@ struct Class_decl : Type_decl
   Def*   def_;
 };
 
-struct Coroutine_decl :Decl
+struct Coroutine_decl :Type_decl
 {
   Coroutine_decl(Name& n, Type& t, Decl_list const& p, Def& d)
-    : Decl(n, t), ret_(&t), def_(&d), parms_(p)
+    : Type_decl(n, t), ret_(&t), def_(&d), parms_(p)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -234,6 +234,7 @@ struct Coroutine_decl :Decl
   Decl_list const& parameters() const { return parms_; }
   Decl_list&       parameters()       { return parms_; }
 
+  Type* kind_;
   Type* ret_;
   Def* def_;
   Decl_list parms_;

@@ -467,6 +467,7 @@ Printer::primary_type(Type const& t)
     void operator()(Tuple_type const& t)     { p.primary_type(t); }
     void operator()(Type_type const& t)      { p.primary_type(t); }
     void operator()(Class_type const& t)     { p.id_type(t); }
+    void operator()(Typename_type const& t)  { p.id_type(t); }
   };
   apply(t, fn{*this});
 }
@@ -558,6 +559,14 @@ Printer::primary_type(Type_type const& t)
 // Print the name of the class type.
 void
 Printer::id_type(Class_type const& t)
+{
+  identifier(t.declaration());
+}
+
+
+// Print the name of the type parameter.
+void
+Printer::id_type(Typename_type const& t)
 {
   identifier(t.declaration());
 }
@@ -1499,6 +1508,9 @@ Printer::function_definition(Defaulted_def const&)
 }
 
 
+// -------------------------------------------------------------------------- //
+// Class declarations
+
 void
 Printer::class_declaration(Class_decl const& d)
 {
@@ -1532,6 +1544,76 @@ Printer::class_definition(Class_def const& d)
   statement(d.body());
 }
 
+
+// -------------------------------------------------------------------------- //
+// Template declarations
+
+void
+Printer::template_declaration(Template_decl const& d)
+{
+  token(template_tok);
+  token(lt_tok);
+  template_parameter_list(d.parameters());
+  token(gt_tok);
+  newline();
+  declaration(d.parameterized_declaration());
+}
+
+
+void
+Printer::template_parameter_list(Decl_list const& ps)
+{
+  for (auto iter = ps.begin(); iter != ps.end(); ++iter) {
+    template_parameter(*iter);
+    if (std::next(iter) != ps.end())
+      token(comma_tok);
+  }
+}
+
+
+void
+Printer::template_parameter(Decl const& d)
+{
+  struct fn
+  {
+    Printer& p;
+    void operator()(Decl const& d)      { lingo_unhandled(d); }
+    void operator()(Type_parm const& d) { p.type_template_parameter(d); }
+  };
+  apply(d, fn{*this});
+}
+
+
+// FIXME: Handle default arguments.
+void
+Printer::type_template_parameter(Type_parm const& d)
+{
+  token(typename_tok);
+  id(d.name());
+}
+
+
+// FIXME: Default arguments.
+void
+Printer::value_template_parameter(Value_parm const& d)
+{
+  token(const_tok);
+  id(d.name());
+}
+
+
+// FIXME: Actually implement me.
+void
+Printer::template_template_parameter(Template_parm const& d)
+{
+  token(template_tok);
+  id(d.name());
+}
+
+
+
+// -------------------------------------------------------------------------- //
+// Concept declarations
 
 void
 Printer::concept_definition(Expression_def const& d)
@@ -1659,52 +1741,6 @@ Printer::parameter_list(Decl_list const& d)
       token(comma_tok);
       space();
     }
-  }
-}
-
-
-void
-Printer::template_parameter(Decl const& d)
-{
-  // FIXME: This is a bit odd.
-  parameter(d);
-}
-
-
-// FIXME: Emit a default argument.
-void
-Printer::type_template_parameter(Type_parm const& d)
-{
-  token(typename_tok);
-  id(d.name());
-}
-
-
-// FIXME: Emit a default argument.
-void
-Printer::value_template_parameter(Value_parm const& d)
-{
-  token(const_tok);
-  id(d.name());
-}
-
-
-// FIXME: Implement me!
-void
-Printer::template_template_parameter(Template_parm const& d)
-{
-  token(template_tok);
-  id(d.name());
-}
-
-
-void
-Printer::template_parameter_list(Decl_list const& ps)
-{
-  for (auto iter = ps.begin(); iter != ps.end(); ++iter) {
-    template_parameter(*iter);
-    if (std::next(iter) != ps.end())
-      token(comma_tok);
   }
 }
 

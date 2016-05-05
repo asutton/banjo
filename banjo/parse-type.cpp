@@ -184,9 +184,14 @@ Parser::primary_type()
     case class_tok:
       return on_class_type(accept());
 
+    case coroutine_tok:
+      return on_coroutine_type(accept());
+
     case lparen_tok: {
       // FIXME: We shouldn't need a tentative parse for this.
       if (Type* t = match_if(&Parser::function_type))
+        return *t;
+      if (Type* t = match_if(&Parser::coroutione_type))
         return *t;
       return grouped_type();
     }
@@ -230,6 +235,8 @@ Parser::function_type()
   Type& ret = type();
   return on_function_type(types, ret);
 }
+
+
 
 
 // Parse a type list.

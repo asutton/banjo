@@ -118,7 +118,6 @@ struct Float_type : Type
 };
 
 
-
 // A function type.
 struct Function_type : Type
 {
@@ -139,60 +138,6 @@ struct Function_type : Type
   Type*     ret;
 };
 
-
-// Represents any type that has a declaration (i.e., not a built-in)
-// type. Note that placeholders and type variables are also declared
-// types.
-struct Declared_type : Type
-{
-  Declared_type(Decl& d)
-    : decl_(&d)
-  { }
-
-  // Returns the name of the user-defined type.
-  Name const& name() const;
-  Name&       name();
-
-  // Returns the declaration of the user-defined type.
-  Type_decl const& declaration() const;
-  Type_decl&       declaration();
-
-  Decl* decl_;
-};
-
-
-
-// A user-defined type refers to its declaration.
-//
-// FIXME: Rename to Class_type.
-struct Class_type : Declared_type
-{
-  using Declared_type::Declared_type;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-};
-
-struct Coroutine_type : Class_type
-{
-  using Class_type::Class_type;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  Coroutine_decl const& declaration() const;
-  Coroutine_decl&       declaration();
-
-  Type_list const& parameter_types() const { return params; }
-  Type_list&       parameter_types()       { return params; }
-
-  Type const&      return_type() const     { return *ret; }
-  Type&            return_type()           { return *ret; }
-
-  Type_list params;
-  Type*     ret;
-
-};
 
 // The base class of all unary type constructors.
 struct Unary_type : Type
@@ -223,7 +168,7 @@ struct Qualified_type : Unary_type
 
   // Returns the qualifier for this type. Note that these
   // override functions in type.
-  Qualifier_set qualifier() const   { return qual; }
+  Qualifier_set qualifiers() const   { return qual; }
   bool          is_const() const    { return qual & const_qual; }
   bool          is_volatile() const { return qual & volatile_qual; }
 
@@ -335,6 +280,78 @@ struct Pack_type : Unary_type
 };
 
 
+// Represents any type that has a declaration (i.e., not a built-in)
+// type. Note that placeholders and type variables are also declared
+// types.
+struct Declared_type : Type
+{
+  Declared_type(Decl& d)
+    : decl_(&d)
+  { }
+
+  // Returns the name of the user-defined type.
+  Name const& name() const;
+  Name&       name();
+
+  // Returns the declaration of the user-defined type.
+  Type_decl const& declaration() const;
+  Type_decl&       declaration();
+
+  Decl* decl_;
+};
+
+
+// A user-defined type refers to its declaration.
+//
+// FIXME: Rename to Class_type.
+struct Class_type : Declared_type
+{
+  using Declared_type::Declared_type;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+
+struct Typename_type : Declared_type
+{
+  using Declared_type::Declared_type;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// Represents the type of a coroutine.
+//
+// TODO: Do I really want a coroutine to be a class type. These can't
+// have or act as base classes, etc.
+struct Coroutine_type : Class_type
+{
+  using Class_type::Class_type;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  Coroutine_decl const& declaration() const;
+  Coroutine_decl&       declaration();
+
+  // Returns the list of parameters used to initialize the
+  // coroutine closure.
+  Type_list const& parameter_types() const { return params; }
+  Type_list&       parameter_types()       { return params; }
+
+  // Returns the type yielded by the coroutine in every evalation.
+  Type const& return_type() const     { return *ret; }
+  Type&       return_type()           { return *ret; }
+
+  Type_list params;
+  Type*     ret;
+
+};
+
+
 // The auto type.
 //
 // TODO: Allow a deduction constraint on placeholder types.
@@ -393,7 +410,7 @@ struct Synthetic_type : Declared_type
 };
 
 
-// The type of types.
+// The type of types. This is the most general kind of type.
 struct Type_type : Type
 {
   void accept(Visitor& v) const { v.visit(*this); }

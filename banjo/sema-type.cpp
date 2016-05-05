@@ -18,6 +18,12 @@ Parser::on_class_type(Token)
   return build.get_type_type();
 }
 
+Type&
+Parser::on_coroutine_type(Token)
+{
+  return build.get_coroutine_type();
+}
+
 
 Type&
 Parser::on_void_type(Token)

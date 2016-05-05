@@ -877,7 +877,7 @@ Parser::concept_declaration()
 Decl&
 Parser::coroutine_declaration()
 {
-  Token tok = require(coroutine_tok); // co_def
+  require(coroutine_tok);
   Name& n = identifier(); // Name of coroutine
   match(colon_tok); // :
 

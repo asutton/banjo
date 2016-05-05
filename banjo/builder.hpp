@@ -63,9 +63,6 @@ struct Builder
   Function_type&  get_function_type(Decl_list const&, Type&);
   Function_type&  get_function_type(Type_list const&, Type&);
   Qualified_type& get_qualified_type(Type&, Qualifier_set);
-  Class_type&     get_class_type(Type_decl&);
-  Coroutine_type& get_coroutine_type(Type_decl&);
-  Auto_type&      get_auto_type(Type_decl&);
   Qualified_type& get_const_type(Type&);
   Qualified_type& get_volatile_type(Type&);
   Pointer_type&   get_pointer_type(Type&);
@@ -75,6 +72,11 @@ struct Builder
   Slice_type&     get_slice_type(Type&);
   Dynarray_type&  get_dynarray_type(Type&, Expr&);
   Pack_type&      get_pack_type(Type&);
+  Class_type&     get_class_type(Type_decl&);
+  Typename_type&  get_typename_type(Type_decl&);
+  Coroutine_type& get_coroutine_type(Type_decl&);
+  Coroutine_type& get_coroutine_type();
+  Auto_type&      get_auto_type(Type_decl&);
   Type_type&      get_type_type();
 
   // Placeholder types

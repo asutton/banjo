@@ -18,6 +18,10 @@ Expr& direct_initialize(Context&, Type&, Expr_list&);
 Expr& list_initialize(Context&, Type&, Expr_list&);
 Expr& reference_initialize(Context&, Reference_type&, Expr&);
 Expr& aggregate_initialize(Context&, Type&, Expr_list&);
+Expr& array_initialize(Type&, Expr&);
+Expr& tuple_initialize(Type&, Expr&);
+Expr& tuple_array_init(Type&, Expr&);
+Expr& array_tuple_init(Type&, Expr&);
 
 
 } // namespace banjo
