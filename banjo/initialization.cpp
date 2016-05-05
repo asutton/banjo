@@ -165,7 +165,7 @@ copy_initialize(Context& cxt, Type& t, Expr& e)
 }
 
 
-//Array compared with array or tuple
+//array compared with array or tuple
 Expr&
 array_initialize(Type& t, Expr& e)
 {

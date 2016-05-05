@@ -274,7 +274,7 @@ Generator::gen(Literal_expr const* e)
   }
 
   else
-    throw std::runtime_error("cannot generate tion literal");
+    throw std::runtime_error("cannot generate function literal");
 }
 
 
@@ -500,7 +500,7 @@ calls_virtual_method(Call_expr const* e)
 llvm::Value*
 Generator::gen(Call_expr const* e)
 {
-  // Generate the code for a virtual tion call.
+  // Generate the code for a virtual function call.
   //
   //    f(x, args...)
   //
