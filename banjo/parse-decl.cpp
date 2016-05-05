@@ -890,6 +890,9 @@ Parser::coroutine_declaration()
   Stmt& body = unparsed_function_body();
 
   Decl& cor = on_coroutine_declaration(n, params, yield, body);
+  // Set the kind here?
+  auto cdecl = as<Coroutine_decl>(cor);
+  cdecl.kind_ = new Coroutine_type(cor);
   return cor;
 }
 

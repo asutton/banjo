@@ -21,7 +21,7 @@ Parser::on_class_type(Token)
 Type&
 Parser::on_coroutine_type(Token)
 {
-  return build.get_coroutine_type();
+  return build.get_type_type();
 }
 
 

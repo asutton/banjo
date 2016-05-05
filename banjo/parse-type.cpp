@@ -191,8 +191,6 @@ Parser::primary_type()
       // FIXME: We shouldn't need a tentative parse for this.
       if (Type* t = match_if(&Parser::function_type))
         return *t;
-      if (Type* t = match_if(&Parser::coroutione_type))
-        return *t;
       return grouped_type();
     }
     

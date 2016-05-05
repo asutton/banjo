@@ -365,12 +365,7 @@ Builder::get_type_type()
   return t;
 }
 
-Coroutine_type&
-Builder::get_coroutine_type()
-{
-  static Coroutine_type t;
-  return t;
-}
+
 
 
 // Synthesize a type from the given parameter. This is used to generate
