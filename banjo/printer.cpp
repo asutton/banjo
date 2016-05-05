@@ -1097,6 +1097,7 @@ Printer::statement(Stmt const& s)
     void operator()(Member_stmt const& s)      { p.member_statement(s); }
     void operator()(Compound_stmt const& s)    { p.compound_statement(s); }
     void operator()(Return_stmt const& s)      { p.return_statement(s); }
+    void operator()(Yield_stmt const& s)       { p.yield_statement(s); }
     void operator()(If_then_stmt const& s)     { p.if_statement(s); }
     void operator()(If_else_stmt const& s)     { p.if_statement(s); }
     void operator()(While_stmt const& s)       { p.while_statement(s); }
@@ -1178,6 +1179,14 @@ Printer::return_statement(Return_stmt const& s)
   token(semicolon_tok);
 }
 
+void
+Printer::yield_statement(Yield_stmt const& s)
+{
+  token(yield_tok);
+  space();
+  expression(s.expression());
+  token(semicolon_tok);
+}
 
 // TODO: If the branch is not compound statement, then drop to the next
 // line and indent, so it prints like this:
@@ -1288,7 +1297,7 @@ Printer::declaration(Decl const& d)
     void operator()(Variable_decl const& d)  { p.variable_declaration(d); }
     void operator()(Function_decl const& d)  { p.function_declaration(d); }
     void operator()(Class_decl const& d)     { p.class_declaration(d); }
-    void operator()(Template_decl const& d)  { p.template_declaration(d); }
+    void operator()(Coroutine_decl const& d) { p.coroutine_delcaration(d); }
 
     // Support emitting these here so we can print parameters without
     // an appropriate context.
@@ -1436,6 +1445,20 @@ Printer::function_declaration(Function_decl const& d)
   function_definition(d.definition());
 }
 
+void
+Printer::coroutine_delcaration(Coroutine_decl const& d)
+{
+  token(coroutine_tok);
+  space();
+  identifier(d);
+  binary_operator(colon_tok);
+  token(lparen_tok);
+  parameter_list(d.parameters());
+  token(rparen_tok);
+  binary_operator(arrow_tok);
+  type(d.return_type());
+  function_definition(d.definition());
+}
 
 void
 Printer::function_definition(Def const& d)

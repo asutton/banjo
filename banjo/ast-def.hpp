@@ -150,7 +150,6 @@ struct Class_def : Def
   Stmt* body_;
 };
 
-
 // A concept body is a sequence of statements.
 struct Concept_def : Def
 {

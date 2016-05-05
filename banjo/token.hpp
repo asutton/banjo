@@ -69,6 +69,7 @@ enum Token_kind
   class_tok,
   concept_tok,
   const_tok,
+  coroutine_tok,
   consume_tok,
   continue_tok,
   decltype_tok,
@@ -116,6 +117,7 @@ enum Token_kind
   void_tok,
   volatile_tok,
   while_tok,
+  yield_tok,
   last_keyword_tok,
 
   // Character classes

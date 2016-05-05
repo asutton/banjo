@@ -184,8 +184,13 @@ Parser::declaration()
       return variable_declaration();
     case def_tok:
       return function_declaration();
+
+    case coroutine_tok:
+      return coroutine_declaration();
+
     case class_tok:
       return class_declaration();
+
     case concept_tok:
       lingo_unreachable();
     case super_tok:
@@ -392,7 +397,7 @@ Parser::function_declaration()
 {
   require(def_tok);
   Name& name = identifier();
-  
+
   // NOTE: I'm making the colon optional since it isn't actually necessary
   // with this syntax.
   match_if(colon_tok);
@@ -412,7 +417,7 @@ Parser::function_declaration()
       return on_function_declaration(name, parms, ret, body);
     }
 
-    // { ... }
+      // { ... }
     else {
       Stmt& body = unparsed_function_body();
       return on_function_declaration(name, parms, ret, body);
@@ -435,7 +440,6 @@ Parser::function_declaration()
   match(semicolon_tok);
   return on_function_declaration(name, parms, ret, body);
 }
-
 
 // Parse a parameter clause.
 //
@@ -865,6 +869,29 @@ Parser::concept_declaration()
   return con;
 }
 
+// Coroutine Declaration
+// co_def Name:(params) -> ret_value {
+// ...
+// yield 5;
+// }
+Decl&
+Parser::coroutine_declaration()
+{
+  Token tok = require(coroutine_tok); // co_def
+  Name& n = identifier(); // Name of coroutine
+  match(colon_tok); // :
+
+
+  Decl_list params = parameter_clause(); // (...)
+
+  require(arrow_tok);
+  Type& yield = unparsed_return_type();
+
+  Stmt& body = unparsed_function_body();
+
+  Decl& cor = on_coroutine_declaration(n, params, yield, body);
+  return cor;
+}
 
 // Parse a concept definition.
 //

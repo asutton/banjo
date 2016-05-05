@@ -107,6 +107,7 @@ init_tokens(Symbol_table& syms)
   init_token(syms, class_tok, "class");
   init_token(syms, concept_tok, "concept");
   init_token(syms, const_tok, "const");
+  init_token(syms, coroutine_tok, "codef");
   init_token(syms, consume_tok, "consume");
   init_token(syms, continue_tok, "continue");
   init_token(syms, decltype_tok, "decltype");
@@ -153,6 +154,7 @@ init_tokens(Symbol_table& syms)
   init_token(syms, var_tok, "var");
   init_token(syms, void_tok, "void");
   init_token(syms, volatile_tok, "volatile");
+  init_token(syms, yield_tok, "yield");
   init_token(syms, while_tok, "while");
 
   init_token_class(syms, identifier_tok, "<identifier>");

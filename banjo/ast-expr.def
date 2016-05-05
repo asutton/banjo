@@ -1,9 +1,11 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
+// Literals and primary expressions
 define_node(Boolean_expr)
 define_node(Integer_expr)
 define_node(Real_expr)
+define_node(Tuple_expr)
 
 // References to declarations
 define_node(Object_expr)
@@ -12,7 +14,6 @@ define_node(Overload_expr)
 define_node(Field_expr)
 define_node(Method_expr)
 define_node(Member_expr)
-
 
 // Arithmetic expressions
 define_node(Add_expr)
@@ -49,16 +50,14 @@ define_node(Not_expr)
 define_node(Assign_expr)
 
 // Function call
+define_node(Convert_expr)
 define_node(Call_expr)
-
-// Tuple
-define_node(Tuple_expr)
 
 // Concept check
 define_node(Check_expr)
-
 define_node(Requires_expr)
 define_node(Synthetic_expr)
+
 define_node(Unparsed_expr)
 
 // Conversions

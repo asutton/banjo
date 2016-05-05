@@ -114,6 +114,7 @@ struct Parser
   Stmt& member_statement();
   Stmt& empty_statement();
   Stmt& return_statement();
+  Stmt& yield_statement();
   Stmt& if_statement();
   Stmt& while_statement();
   Stmt& break_statement();
@@ -145,6 +146,7 @@ struct Parser
 
   // Functions
   Decl& function_declaration();
+  Decl& coroutine_declaration();
   Decl_list parameter_clause();
   Decl_list parameter_list();
   Decl& parameter_declaration();
@@ -198,6 +200,7 @@ struct Parser
   void elaborate_function_declaration(Function_decl&);
   void elaborate_parameter_declaration(Object_parm&);
   void elaborate_class_declaration(Class_decl&);
+  void elaborate_coroutine_declaration(Coroutine_decl&);
   Type& elaborate_type(Type&);
 
   // Overloading
@@ -223,6 +226,7 @@ struct Parser
   void elaborate_function_definition(Function_decl&, Function_def&);
   void elaborate_class_definition(Class_decl&);
   void elaborate_class_definition(Class_decl&, Class_def&);
+  void elaborate_coroutine_definition(Coroutine_decl&);
   Expr& elaborate_expression(Expr&);
   Stmt& elaborate_compound_statement(Stmt&);
   Stmt& elaborate_member_statement(Stmt&);
@@ -301,6 +305,9 @@ struct Parser
   Stmt& on_translation_statement(Stmt_list&&);
   Stmt& on_member_statement(Stmt_list&&);
   Stmt& on_compound_statement(Stmt_list&&);
+  Stmt& on_yield_statement(Token, Expr&);
+
+
   Stmt& on_empty_statement();
   Stmt& on_return_statement(Token, Expr&);
   Stmt& on_if_statement(Expr&, Stmt&);
@@ -326,6 +333,9 @@ struct Parser
 
   // Type declarations
   Decl& on_class_declaration(Name&, Type&, Stmt&);
+
+  // Coroutine declarations
+  Decl& on_coroutine_declaration(Name&, Decl_list&, Type&, Stmt&);
 
   // Concept declarations
   Decl& on_concept_declaration(Token, Name&, Decl_list&);
@@ -459,7 +469,7 @@ Parser::take_decl_specs()
 
 // The trial parser provides recovery information for the parser
 // class. If the trial parse fails, then the state of the underlying
-// parser is rewound to the state cached bythe trial parser.
+// parser is rewound to the state cached by the trial parser.
 //
 // TODO: Can we automatically detect failures without needing
 // an explicit indication of failure?

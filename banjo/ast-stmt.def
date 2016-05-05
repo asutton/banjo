@@ -8,6 +8,8 @@ define_node(Compound_stmt)
 define_node(Expression_stmt)
 define_node(Declaration_stmt)
 define_node(Return_stmt)
+define_node(Yield_stmt)
+
 define_node(If_then_stmt)
 define_node(If_else_stmt)
 define_node(While_stmt)

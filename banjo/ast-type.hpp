@@ -118,7 +118,6 @@ struct Float_type : Type
 };
 
 
-
 // A function type.
 struct Function_type : Type
 {
@@ -312,6 +311,33 @@ struct Class_type : Declared_type
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 };
+
+
+
+// Represents the type of a coroutine.
+//
+// TODO: Do I really want a coroutine to be a class type.
+struct Coroutine_type : Class_type
+{
+  using Class_type::Class_type;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  Coroutine_decl const& declaration() const;
+  Coroutine_decl&       declaration();
+
+  Type_list const& parameter_types() const { return params; }
+  Type_list&       parameter_types()       { return params; }
+
+  Type const&      return_type() const     { return *ret; }
+  Type&            return_type()           { return *ret; }
+
+  Type_list params;
+  Type*     ret;
+
+};
+
 
 
 struct Typename_type : Declared_type

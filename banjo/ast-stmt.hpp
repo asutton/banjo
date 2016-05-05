@@ -151,6 +151,21 @@ struct Return_stmt : Stmt
   Expr* expr;
 };
 
+// A yield statement.
+struct Yield_stmt : Stmt
+{
+  Yield_stmt(Expr& e)
+    : expr(&e)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator &v)       { v.visit(*this); }
+
+  Expr const& expression() const { return *expr; }
+  Expr&       expression()       { return *expr; }
+
+  Expr* expr;
+};
 
 // An if-then statement.
 struct If_then_stmt : Stmt
