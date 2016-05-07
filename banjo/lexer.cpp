@@ -89,8 +89,7 @@ Lexer::scan()
       return symbol();
 
     case '*': get(); return symbol();
-
-      case '%': get(); return symbol();
+    case '%': get(); return symbol();
 
     case '/':
       get();

@@ -180,9 +180,9 @@ Generator::gen(Expr const& e)
     llvm::Value* operator()(Gt_expr const& e) { return g.gen(e); }
     llvm::Value* operator()(Le_expr const& e) { return g.gen(e); }
     llvm::Value* operator()(Ge_expr const& e) { return g.gen(e); }
-//    llvm::Value* operator()(And_expr const& e) { return g.gen(e); }
-//    llvm::Value* operatortor()(Or_expr const& e) { return g.gen(e); }
-  //  llvm::Value* operator()(Not_expr const& e) { return g.gen(e); }
+//  llvm::Value* operator()(And_expr const& e) { return g.gen(e); }
+//  llvm::Value* operatortor()(Or_expr const& e) { return g.gen(e);
+//  llvm::Value* operator()(Not_expr const& e) { return g.gen(e); }
 
     // llvm::Value* operator()(Id_expr const* e) const { return g.gen(e); }
     // llvm::Value* operator()(Decl_expr const* e) const { return g.gen(e); }
