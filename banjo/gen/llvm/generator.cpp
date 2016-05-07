@@ -56,6 +56,7 @@ Generator::get_type(Type const& t)
     llvm::Type* operator()(Void_type const& t)      { return g.get_type(t); }
     llvm::Type* operator()(Boolean_type const& t)   { return g.get_type(t); }
     llvm::Type* operator()(Integer_type const& t)   { return g.get_type(t); }
+    llvm::Type* operator()(Byte_type const& t)      { return g.get_type(t); }
     llvm::Type* operator()(Float_type const& t)     { return g.get_type(t); }
     llvm::Type* operator()(Function_type const& t)  { return g.get_type(t); }
     llvm::Type* operator()(Coroutine_type const& t) { return g.get_type(t); }
@@ -87,6 +88,12 @@ llvm::Type*
 Generator::get_type(Integer_type const& t)
 {
   return build.getInt32Ty();
+}
+
+llvm::Type*
+Generator::get_type(Byte_type const& t)
+{
+  return build.getInt8Ty();
 }
 
 

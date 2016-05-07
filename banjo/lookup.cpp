@@ -94,12 +94,7 @@ qualified_lookup(Context& cxt, Type& type, Name const& name)
   // TODO: This probably needs to strip of all reference qualifiers,
   // not just &.
   Type& t1 = type.non_reference_type();
-  if(is<Class_type>(t1)){
-    std::cout << "Classtype\n";
-  }else if(is<Unparsed_type>(t1)){
 
-    std::cout << "unparsed";
-  }
   if (!is<Declared_type>(t1)) {
     error("'{}' is not a user-defined type", name);
     throw Lookup_error("wrong type");
