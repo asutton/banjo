@@ -3,6 +3,7 @@
 
 #include "parser.hpp"
 #include "printer.hpp"
+#include "ast-expr.hpp"
 
 #include <iostream>
 

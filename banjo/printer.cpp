@@ -564,6 +564,7 @@ Printer::id_type(Class_type const& t)
 }
 
 
+
 // Print the name of the type parameter.
 void
 Printer::id_type(Typename_type const& t)

@@ -137,7 +137,6 @@ Parser::return_statement()
 Stmt&
 Parser::yield_statement()
 {
-
   if(!is<Coroutine_decl>(cxt.current_context())){
     std::cout << "ERROR\n";
   }
