@@ -90,6 +90,8 @@ Lexer::scan()
 
     case '*': get(); return symbol();
 
+      case '%': get(); return symbol();
+
     case '/':
       get();
       if (lookahead() == '/') {

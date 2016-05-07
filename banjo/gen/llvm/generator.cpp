@@ -167,26 +167,27 @@ Generator::gen(Expr const& e)
     llvm::Value* operator()(Expr const& e) { lingo_unhandled(e); }
     llvm::Value* operator()(Boolean_expr const& e) { return g.gen(e); }
     llvm::Value* operator()(Integer_expr const& e) { return g.gen(e); }
-    
+    llvm::Value* operator()(Add_expr const& e)  { return g.gen(e); }
+    llvm::Value* operator()(Sub_expr const& e) { return g.gen(e); }
+    llvm::Value* operator()(Mul_expr const& e) { return g.gen(e); }
+    llvm::Value* operator()(Div_expr const& e) { return g.gen(e); }
+    llvm::Value* operator()(Rem_expr const& e) { return g.gen(e); }
+    llvm::Value* operator()(Neg_expr const& e) { return g.gen(e); }
+    llvm::Value* operator()(Pos_expr const& e) { return g.gen(e); }
+    llvm::Value* operator()(Eq_expr const& e) { return g.gen(e); }
+    llvm::Value* operator()(Ne_expr const& e) { return g.gen(e); }
+    llvm::Value* operator()(Lt_expr const& e) { return g.gen(e); }
+    llvm::Value* operator()(Gt_expr const& e) { return g.gen(e); }
+    llvm::Value* operator()(Le_expr const& e) { return g.gen(e); }
+    llvm::Value* operator()(Ge_expr const& e) { return g.gen(e); }
+//    llvm::Value* operator()(And_expr const& e) { return g.gen(e); }
+//    llvm::Value* operatortor()(Or_expr const& e) { return g.gen(e); }
+  //  llvm::Value* operator()(Not_expr const& e) { return g.gen(e); }
+
     // llvm::Value* operator()(Id_expr const* e) const { return g.gen(e); }
     // llvm::Value* operator()(Decl_expr const* e) const { return g.gen(e); }
     // llvm::Value* operator()(Lambda_expr const* e) const { lingo_unreachable(); }
-    // llvm::Value* operator()(Add_expr const* e) const { return g.gen(e); }
-    // llvm::Value* operator()(Sub_expr const* e) const { return g.gen(e); }
-    // llvm::Value* operator()(Mul_expr const* e) const { return g.gen(e); }
-    // llvm::Value* operator()(Div_expr const* e) const { return g.gen(e); }
-    // llvm::Value* operator()(Rem_expr const* e) const { return g.gen(e); }
-    // llvm::Value* operator()(Neg_expr const* e) const { return g.gen(e); }
-    // llvm::Value* operator()(Pos_expr const* e) const { return g.gen(e); }
-    // llvm::Value* operator()(Eq_expr const* e) const { return g.gen(e); }
-    // llvm::Value* operator()(Ne_expr const* e) const { return g.gen(e); }
-    // llvm::Value* operator()(Lt_expr const* e) const { return g.gen(e); }
-    // llvm::Value* operator()(Gt_expr const* e) const { return g.gen(e); }
-    // llvm::Value* operator()(Le_expr const* e) const { return g.gen(e); }
-    // llvm::Value* operator()(Ge_expr const* e) const { return g.gen(e); }
-    // llvm::Value* operator()(And_expr const* e) const { return g.gen(e); }
-    // llvm::Value* operator()(Or_expr const* e) const { return g.gen(e); }
-    // llvm::Value* operator()(Not_expr const* e) const { return g.gen(e); }
+
     // llvm::Value* operator()(Call_expr const* e) const { return g.gen(e); }
     // llvm::Value* operator()(Dot_expr const* e) const { return g.gen(e); }
     // llvm::Value* operator()(Field_expr const* e) const { return g.gen(e); }
@@ -216,7 +217,182 @@ Generator::gen(Integer_expr const& e)
 }
 
 
+llvm::Value*
+Generator::gen(Add_expr const& e)
+{
+  llvm::Value* l = gen(*e.first);
+  llvm::Value* r = gen(*e.second);
+  return build.CreateAdd(l, r);
+}
 
+
+
+llvm::Value*
+Generator::gen(Sub_expr const& e)
+{
+  llvm::Value* l = gen(*e.first);
+  llvm::Value* r = gen(*e.second);
+  return build.CreateSub(l, r);
+}
+
+
+llvm::Value*
+Generator::gen(Mul_expr const& e)
+{
+  llvm::Value* l = gen(*e.first);
+  llvm::Value* r = gen(*e.second);
+  return build.CreateMul(l, r);
+}
+
+
+llvm::Value*
+Generator::gen(Div_expr const& e)
+{
+  llvm::Value* l = gen(*e.first);
+  llvm::Value* r = gen(*e.second);
+  return build.CreateSDiv(l, r);
+}
+
+
+// FIXME: decide on unsigned or signed remainder
+// based on types of expressions
+llvm::Value*
+Generator::gen(Rem_expr const& e)
+{
+  llvm::Value* l = gen(*e.first);
+  llvm::Value* r = gen(*e.second);
+  return build.CreateURem(l, r);
+}
+
+
+llvm::Value*
+Generator::gen(Neg_expr const& e)
+{
+  llvm::Value* zero = build.getInt32(0);
+  llvm::Value* val = gen(*e.first);
+  return build.CreateSub(zero, val);
+}
+
+
+llvm::Value*
+Generator::gen(Pos_expr const& e)
+{
+  return gen(*e.first);
+}
+
+
+llvm::Value*
+Generator::gen(Eq_expr const& e)
+{
+  llvm::Value* l = gen(*e.first);
+  llvm::Value* r = gen(*e.second);
+  return build.CreateICmpEQ(l, r);
+}
+
+
+llvm::Value*
+Generator::gen(Ne_expr const& e)
+{
+  llvm::Value* l = gen(*e.first);
+  llvm::Value* r = gen(*e.second);
+  return build.CreateICmpNE(l, r);
+}
+
+
+llvm::Value*
+Generator::gen(Lt_expr const& e)
+{
+  llvm::Value* l = gen(*e.first);
+  llvm::Value* r = gen(*e.second);
+  return build.CreateICmpSLT(l, r);
+}
+
+
+llvm::Value*
+Generator::gen(Gt_expr const& e)
+{
+  llvm::Value* l = gen(*e.first);
+  llvm::Value* r = gen(*e.second);
+  return build.CreateICmpSGT(l, r);
+}
+
+
+llvm::Value*
+Generator::gen(Le_expr const& e)
+{
+  llvm::Value* l = gen(*e.first);
+  llvm::Value* r = gen(*e.second);
+  return build.CreateICmpSLE(l, r);
+}
+
+
+llvm::Value*
+Generator::gen(Ge_expr const& e)
+{
+  llvm::Value* l = gen(*e.first);
+  llvm::Value* r = gen(*e.second);
+  return build.CreateICmpSGE(l, r);
+}
+
+//
+//llvm::Value*
+//Generator::gen(And_expr const* e)
+//{
+//  llvm::BasicBlock* head_block = build.GetInsertBlock();
+//  llvm::BasicBlock* tail_block = llvm::BasicBlock::Create(cxt, "", fn, head_block->getNextNode());
+//  llvm::BasicBlock* then_block = llvm::BasicBlock::Create(cxt, "", fn, tail_block);
+//
+//  // Generate code for the left operand.
+//  llvm::Value* left = gen(e->left());
+//  build.CreateCondBr(left, then_block, tail_block);
+//  build.SetInsertPoint(then_block);
+//
+//  // Generate code for the right operand.
+//  llvm::Value* right = gen(e->right());
+//  build.CreateBr(tail_block);
+//  build.SetInsertPoint(tail_block);
+//
+//  llvm::PHINode* phi_inst = build.CreatePHI(build.getInt1Ty(), 2);
+//  phi_inst->addIncoming(build.getFalse(), head_block);
+//  phi_inst->addIncoming(right, then_block);
+//  return phi_inst;
+//}
+//
+//
+//llvm::Value*
+//Generator::gen(Or_expr const* e)
+//{
+//  llvm::BasicBlock* head_block = build.GetInsertBlock();
+//  llvm::BasicBlock* tail_block = llvm::BasicBlock::Create(cxt, "", fn, head_block->getNextNode());
+//  llvm::BasicBlock* then_block = llvm::BasicBlock::Create(cxt, "", fn, tail_block);
+//
+//  // Generate code for the left operand.
+//  llvm::Value* left = gen(e->left());
+//  build.CreateCondBr(left, tail_block, then_block);
+//  build.SetInsertPoint(then_block);
+//
+//  // Generate code for the right operand.
+//  llvm::Value* right = gen(e->right());
+//  build.CreateBr(tail_block);
+//  build.SetInsertPoint(tail_block);
+//
+//  llvm::PHINode* phi_inst = build.CreatePHI(build.getInt1Ty(), 2);
+//  phi_inst->addIncoming(build.getTrue(), head_block);
+//  phi_inst->addIncoming(right, then_block);
+//  return phi_inst;
+//}
+//
+//
+//// Logical not is a simple XOR with the value true
+//// 1 xor 1 = 0
+//// 0 xor 1 = 1
+//llvm::Value*
+//Generator::gen(Not_expr const* e)
+//{
+//  llvm::Value* one = build.getTrue();
+//  llvm::Value* operand = gen(e->operand());
+//  return build.CreateXor(one, operand);
+//}
 #if 0
 
 // Return the value corresponding to a literal expression.
@@ -284,181 +460,9 @@ Generator::gen(Decl_expr const* e)
 }
 
 
-llvm::Value*
-Generator::gen(Add_expr const* e)
-{
-  llvm::Value* l = gen(e->left());
-  llvm::Value* r = gen(e->right());
-  return build.CreateAdd(l, r);
-}
 
 
-llvm::Value*
-Generator::gen(Sub_expr const* e)
-{
-  llvm::Value* l = gen(e->left());
-  llvm::Value* r = gen(e->right());
-  return build.CreateSub(l, r);
-}
 
-
-llvm::Value*
-Generator::gen(Mul_expr const* e)
-{
-  llvm::Value* l = gen(e->left());
-  llvm::Value* r = gen(e->right());
-  return build.CreateMul(l, r);
-}
-
-
-llvm::Value*
-Generator::gen(Div_expr const* e)
-{
-  llvm::Value* l = gen(e->left());
-  llvm::Value* r = gen(e->right());
-  return build.CreateSDiv(l, r);
-}
-
-
-// FIXME: decide on unsigned or signed remainder
-// based on types of expressions
-llvm::Value*
-Generator::gen(Rem_expr const* e)
-{
-  llvm::Value* l = gen(e->left());
-  llvm::Value* r = gen(e->right());
-  return build.CreateURem(l, r);
-}
-
-
-llvm::Value*
-Generator::gen(Neg_expr const* e)
-{
-  llvm::Value* zero = build.getInt32(0);
-  llvm::Value* val = gen(e->operand());
-  return build.CreateSub(zero, val);
-}
-
-
-llvm::Value*
-Generator::gen(Pos_expr const* e)
-{
-  return gen(e->operand());
-}
-
-
-llvm::Value*
-Generator::gen(Eq_expr const* e)
-{
-  llvm::Value* l = gen(e->left());
-  llvm::Value* r = gen(e->right());
-  return build.CreateICmpEQ(l, r);
-}
-
-
-llvm::Value*
-Generator::gen(Ne_expr const* e)
-{
-  llvm::Value* l = gen(e->left());
-  llvm::Value* r = gen(e->right());
-  return build.CreateICmpNE(l, r);
-}
-
-
-llvm::Value*
-Generator::gen(Lt_expr const* e)
-{
-  llvm::Value* l = gen(e->left());
-  llvm::Value* r = gen(e->right());
-  return build.CreateICmpSLT(l, r);
-}
-
-
-llvm::Value*
-Generator::gen(Gt_expr const* e)
-{
-  llvm::Value* l = gen(e->left());
-  llvm::Value* r = gen(e->right());
-  return build.CreateICmpSGT(l, r);
-}
-
-
-llvm::Value*
-Generator::gen(Le_expr const* e)
-{
-  llvm::Value* l = gen(e->left());
-  llvm::Value* r = gen(e->right());
-  return build.CreateICmpSLE(l, r);
-}
-
-
-llvm::Value*
-Generator::gen(Ge_expr const* e)
-{
-  llvm::Value* l = gen(e->left());
-  llvm::Value* r = gen(e->right());
-  return build.CreateICmpSGE(l, r);
-}
-
-
-llvm::Value*
-Generator::gen(And_expr const* e)
-{
-  llvm::BasicBlock* head_block = build.GetInsertBlock();
-  llvm::BasicBlock* tail_block = llvm::BasicBlock::Create(cxt, "", fn, head_block->getNextNode());
-  llvm::BasicBlock* then_block = llvm::BasicBlock::Create(cxt, "", fn, tail_block);
-
-  // Generate code for the left operand.
-  llvm::Value* left = gen(e->left());
-  build.CreateCondBr(left, then_block, tail_block);
-  build.SetInsertPoint(then_block);
-
-  // Generate code for the right operand.
-  llvm::Value* right = gen(e->right());
-  build.CreateBr(tail_block);
-  build.SetInsertPoint(tail_block);
-
-  llvm::PHINode* phi_inst = build.CreatePHI(build.getInt1Ty(), 2);
-  phi_inst->addIncoming(build.getFalse(), head_block);
-  phi_inst->addIncoming(right, then_block);
-  return phi_inst;
-}
-
-
-llvm::Value*
-Generator::gen(Or_expr const* e)
-{
-  llvm::BasicBlock* head_block = build.GetInsertBlock();
-  llvm::BasicBlock* tail_block = llvm::BasicBlock::Create(cxt, "", fn, head_block->getNextNode());
-  llvm::BasicBlock* then_block = llvm::BasicBlock::Create(cxt, "", fn, tail_block);
-
-  // Generate code for the left operand.
-  llvm::Value* left = gen(e->left());
-  build.CreateCondBr(left, tail_block, then_block);
-  build.SetInsertPoint(then_block);
-
-  // Generate code for the right operand.
-  llvm::Value* right = gen(e->right());
-  build.CreateBr(tail_block);
-  build.SetInsertPoint(tail_block);
-
-  llvm::PHINode* phi_inst = build.CreatePHI(build.getInt1Ty(), 2);
-  phi_inst->addIncoming(build.getTrue(), head_block);
-  phi_inst->addIncoming(right, then_block);
-  return phi_inst;
-}
-
-
-// Logical not is a simple XOR with the value true
-// 1 xor 1 = 0
-// 0 xor 1 = 1
-llvm::Value*
-Generator::gen(Not_expr const* e)
-{
-  llvm::Value* one = build.getTrue();
-  llvm::Value* operand = gen(e->operand());
-  return build.CreateXor(one, operand);
-}
 
 
 namespace
@@ -682,7 +686,7 @@ Generator::gen(Stmt const& s)
     void operator()(Break_stmt const& s)       { g.gen(s); }
     void operator()(Continue_stmt const& s)    { g.gen(s); }
     void operator()(Declaration_stmt const& s) { g.gen(s); }
-    // void operator()(Expression_stmt const& s) { g.gen(s); }
+    void operator()(Expression_stmt const& s) { g.gen(s); }
   };
   apply(s, Fn{*this});
 }
@@ -879,6 +883,11 @@ Generator::gen(Expression_stmt const* s)
 
 
 #endif
+void
+Generator::gen(Expression_stmt const& s)
+{
+  gen(s.expression());
+}
 
 // -------------------------------------------------------------------------- //
 // Code generation for declarations
