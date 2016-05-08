@@ -1142,7 +1142,7 @@ Generator::gen(Class_decl const& d)
   if (types.lookup(&d))
     return;
 
-  // Genereate the definition
+  // Generate the definition
 }
 
 void 

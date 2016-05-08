@@ -6,6 +6,7 @@
 #include "context.hpp"
 #include "scope.hpp"
 #include "printer.hpp"
+#include "parser.hpp"
 
 #include <iostream>
 
@@ -95,8 +96,36 @@ qualified_lookup(Context& cxt, Type& type, Name const& name)
   // not just &.
   Type& t1 = type.non_reference_type();
 
+  // Parse the type if it has not been parsed yet
+  if(is<Unparsed_type>(t1)){
+    Unparsed_type up = as<Unparsed_type>(t1);
+    Token_stream ts = up.toks;
+    Parser p(cxt, ts);
+    Type& t2 = p.type();
+
+    if(is<Unparsed_type>(t2)){
+      std::cout << "Still unparsed\n";
+    }
+    if (!is<Declared_type>(t2)) {
+      error("'{}' is not a user-defined type", t2);
+      throw Lookup_error("wrong type");
+    }
+    Decl& decl = cast<Declared_type>(t2).declaration();
+
+    // Start by searching this scope.
+    Decl_list decls = qualified_lookup(cxt, cxt.saved_scope(decl), name);
+
+    // TODO: Search (all) bases for a member with the given name.
+    // Note that multiple members can be found in multiple base classes.
+    // That would constitute an ambiguous lookup.
+
+    return decls;
+  }
+  if(is<Unparsed_type>(t1)){
+    std::cout << "Still unparsed\n";
+  }
   if (!is<Declared_type>(t1)) {
-    error("'{}' is not a user-defined type", name);
+    error("'{}' is not a user-defined type", t1);
     throw Lookup_error("wrong type");
   }
   Decl& decl = cast<Declared_type>(t1).declaration();
