@@ -1164,9 +1164,12 @@ Generator::gen(Class_decl const& d)
   // Add members to ts
 
   // Create the llvm type
-  // TODO: Get the name from the declaration
   llvm::Type* t = llvm::StructType::create(cxt, ts, get_name(d));
   types.bind(&d,t);
+
+  // Enter a new context for the type
+  Enter_context scope(*this, type_cxt);
+
 }
 void
 Generator::gen_class_definition(Def const& d)
