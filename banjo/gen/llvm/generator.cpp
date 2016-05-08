@@ -130,7 +130,7 @@ Generator::get_type(Class_type const& t)
   auto const* bind = types.lookup(&t.declaration());
   if (!bind)
   {
-    gen(t.declaration());
+    gen(as<Class_decl>(t.declaration()));
     bind = types.lookup(&t.declaration());
   }
   return bind->second;
@@ -1155,9 +1155,18 @@ Generator::gen(Class_decl const& d)
   if (types.lookup(&d))
     return;
 
-  // Generate the definition
-  Class_def def = as<Class_def>(d.definition());
-  //gen(def);
+  // Holds the types and also the super classes.
+  // Super classes should be put at the head of the vector
+  std::vector<llvm::Type*> ts;
+
+  // Check for parent classes and add them to ts
+
+  // Add members to ts
+
+  // Create the llvm type
+  // TODO: Get the name from the declaration
+  llvm::Type* t = llvm::StructType::create(cxt, ts, get_name(d));
+  types.bind(&d,t);
 }
 void
 Generator::gen_class_definition(Def const& d)
