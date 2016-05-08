@@ -4,6 +4,7 @@
 #include "builder.hpp"
 #include "context.hpp"
 #include "ast.hpp"
+#include "parser.hpp"
 
 #include <unordered_set>
 
@@ -902,6 +903,14 @@ Builder::make_class_declaration(Name& n, Type& t, Stmt& s)
 Coroutine_decl&
 Builder::make_coroutine_declaration(Name&n, Decl_list&p, Type& t, Stmt& s)
 {
+  // Parse the type of the yield
+  if(Unparsed_type* up = as<Unparsed_type>(&t)){
+    Token_stream ts = up->toks;
+    Parser parse(cxt, ts);
+    Type& ret = parse.type();
+    Def& d = make_coroutine_definition(s);
+    return make<Coroutine_decl>(n,ret,p,d);
+  }
   Def& d = make_coroutine_definition(s);
   return make<Coroutine_decl>(n,t,p,d);
 }

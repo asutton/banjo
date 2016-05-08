@@ -65,6 +65,7 @@ struct Generator
   llvm::Type* get_type(Dynarray_type const&);
   llvm::Type* get_type(Auto_type const&);
   llvm::Type* get_type(Coroutine_type const&);
+  llvm::Type* get_type(Class_type const&);
 
   llvm::Value* gen(Expr const&);
   llvm::Value* gen(Boolean_expr const&);

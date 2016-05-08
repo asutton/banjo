@@ -60,9 +60,10 @@ Generator::get_type(Type const& t)
     llvm::Type* operator()(Float_type const& t)     { return g.get_type(t); }
     llvm::Type* operator()(Function_type const& t)  { return g.get_type(t); }
     llvm::Type* operator()(Coroutine_type const& t) { return g.get_type(t); }
+    llvm::Type* operator()(Class_type const& t)     { return g.get_type(t); }
     llvm::Type* operator()(Auto_type const& t)      { return g.get_type(t); }
-    llvm::Type* operator()(Array_type const& t)    { return g.get_type(t); }
-    llvm::Type* operator()(Dynarray_type const& t) { return g.get_type(t); }
+    llvm::Type* operator()(Array_type const& t)     { return g.get_type(t); }
+    llvm::Type* operator()(Dynarray_type const& t)  { return g.get_type(t); }
   };
   return apply(t, fn{*this});
 }
@@ -121,6 +122,18 @@ llvm::Type*
 Generator::get_type(Coroutine_type const& t)
 {
   lingo_unimplemented("coroutine type");
+}
+
+llvm::Type*
+Generator::get_type(Class_type const& t)
+{
+  auto const* bind = types.lookup(&t.declaration());
+  if (!bind)
+  {
+    gen(t.declaration());
+    bind = types.lookup(&t.declaration());
+  }
+  return bind->second;
 }
 
 //return an array type
@@ -1361,6 +1374,12 @@ Generator::gen_vref(Record_decl const* r, llvm::Value* obj)
 
 
 #endif
+
+void
+Generator::gen(Type_decl const& d)
+{
+  lingo_unimplemented("Gen type decl");
+}
 
 llvm::Module*
 Generator::operator()(Stmt const& s)
