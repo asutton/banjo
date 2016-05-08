@@ -118,6 +118,8 @@ struct Generator
   void gen(Function_decl const&);
   void gen_function_definition(Def const&);
   void gen_function_definition(Function_def const&);
+  void gen_class_definition(Def const&);
+  void gen_class_definition(Class_def const&);
   void gen(Type_decl const&);
   void gen(Object_parm const&);
   void gen(Coroutine_decl const&);

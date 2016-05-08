@@ -1143,6 +1143,21 @@ Generator::gen(Class_decl const& d)
     return;
 
   // Generate the definition
+  Class_def def = as<Class_def>(d.definition());
+  //gen(def);
+}
+void
+Generator::gen_class_definition(Def const& d)
+{
+  if (Class_def const* c = as<Class_def>(&d))
+    return gen_class_definition(*c);
+  lingo_unreachable();
+}
+
+void
+Generator::gen_class_definition(Class_def const& d)
+{
+  gen(d.body());
 }
 
 void 
