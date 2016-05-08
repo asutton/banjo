@@ -180,19 +180,20 @@ Generator::gen(Expr const& e)
     llvm::Value* operator()(Expr const& e) { lingo_unhandled(e); }
     llvm::Value* operator()(Boolean_expr const& e) { return g.gen(e); }
     llvm::Value* operator()(Integer_expr const& e) { return g.gen(e); }
-    llvm::Value* operator()(Add_expr const& e)  { return g.gen(e); }
-    llvm::Value* operator()(Sub_expr const& e) { return g.gen(e); }
-    llvm::Value* operator()(Mul_expr const& e) { return g.gen(e); }
-    llvm::Value* operator()(Div_expr const& e) { return g.gen(e); }
-    llvm::Value* operator()(Rem_expr const& e) { return g.gen(e); }
-    llvm::Value* operator()(Neg_expr const& e) { return g.gen(e); }
-    llvm::Value* operator()(Pos_expr const& e) { return g.gen(e); }
-    llvm::Value* operator()(Eq_expr const& e) { return g.gen(e); }
-    llvm::Value* operator()(Ne_expr const& e) { return g.gen(e); }
-    llvm::Value* operator()(Lt_expr const& e) { return g.gen(e); }
-    llvm::Value* operator()(Gt_expr const& e) { return g.gen(e); }
-    llvm::Value* operator()(Le_expr const& e) { return g.gen(e); }
-    llvm::Value* operator()(Ge_expr const& e) { return g.gen(e); }
+    llvm::Value* operator()(Add_expr const& e)     { return g.gen(e); }
+    llvm::Value* operator()(Sub_expr const& e)     { return g.gen(e); }
+    llvm::Value* operator()(Mul_expr const& e)     { return g.gen(e); }
+    llvm::Value* operator()(Div_expr const& e)     { return g.gen(e); }
+    llvm::Value* operator()(Rem_expr const& e)     { return g.gen(e); }
+    llvm::Value* operator()(Neg_expr const& e)     { return g.gen(e); }
+    llvm::Value* operator()(Pos_expr const& e)     { return g.gen(e); }
+    llvm::Value* operator()(Eq_expr const& e)      { return g.gen(e); }
+    llvm::Value* operator()(Ne_expr const& e)      { return g.gen(e); }
+    llvm::Value* operator()(Lt_expr const& e)      { return g.gen(e); }
+    llvm::Value* operator()(Gt_expr const& e)      { return g.gen(e); }
+    llvm::Value* operator()(Le_expr const& e)      { return g.gen(e); }
+    llvm::Value* operator()(Ge_expr const& e)      { return g.gen(e); }
+    llvm::Value* operator()(Object_expr const& e)  { return g.gen(e); }
 //  llvm::Value* operator()(And_expr const& e) { return g.gen(e); }
 //  llvm::Value* operatortor()(Or_expr const& e) { return g.gen(e);
 //  llvm::Value* operator()(Not_expr const& e) { return g.gen(e); }
@@ -346,6 +347,14 @@ Generator::gen(Ge_expr const& e)
   llvm::Value* r = gen(*e.second);
   return build.CreateICmpSGE(l, r);
 }
+
+llvm::Value*
+Generator::gen(Object_expr const& e)
+{
+  lingo_unimplemented("Object_expr");
+}
+
+
 
 //
 //llvm::Value*

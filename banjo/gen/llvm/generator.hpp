@@ -89,6 +89,7 @@ struct Generator
   llvm::Value* gen(Or_expr const&);
   llvm::Value* gen(Not_expr const&);
   llvm::Value* gen(Call_expr const&);
+  llvm::Value* gen(Object_expr const&);
 
   void gen(Stmt const&);
   void gen(Empty_stmt const&);
