@@ -296,17 +296,20 @@ Parser::current_scope()
 
 // Parse a translation unit.
 //
-//    input:
+//    translation:
 //      [statement-list]
 //
-// FIXME: This should return a single node, not a sequence.
+// FIXME: Rethink the program structure for the language. In particular,
+// we should prefer to think in terms of program fragments. Fragments can
+// be combined to define libraries (archives?), modules, and programs.
+// This can probably be achieved by simply renaming Translation_stmt to
+// Fragment_stmt, although it would probably be nice to revisit the design 
+// of compound statements in general.
 Stmt&
 Parser::translation()
 {
-  // TODO: We should enter the global scope and not create a temporary
-  // one.
+  // TODO: We should enter the global scope and not create a temporary.
   Enter_scope scope(cxt);
-
   Stmt_list ss = statement_seq();
   return on_translation_statement(std::move(ss));
 }
