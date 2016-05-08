@@ -22,7 +22,6 @@ make_type(Context& cxt, Simple_id& id)
 {
   Decl& d = simple_lookup(cxt, id);
   if (is<Coroutine_decl>(d)) {
-    std::cout<< "Coroutine type!\n";
     Coroutine_decl& decl = cast<Coroutine_decl>(d);
     return cxt.get_coroutine_type(decl);
   }

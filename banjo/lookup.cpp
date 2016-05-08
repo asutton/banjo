@@ -103,15 +103,45 @@ qualified_lookup(Context& cxt, Type& type, Name const& name)
     Parser p(cxt, ts);
     Type& t2 = p.type();
 
-    if(is<Unparsed_type>(t2)){
-      std::cout << "Still unparsed\n";
-    }
     if (!is<Declared_type>(t2)) {
       error("'{}' is not a user-defined type", t2);
       throw Lookup_error("wrong type");
     }
     Decl& decl = cast<Declared_type>(t2).declaration();
 
+    // Check if it is a class then parse its type and definition if needed.
+    // TODO: Clean this up
+    if(is<Class_decl>(decl)){
+      Class_decl cd = as<Class_decl>(decl);
+      Class_def def = as<Class_def>(cd.definition());
+      if(Unparsed_stmt* up = as<Unparsed_stmt>(&def.body())){
+        Token_stream ts = up->toks;
+        Parser p(cxt, ts);
+        def.body_ = &p.statement();
+        cd.def_ = &def;
+      }
+      // At this point we should have a fully parsed declared type both its type and definition.
+      Decl& decl = cd;
+      Decl_list decls = qualified_lookup(cxt, cxt.saved_scope(decl), name);
+      return decls;
+    }
+
+    // Check if it is a Coroutine then parse its definition.
+    if(is<Coroutine_decl>(decl)){
+      Coroutine_decl cd = as<Coroutine_decl>(decl);
+      // Coroutines use function defs
+      Function_def def = as<Function_def>(cd.definition());
+      if(Unparsed_stmt* up = as<Unparsed_stmt>(&def.statement())){
+        Token_stream ts = up->toks;
+        Parser p(cxt, ts);
+        def.stmt_ = &p.statement();
+        cd.def_ = &def;
+      }
+      // At this point we should have a fully parsed declared type both its type and definition.
+      Decl& decl = cd;
+      Decl_list decls = qualified_lookup(cxt, cxt.saved_scope(decl), name);
+      return decls;
+    }
     // Start by searching this scope.
     Decl_list decls = qualified_lookup(cxt, cxt.saved_scope(decl), name);
 
@@ -121,9 +151,7 @@ qualified_lookup(Context& cxt, Type& type, Name const& name)
 
     return decls;
   }
-  if(is<Unparsed_type>(t1)){
-    std::cout << "Still unparsed\n";
-  }
+
   if (!is<Declared_type>(t1)) {
     error("'{}' is not a user-defined type", t1);
     throw Lookup_error("wrong type");
