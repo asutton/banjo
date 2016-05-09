@@ -636,10 +636,13 @@ Parser::class_declaration()
   else
     kind = &unparsed_class_kind();
 
-  // Match tghe body.
-  Stmt& body = unparsed_class_body();
+  Decl& decl = on_class_declaration(name, *kind);
+  Enter_scope scope(cxt, cxt.saved_scope(decl));
 
-  return on_class_declaration(name, *kind, body);
+  // Match the body.
+  Stmt& body = class_body();
+
+  return on_class_definition(decl, body);
 };
 
 
@@ -675,6 +678,43 @@ Parser::unparsed_class_body()
   }
   toks.push_back(match(rbrace_tok));
   return on_unparsed_statement(std::move(toks));
+}
+
+
+// Parse a class body, which represents the body of a class.
+//
+//    class-body:
+//      '{' [member-seq] '}'
+//
+//    member-seq:
+//      member
+//      member-seq member
+//
+// Note that that the scope into which declarations are added is pushed 
+// prior to the parsing of the member statement.
+Stmt&
+Parser::class_body()
+{
+  Stmt_list ss;
+  match(lbrace_tok);
+  if (lookahead() != rbrace_tok)
+    ss = member();
+  match(rbrace_tok);
+  return on_member_statement(std::move(ss));
+}
+
+
+// A member is a declaration within a class.
+//
+//    member:
+//      member-declaration
+//
+// TODO: Allow any statements here in order to support metaprogramming.
+Stmt&
+Parser::member()
+{
+  Decl& d = declaration();
+  return on_declaration_directive(d); 
 }
 
 

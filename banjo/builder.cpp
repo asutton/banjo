@@ -889,6 +889,15 @@ Builder::make_function_declaration(Name& n, Decl_list const& p, Type& t, Stmt& s
 }
 
 
+// Make an incomplete class declaration with an empty definition. 
+Class_decl&
+Builder::make_class_declaration(Name& n, Type& t)
+{
+  Def& d = make_empty_definition();
+  return make<Class_decl>(n, t, d);
+}
+
+
 Class_decl&
 Builder::make_class_declaration(Name& n, Type& t, Stmt& s)
 {

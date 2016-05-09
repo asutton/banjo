@@ -18,9 +18,8 @@ namespace banjo
 void
 Parser::elaborate_definitions(Stmt_list& ss)
 {
-  for (Stmt& s : ss) {
+  for (Stmt& s : ss)
     elaborate_definition(s);
-  }
 }
 
 // If the statement is a declaration, elaborate its declared type.
@@ -41,8 +40,8 @@ Parser::elaborate_definition(Decl& d)
     void operator()(Decl& d)          { lingo_unhandled(d); }
     void operator()(Variable_decl& d) { p.elaborate_variable_initializer(d); }
     void operator()(Function_decl& d) { p.elaborate_function_definition(d); }
-    void operator()(Class_decl& d)    { p.elaborate_class_definition(d); }
     void operator()(Coroutine_decl& d){ p.elaborate_coroutine_definition(d); }
+    void operator()(Class_decl& d)    { p.elaborate_class_definition(d); }
     void operator()(Super_decl& d)    { /* Nothing to do. */ }
   };
   apply(d, fn{*this});

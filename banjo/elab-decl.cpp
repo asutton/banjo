@@ -38,10 +38,10 @@ Parser::elaborate_declaration(Decl& d)
   struct fn
   {
     Parser& p;
-    void operator()(Decl& d)          { lingo_unhandled(d); }
-    void operator()(Object_decl& d)   { p.elaborate_object_declaration(d); }
-    void operator()(Function_decl& d) { p.elaborate_function_declaration(d); }
-    void operator()(Class_decl& d)    { p.elaborate_class_declaration(d); }
+    void operator()(Decl& d)           { lingo_unhandled(d); }
+    void operator()(Object_decl& d)    { p.elaborate_object_declaration(d); }
+    void operator()(Function_decl& d)  { p.elaborate_function_declaration(d); }
+    void operator()(Class_decl& d)     { p.elaborate_class_declaration(d); }
     void operator()(Coroutine_decl& d) { p.elaborate_coroutine_declaration(d); }
   };
   apply(d, fn{*this});
@@ -179,6 +179,7 @@ Parser::elaborate_type(Type& t)
   }
   return t;
 }
+
 
 void
 Parser::elaborate_coroutine_declaration(Coroutine_decl &d)

@@ -12,16 +12,6 @@
 namespace banjo
 {
 
-// -------------------------------------------------------------------------- //
-// Supers
-Decl&
-Parser::on_super_declaration(Name& n, Type& t)
-{
-  Decl& d = cxt.make_super_declaration(t);
-  declare(cxt, d);
-  return d;
-}
-
 
 // Returns true if it looks like we're declaring a non-static member
 // of a user-defined type.
@@ -141,7 +131,17 @@ Parser::on_defaulted_definition(Decl& d)
 
 
 // -------------------------------------------------------------------------- //
-// Types
+// Classes
+
+// Handle the declaration of the class.
+Decl&
+Parser::on_class_declaration(Name& n, Type& t)
+{
+  Decl& d = build.make_class_declaration(n, t);
+  declare(cxt, current_scope(), d);
+  return d;
+}
+
 
 Decl&
 Parser::on_class_declaration(Name& n, Type& t, Stmt& s)
@@ -151,8 +151,19 @@ Parser::on_class_declaration(Name& n, Type& t, Stmt& s)
   return d;
 }
 
+
+Decl&
+Parser::on_super_declaration(Name& n, Type& t)
+{
+  Decl& d = cxt.make_super_declaration(t);
+  declare(cxt, d);
+  return d;
+}
+
+
 // -------------------------------------------------------------------------- //
 // Coroutine
+
 Decl&
 Parser::on_coroutine_declaration(Name& n,Decl_list& p, Type& t, Stmt& s)
 {
@@ -160,6 +171,7 @@ Parser::on_coroutine_declaration(Name& n,Decl_list& p, Type& t, Stmt& s)
   declare(cxt, current_scope(), d);
   return d;
 }
+
 
 // -------------------------------------------------------------------------- //
 // Templates

@@ -106,25 +106,6 @@ Parser::compound_statement()
 }
 
 
-// Parse a member statement, which represents the body of a class.
-//
-//    member-statement:
-//      '{' [statement-seq] '}'
-//
-// Note that that the scope into which declarations are added is
-// pushed prior to the parsing of the member statement.
-Stmt&
-Parser::member_statement()
-{
-  Stmt_list ss;
-  match(lbrace_tok);
-  if (lookahead() != rbrace_tok)
-    ss = statement_seq();
-  match(rbrace_tok);
-  return on_member_statement(std::move(ss));
-}
-
-
 Stmt&
 Parser::return_statement()
 {

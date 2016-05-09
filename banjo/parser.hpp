@@ -191,6 +191,8 @@ struct Parser
 
   // Modules
   Stmt& translation();
+  Stmt& directive();
+  Stmt_list& directive_list();
 
   // Type elaboration
   void elaborate_declarations(Stmt_list&);

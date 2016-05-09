@@ -9,13 +9,6 @@ namespace banjo
 
 
 Stmt&
-Parser::on_translation_statement(Stmt_list&& ss)
-{
-  return cxt.make_translation_statement(std::move(ss));
-}
-
-
-Stmt&
 Parser::on_compound_statement(Stmt_list&& ss)
 {
   return cxt.make_compound_statement(std::move(ss));

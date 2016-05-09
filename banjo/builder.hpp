@@ -156,6 +156,7 @@ struct Builder
   Coroutine_decl& make_coroutine_declaration(Name&, Decl_list&, Type&, Stmt&);
 
   // Types and members
+  Class_decl&     make_class_declaration(Name&, Type&);
   Class_decl&     make_class_declaration(Name&, Type&, Stmt&);
   Field_decl&     make_field_declaration(Name&, Type&);
   Field_decl&     make_field_declaration(Name&, Type&, Expr&);
