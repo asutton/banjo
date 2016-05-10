@@ -35,9 +35,9 @@ Parser::elaborate_overloads(Decl& decl)
   Name& name = decl.name();
   Overload_set& ovl = *current_scope().lookup(name);
 
-  // Find the position of the declation within the overload
+  // Find the position of the declaration within the overload
   // set. We only need to compare it with declarations "down stream"
-  // since we will have validated all preceeding declarations.
+  // since we will have validated all preceding declarations.
   auto iter = std::find_if(ovl.begin(), ovl.end(), [&decl](Decl& d) {
     return &decl == &d;
   });

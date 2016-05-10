@@ -1,8 +1,8 @@
 
 // Check for a broad set of declaration errors.
 
-// var f : int;
-// def f : () -> void { }
+var f : int;
+def f : () -> void { }
 
 // class t1 { }
 // var t1 : int;
@@ -10,4 +10,4 @@
 // class t2 : int { }
 // class t2 { }
 
-def f0 : (x, x) -> void { }
+// def f0 : (x, x) -> void { }
