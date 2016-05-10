@@ -17,6 +17,7 @@ add_library(banjo
   parse-expr.cpp
   parse-stmt.cpp
   parse-decl.cpp
+  parse-function.cpp
   parse-class.cpp
   parse-module.cpp
   parse-req.cpp
@@ -26,6 +27,7 @@ add_library(banjo
   sema-init.cpp
   sema-stmt.cpp
   sema-decl.cpp
+  sema-function.cpp
   sema-class.cpp
   sema-module.cpp
   sema-req.cpp
