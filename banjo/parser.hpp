@@ -215,6 +215,12 @@ struct Parser
   // Partial definitions
   void elaborate_partials(Stmt_list&);
 
+  // Class definitions
+  void elaborate_classes(Stmt_list&);
+  void elaborate_classes(Stmt&);
+  void elaborate_class(Decl&);
+  void elaborate_class(Class_decl&);
+
   // Definition elaboration
   void elaborate_definitions(Stmt_list&);
   void elaborate_definition(Stmt&);

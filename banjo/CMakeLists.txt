@@ -35,6 +35,7 @@ add_library(banjo
   elab-def.cpp
   elab-overloads.cpp
   elab-partials.cpp
+  elab-classes.cpp
   printer.cpp
 
   # Core facilities

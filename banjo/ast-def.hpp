@@ -147,15 +147,21 @@ struct Class_def : Def
   Stmt_list const& statements() const { return stmts_; }
   Stmt_list&       statements()       { return stmts_; }
 
+  // Returns the list of base classes.
+  Decl_list const& base_classes() const { return bases_; }
+  Decl_list&       base_classes()       { return bases_; }
+
   // Returns the list of member variables.
-  Decl_list const& objects() const;
-  Decl_list&       objects();
+  Decl_list const& objects() const { return objs_; }
+  Decl_list&       objects()       { return objs_; }
 
   // Returns the list of constructors.
   Decl_list const& constructors() const;
   Decl_list&       constructors();
 
   Stmt_list stmts_;
+  Decl_list bases_;
+  Decl_list objs_;
 };
 
 

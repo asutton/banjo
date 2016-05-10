@@ -35,14 +35,7 @@ Parser::on_class_definition(Decl& decl, Def& def)
 Def&
 Parser::on_class_body(Stmt_list&& ss)
 {
-  Def& def = cxt.make_class_definition(std::move(ss));
-
-  // TODO: Partition the original statements of the class in order
-  // to recognize member variables, bases, constructors, etc. We can't
-  // determine their specific properties (in general), but we do know
-  // about declarations and statements.
-
-  return def;
+  return cxt.make_class_definition(std::move(ss));
 }
 
 

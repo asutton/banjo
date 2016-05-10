@@ -26,6 +26,9 @@ Parser::elaborate_overloads(Stmt& s)
 {
   if (Declaration_stmt* s1 = as<Declaration_stmt>(&s))
     elaborate_overloads(s1->declaration());
+  
+  if (Compound_stmt* s1 = as<Compound_stmt>(&s))
+    elaborate_overloads(s1->statements());
 }
 
 
