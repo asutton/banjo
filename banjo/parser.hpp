@@ -114,6 +114,7 @@ struct Parser
   Stmt& yield_statement();
   Stmt& if_statement();
   Stmt& while_statement();
+  Stmt& for_statement();
   Stmt& break_statement();
   Stmt& continue_statement();
   Stmt& declaration_statement();

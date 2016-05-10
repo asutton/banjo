@@ -56,6 +56,9 @@ Parser::statement()
 
     case while_tok:
       return while_statement();
+    
+    case for_tok:
+      return for_statement();
 
     case break_tok:
       return break_statement();
@@ -143,8 +146,12 @@ Parser::yield_statement()
 // Parse an if statement.
 //
 //    if-statement:
-//      'if' '(' expression ')' statement
-//      'if' '(' expression ')' statement 'else' statement
+//      'if' '(' condition ')' statement
+//      'if' '(' condition ')' statement 'else' statement
+//
+// TODO: Allow a declaration in the condition. This is not quite
+// the same as a 'let' since the name is bound until the end of the
+// statement.
 Stmt&
 Parser::if_statement()
 {
@@ -164,6 +171,12 @@ Parser::if_statement()
 }
 
 
+// Parse a while statement.
+//
+//    while-statement:
+//      'while' '(' condition ')' statement
+//
+// TODO: Allow a declaration in the condition?
 Stmt&
 Parser::while_statement()
 {
@@ -175,6 +188,26 @@ Parser::while_statement()
   match(rparen_tok);
   Stmt& body = statement();
   return on_while_statement(cond, body);
+}
+
+
+// Parse a for statement.
+//
+//    for-statement:
+//      'for' '(' variable-declaration [condition] ';' [expression] ')' statement
+//      'for' '(' expression-statement [condition] ';' [expression] ')' statement
+//      'for' '(' parameter-declaration 'in' expression ')' statement
+//
+// TODO: Nail down the parse semantics for the for loop. We can probably
+// find some way of unifying the first term.
+//
+// TODO: Implement a parse for the range-based for. This will require
+// lookahead for the first non-nested ';' in order to determine if
+// we have a range-for or a normal for.
+Stmt&
+Parser::for_statement()
+{
+  lingo_unimplemented("for loop");
 }
 
 

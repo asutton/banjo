@@ -9,11 +9,21 @@ def f5 : (x, y) = x;
 def f6 : (x, y) x;
 
 
-def g : (x : int) -> int {
+def g1 : (x : int) -> int {
   var y : int = 5;
   while (true) {
     break;
   }
   return 0;
+}
+
+def g2 : (x : int) -> int {
+  class A {
+    class B {
+      def f() {
+        class C { var x : int; }
+      }
+    }
+  }
 }
 
