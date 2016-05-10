@@ -19,17 +19,12 @@ namespace banjo
 // before a declaration's type. They look like part of the type but
 // are distinct.
 
-namespace
-{
-
-inline void
+static inline void
 accept_specifier(Parser& p, Specifier_set s)
 {
   p.accept();
   p.decl_specs() |= s;
 }
-
-} // namespace
 
 
 // Parse a sequence of declaration specifiers.
@@ -602,119 +597,6 @@ Parser::function_definition(Decl& d)
       return on_defaulted_definition(d);
   }
   throw Syntax_error("expected function-definition");
-}
-
-
-// -------------------------------------------------------------------------- //
-// Types
-
-// Parse a type declaration.
-//
-//    type-declaration:
-//      'class' identifier [':' type] type-body
-//
-//    type-body:
-//      compound-statement
-//
-// NOTE: The parser currently allows the omission of the ':' because it
-// looks weird when the kind is omitted.
-//
-// TODO: We could use '=' notation in bodies to create new derived types.
-Decl&
-Parser::class_declaration()
-{
-  require(class_tok);
-  Name& name = identifier();
-
-  // NOTE: The colon is made optional.
-  match_if(colon_tok);
-
-  // Match the kind of the class.
-  Type* kind;
-  if (next_token_is(lbrace_tok))
-    kind = &cxt.get_type_type();
-  else
-    kind = &unparsed_class_kind();
-
-  Decl& decl = on_class_declaration(name, *kind);
-  Enter_scope scope(cxt, cxt.saved_scope(decl));
-
-  // Match the body.
-  Stmt& body = class_body();
-
-  return on_class_definition(decl, body);
-};
-
-
-// Return an unparsed type for the variable's type specification.
-Type&
-Parser::unparsed_class_kind()
-{
-  Token_seq toks;
-  while (!is_eof()) {
-    if (next_token_is_one_of(lbrace_tok) && !in_braces())
-      break;
-    toks.push_back(accept());
-  }
-  return on_unparsed_type(std::move(toks));
-}
-
-
-// Returns an unparsed type body.
-//
-// NOTE: The sequence of tokens are identical to a compound statement
-// but, because this is a type body, they will be interpreted as a
-// member statement.
-Stmt&
-Parser::unparsed_class_body()
-{
-  Token_seq toks;
-  toks.push_back(match(lbrace_tok));
-  Brace_matching_sentinel is_non_nested(*this);
-  while (!is_eof()) {
-    if (next_token_is(rbrace_tok) && is_non_nested())
-      break;
-    toks.push_back(accept());
-  }
-  toks.push_back(match(rbrace_tok));
-  return on_unparsed_statement(std::move(toks));
-}
-
-
-// Parse a class body, which represents the body of a class.
-//
-//    class-body:
-//      '{' [member-seq] '}'
-//
-//    member-seq:
-//      member
-//      member-seq member
-//
-// Note that that the scope into which declarations are added is pushed 
-// prior to the parsing of the member statement.
-Stmt&
-Parser::class_body()
-{
-  Stmt_list ss;
-  match(lbrace_tok);
-  if (lookahead() != rbrace_tok)
-    ss = member();
-  match(rbrace_tok);
-  return on_member_statement(std::move(ss));
-}
-
-
-// A member is a declaration within a class.
-//
-//    member:
-//      member-declaration
-//
-// TODO: Allow any statements here in order to support metaprogramming.
-Stmt&
-Parser::member()
-{
-  Decl& d = declaration();
-  return on_declaration_directive(d); 
 }
 
 

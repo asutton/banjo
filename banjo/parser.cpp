@@ -298,7 +298,7 @@ Parser::current_scope()
 Stmt&
 Parser::operator()()
 {
-  return translation();
+  return translation_unit();
 }
 
 

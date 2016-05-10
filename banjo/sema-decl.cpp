@@ -131,37 +131,6 @@ Parser::on_defaulted_definition(Decl& d)
 
 
 // -------------------------------------------------------------------------- //
-// Classes
-
-// Handle the declaration of the class.
-Decl&
-Parser::on_class_declaration(Name& n, Type& t)
-{
-  Decl& d = build.make_class_declaration(n, t);
-  declare(cxt, current_scope(), d);
-  return d;
-}
-
-
-Decl&
-Parser::on_class_declaration(Name& n, Type& t, Stmt& s)
-{
-  Decl& d = build.make_class_declaration(n, t, s);
-  declare(cxt, current_scope(), d);
-  return d;
-}
-
-
-Decl&
-Parser::on_super_declaration(Name& n, Type& t)
-{
-  Decl& d = cxt.make_super_declaration(t);
-  declare(cxt, d);
-  return d;
-}
-
-
-// -------------------------------------------------------------------------- //
 // Coroutine
 
 Decl&

@@ -1094,7 +1094,6 @@ Printer::statement(Stmt const& s)
     void operator()(Stmt const& s)             { lingo_unhandled(s); }
     void operator()(Unparsed_stmt const& s)    { p.statement(s); }
     void operator()(Translation_stmt const& s) { p.translation_statement(s); }
-    void operator()(Member_stmt const& s)      { p.member_statement(s); }
     void operator()(Compound_stmt const& s)    { p.compound_statement(s); }
     void operator()(Return_stmt const& s)      { p.return_statement(s); }
     void operator()(Yield_stmt const& s)       { p.yield_statement(s); }
@@ -1143,17 +1142,6 @@ void
 Printer::translation_statement(Translation_stmt const& s)
 {
   statement_seq(s.statements());
-}
-
-
-void
-Printer::member_statement(Member_stmt const& s)
-{
-  token(lbrace_tok);
-  newline_and_indent();
-  statement_seq(s.statements());
-  newline_and_undent();
-  token(rbrace_tok);
 }
 
 
@@ -1541,7 +1529,36 @@ void
 Printer::class_definition(Class_def const& d)
 {
   newline();
-  statement(d.body());
+  class_body(d);
+}
+
+
+void
+Printer::class_body(Class_def const& d)
+{
+  token(lbrace_tok);
+  newline_and_indent();
+  member_statement_seq(d.statements());
+  newline_and_undent();
+  token(rbrace_tok);
+}
+
+
+void
+Printer::member_statement_seq(Stmt_list const& ss)
+{
+  for (auto iter = ss.begin(); iter != ss.end(); ++iter) {
+    member_statement(*iter);
+    if (std::next(iter) != ss.end())
+      newline();
+  }
+}
+
+
+void
+Printer::member_statement(Stmt const& s)
+{
+  statement(s);
 }
 
 

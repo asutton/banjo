@@ -174,11 +174,11 @@ Parser::elaborate_class_definition(Class_decl& decl, Class_def& def)
   Enter_scope scope(cxt, cxt.saved_scope(decl));
 
   // Elaborate the definition's statement, possibly parsing it.
-  Stmt& stmt = elaborate_member_statement(def.body());
+  // Stmt& stmt = elaborate_member_statement(def.body());
 
   // Update the definition with the new statement. We don't need
   // to update the declaration.
-  def.body_ = &stmt;
+  // def.body_ = &stmt;
 }
 
 
@@ -211,12 +211,12 @@ Parser::elaborate_compound_statement(Stmt& s)
 Stmt&
 Parser::elaborate_member_statement(Stmt& s)
 {
-  if (Unparsed_stmt* soup = as<Unparsed_stmt>(&s)) {
-    Save_input_location loc(cxt);
-    Token_stream ts(soup->tokens());
-    Parser parse(cxt, ts);
-    return parse.member_statement();
-  }
+  // if (Unparsed_stmt* soup = as<Unparsed_stmt>(&s)) {
+  //   Save_input_location loc(cxt);
+  //   Token_stream ts(soup->tokens());
+  //   Parser parse(cxt, ts);
+  //   return parse.member_statement();
+  // }
   return s;
 }
 

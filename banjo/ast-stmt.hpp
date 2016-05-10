@@ -64,21 +64,10 @@ struct Multiple_stmt : Stmt
 
 
 // A sequence of statements representing a complete translation unit.
-struct Translation_stmt : Multiple_stmt
-{
-  using Multiple_stmt::Multiple_stmt;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-};
-
-
-// A sequence of statements representing the body of a type.
 //
-// Note that this term only follows the declaration of a type as a form
-// of its definition. It is otherwise syntactically identical to compound
-// statement, but with different semantics.
-struct Member_stmt : Multiple_stmt
+// FIXME: I hate this class. This should be named Translation_unit, and
+// it should probably be a declaration.
+struct Translation_stmt : Multiple_stmt
 {
   using Multiple_stmt::Multiple_stmt;
 

@@ -3,7 +3,6 @@
 
 define_node(Empty_stmt)
 define_node(Translation_stmt)
-define_node(Member_stmt)
 define_node(Compound_stmt)
 define_node(Expression_stmt)
 define_node(Declaration_stmt)

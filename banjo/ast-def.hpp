@@ -136,19 +136,28 @@ struct Function_def : Def
 // kind of definition for each entity.
 struct Class_def : Def
 {
-  Class_def(Stmt& s)
-    : body_(&s)
+  Class_def(Stmt_list&& ss)
+    : stmts_(std::move(ss))
   { }
 
   void accept(Visitor& v) const { return v.visit(*this); }
   void accept(Mutator& v)       { return v.visit(*this); }
 
-  // Returns the list of member declarations.
-  Stmt const& body() const { return *body_; }
-  Stmt&       body()       { return *body_; }
+  // Returns the list of member statements.
+  Stmt_list const& statements() const { return stmts_; }
+  Stmt_list&       statements()       { return stmts_; }
 
-  Stmt* body_;
+  // Returns the list of member variables.
+  Decl_list const& objects() const;
+  Decl_list&       objects();
+
+  // Returns the list of constructors.
+  Decl_list const& constructors() const;
+  Decl_list&       constructors();
+
+  Stmt_list stmts_;
 };
+
 
 // A concept body is a sequence of statements.
 struct Concept_def : Def

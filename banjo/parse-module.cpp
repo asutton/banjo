@@ -12,56 +12,50 @@ namespace banjo
 
 // Parse a translation unit.
 //
-//    translation:
-//      [directive-list]
+//    translation-unit:
+//      [toplevel-statement-seq]
 //
-// FIXME: Rethink the program structure for the language. In particular,
-// we should prefer to think in terms of program fragments. Fragments can
-// be combined to define libraries (archives?), modules, and programs.
-// This can probably be achieved by simply renaming Translation_stmt to
-// Fragment_stmt, although it would probably be nice to revisit the design 
-// of compound statements in general.
+// A translation unit is physically comprised of a sequence of input 
+// files. The order in which these files appear in the translation is 
+// not consequential, except in some cases.
 Stmt&
-Parser::translation()
+Parser::translation_unit()
 {
   // TODO: We should enter the global scope and not create a temporary.
   Enter_scope scope(cxt);
-
-  Stmt_list ss;
-  while (!is_eof())
-    Stmt& s = directive();
-    ss.push_back(s);
-  }
-
-  return on_translation_statement(std::move(ss));
+  Stmt_list ss = toplevel_statement_seq();
+  return on_translation_unit(std::move(ss));
 }
 
 
-// Parse a directive.
+// Parse a sequence of top-level statements.
 //
-//    directive:
-//      include-directive     -- Probably?
-//      pragma-directive      -- Maybe?
-//      declaration-directive
-//
-//    declaration-directive:
-//      declaration
-//
-// A directive is a top-level statement in a program fragment. This includes 
-// information defining properties of the eventual module or program, 
-// including its declarations.
-//
-// Note that directives are set of statements that can appear only in the
-// global scope.
-//
-// TODO: What kinds of directives can we have? Note that imports and
-// modules are declarations. Maybe pragma-like things? What about 
-// metaprogamming facilities?
-Stmt&
-Parser::directive()
+//    toplevel-statement-seq:
+//      toplevel-statement
+//      toplevel-statement-seq toplevel-statement
+Stmt_list
+Parser::toplevel_statement_seq()
 {
-  Decl& d = declaration();
-  return on_declaration_directive(d);
+  Stmt_list ss;
+  while (!is_eof()) {
+    Stmt& s = toplevel_statement();
+    ss.push_back(s);
+  }
+  return ss;
+}
+
+
+// Parse a toplevel statement.
+//
+//    toplevel-statement:
+//      declaration-statement
+//
+// TODO: What other kinds of toplevel-statements should we have. Note that
+// imports and modules are declarations. 
+Stmt&
+Parser::toplevel_statement()
+{
+  return declaration_statement();
 }
 
 

@@ -26,7 +26,7 @@ Stmt&
 Parser::statement()
 {
   switch (lookahead()) {
-    // Declaration specifiers start declarations.
+    // Declaration specifiers.
     case virtual_tok:
     case abstract_tok:
     case static_tok:
@@ -106,6 +106,11 @@ Parser::compound_statement()
 }
 
 
+// Parse a return statement.
+//
+//    return-statement:
+//      'return' ';'
+//      'return' expression ';'
 Stmt&
 Parser::return_statement()
 {
@@ -115,6 +120,12 @@ Parser::return_statement()
   return on_return_statement(tok, e);
 }
 
+
+// Parse a yield statement.
+//
+//    yield-statement:
+//      'yield' ';'
+//      'yield' expression ';'
 Stmt&
 Parser::yield_statement()
 {
@@ -123,6 +134,7 @@ Parser::yield_statement()
   match(semicolon_tok);
   return on_yield_statement(tok, e);
 }
+
 
 // Parse an if statement.
 //
@@ -177,6 +189,9 @@ Parser::continue_statement()
 
 
 // Parse a declaration-statement.
+//
+//    declaration-statement:
+//      declaration
 Stmt&
 Parser::declaration_statement()
 {

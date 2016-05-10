@@ -706,16 +706,9 @@ Builder::synthesize_expression(Decl& d)
 // Statements
 
 Translation_stmt&
-Builder::make_translation_statement(Stmt_list&& ss)
+Builder::make_translation_unit(Stmt_list&& ss)
 {
   return make<Translation_stmt>(std::move(ss));
-}
-
-
-Member_stmt&
-Builder::make_member_statement(Stmt_list&& ss)
-{
-  return make<Member_stmt>(std::move(ss));
 }
 
 
@@ -898,11 +891,10 @@ Builder::make_class_declaration(Name& n, Type& t)
 }
 
 
-Class_decl&
-Builder::make_class_declaration(Name& n, Type& t, Stmt& s)
+Class_def&
+Builder::make_class_definition(Stmt_list&& s)
 {
-  Def& d = make_class_definition(s);
-  return make<Class_decl>(n, t, d);
+  return make<Class_def>(std::move(s));
 }
 
 
@@ -1090,12 +1082,6 @@ Builder::make_function_definition(Stmt& s)
   return make<Function_def>(s);
 }
 
-
-Class_def&
-Builder::make_class_definition(Stmt& s)
-{
-  return make<Class_def>(s);
-}
 
 Function_def&
 Builder::make_coroutine_definition(Stmt& s)

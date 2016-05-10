@@ -16,13 +16,6 @@ Parser::on_compound_statement(Stmt_list&& ss)
 
 
 Stmt&
-Parser::on_member_statement(Stmt_list&& ss)
-{
-  return cxt.make_member_statement(std::move(ss));
-}
-
-
-Stmt&
 Parser::on_empty_statement()
 {
   return cxt.make_empty_statement();
