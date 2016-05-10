@@ -200,6 +200,7 @@ struct Parser
   void elaborate_declaration(Stmt&);
   void elaborate_declaration(Decl&);
   void elaborate_variable_declaration(Variable_decl&);
+  void elaborate_super_declaration(Super_decl&);
   void elaborate_function_declaration(Function_decl&);
   void elaborate_parameter_declaration(Object_parm&);
   void elaborate_class_declaration(Class_decl&);

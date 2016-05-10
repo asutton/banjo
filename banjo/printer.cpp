@@ -1317,10 +1317,8 @@ void
 Printer::super_declaration(Super_decl const& d)
 {
   token(super_tok);
-  space();
   //identifier(d);
   binary_operator(colon_tok);
-  space();
   type(d.type());
   token(semicolon_tok);
 

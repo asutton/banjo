@@ -45,6 +45,7 @@ Parser::elaborate_declaration(Decl& d)
     Parser& p;
     void operator()(Decl& d)           { lingo_unhandled(d); }
     void operator()(Variable_decl& d)  { p.elaborate_variable_declaration(d); }
+    void operator()(Super_decl& d)     { p.elaborate_super_declaration(d); }
     void operator()(Function_decl& d)  { p.elaborate_function_declaration(d); }
     void operator()(Coroutine_decl& d) { p.elaborate_coroutine_declaration(d); }
     void operator()(Class_decl& d)     { p.elaborate_class_declaration(d); }
@@ -56,6 +57,14 @@ Parser::elaborate_declaration(Decl& d)
 // Update the type of the variable.
 void
 Parser::elaborate_variable_declaration(Variable_decl& d)
+{
+  d.type_ = &elaborate_type(d.type());
+}
+
+
+// Update the type of the super declaration.
+void
+Parser::elaborate_super_declaration(Super_decl& d)
 {
   d.type_ = &elaborate_type(d.type());
 }

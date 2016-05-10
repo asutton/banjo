@@ -127,7 +127,6 @@ Parser::member_statement()
       return declaration_statement();
     
     default:
-      std::cout << "HERE: " << lookahead() << '\n';
       error("expected member-statement");
       throw Syntax_error();
   }

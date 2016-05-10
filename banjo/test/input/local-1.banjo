@@ -1,0 +1,4 @@
+
+def f() -> void {
+  var x : int = 5;  
+}
