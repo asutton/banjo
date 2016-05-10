@@ -5,6 +5,7 @@
 #include "printer.hpp"
 #include "ast.hpp"
 #include "type.hpp"
+#include "overload.hpp"
 
 #include <iostream>
 
@@ -12,9 +13,7 @@
 namespace banjo
 {
 
-// Elaborate the type of each declaration in turn. Note that elaboration
-// and "skip forward" if the type of one declaration depends on the type
-// or definition of another defined after it.
+// Elaborate the type of each declaration in turn.
 void
 Parser::elaborate_declarations(Stmt_list& ss)
 {
@@ -23,12 +22,18 @@ Parser::elaborate_declarations(Stmt_list& ss)
   }
 }
 
+
 // If the statement is a declaration, elaborate its declared type.
+// Otherwise, do nothing.
 void
 Parser::elaborate_declaration(Stmt& s)
 {
   if (Declaration_stmt* s1 = as<Declaration_stmt>(&s))
     elaborate_declaration(s1->declaration());
+  
+  // Recurse through block statements.
+  if (Compound_stmt* s1 = as<Compound_stmt>(&s))
+    elaborate_declarations(s1->statements());
 }
 
 
@@ -39,32 +44,31 @@ Parser::elaborate_declaration(Decl& d)
   {
     Parser& p;
     void operator()(Decl& d)           { lingo_unhandled(d); }
-    void operator()(Object_decl& d)    { p.elaborate_object_declaration(d); }
+    void operator()(Variable_decl& d)  { p.elaborate_variable_declaration(d); }
     void operator()(Function_decl& d)  { p.elaborate_function_declaration(d); }
-    void operator()(Class_decl& d)     { p.elaborate_class_declaration(d); }
     void operator()(Coroutine_decl& d) { p.elaborate_coroutine_declaration(d); }
+    void operator()(Class_decl& d)     { p.elaborate_class_declaration(d); }
   };
   apply(d, fn{*this});
 }
 
 
-
+// Update the type of the variable.
 void
-Parser::elaborate_object_declaration(Object_decl& d)
+Parser::elaborate_variable_declaration(Variable_decl& d)
 {
   d.type_ = &elaborate_type(d.type());
 }
 
 
 void
-Parser::elaborate_function_declaration(Function_decl& d)
+Parser::elaborate_function_declaration(Function_decl& decl)
 {
   // Reset the list of implicit parameters.
   state.implicit_parms = {};
 
-  // Elaborate the type of each parameter in turn. Note that this does
-  // not declare the parameters, it just checks their types.
-  Decl_list& parms = d.parameters();
+  // Elaborate the type of each parameter in turn. 
+  Decl_list& parms = decl.parameters();
   for (Decl& d : parms)
     elaborate_parameter_declaration(cast<Object_parm>(d));
 
@@ -72,14 +76,14 @@ Parser::elaborate_function_declaration(Function_decl& d)
   //
   // FIXME: If the return type shares a placehoder name with a parameter,
   // then that's not a placeholder. We need to rewrite the type.
-  Type& ret = elaborate_type(d.return_type());
+  Type& ret = elaborate_type(decl.return_type());
 
   // Rebuild the function type and update the declaration.
-  d.type_ = &cxt.get_function_type(parms, ret);
+  decl.type_ = &cxt.get_function_type(parms, ret);
 
-  // If necessary, make the function a template.
+  // If necessary, transform the function into a template.
   if (state.implicit_parms.size()) {
-    Decl& tmp = cxt.make_template(state.implicit_parms, d);
+    Decl& tmp = cxt.make_template(state.implicit_parms, decl);
 
     // FIXME: Actually make this a declaration! We probably need to
     // replace this entity in the declaration list with its new
@@ -87,8 +91,53 @@ Parser::elaborate_function_declaration(Function_decl& d)
     (void)tmp;
   }
 
+  // FIXME: Rewrite expression definitins into function definitions
+  // to simplify later analysis and code gen.
+  
+  if (Function_def* def = as<Function_def>(&decl.definition())) {
+    // Note that functions don't have saved scope because you can't
+    // refer into them.
+    Enter_scope scope(cxt);
+    elaborate_declaration(def->statement());
+  }
 }
 
+
+// TODO: We should probably be doing more checking here.
+void
+Parser::elaborate_coroutine_declaration(Coroutine_decl &d)
+{
+  // Elaborate the parameters
+  Decl_list& parms = d.parameters();
+  for (Decl& d : parms)
+    elaborate_parameter_declaration(cast<Object_parm>(d));
+  
+  // Elaborate the return type of the coroutine
+  d.ret_ = &elaborate_type(d.type());
+}
+
+
+// Elaborate a class declaration by updating its kind and members.
+void
+Parser::elaborate_class_declaration(Class_decl& decl)
+{
+  decl.kind_ = &elaborate_type(decl.kind());
+
+  // TODO: What about a deleted class?
+  Class_def& def = cast<Class_def>(decl.definition());
+
+  // Recurse through member statements.
+  Enter_scope scope(cxt, cxt.saved_scope(decl));
+  elaborate_declarations(def.statements());
+}
+
+
+
+// -------------------------------------------------------------------------- //
+// Elaboration of parameters
+
+namespace
+{
 
 Type& rewrite_parameter_type(Context&, Type&, Decl_list&);
 
@@ -140,6 +189,9 @@ rewrite_parameter_type(Context& cxt, Type& t, Decl_list& ds)
 }
 
 
+} // namespace
+
+
 void
 Parser::elaborate_parameter_declaration(Object_parm& p)
 {
@@ -160,36 +212,19 @@ Parser::elaborate_parameter_declaration(Object_parm& p)
 }
 
 
-// Elaborate the kind of a type.
-void
-Parser::elaborate_class_declaration(Class_decl& d)
-{
-  d.kind_ = &elaborate_type(d.kind());
-}
-
-
+// Resolve the (possibly) unparsed type.
 Type&
 Parser::elaborate_type(Type& t)
 {
-  if (Unparsed_type* soup = as<Unparsed_type>(&t)) {
+  // FIXME: Don't create a new parser. Just reset this parser.
+  if (Unparsed_type* tokens = as<Unparsed_type>(&t)) {
     Save_input_location loc(cxt);
-    Token_stream ts(soup->tokens());
+    Token_stream ts(tokens->tokens());
     Parser parse(cxt, ts);
     return parse.type();
   }
   return t;
 }
 
-
-void
-Parser::elaborate_coroutine_declaration(Coroutine_decl &d)
-{
-  // Elaborate the parameters
-  Decl_list& parms = d.parameters();
-  for (Decl& d : parms)
-    elaborate_parameter_declaration(cast<Object_parm>(d));
-  // Elaborate the return type of the coroutine
-  d.ret_ = &elaborate_type(d.type());
-}
 
 } // namespace banjo

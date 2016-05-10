@@ -11,23 +11,14 @@ namespace banjo
 {
 
 
-struct match_lbrace
-{
-  Parser& p;
-  bool operator()() const
-  {
-    return p.next_token_is(lbrace_tok);
-  }
-};
-
-
 // Parse a class definition.
 //
 //    class-declaration:
+//      'class' identifier [':'] class-body
 //      'class' identifier [':' type] class-body
 //
 // NOTE: The parser currently allows the omission of the ':' because it
-// looks weird when the kind is omitted.
+// looks weird when the kind is not given explicitly omitted.
 //
 // TODO: We could use '=' notation in bodies to create new derived types.
 Decl&

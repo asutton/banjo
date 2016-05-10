@@ -20,7 +20,9 @@ def g1 : (x : int) -> int {
 def g2 : (x : int) -> int {
   class A {
     class B {
-      def f() {
+      def f(b : *B) {
+        var b1 : bool = true;
+        var b2 : bool = false;
         class C { var x : int; }
       }
     }
