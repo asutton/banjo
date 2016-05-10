@@ -1056,7 +1056,6 @@ Generator::gen(Function_decl const& d)
 {
   String name = get_name(d);
   llvm::Type* type = get_type(d.type());
-
   // Build the function.
   llvm::FunctionType* ftype = llvm::cast<llvm::FunctionType>(type);
   fn = llvm::Function::Create(
@@ -1154,7 +1153,52 @@ Generator::gen(Coroutine_decl const& d)
 {
   String name = get_name(d);
   llvm::Type* type = get_type(d.type());
-  lingo_unimplemented("Coroutines");
+  //llvm::Instruction address; // Address of the block;
+  std::vector<llvm::BlockAddress*> labels; // This will hold the labels and use an indirect branch inst;
+  std::vector<llvm::Type*> ts;
+  // The parameters of the coroutine become members of the class
+  for(auto &mem : d.parameters()){
+    ts.push_back(get_type(mem.type()));
+  }
+
+  llvm::Type* t = llvm::StructType::create(cxt, ts, get_name(d));
+  types.bind(&d, t);
+  // Generate the call function
+  Function_def def = as<Function_def>(d.definition());
+
+
+
+  gen_coroutine_definition(def, d.type());
+
+}
+
+void
+Generator::gen_coroutine_definition(Function_def const& d, Type const& t)
+{
+  // Probably need to do something else here since yield should set a label pointer
+  String name = "call";
+  llvm::Type* type = get_type(t);
+  type->dump();
+  llvm::FunctionType* ftype = llvm::FunctionType::get(get_type(t),false);
+  fn = llvm::Function::Create(
+    ftype,                           // function type
+    llvm::Function::ExternalLinkage, // linkage
+    name,                            // name
+    mod);                            // owning module
+
+  // Build the entry and exit blocks for the function.
+  entry = llvm::BasicBlock::Create(cxt, "entry", fn);
+  exit = llvm::BasicBlock::Create(cxt, "exit");
+  build.SetInsertPoint(entry);
+  auto address = entry->getFirstInsertionPt();
+ // build.CreateIndirectBr(address);
+  if (!is<Void_type>(t))
+    ret = build.CreateAlloca(fn->getReturnType());
+  else
+    ret = nullptr;
+
+  // Create a new binding for the variable.
+  gen_function_definition(d);
 }
 
 void

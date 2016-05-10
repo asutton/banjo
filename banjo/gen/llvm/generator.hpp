@@ -126,6 +126,7 @@ struct Generator
   void gen(Object_parm const&);
   void gen(Coroutine_decl const&);
   void gen(Class_decl const&);
+  void gen_coroutine_definition(Function_def const&, Type const&);
 
   // Name  bindings
   void declare(Decl const&, llvm::Value*);
