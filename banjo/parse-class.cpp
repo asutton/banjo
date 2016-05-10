@@ -11,6 +11,16 @@ namespace banjo
 {
 
 
+struct match_lbrace
+{
+  Parser& p;
+  bool operator()() const
+  {
+    return p.next_token_is(lbrace_tok);
+  }
+};
+
+
 // Parse a class definition.
 //
 //    class-declaration:
@@ -23,16 +33,18 @@ namespace banjo
 Decl&
 Parser::class_declaration()
 {
+  Match_token_pred end_kind(*this, lbrace_tok);
+
   require(class_tok);
   Name& name = identifier();
 
-  // Match the type kind.
+  // Match the metatype. This will be late-parsed.
   Type* kind;
   if (match_if(colon_tok)) {
     if (next_token_is(lbrace_tok))
       kind = &cxt.get_type_type();
     else
-      kind = &unparsed_metatype();
+      kind = &unparsed_type(end_kind);
   } else {
     kind = &cxt.get_type_type();
   }
@@ -46,20 +58,6 @@ Parser::class_declaration()
   
   return on_class_definition(decl, def);
 };
-
-
-// Return an unparsed type for the variable's type specification.
-Type&
-Parser::unparsed_metatype()
-{
-  Token_seq toks;
-  while (!is_eof()) {
-    if (next_token_is_one_of(lbrace_tok) && !in_braces())
-      break;
-    toks.push_back(accept());
-  }
-  return on_unparsed_type(std::move(toks));
-}
 
 
 // Parse a class body, which represents the body of a class.
@@ -138,6 +136,7 @@ Parser::member_statement()
       return declaration_statement();
     
     default:
+      std::cout << "HERE: " << lookahead() << '\n';
       error("expected member-statement");
       throw Syntax_error();
   }

@@ -66,8 +66,6 @@ struct Parser
   Decl& template_name();
   Decl& concept_name();
 
-  // Specifiers
-
   // Types
   Type& type();
   Type& suffix_type();
@@ -151,11 +149,9 @@ struct Parser
   Type& unparsed_parameter_type();
   Type& unparsed_return_type();
   Expr& unparsed_expression_body();
-  Def& function_definition(Decl&);
 
   // Classes
   Decl& class_declaration();
-  Type& unparsed_metatype();
   Def& class_body();
   Stmt_list member_statement_seq();
   Stmt& member_statement();
@@ -189,6 +185,13 @@ struct Parser
   Stmt& translation_unit();
   Stmt_list toplevel_statement_seq();
   Stmt& toplevel_statement();
+
+  // Unparsed terms
+  template<typename P> 
+  Type& unparsed_type(P);
+  
+  template<typename P>
+  Expr& unparsed_expression(P);
 
 
   // Type elaboration
@@ -475,6 +478,103 @@ Parser::clear_decl_specs()
 }
 
 
+// This class defines a predicate that can be tested to determine if the
+// current token is in the same nesting level as when this object is
+// constructed.
+struct Match_braces
+{
+  Match_braces(Parser& p)
+    : parser(p), level(p.brace_level())
+  { }
+
+  bool operator()() const
+  {
+    return parser.in_level(level);
+  }
+
+  Parser& parser;
+  int     level;
+};
+
+
+struct Match_token_pred
+{
+  Match_token_pred(Parser& p, Token_kind k)
+    : p(p), k(k)
+  { }
+
+  bool operator()() const
+  {
+    return p.next_token_is(k);
+  }
+
+  Parser&    p;
+  Token_kind k;
+};
+
+
+// TODO: Handle the 4 case.
+struct Match_any_token_pred
+{
+  Match_any_token_pred(Parser& p, Token_kind k1, Token_kind k2)
+    : p(p), n(2), k1(k1), k2(k2)
+  { 
+  }
+
+  Match_any_token_pred(Parser& p, Token_kind k1, Token_kind k2, Token_kind k3)
+    : p(p), n(2), k1(k1), k2(k2), k3(k3)
+  { 
+  }
+
+  bool operator()() const
+  {
+    if (n == 2)
+      return p.next_token_is_one_of(k1, k2);
+    if (n == 3)
+      return p.next_token_is_one_of(k1, k2, k3);
+    lingo_unreachable();
+  }
+
+  Parser&    p;
+  int        n;
+  Token_kind k1, k2, k3;
+};
+
+
+// Consume tokens until we reach the current token satisfied pred
+// at the same level brace nesting level.
+template<typename P>
+inline Type&
+Parser::unparsed_type(P pred)
+{
+  Token_seq toks;
+  Match_braces is_non_nested(*this);
+  while (!is_eof()) {
+    if (pred() && is_non_nested())
+      break;
+    toks.push_back(accept());
+  }
+  return on_unparsed_type(std::move(toks));
+}
+
+
+// Consume tokens until we reach the current token satisfied pred
+// at the same level brace nesting level.
+template<typename P>
+inline Expr&
+Parser::unparsed_expression(P pred)
+{
+  Token_seq toks;
+  Match_braces is_non_nested(*this);
+  while (!is_eof()) {
+    if (pred() && is_non_nested())
+      break;
+    toks.push_back(accept());
+  }
+  return on_unparsed_expression(std::move(toks));
+}
+
+
 // The trial parser provides recovery information for the parser
 // class. If the trial parse fails, then the state of the underlying
 // parser is rewound to the state cached by the trial parser.
@@ -528,25 +628,6 @@ Parser::match_if(R& (Parser::* f)())
   }
   return nullptr;
 }
-
-
-// This class defines a predicate that can be tested to determine if the
-// current token is in the same nesting level as when this object is
-// constructed.
-struct Brace_matching_sentinel
-{
-  Brace_matching_sentinel(Parser& p)
-    : parser(p), level(p.brace_level())
-  { }
-
-  bool operator()() const
-  {
-    return parser.in_level(level);
-  }
-
-  Parser& parser;
-  int     level;
-};
 
 
 } // nammespace banjo

@@ -12,7 +12,6 @@
 namespace banjo
 {
 
-// Functions
 
 // Parse a function definition.
 //
@@ -47,6 +46,10 @@ namespace banjo
 Decl&
 Parser::function_declaration()
 {
+  // Helper functions
+  Match_any_token_pred end_type(*this, lbrace_tok, eq_tok);
+  Match_token_pred     end_expr(*this, semicolon_tok);
+
   require(def_tok);
   Name& name = identifier();
 
@@ -60,78 +63,28 @@ Parser::function_declaration()
   // Match the return type.
   Type* ret;
   if (match_if(arrow_tok))
-    ret = &unparsed_return_type();
+    ret = &unparsed_type(end_type);
   else
     ret = &cxt.make_auto_type();
 
   // Match the function definition.
   if (match_if(eq_tok)) {
-    // = expression ;
-    Expr& body = unparsed_expression_body();
+    // TODO: Handle default and deleted functions.
+    Expr& expr = unparsed_expression(end_expr);
     match(semicolon_tok);
-    return on_function_declaration(name, parms, *ret, body);
+    return on_function_declaration(name, parms, *ret, expr);
+  } else if (next_token_is(lbrace_tok)) {
+    Stmt& stmt = compound_statement();
+    return on_function_declaration(name, parms, *ret, stmt);
   } else {
-    // { ... }
-    Stmt& body = compound_statement();
-    return on_function_declaration(name, parms, *ret, body);
+    Expr& expr = unparsed_expression(end_expr);
+    match(semicolon_tok);
+    return on_function_declaration(name, parms, *ret, expr);
   }
 }
 
 
-// Returns an unparsed return type.
-Type&
-Parser::unparsed_return_type()
-{
-  Token_seq toks;
-  Brace_matching_sentinel is_non_nested(*this);
-  while (!is_eof()) {
-    if (next_token_is_one_of(lbrace_tok, eq_tok) && is_non_nested())
-      break;
-    toks.push_back(accept());
-  }
-  return on_unparsed_type(std::move(toks));
-}
-
-
-// Returns an unparsed expression that defines a function.
-Expr&
-Parser::unparsed_expression_body()
-{
-  Token_seq toks;
-  Brace_matching_sentinel is_non_nested(*this);
-  while (!is_eof()) {
-    if (next_token_is(semicolon_tok) && is_non_nested())
-      break;
-    toks.push_back(accept());
-  }
-  return on_unparsed_expression(std::move(toks));
-}
-
-
-// Parse a function definition.
-//
-//    function-body:
-//      compound-statement
-//      '=' 'default' ';'
-//      '=' 'delete' ';'
-//
-// TODO: Allow '= expression' as a viable definition.
-Def&
-Parser::function_definition(Decl& d)
-{
-  if (lookahead() == lbrace_tok) {
-    Stmt& s = compound_statement();
-    return on_function_definition(d, s);
-  } else if (match_if(eq_tok)) {
-    if (match_if(delete_tok))
-      return on_deleted_definition(d);
-    if (match_if(default_tok))
-      return on_defaulted_definition(d);
-  }
-  throw Syntax_error("expected function-definition");
-}
-
-
+// -------------------------------------------------------------------------- //
 // Parameters
 
 // Parse a parameter clause.
@@ -183,6 +136,8 @@ Parser::parameter_list()
 Decl&
 Parser::parameter_declaration()
 {
+  Match_any_token_pred end_type(*this, comma_tok, rparen_tok, eq_tok);
+
   // Parse and cache the optional parameter specifier.
   parameter_specifier_seq();
 
@@ -192,8 +147,9 @@ Parser::parameter_declaration()
     if (next_token_is(eq_tok))
       lingo_unimplemented("default arguments");
 
-    Type& type = unparsed_parameter_type();
+    Type& type = unparsed_type(end_type);
 
+    // TODO: Implement default argument types.
     if (next_token_is(eq_tok))
       lingo_unimplemented("default arguments");
 
@@ -202,6 +158,7 @@ Parser::parameter_declaration()
 
   Type& type = cxt.make_auto_type();
 
+  // TODO: Implement default arguments.
   if (next_token_is(eq_tok))
     lingo_unimplemented("default arguments");
 
@@ -209,18 +166,37 @@ Parser::parameter_declaration()
 }
 
 
-Type&
-Parser::unparsed_parameter_type()
-{
-  Token_seq toks;
-  Brace_matching_sentinel is_non_nested(*this);
-  while (true) {
-    if (next_token_is_one_of(comma_tok, rparen_tok) && is_non_nested())
-      break;
-    toks.push_back(accept());
-  }
-  return on_unparsed_type(std::move(toks));
-}
+// -------------------------------------------------------------------------- //
+// Coroutines.
 
+// Parse a coroutine.
+//
+//    coroutine-definition:
+//      'codef' identifier ':' parameter-clause '->' type compound-statement
+//
+// TODO: Allow deduction from yield statements?
+Decl&
+Parser::coroutine_declaration()
+{
+  Match_token_pred end_type(*this, lbrace_tok);
+  
+  require(coroutine_tok);
+
+  // Name
+  Name& n = identifier(); // Name of coroutine
+  match_if(colon_tok);
+  
+  // Parameters.
+  Decl_list params = parameter_clause(); // (...)
+
+  // Return type.
+  match(arrow_tok);
+  Type& yield = unparsed_type(end_type);
+
+  // Body.
+  Stmt& body = compound_statement();
+  
+  return on_coroutine_declaration(n, params, yield, body);
+}
 
 } // namespace banjo

@@ -211,6 +211,10 @@ Parser::declaration()
 Decl&
 Parser::variable_declaration()
 {
+  // Helper functions.
+  Match_token_pred end_type(*this, eq_tok);
+  Match_token_pred end_init(*this, semicolon_tok);
+
   require(var_tok);
   Name& name = identifier();
   match(colon_tok);
@@ -218,17 +222,17 @@ Parser::variable_declaration()
   // Match the ":=" form.
   if (match_if(eq_tok)) {
     Type& type = cxt.make_auto_type();
-    Expr& init = unparsed_variable_initializer();
+    Expr& init = unparsed_expression(end_init);
     match(semicolon_tok);
     return on_variable_declaration(name, type, init);
   }
 
   // Match the type.
-  Type& type = unparsed_variable_type();
+  Type& type = unparsed_type(end_type);
 
   // Match the "name : type =" form.
   if (match_if(eq_tok)) {
-    Expr& init = unparsed_variable_initializer();
+    Expr& init = unparsed_expression(end_init);
     match(semicolon_tok);
     return on_variable_declaration(name, type, init);
   }
@@ -239,108 +243,18 @@ Parser::variable_declaration()
 }
 
 
-// Return an unparsed type for the variable's type specification.
-Type&
-Parser::unparsed_variable_type()
-{
-  Token_seq toks;
-  Brace_matching_sentinel is_non_nested(*this);
-  while (!is_eof()) {
-    if (next_token_is_one_of(semicolon_tok, eq_tok) && is_non_nested())
-      break;
-    toks.push_back(accept());
-  }
-  return on_unparsed_type(std::move(toks));
-}
+// -------------------------------------------------------------------------- //
+// Base class declarations
 
-
-// Returns an unparsed variable initializer.
-Expr&
-Parser::unparsed_variable_initializer()
-{
-  Token_seq toks;
-  Brace_matching_sentinel is_non_nested(*this);
-  while (!is_eof()) {
-    if (next_token_is(semicolon_tok) && is_non_nested())
-      break;
-    toks.push_back(accept());
-  }
-  return on_unparsed_expression(std::move(toks));
-}
-
-
-// Parse a variable initializer.
-//
-//    initializer:
-//      value-initializer
-//      brace-initializer
-//
-// Note that C++ refers to the equal-initializer form of initialization
-// as copy-initialization. This term also applies to object initialization
-// that occurs in argument passing, initialization of condition variables,
-// exception construction and catching and aggregate member initialization.
-// Copy initialization may invoke a move.
-//
-// The paren- and brace-initializer forms are called direct initialization.
-// This term also applies to object initialization in new expressions,
-// static casts, functional conversion, and member initializers.
-//
-// TODO: Am I using this or not?
-Expr&
-Parser::initializer(Decl& d)
-{
-  if (lookahead() == eq_tok)
-    return equal_initializer(d);
-  else if (lookahead() == lparen_tok)
-    return paren_initializer(d);
-  else if (lookahead() == lbrace_tok)
-    return brace_initializer(d);
-  throw Syntax_error("expected initializer");
-}
-
-
-// Parse a value initializer.
-//
-//    equal-initializer:
-//      '=' expression
-Expr&
-Parser::equal_initializer(Decl& d)
-{
-  require(eq_tok);
-  Expr& expr = expression();
-  return on_equal_initialization(d, expr);
-}
-
-
-// Parse a direct initializer.
-//
-//    paren-initializer:
-//      '(' expression-list ')'
-Expr&
-Parser::paren_initializer(Decl&)
-{
-  lingo_unimplemented("parse paren-initializer");
-}
-
-
-// Parse a brace initializer.
-//
-//    brace-initializer:
-//      '{' expression-list '}'
-Expr&
-Parser::brace_initializer(Decl&)
-{
-  lingo_unimplemented("parse brace-initializer");
-}
-
-
-// Parse a base class declaration.
+// Parse a base class (super) declaration.
 //
 //    super-declaration:
 //      super [identifier] : type;
 Decl&
 Parser::super_declaration()
 {
+  Match_token_pred end_type(*this, semicolon_tok);
+
   require(super_tok);
 
   // Match the optional identifier.
@@ -352,7 +266,7 @@ Parser::super_declaration()
 
   // Match type type.
   match(colon_tok);
-  Type& type = unparsed_variable_type();
+  Type& type = unparsed_type(end_type);
   match(semicolon_tok);
 
   return on_super_declaration(*name, type);
@@ -548,29 +462,6 @@ Parser::concept_declaration()
   // Enter_scope cscope(cxt, cxt.make_concept_scope(con));
   concept_definition(con);
   return con;
-}
-
-// Parse a coroutine.
-//
-//    coroutine-definition:
-//      'codef' identifier ':' parameter-clause '->' type compound-statement
-//
-Decl&
-Parser::coroutine_declaration()
-{
-  require(coroutine_tok);
-  Name& n = identifier(); // Name of coroutine
-  
-  // Make the colon optional.
-  match_if(colon_tok); // :
-
-  Decl_list params = parameter_clause(); // (...)
-
-  match(arrow_tok);
-  Type& yield = unparsed_return_type();
-  Stmt& body = compound_statement();
-  Decl& cor = on_coroutine_declaration(n, params, yield, body);
-  return cor;
 }
 
 

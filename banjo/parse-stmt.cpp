@@ -114,8 +114,10 @@ Parser::compound_statement()
 Stmt&
 Parser::return_statement()
 {
+  Match_token_pred end_expr(*this, semicolon_tok);
+
   Token tok = require(return_tok);
-  Expr& e = expression();
+  Expr& e = unparsed_expression(end_expr);
   match(semicolon_tok);
   return on_return_statement(tok, e);
 }
@@ -129,8 +131,10 @@ Parser::return_statement()
 Stmt&
 Parser::yield_statement()
 {
+  Match_token_pred end_expr(*this, semicolon_tok);
+  
   Token tok = require(yield_tok);
-  Expr&e = expression();
+  Expr&e = unparsed_expression(end_expr);
   match(semicolon_tok);
   return on_yield_statement(tok, e);
 }
@@ -144,9 +148,11 @@ Parser::yield_statement()
 Stmt&
 Parser::if_statement()
 {
+  Match_token_pred end_cond(*this, rparen_tok);
+
   require(if_tok);
   match(lparen_tok);
-  Expr& cond = expression();
+  Expr& cond = unparsed_expression(end_cond);
   match(rparen_tok);
   Stmt& branch1 = statement();
   if (match_if(else_tok)) {
@@ -161,9 +167,11 @@ Parser::if_statement()
 Stmt&
 Parser::while_statement()
 {
+  Match_token_pred end_cond(*this, rparen_tok);
+  
   require(while_tok);
   match(lparen_tok);
-  Expr& cond = expression();
+  Expr& cond = unparsed_expression(end_cond);
   match(rparen_tok);
   Stmt& body = statement();
   return on_while_statement(cond, body);
@@ -207,7 +215,8 @@ Parser::declaration_statement()
 Stmt&
 Parser::expression_statement()
 {
-  Expr& e = expression();
+  Match_token_pred end_expr(*this, rparen_tok);
+  Expr& e = unparsed_expression(end_expr);
   Stmt& s = on_expression_statement(e);
   match(semicolon_tok);
   return s;
@@ -230,8 +239,11 @@ Parser::statement_seq()
   do {
     Stmt& s = statement();
     ss.push_back(s);
-  } while (!is_eof() && next_token_is_not(rbrace_tok));
+  } while (next_token_is_not(rbrace_tok));
+  
+  // Process statements in the block?
   on_statement_seq(ss);
+  
   return ss;
 }
 

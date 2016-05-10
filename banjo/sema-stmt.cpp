@@ -100,14 +100,14 @@ Parser::on_unparsed_statement(Token_seq&& toks)
 void
 Parser::on_statement_seq(Stmt_list& ss)
 {
-  // Second pass: Resolve declared types.
-  elaborate_declarations(ss);
+  // // Second pass: Resolve declared types.
+  // elaborate_declarations(ss);
 
-  elaborate_partials(ss);
-  elaborate_overloads(ss);
+  // elaborate_partials(ss);
+  // elaborate_overloads(ss);
 
-  // Third pass: Resolve definitions.
-  elaborate_definitions(ss);
+  // // Third pass: Resolve definitions.
+  // elaborate_definitions(ss);
 }
 
 
