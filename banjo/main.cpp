@@ -26,7 +26,7 @@ struct Options
 {
   ~Options();
 
-  String   emit    = "bano";
+  String   emit    = "banjo";
   File_seq inputs  = {};
 };
 
