@@ -212,8 +212,8 @@ Decl&
 Parser::variable_declaration()
 {
   // Helper functions.
-  Match_token_pred end_type(*this, eq_tok);
-  Match_token_pred end_init(*this, semicolon_tok);
+  Match_any_token_pred end_type(*this, eq_tok, semicolon_tok);
+  Match_token_pred     end_init(*this, semicolon_tok);
 
   require(var_tok);
   Name& name = identifier();
