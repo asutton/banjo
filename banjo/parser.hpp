@@ -151,7 +151,6 @@ struct Parser
   Type& unparsed_parameter_type();
   Type& unparsed_return_type();
   Expr& unparsed_expression_body();
-  Stmt& unparsed_function_body();
   Def& function_definition(Decl&);
 
   // Classes

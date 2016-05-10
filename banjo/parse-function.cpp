@@ -12,12 +12,16 @@
 namespace banjo
 {
 
+// Functions
+
 // Parse a function definition.
 //
 //    function-definition:
-//      'def' identifier ':' [template-header] parameter-clause expression-statement
+//      'def' identifier ':' [template-header] parameter-clause '->' type compound-statement
+//      'def' identifier ':' [template-header] parameter-clause compound-statement
+//      'def' identifier ':' [template-header] parameter-clause '->' type '=' expression-statement
 //      'def' identifier ':' [template-header] parameter-clause '=' expression-statement
-//      'def' identifier ':' [template-header] parameter-clause '->' type function-body
+//      'def' identifier ':' [template-header] parameter-clause expression-statement
 //
 //    parameter-spec:
 //      '(' [parameter-list] ')'
@@ -27,6 +31,9 @@ namespace banjo
 //      '=' delete
 //      '=' expression-statement
 //
+// Note that that the last form cannot have a type annotation because there
+// is no token delimiting for the start of the definition.
+//  
 // TODO: Implement deleted functions.
 //
 // TODO: Allow named return types. That would change the grammar for return
@@ -65,11 +72,67 @@ Parser::function_declaration()
     return on_function_declaration(name, parms, *ret, body);
   } else {
     // { ... }
-    Stmt& body = unparsed_function_body();
+    Stmt& body = compound_statement();
     return on_function_declaration(name, parms, *ret, body);
   }
 }
 
+
+// Returns an unparsed return type.
+Type&
+Parser::unparsed_return_type()
+{
+  Token_seq toks;
+  Brace_matching_sentinel is_non_nested(*this);
+  while (!is_eof()) {
+    if (next_token_is_one_of(lbrace_tok, eq_tok) && is_non_nested())
+      break;
+    toks.push_back(accept());
+  }
+  return on_unparsed_type(std::move(toks));
+}
+
+
+// Returns an unparsed expression that defines a function.
+Expr&
+Parser::unparsed_expression_body()
+{
+  Token_seq toks;
+  Brace_matching_sentinel is_non_nested(*this);
+  while (!is_eof()) {
+    if (next_token_is(semicolon_tok) && is_non_nested())
+      break;
+    toks.push_back(accept());
+  }
+  return on_unparsed_expression(std::move(toks));
+}
+
+
+// Parse a function definition.
+//
+//    function-body:
+//      compound-statement
+//      '=' 'default' ';'
+//      '=' 'delete' ';'
+//
+// TODO: Allow '= expression' as a viable definition.
+Def&
+Parser::function_definition(Decl& d)
+{
+  if (lookahead() == lbrace_tok) {
+    Stmt& s = compound_statement();
+    return on_function_definition(d, s);
+  } else if (match_if(eq_tok)) {
+    if (match_if(delete_tok))
+      return on_deleted_definition(d);
+    if (match_if(default_tok))
+      return on_defaulted_definition(d);
+  }
+  throw Syntax_error("expected function-definition");
+}
+
+
+// Parameters
 
 // Parse a parameter clause.
 //
@@ -159,79 +222,5 @@ Parser::unparsed_parameter_type()
   return on_unparsed_type(std::move(toks));
 }
 
-
-// Returns an unparsed return type.
-Type&
-Parser::unparsed_return_type()
-{
-  Token_seq toks;
-  Brace_matching_sentinel is_non_nested(*this);
-  while (!is_eof()) {
-    if (next_token_is_one_of(lbrace_tok, eq_tok) && is_non_nested())
-      break;
-    toks.push_back(accept());
-  }
-  return on_unparsed_type(std::move(toks));
-}
-
-
-// Returns an unparsed expression that defines a function.
-Expr&
-Parser::unparsed_expression_body()
-{
-  Token_seq toks;
-  Brace_matching_sentinel is_non_nested(*this);
-  while (!is_eof()) {
-    if (next_token_is(semicolon_tok) && is_non_nested())
-      break;
-    toks.push_back(accept());
-  }
-  return on_unparsed_expression(std::move(toks));
-}
-
-
-// Returns an unparsed compound statement that defines a function.
-//
-// FIXME: This is identical to untyped_type_body, but semantically different.
-// There should be no order independence among declarations within a function
-// body... Maybe?
-Stmt&
-Parser::unparsed_function_body()
-{
-  Token_seq toks;
-  toks.push_back(match(lbrace_tok));
-  Brace_matching_sentinel is_non_nested(*this);
-  while (!is_eof()) {
-    if (next_token_is(rbrace_tok) && is_non_nested())
-      break;
-    toks.push_back(accept());
-  }
-  toks.push_back(match(rbrace_tok));
-  return on_unparsed_statement(std::move(toks));
-}
-
-
-// Parse a function definition.
-//
-//    function-body:
-//      compound-statement
-//      '=' 'default' ';'
-//      '=' 'delete' ';'
-//
-// TODO: Allow '= expression' as a viable definition.
-Def&
-Parser::function_definition(Decl& d)
-{
-  if (lookahead() == lbrace_tok) {
-    Stmt& s = compound_statement();
-    return on_function_definition(d, s);
-  } else if (match_if(eq_tok)) {
-    if (match_if(delete_tok))
-      return on_deleted_definition(d);
-    if (match_if(default_tok))
-      return on_defaulted_definition(d);
-  }
-  throw Syntax_error("expected function-definition");
-}
 
 } // namespace banjo
