@@ -636,7 +636,7 @@ Parser::class_declaration()
   else
     kind = &unparsed_class_kind();
 
-  // Match tghe body.
+  // Match the body.
   Stmt& body = unparsed_class_body();
 
   return on_class_declaration(name, *kind, body);
