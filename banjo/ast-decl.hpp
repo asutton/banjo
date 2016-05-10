@@ -211,6 +211,8 @@ struct Class_decl : Type_decl
 
   Type*  kind_;
   Def*   def_;
+  std::vector<Decl*> fields;
+  std::vector<Decl*> methods;
 };
 
 struct Coroutine_decl :Type_decl

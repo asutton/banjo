@@ -147,8 +147,7 @@ struct Class_def : Def
   Stmt const& body() const { return *body_; }
   Stmt&       body()       { return *body_; }
 
-  Stmt_list members;
-  Stmt_list methods;
+
   Stmt* body_;
 };
 

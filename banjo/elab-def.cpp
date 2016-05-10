@@ -183,12 +183,12 @@ Parser::elaborate_class_definition(Class_decl& decl, Class_def& def)
   Member_stmt& ms = as<Member_stmt>(*def.body_);
   for (auto& s : ms.stmts) {
     auto declaration = as<Declaration_stmt>(s);
-    if (is<Field_decl>(declaration.declaration()))
+    if (Field_decl* d = as<Field_decl>(&declaration.declaration()))
     {
-      def.members.push_back(s);
-    }else if (is<Method_decl>(declaration.declaration()))
+      decl.fields.push_back(d);
+    }else if (Method_decl* d = as<Method_decl>(&declaration.declaration()))
     {
-      def.members.push_back(s);
+      decl.methods.push_back(d);
     }
   }
 }
