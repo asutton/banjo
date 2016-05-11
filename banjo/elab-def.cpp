@@ -92,6 +92,7 @@ Parser::elaborate_function_definition(Function_decl& d)
   apply(d.definition(), fn{*this, d});
 }
 
+
 void
 Parser::elaborate_coroutine_definition(Coroutine_decl &decl){
   Enter_scope scope(cxt);
@@ -107,6 +108,7 @@ Parser::elaborate_coroutine_definition(Coroutine_decl &decl){
   def->stmt_ = &stmt;
   decl.def_ = def;
 }
+
 
 void
 Parser::elaborate_function_definition(Function_decl& decl, Expression_def& def)

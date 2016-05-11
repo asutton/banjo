@@ -248,7 +248,7 @@ Parser::declaration_statement()
 Stmt&
 Parser::expression_statement()
 {
-  Match_token_pred end_expr(*this, rparen_tok);
+  Match_token_pred end_expr(*this, semicolon_tok);
   Expr& e = unparsed_expression(end_expr);
   Stmt& s = on_expression_statement(e);
   match(semicolon_tok);

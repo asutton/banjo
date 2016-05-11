@@ -4,6 +4,7 @@
 #include "parser.hpp"
 #include "printer.hpp"
 #include "ast-stmt.hpp"
+#include "elab-expressions.hpp"
 
 #include <iostream>
 
@@ -19,21 +20,16 @@ Parser::on_translation_unit(Stmt_list&& ss)
   // TODO: All of these should be taking the translation unit
   // so that we can compute and push properties up.
 
-  // Assign types to declarations.
-  elaborate_declarations(unit.statements());
-
-  // Check overloading sanity.
-  elaborate_overloads(unit.statements());
-
-  // Merge partial classes.
-  // elaborate_partials(unit.statements());
-
-  // Elaborate all class definitions.
-  elaborate_classes(unit.statements());
+  Elaborate_expressions expr(*this);
 
 
-  // Elaborate all function definitions.
+  elaborate_declarations(unit.statements()); // Assign types to names
+  elaborate_overloads(unit.statements());    // Check overloads
+  // elaborate_partials(unit.statements());     // Manage partial definitions
+  elaborate_classes(unit.statements());      // Analyze class definitions
+  // elaborate_statements(unit.statements());   // Finish up all statements
 
+  expr(unit); // Typecheck expressions
 
   return unit;
 }

@@ -91,17 +91,17 @@ struct Compound_stmt : Multiple_stmt
 struct Expression_stmt : Stmt
 {
   Expression_stmt(Expr& e)
-    : expr(&e)
+    : expr_(&e)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the expression of the statement.
-  Expr const& expression() const { return *expr; }
-  Expr&       expression()       { return *expr; }
+  Expr const& expression() const { return *expr_; }
+  Expr&       expression()       { return *expr_; }
 
-  Expr* expr;
+  Expr* expr_;
 };
 
 
@@ -109,17 +109,17 @@ struct Expression_stmt : Stmt
 struct Declaration_stmt : Stmt
 {
   Declaration_stmt(Decl& d)
-    : decl(&d)
+    : decl_(&d)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the declaration of the statement.
-  Decl const& declaration() const { return *decl; }
-  Decl&       declaration()       { return *decl; }
+  Decl const& declaration() const { return *decl_; }
+  Decl&       declaration()       { return *decl_; }
 
-  Decl* decl;
+  Decl* decl_;
 };
 
 
@@ -127,33 +127,33 @@ struct Declaration_stmt : Stmt
 struct Return_stmt : Stmt
 {
   Return_stmt(Expr& e)
-    : expr(&e)
+    : expr_(&e)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the expression returned by the statement.
-  Expr const& expression() const { return *expr; }
-  Expr&       expression()       { return *expr; }
+  Expr const& expression() const { return *expr_; }
+  Expr&       expression()       { return *expr_; }
 
-  Expr* expr;
+  Expr* expr_;
 };
 
 // A yield statement.
 struct Yield_stmt : Stmt
 {
   Yield_stmt(Expr& e)
-    : expr(&e)
+    : expr_(&e)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator &v)       { v.visit(*this); }
 
-  Expr const& expression() const { return *expr; }
-  Expr&       expression()       { return *expr; }
+  Expr const& expression() const { return *expr_; }
+  Expr&       expression()       { return *expr_; }
 
-  Expr* expr;
+  Expr* expr_;
 };
 
 // An if-then statement.

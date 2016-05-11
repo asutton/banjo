@@ -29,7 +29,7 @@ Parser::class_declaration()
   require(class_tok);
   Name& name = identifier();
 
-  // Match the metatype. This will be late-parsed.
+  // Match the metatype.
   Type* kind;
   if (match_if(colon_tok)) {
     if (next_token_is(lbrace_tok))

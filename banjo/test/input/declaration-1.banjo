@@ -11,3 +11,7 @@ def f : () -> void { }
 // class t2 { }
 
 // def f0 : (x, x) -> void { }
+
+class X {
+  == : (in X, in X) = default;
+}

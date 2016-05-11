@@ -137,9 +137,6 @@ struct Parser
   Type& unparsed_variable_type();
   Expr& unparsed_variable_initializer();
   Expr& initializer(Decl&);
-  Expr& equal_initializer(Decl&);
-  Expr& paren_initializer(Decl&);
-  Expr& brace_initializer(Decl&);
   
   // Functions
   Decl& function_declaration();
@@ -215,7 +212,7 @@ struct Parser
   // Partial definitions
   void elaborate_partials(Stmt_list&);
 
-  // Class definitions
+  // Elaboration of class definitions
   void elaborate_classes(Stmt_list&);
   void elaborate_classes(Stmt&);
   void elaborate_class(Decl&);
@@ -431,12 +428,8 @@ struct Parser
   // and restoring parse state.
   struct State
   {
-    State()
-      : braces(), specs()
-    { }
-
-    Braces  braces;
-    Specs   specs;
+    Braces  braces; // Current nesting level
+    Specs   specs;  // Parsed specifiers
 
     Decl_list implicit_parms; // Implicit template parameters
   };

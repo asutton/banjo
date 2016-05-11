@@ -10,6 +10,8 @@ class List
   var next : *List;
   
   def ptr() -> *List { return next; }
+
+  def f(:List) { }
 }
 
 

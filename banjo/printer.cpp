@@ -989,7 +989,6 @@ void
 Printer::grouped_expression(Expr const& e)
 {
   token(lparen_tok);
-  std::cout << "HERE\n";
   expression(e);
   token(rparen_tok);
 }

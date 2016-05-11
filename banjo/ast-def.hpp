@@ -106,7 +106,8 @@ struct Expression_def : Def
 
 // A function declaration can be initialized by a compound statement.
 //
-// FIXME: Rename this to something more meaningful.
+// TODO: Are there any interesting properties of the function definition
+// that are not related to its body?
 struct Function_def : Def
 {
   Function_def(Stmt& s)

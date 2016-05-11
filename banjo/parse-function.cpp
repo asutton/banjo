@@ -128,7 +128,7 @@ Parser::parameter_list()
 // Parse a parameter declaration.
 //
 //    parameter-declaration:
-//      [parameter-specifier] identifier [':' type] ['=' expression]
+//      [parameter-specifier] [identifier] [':' type] ['=' expression]
 //      [parameter-specifier] identifier [':=' expression]
 //
 // Note that parameter packs and variadics are part of the type system
@@ -141,7 +141,12 @@ Parser::parameter_declaration()
   // Parse and cache the optional parameter specifier.
   parameter_specifier_seq();
 
-  Name& name = identifier();
+  // Parse the optional name.
+  Name* name;
+  if (next_token_is_not(colon_tok))
+    name = &identifier();
+  else
+    name = &cxt.get_id();
 
   if (match_if(colon_tok)) {
     if (next_token_is(eq_tok))
@@ -153,7 +158,7 @@ Parser::parameter_declaration()
     if (next_token_is(eq_tok))
       lingo_unimplemented("default arguments");
 
-    return on_function_parameter(name, type);
+    return on_function_parameter(*name, type);
   }
 
   Type& type = cxt.make_auto_type();
@@ -162,7 +167,7 @@ Parser::parameter_declaration()
   if (next_token_is(eq_tok))
     lingo_unimplemented("default arguments");
 
-  return on_function_parameter(name, type);
+  return on_function_parameter(*name, type);
 }
 
 
