@@ -18,15 +18,15 @@ namespace banjo
 { }
 
 
+// -------------------------------------------------------------------------- //
+// Statements
+
 void
 Elaborate_expressions::translation_unit(Translation_stmt& s)
 {
   statement_seq(s.statements());
 }
 
-
-// -------------------------------------------------------------------------- //
-// Statements
 
 void
 Elaborate_expressions::statement(Stmt& s)

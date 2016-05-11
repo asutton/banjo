@@ -1,6 +1,8 @@
+
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
+#include "elab-classes.hpp"
 #include "parser.hpp"
 #include "printer.hpp"
 #include "ast.hpp"
@@ -12,39 +14,99 @@
 namespace banjo
 {
 
+ Elaborate_classes::Elaborate_classes(Parser& p)
+  : parser(p), cxt(p.cxt)
+{ }
+
+
+// -------------------------------------------------------------------------- //
+// Statements
 
 void
-Parser::elaborate_classes(Stmt_list& ss)
+Elaborate_classes::translation_unit(Translation_stmt& s)
 {
-  for (Stmt& s : ss)
-    elaborate_classes(s);
+  statement_seq(s.statements());
 }
 
 
 void
-Parser::elaborate_classes(Stmt& s)
-{
-  if (Declaration_stmt* s1 = as<Declaration_stmt>(&s))
-    elaborate_class(s1->declaration());
-  
-  if (Compound_stmt* s1 = as<Compound_stmt>(&s))
-    elaborate_classes(s1->statements());
-}
-
-
-void
-Parser::elaborate_class(Decl& d)
+Elaborate_classes::statement(Stmt& s)
 {
   struct fn
   {
-    Parser& p;
-    void operator()(Decl& d)       { }
-    void operator()(Class_decl& d) { p.elaborate_class(d); }
+    Self& elab;
+    void operator()(Stmt& s)             { /* Do nothing. */ }
+    void operator()(Compound_stmt& s)    { elab.compound_statement(s); }
+    void operator()(Declaration_stmt& s) { elab.declaration_statement(s); }
+  };
+  apply(s, fn{*this});
+}
+
+
+void
+Elaborate_classes::statement_seq(Stmt_list& ss)
+{
+  for (Stmt& s : ss)
+    statement(s);
+}
+
+
+void
+Elaborate_classes::compound_statement(Compound_stmt& s)
+{
+  statement_seq(s.statements());
+}
+
+
+void
+Elaborate_classes::declaration_statement(Declaration_stmt& s)
+{
+  declaration(s.declaration());
+}
+
+
+// -------------------------------------------------------------------------- //
+// Declarations
+
+void
+Elaborate_classes::declaration(Decl& d)
+{
+  struct fn
+  {
+    Self& elab;
+    void operator()(Decl& d)          { /* Do nothing. */ }
+    void operator()(Function_decl& d) { elab.function_declaration(d); }
+    void operator()(Class_decl& d)    { elab.class_declaration(d); }
   };
   apply(d, fn{*this});
 }
 
 
+// TODO: Parse default arguments.
+//
+// TODO: Should we have transformed expression definitions into legitimate
+// function bodies at this point?
+void
+Elaborate_classes::function_declaration(Function_decl& d)
+{
+  struct fn
+  {
+    Self& elab;
+    void operator()(Def& d)            { lingo_unhandled(d); }
+    void operator()(Expression_def& d) { /* Do nothing. */ }
+    void operator()(Function_def& d)   { elab.statement(d.statement()); }
+  };
+
+  // Declare parameters. We do this for decltypes.
+  Enter_scope scope(cxt);
+  for (Decl& p : d.parameters())
+    declare(cxt, p);
+
+  apply(d.definition(), fn{*this});
+}
+
+
+// Helper functions for class analysis.
 namespace
 {
 
@@ -104,11 +166,13 @@ partition_members(Class_def& def, Stmt& s)
 } // namespace
 
 
-// Actually, elaborate the definition.
+
+// TODO: What if the definition is something other than a typical class 
+// definition. If so, we should probably apply that transformation here.
 void
-Parser::elaborate_class(Class_decl& decl)
+Elaborate_classes::class_declaration(Class_decl& decl)
 {
-  // FIXME: Elaborate the class kind.
+  // FIXME: Do something with the metatype.
 
   // Partition the statements into bases and fields.
   Class_def& def = cast<Class_def>(decl.definition());
@@ -120,5 +184,5 @@ Parser::elaborate_class(Class_decl& decl)
 }
 
 
-
 } // namespace banjo
+

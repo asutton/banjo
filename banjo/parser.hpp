@@ -212,31 +212,6 @@ struct Parser
   // Partial definitions
   void elaborate_partials(Stmt_list&);
 
-  // Elaboration of class definitions
-  void elaborate_classes(Stmt_list&);
-  void elaborate_classes(Stmt&);
-  void elaborate_class(Decl&);
-  void elaborate_class(Class_decl&);
-
-  // Definition elaboration
-  void elaborate_definitions(Stmt_list&);
-  void elaborate_definition(Stmt&);
-  void elaborate_definition(Decl&);
-  void elaborate_super_initializer(Super_decl&);
-  void elaborate_super_initializer(Super_decl&, Empty_def&);
-  void elaborate_super_initializer(Super_decl&, Expression_def&);
-  void elaborate_variable_initializer(Variable_decl&);
-  void elaborate_variable_initializer(Variable_decl&, Empty_def&);
-  void elaborate_variable_initializer(Variable_decl&, Expression_def&);
-  void elaborate_function_definition(Function_decl&);
-  void elaborate_function_definition(Function_decl&, Expression_def&);
-  void elaborate_function_definition(Function_decl&, Function_def&);
-  void elaborate_class_definition(Class_decl&);
-  void elaborate_class_definition(Class_decl&, Class_def&);
-  void elaborate_coroutine_definition(Coroutine_decl&);
-  Expr& elaborate_expression(Expr&);
-  Stmt& elaborate_compound_statement(Stmt&);
-  Stmt& elaborate_member_statement(Stmt&);
 
   // Semantics actions
 

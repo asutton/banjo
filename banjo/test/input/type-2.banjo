@@ -9,9 +9,10 @@ class List
 {
   var next : *List;
   
-  def ptr() -> *List { return next; }
+  def ptr(p : *List) -> int { return 0; }
 
-  def f(:List) { }
+  def f(a :*List) { }
+  def f(b :List) { }
 }
 
 

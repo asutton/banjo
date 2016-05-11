@@ -32,7 +32,6 @@ add_library(banjo
   sema-module.cpp
   sema-req.cpp
   elab-decl.cpp
-  elab-def.cpp
   elab-overloads.cpp
   elab-partials.cpp
   elab-classes.cpp
