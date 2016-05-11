@@ -97,6 +97,7 @@ struct Generator
   void gen(Member_stmt const&);
   void gen(Compound_stmt const&);
   void gen(Return_stmt const&);
+  void gen(Yield_stmt const&);
   void gen(If_then_stmt const&);
   void gen(If_else_stmt const&);
   void gen(While_stmt const&);
@@ -146,6 +147,10 @@ struct Generator
   llvm::BasicBlock* exit;  // Function exit
   llvm::BasicBlock* top;   // Loop top
   llvm::BasicBlock* bot;   // Loop bottom
+
+  // Information about coroutine
+  llvm::BasicBlock* leave; // Coroutine yield
+  llvm::BasicBlock* reenter; // Should be where the corouitine goes.
 
   // Environment.
   int           declcxt; // The current declaration context

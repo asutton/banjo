@@ -121,7 +121,13 @@ Generator::get_type(Function_type const& t)
 llvm::Type*
 Generator::get_type(Coroutine_type const& t)
 {
-  lingo_unimplemented("coroutine type");
+  auto const* bind = types.lookup(&t.declaration());
+  if(!bind)
+  {
+    gen(as<Coroutine_decl>(t.declaration()));
+    bind = types.lookup(&t.declaration());
+  }
+  return bind->second;
 }
 
 llvm::Type*
@@ -702,6 +708,7 @@ Generator::gen(Stmt const& s)
     void operator()(Translation_stmt const& s) { g.gen(s); }
     void operator()(Compound_stmt const& s)    { g.gen(s); }
     void operator()(Return_stmt const& s)      { g.gen(s); }
+    void operator()(Yield_stmt const& s)       { g.gen(s); }
     void operator()(If_then_stmt const& s)     { g.gen(s); }
     void operator()(If_else_stmt const& s)     { g.gen(s); }
     void operator()(While_stmt const& s)       { g.gen(s); }
@@ -768,6 +775,14 @@ Generator::gen(Return_stmt const& s)
   llvm::Value* v = gen(s.expression());
   build.CreateStore(v, ret);
   build.CreateBr(exit);
+}
+
+void
+Generator::gen(Yield_stmt const& s)
+{
+  llvm::Value* v = gen(s.expression());
+  build.CreateStore(v, ret);
+  build.CreateBr(leave);
 }
 
 
@@ -1156,11 +1171,10 @@ Generator::gen(Coroutine_decl const& d)
   //llvm::Instruction address; // Address of the block;
   std::vector<llvm::BlockAddress*> labels; // This will hold the labels and use an indirect branch inst;
   std::vector<llvm::Type*> ts;
-  // The parameters of the coroutine become members of the class
+  // The parameters of the coroutine become members of the class, should also probably grab them from the definition.
   for(auto &mem : d.parameters()){
     ts.push_back(get_type(mem.type()));
   }
-
   llvm::Type* t = llvm::StructType::create(cxt, ts, get_name(d));
   types.bind(&d, t);
   // Generate the call function
@@ -1171,7 +1185,7 @@ Generator::gen(Coroutine_decl const& d)
   gen_coroutine_definition(def, d.type());
 
 }
-
+// Probably need all of the variables in the def to add them as members of the struct.
 void
 Generator::gen_coroutine_definition(Function_def const& d, Type const& t)
 {
@@ -1188,10 +1202,10 @@ Generator::gen_coroutine_definition(Function_def const& d, Type const& t)
 
   // Build the entry and exit blocks for the function.
   entry = llvm::BasicBlock::Create(cxt, "entry", fn);
-  exit = llvm::BasicBlock::Create(cxt, "exit");
+  exit  = llvm::BasicBlock::Create(cxt, "exit");
+  leave = llvm::BasicBlock::Create(cxt, "leave");
+  reenter = llvm::BasicBlock::Create(cxt, "reenter");
   build.SetInsertPoint(entry);
-  auto address = entry->getFirstInsertionPt();
- // build.CreateIndirectBr(address);
   if (!is<Void_type>(t))
     ret = build.CreateAlloca(fn->getReturnType());
   else

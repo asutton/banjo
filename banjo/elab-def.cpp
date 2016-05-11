@@ -186,7 +186,7 @@ Parser::elaborate_class_definition(Class_decl& decl, Class_def& def)
     if (Field_decl* d = as<Field_decl>(&declaration.declaration()))
     {
       def.variables().push_back(d);
-    }else 
+    }else
     {
       def.methods().push_back(s);
     }
