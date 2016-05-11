@@ -1213,15 +1213,16 @@ Generator::gen(Class_decl const& d)
   std::vector<llvm::Type*> ts;
 
   // Check for parent classes and add them to ts
+  Class_def def = as<Class_def>(d.definition());
 
   // Construct the type over only the fields. If the record
   // is empty, generate a struct with exactly one  byte so that
   // we never have a type with 0 size.
-  if (d.fields.empty()) {
+  if (def.variables().empty()) {
     ts.push_back(build.getInt8Ty());
   } else {
-    for (Decl const* f : d.fields)
-      ts.push_back(get_type(f->type()));
+    for (auto& v : def.variables())
+      ts.push_back(get_type(v.type()));
   }
 
   // Create the llvm type
@@ -1229,8 +1230,8 @@ Generator::gen(Class_decl const& d)
   types.bind(&d,t);
 
   // Now, generate code for all other members.
-  for (Decl const* m : d.methods)
-    gen(*m);
+  for (Stmt& m : def.methods())
+    gen(m);
 
   // Enter a new context for the type
   Enter_context scope(*this, type_cxt);

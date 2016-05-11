@@ -185,10 +185,10 @@ Parser::elaborate_class_definition(Class_decl& decl, Class_def& def)
     auto declaration = as<Declaration_stmt>(s);
     if (Field_decl* d = as<Field_decl>(&declaration.declaration()))
     {
-      decl.fields.push_back(d);
-    }else if (Method_decl* d = as<Method_decl>(&declaration.declaration()))
+      def.variables().push_back(d);
+    }else 
     {
-      decl.methods.push_back(d);
+      def.methods().push_back(s);
     }
   }
 }

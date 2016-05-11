@@ -147,7 +147,14 @@ struct Class_def : Def
   Stmt const& body() const { return *body_; }
   Stmt&       body()       { return *body_; }
 
+  Stmt_list const& methods() const { return methods_; }
+  Stmt_list&       methods()       { return methods_; }
 
+  Decl_list const& variables() const { return variables_; }
+  Decl_list&       variables()       { return variables_; }
+
+  Stmt_list methods_;
+  Decl_list variables_;
   Stmt* body_;
 };
 
