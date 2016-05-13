@@ -72,8 +72,10 @@ operator<<(std::ostream& os, Value const& v)
     void operator()(Error_value const& v) { os << "<error>"; }
     void operator()(Integer_value const& v) { os << v; };
     void operator()(Float_value const& v) { os << v; };
-    void operator()(Function_value const& v) { os << v->name(); };
-    void operator()(Reference_value const& v) { os << *v << '@' << (void*)v; };
+    
+    // TODO: Print the qualified name.
+    void operator()(Reference_value const& v) { os << v->name(); };
+    
     void operator()(Array_value const& v) { print(os, v); }
     void operator()(Tuple_value const& v) { print(os, v); }
   };
@@ -121,7 +123,6 @@ zero_initialize(Value& v)
     void operator()(Error_value& v)     { };
     void operator()(Integer_value& v)   { zero_initialize(v); };
     void operator()(Float_value& v)     { zero_initialize(v); };
-    void operator()(Function_value& v)  { }
     void operator()(Reference_value& v) { }
     void operator()(Aggregate_value& v) { zero_initialize(v); };
   };

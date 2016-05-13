@@ -57,7 +57,7 @@ public:
   Value boolean(Boolean_expr const&);
   Value integer(Integer_expr const&);
   Value tuple(Tuple_expr const&);
-  Value ref(Decl_expr const&);
+  Value object(Object_expr const&);
   Value call(Call_expr const&);
   Value logical_and(And_expr const&);
   Value logical_or(Or_expr const&);
@@ -79,6 +79,9 @@ public:
   Value ge(Ge_expr const&);
   Value cmp(Cmp_expr const&);
 
+  Value to_value(Value_conv const&);
+  Value to_bool(Boolean_conv const&);
+
   Control evaluate(Stmt const&, Value&);
   Control evaluate_block(Compound_stmt const&, Value&);
   Control evaluate_declaration(Declaration_stmt const&, Value&);
@@ -88,7 +91,7 @@ public:
   void elaborate(Decl const&);
   void elaborate_object(Object_decl const&);
 
-  // Memory management
+  // Load/store functions
   Value  alias(Decl const&);
   Value  load(Decl const&);
   Value& store(Decl const&, Value const&);

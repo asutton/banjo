@@ -4,7 +4,9 @@
 #ifndef BANJO_VALUE_HPP
 #define BANJO_VALUE_HPP
 
-#include "prelude.hpp"
+#include "language.hpp"
+
+#include <cstring>
 
 
 namespace banjo
@@ -21,7 +23,6 @@ enum Value_kind
   error_value,
   integer_value,
   float_value,
-  function_value,
   reference_value,
   array_value,
   tuple_value,
@@ -33,13 +34,20 @@ struct Error_value { };
 
 
 // Representation of fundamental value categories.
-//
-// TODO: Use lingo::Integer and lingo::Real for the integer and 
-// float values.
 using Integer_value = int64_t;
+
+
+// Represents a floating point object.
 using Float_value = double;
-using Function_value = Function_decl const*;
-using Reference_value = Value*;
+
+
+// Represents a memory address.
+//
+// TODO: This isn't quite an address; it's the location of an object
+// in memory. A "pure" address is simply an integer value. However,
+// I'm not sure we want the abstract machine to allow loads and stores
+// of uninitialized (i.e., non-existent) memory.
+using Reference_value = Decl const*;
 
 
 // The common structure of array and tuple values.
@@ -96,7 +104,6 @@ union Value_rep
   Value_rep() : err_() { }
   Value_rep(Integer_value z) : int_(z) { }
   Value_rep(Float_value fp) : float_(fp) { }
-  Value_rep(Function_value f) : fn_(f) { }
   Value_rep(Reference_value r) : ref_(r) { }
   Value_rep(Array_value a) : arr_(a) { }
   Value_rep(Tuple_value t) : tup_(t) { }
@@ -105,7 +112,6 @@ union Value_rep
   Error_value     err_;
   Integer_value   int_;
   Float_value     float_;
-  Function_value  fn_;
   Reference_value ref_;
   Array_value     arr_;
   Tuple_value     tup_;
@@ -144,8 +150,8 @@ struct Value
     : k(float_value), r(fp)
   { }
 
-  Value(Function_value f)
-    : k(function_value), r(f)
+  Value(Reference_value ref)
+    : k(reference_value), r(ref)
   { }
 
   Value(Array_value a)
@@ -167,7 +173,6 @@ struct Value
   bool is_error() const;
   bool is_integer() const;
   bool is_float() const;
-  bool is_function() const;
   bool is_reference() const;
   bool is_array() const;
   bool is_tuple() const;
@@ -175,7 +180,6 @@ struct Value
   Error_value     get_error() const;
   Integer_value   get_integer() const;
   Float_value     get_float() const;
-  Function_value  get_function() const;
   Reference_value get_reference() const;
   Array_value     get_array() const;
   Tuple_value     get_tuple() const;
@@ -192,7 +196,6 @@ struct Value::Visitor
   virtual void visit(Error_value const&) = 0;
   virtual void visit(Integer_value const&) = 0;
   virtual void visit(Float_value const&) = 0;
-  virtual void visit(Function_value const&) = 0;
   virtual void visit(Reference_value const&) = 0;
   virtual void visit(Array_value const&) = 0;
   virtual void visit(Tuple_value const&) = 0;
@@ -205,22 +208,10 @@ struct Value::Mutator
   virtual void visit(Error_value&) = 0;
   virtual void visit(Integer_value&) = 0;
   virtual void visit(Float_value&) = 0;
-  virtual void visit(Function_value&) = 0;
   virtual void visit(Reference_value&) = 0;
   virtual void visit(Array_value&) = 0;
   virtual void visit(Tuple_value&) = 0;
 };
-
-
-// Construct a value reference. Not that reference
-// chains are not permitted. That is, v shall not
-// be a reference.
-inline
-Value::Value(Value* v)
-  : k(reference_value), r(v)
-{
-  assert(!v->is_reference());
-}
 
 
 // Returns true if the value is an error.
@@ -243,13 +234,6 @@ inline bool
 Value::is_float() const
 {
   return k == float_value;
-}
-
-// Returns true if the value is a function.
-inline bool
-Value::is_function() const
-{
-  return k == function_value;
 }
 
 
@@ -304,15 +288,6 @@ Value::get_float() const
 }
 
 
-// Returns the function value.
-inline Function_value
-Value::get_function() const
-{
-  assert(is_function());
-  return r.fn_;
-}
-
-
 // Get a pointer to the referred to value.
 inline Reference_value
 Value::get_reference() const
@@ -355,7 +330,6 @@ Value::accept(Visitor& v) const
     case error_value: return v.visit(r.err_);
     case integer_value: return v.visit(r.int_);
     case float_value: return v.visit(r.float_);
-    case function_value: return v.visit(r.fn_);
     case reference_value: return v.visit(r.ref_);
     case array_value: return v.visit(r.arr_);
     case tuple_value: return v.visit(r.tup_);
@@ -370,7 +344,6 @@ Value::accept(Mutator& v)
     case error_value: return v.visit(r.err_);
     case integer_value: return v.visit(r.int_);
     case float_value: return v.visit(r.float_);
-    case function_value: return v.visit(r.fn_);
     case reference_value: return v.visit(r.ref_);
     case array_value: return v.visit(r.arr_);
     case tuple_value: return v.visit(r.tup_);
@@ -459,7 +432,6 @@ struct Generic_value_visitor : Value::Visitor, lingo::Generic_visitor<F, T>
   void visit(Error_value const& v) { this->invoke(v); };
   void visit(Integer_value const& v) { this->invoke(v); };
   void visit(Float_value const& v) { this->invoke(v); };
-  void visit(Function_value const& v) { this->invoke(v); };
   void visit(Reference_value const& v) { this->invoke(v); };
   void visit(Array_value const& v) { this->invoke(v); };
   void visit(Tuple_value const& v) { this->invoke(v); };
@@ -476,7 +448,6 @@ struct Generic_value_mutator : Value::Mutator, lingo::Generic_mutator<F, T>
   void visit(Error_value& v)     { this->invoke(v); };
   void visit(Integer_value& v)   { this->invoke(v); };
   void visit(Float_value& v)     { this->invoke(v); };
-  void visit(Function_value& v)  { this->invoke(v); };
   void visit(Reference_value& v) { this->invoke(v); };
   void visit(Array_value& v)     { this->invoke(v); };
   void visit(Tuple_value& v)     { this->invoke(v); };

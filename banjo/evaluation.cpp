@@ -20,28 +20,15 @@ namespace banjo
 Value
 Evaluator::alias(Decl const& d)
 {
-  // If the expression refers to an object, then produce
-  // a reference to its stored value.
-  if (Object_decl const* var = as<Object_decl>(&d))
-    return &stack.lookup(var)->second;
-
-  // If the expression refers to a function, then produce
-  // a reference to that function.
-  if (Function_decl const* fn = as<Function_decl>(&d))
-    return fn;
-
-  // Is there anything else?
-  banjo_unhandled_case(d);
+  return Reference_value(&d);
 }
 
 
-// Load the value of an object corresponding to the
-// given declaration.
+// Load the value of an object corresponding to the given declaration.
+// This produces a value associated with the name.
 Value
 Evaluator::load(Decl const& d)
 {
-  // If the expression refers to an object, then produce
-  // a reference to its stored value.
   if (Object_decl const* var = as<Object_decl>(&d))
     return stack.lookup(var)->second;
 
@@ -63,30 +50,6 @@ Evaluator::store(Decl const& d, Value const& v)
 }
 
 
-// Allocate space for an object of type `t`. No value initialization
-// procedure is invoked.
-//
-// This currently works by prototyping an object of the approppriate
-// shape and storing that for the declaration.
-//
-// TODO: It would be better if we could just emplace the approiately
-// shaped object directly into the store.
-Value&
-Evaluator::alloca(Decl const& d)
-{
-  struct fn
-  {
-    Value operator()(Type const& t) { banjo_unhandled_case(t); }
-    Value operator()(Boolean_type const&) { return 0; }
-    Value operator()(Integer_type const&) { return 0; }
-    Value operator()(Float_type const&)   { return 0.0; }
-    Value operator()(Function_type const&) { return Function_value(nullptr); }
-    Value operator()(Reference_type const&) { return Reference_value(nullptr); }
-  };
-  return store(d, apply(declared_type(d), fn{}));
-}
-
-
 // -------------------------------------------------------------------------- //
 // Evaluation of expressions
 
@@ -100,7 +63,7 @@ Evaluator::evaluate(Expr const& e)
     Value operator()(Boolean_expr const& e) { return self.boolean(e); }
     Value operator()(Integer_expr const& e) { return self.integer(e); }
     Value operator()(Tuple_expr const& e)   { return self.tuple(e); }
-    Value operator()(Decl_expr const& e)    { return self.ref(e); }
+    Value operator()(Object_expr const& e)  { return self.object(e); }
     Value operator()(Call_expr const& e)    { return self.call(e); }
     Value operator()(And_expr const& e)     { return self.logical_and(e); }
     Value operator()(Or_expr const& e)      { return self.logical_or(e); }
@@ -154,10 +117,9 @@ Evaluator::tuple(Tuple_expr const& e)
 }
 
 
-// Returns the object or function referred to by the
-// given declaration.
+// Returns a reference to the object referred to be e.
 Value
-Evaluator::ref(Decl_expr const& e)
+Evaluator::object(Object_expr const& e)
 {
   return alias(e.declaration());
 }
@@ -166,8 +128,10 @@ Evaluator::ref(Decl_expr const& e)
 Value
 Evaluator::call(Call_expr const& e)
 {
+  // FIXME: I believe that the function operand must be a reference to
+  // a function.
   Value v = evaluate(e.function());
-  Function_decl const& f = *v.get_function();
+  Function_decl const& f = cast<Function_decl>(*v.get_reference());
 
   // There should probably be a body for the function.
   //
@@ -383,6 +347,19 @@ Evaluator::cmp(Cmp_expr const& e)
 
 
 // -------------------------------------------------------------------------- //
+// Evaluation of conversions
+
+// Given an object, convert it to a value. This loads the value stored
+// previously by the object.
+Value
+Evaluator::to_value(Value_conv const& e)
+{
+  Value v = evaluate(e.source());
+  return load(*v.get_reference());
+}
+
+
+// -------------------------------------------------------------------------- //
 // Evaluation of statements
 
 // Evaluate the given statement, returning a
@@ -469,9 +446,6 @@ Evaluator::elaborate(Decl const& d)
 void
 Evaluator::elaborate_object(Object_decl const& d)
 {
-  // FIXME: Implement initialization!
-  Value& v = alloca(d);
-  (void)v;
   lingo_unreachable();
 }
 
@@ -538,7 +512,6 @@ lift_value(Context& cxt, Type& t, Value const& v)
     Expr& operator()(Error_value const& v)     { return lift_error(cxt, type, v); }
     Expr& operator()(Integer_value const& v)   { return lift_integer(cxt, type, v); }
     Expr& operator()(Float_value const& v)     { lingo_unreachable(); }
-    Expr& operator()(Function_value const& v)  { lingo_unreachable(); }
     Expr& operator()(Reference_value const& v) { lingo_unreachable(); }
     Expr& operator()(Array_value const& v)     { lingo_unreachable(); }
     Expr& operator()(Tuple_value const& v)     { return lift_tuple(cxt, type, v); }
