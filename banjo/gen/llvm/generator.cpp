@@ -64,7 +64,8 @@ Generator::get_type(Type const& t)
     llvm::Type* operator()(Auto_type const& t)      { return g.get_type(t); }
     llvm::Type* operator()(Array_type const& t)     { return g.get_type(t); }
     llvm::Type* operator()(Dynarray_type const& t)  { return g.get_type(t); }
-  };
+    llvm::Type* operator()(Tuple_type const& t)    { return g.get_type(t); }
+   };
   return apply(t, fn{*this});
 }
 
@@ -106,6 +107,25 @@ Generator::get_type(Float_type const&)
 }
 
 
+// Return a tuple type.
+llvm::Type*
+Generator::get_type(Tuple_type const& t)
+{
+  Type_list const& ts = t.element_types();
+
+  // Handle the empty case specially.
+  if (ts.empty())
+    return llvm::StructType::get(cxt);
+
+  // Generate a literal struct type.
+  std::vector<llvm::Type*> types;
+  types.reserve(t.element_types().size());
+  for (Type const& t1 : t.element_types())
+    types.push_back(get_type(t1));
+  return llvm::StructType::get(cxt, types);
+}
+
+
 // Return a function type.
 llvm::Type*
 Generator::get_type(Function_type const& t)
@@ -142,7 +162,7 @@ Generator::get_type(Class_type const& t)
   return bind->second;
 }
 
-//return an array type
+// Return an array type
 llvm::Type*
 Generator::get_type(Array_type const& t) 
 {
@@ -152,7 +172,7 @@ Generator::get_type(Array_type const& t)
 }
 
 
-//return an array type
+// Return an array type
 llvm::Type*
 Generator::get_type(Dynarray_type const& t) 
 {
@@ -183,7 +203,7 @@ Generator::gen(Expr const& e)
   struct fn
   {
     Generator& g;
-    llvm::Value* operator()(Expr const& e) { lingo_unhandled(e); }
+    llvm::Value* operator()(Expr const& e)         { lingo_unhandled(e); }
     llvm::Value* operator()(Boolean_expr const& e) { return g.gen(e); }
     llvm::Value* operator()(Integer_expr const& e) { return g.gen(e); }
     llvm::Value* operator()(Add_expr const& e)     { return g.gen(e); }
@@ -199,21 +219,20 @@ Generator::gen(Expr const& e)
     llvm::Value* operator()(Gt_expr const& e)      { return g.gen(e); }
     llvm::Value* operator()(Le_expr const& e)      { return g.gen(e); }
     llvm::Value* operator()(Ge_expr const& e)      { return g.gen(e); }
+    llvm::Value* operator()(And_expr const& e)     { return g.gen(e); }
+    llvm::Value* operator()(Or_expr const& e)      { return g.gen(e); }
+    llvm::Value* operator()(Not_expr const& e)     { return g.gen(e); }
+    llvm::Value* operator()(Tuple_expr const& e)   { return g.gen(e); }
     llvm::Value* operator()(Object_expr const& e)  { return g.gen(e); }
-//  llvm::Value* operator()(And_expr const& e) { return g.gen(e); }
-//  llvm::Value* operatortor()(Or_expr const& e) { return g.gen(e);
-//  llvm::Value* operator()(Not_expr const& e) { return g.gen(e); }
 
-    // llvm::Value* operator()(Id_expr const* e) const { return g.gen(e); }
-    // llvm::Value* operator()(Decl_expr const* e) const { return g.gen(e); }
-    // llvm::Value* operator()(Lambda_expr const* e) const { lingo_unreachable(); }
+    llvm::Value* operator()(Value_conv const& e)   { return g.gen(e); }
+    llvm::Value* operator()(Boolean_conv const& e) { return g.gen(e); }
 
     // llvm::Value* operator()(Call_expr const* e) const { return g.gen(e); }
     // llvm::Value* operator()(Dot_expr const* e) const { return g.gen(e); }
     // llvm::Value* operator()(Field_expr const* e) const { return g.gen(e); }
     // llvm::Value* operator()(Method_expr const* e) const { return g.gen(e); }
     // llvm::Value* operator()(Index_expr const* e) const { return g.gen(e); }
-    // llvm::Value* operator()(Value_conv const* e) const { return g.gen(e); }
     // llvm::Value* operator()(Promote_conv const* e) const { return g.gen(e); }
     // llvm::Value* operator()(Block_conv const* e) const { return g.gen(e); }
     // llvm::Value* operator()(Base_conv const* e) const { return g.gen(e); }
@@ -236,234 +255,72 @@ Generator::gen(Integer_expr const& e)
   return build.getInt(e.value().impl());
 }
 
-
+// Build a tuple value.
 llvm::Value*
-Generator::gen(Add_expr const& e)
+Generator::gen(Tuple_expr const& e)
 {
-  llvm::Value* l = gen(*e.first);
-  llvm::Value* r = gen(*e.second);
-  return build.CreateAdd(l, r);
+  llvm::Type* type = get_type(e.type());
+  llvm::Value* agg = llvm::UndefValue::get(type);
+
+  // Build the tuple through a sequence of insertvalues, putting a
+  // new value into each index.
+  int n = 0;
+  for (Expr const& elem : e.elements())
+    agg = build.CreateInsertValue(agg, gen(elem), n++);
+
+  return agg;
 }
 
+// Return the value corresponding to a literal expression.
+//llvm::Value*
+//Generator::gen(Literal_expr const* e)
+//{
+//  // TODO: Write better type queries.
+//  //
+//  // TODO: Write a better interface for values.
+//  Value v = evaluate(e);
+//  Type const* t = e->type();
+//  if (t == get_boolean_type())
+//    return build.getInt1(v.get_integer());
+//  if (t == get_character_type())
+//    return build.getInt8(v.get_integer());
+//  if (t == get_integer_type())
+//    return build.getInt32(v.get_integer());
+//
+//  // FIXME: How should we generate array literals? Are
+//  // these global constants or are they local alloca
+//  // objects. Does it depend on context?
+//
+//  // A string literal produces a new global string constant.
+//  // and returns a pointer to an array of N characters.
+//  if (is_string(t)) {
+//    Array_value a = v.get_array();
+//    String s = a.get_string();
+//
+//    // FIXME: This does not unify equivalent strings.
+//    // Maybe we needt maintain a mapping in order to
+//    // avoid redunancies.
+//    auto iter = strings.find(s);
+//    if (iter == strings.end()) {
+//      llvm::Value* v = build.CreateGlobalString(s);
+//      iter = strings.emplace(s, v).first;
+//    }
+//    return iter->second;
+//  }
+//
+//  else
+//    throw std::runtime_error("cannot generate function literal");
+//}
 
-
-llvm::Value*
-Generator::gen(Sub_expr const& e)
-{
-  llvm::Value* l = gen(*e.first);
-  llvm::Value* r = gen(*e.second);
-  return build.CreateSub(l, r);
-}
-
-
-llvm::Value*
-Generator::gen(Mul_expr const& e)
-{
-  llvm::Value* l = gen(*e.first);
-  llvm::Value* r = gen(*e.second);
-  return build.CreateMul(l, r);
-}
-
-
-llvm::Value*
-Generator::gen(Div_expr const& e)
-{
-  llvm::Value* l = gen(*e.first);
-  llvm::Value* r = gen(*e.second);
-  return build.CreateSDiv(l, r);
-}
-
-
-// FIXME: decide on unsigned or signed remainder
-// based on types of expressions
-llvm::Value*
-Generator::gen(Rem_expr const& e)
-{
-  llvm::Value* l = gen(*e.first);
-  llvm::Value* r = gen(*e.second);
-  return build.CreateURem(l, r);
-}
-
-
-llvm::Value*
-Generator::gen(Neg_expr const& e)
-{
-  llvm::Value* zero = build.getInt32(0);
-  llvm::Value* val = gen(*e.first);
-  return build.CreateSub(zero, val);
-}
-
-
-llvm::Value*
-Generator::gen(Pos_expr const& e)
-{
-  return gen(*e.first);
-}
-
-
-llvm::Value*
-Generator::gen(Eq_expr const& e)
-{
-  llvm::Value* l = gen(*e.first);
-  llvm::Value* r = gen(*e.second);
-  return build.CreateICmpEQ(l, r);
-}
-
-
-llvm::Value*
-Generator::gen(Ne_expr const& e)
-{
-  llvm::Value* l = gen(*e.first);
-  llvm::Value* r = gen(*e.second);
-  return build.CreateICmpNE(l, r);
-}
-
-
-llvm::Value*
-Generator::gen(Lt_expr const& e)
-{
-  llvm::Value* l = gen(*e.first);
-  llvm::Value* r = gen(*e.second);
-  return build.CreateICmpSLT(l, r);
-}
-
-
-llvm::Value*
-Generator::gen(Gt_expr const& e)
-{
-  llvm::Value* l = gen(*e.first);
-  llvm::Value* r = gen(*e.second);
-  return build.CreateICmpSGT(l, r);
-}
-
-
-llvm::Value*
-Generator::gen(Le_expr const& e)
-{
-  llvm::Value* l = gen(*e.first);
-  llvm::Value* r = gen(*e.second);
-  return build.CreateICmpSLE(l, r);
-}
-
-
-llvm::Value*
-Generator::gen(Ge_expr const& e)
-{
-  llvm::Value* l = gen(*e.first);
-  llvm::Value* r = gen(*e.second);
-  return build.CreateICmpSGE(l, r);
-}
-
+// Return the address of the object referenced by the expression.
 llvm::Value*
 Generator::gen(Object_expr const& e)
 {
-  lingo_unimplemented("Object_expr");
+  llvm::Value* ret = lookup(e.declaration());
+  return ret;
 }
 
-
-
-//
-//llvm::Value*
-//Generator::gen(And_expr const* e)
-//{
-//  llvm::BasicBlock* head_block = build.GetInsertBlock();
-//  llvm::BasicBlock* tail_block = llvm::BasicBlock::Create(cxt, "", fn, head_block->getNextNode());
-//  llvm::BasicBlock* then_block = llvm::BasicBlock::Create(cxt, "", fn, tail_block);
-//
-//  // Generate code for the left operand.
-//  llvm::Value* left = gen(e->left());
-//  build.CreateCondBr(left, then_block, tail_block);
-//  build.SetInsertPoint(then_block);
-//
-//  // Generate code for the right operand.
-//  llvm::Value* right = gen(e->right());
-//  build.CreateBr(tail_block);
-//  build.SetInsertPoint(tail_block);
-//
-//  llvm::PHINode* phi_inst = build.CreatePHI(build.getInt1Ty(), 2);
-//  phi_inst->addIncoming(build.getFalse(), head_block);
-//  phi_inst->addIncoming(right, then_block);
-//  return phi_inst;
-//}
-//
-//
-//llvm::Value*
-//Generator::gen(Or_expr const* e)
-//{
-//  llvm::BasicBlock* head_block = build.GetInsertBlock();
-//  llvm::BasicBlock* tail_block = llvm::BasicBlock::Create(cxt, "", fn, head_block->getNextNode());
-//  llvm::BasicBlock* then_block = llvm::BasicBlock::Create(cxt, "", fn, tail_block);
-//
-//  // Generate code for the left operand.
-//  llvm::Value* left = gen(e->left());
-//  build.CreateCondBr(left, tail_block, then_block);
-//  build.SetInsertPoint(then_block);
-//
-//  // Generate code for the right operand.
-//  llvm::Value* right = gen(e->right());
-//  build.CreateBr(tail_block);
-//  build.SetInsertPoint(tail_block);
-//
-//  llvm::PHINode* phi_inst = build.CreatePHI(build.getInt1Ty(), 2);
-//  phi_inst->addIncoming(build.getTrue(), head_block);
-//  phi_inst->addIncoming(right, then_block);
-//  return phi_inst;
-//}
-//
-//
-//// Logical not is a simple XOR with the value true
-//// 1 xor 1 = 0
-//// 0 xor 1 = 1
-//llvm::Value*
-//Generator::gen(Not_expr const* e)
-//{
-//  llvm::Value* one = build.getTrue();
-//  llvm::Value* operand = gen(e->operand());
-//  return build.CreateXor(one, operand);
-//}
 #if 0
-
-// Return the value corresponding to a literal expression.
-llvm::Value*
-Generator::gen(Literal_expr const* e)
-{
-  // TODO: Write better type queries.
-  //
-  // TODO: Write a better interface for values.
-  Value v = evaluate(e);
-  Type const* t = e->type();
-  if (t == get_boolean_type())
-    return build.getInt1(v.get_integer());
-  if (t == get_character_type())
-    return build.getInt8(v.get_integer());
-  if (t == get_integer_type())
-    return build.getInt32(v.get_integer());
-
-  // FIXME: How should we generate array literals? Are
-  // these global constants or are they local alloca
-  // objects. Does it depend on context?
-
-  // A string literal produces a new global string constant.
-  // and returns a pointer to an array of N characters.
-  if (is_string(t)) {
-    Array_value a = v.get_array();
-    String s = a.get_string();
-
-    // FIXME: This does not unify equivalent strings.
-    // Maybe we needt maintain a mapping in order to
-    // avoid redunancies.
-    auto iter = strings.find(s);
-    if (iter == strings.end()) {
-      llvm::Value* v = build.CreateGlobalString(s);
-      iter = strings.emplace(s, v).first;
-    }
-    return iter->second;
-  }
-
-  else
-    throw std::runtime_error("cannot generate function literal");
-}
-
 
 llvm::Value*
 Generator::gen(Id_expr const* e)
@@ -486,13 +343,239 @@ Generator::gen(Decl_expr const* e)
     return build.CreateLoad(result);
   return result;
 }
+#endif
+llvm::Value*
+Generator::gen(Add_expr const& e)
+{
+  llvm::Value* l = gen(e.left());
+  llvm::Value* r = gen(e.right());
+  return build.CreateAdd(l, r);
+}
+
+
+llvm::Value*
+Generator::gen(Sub_expr const& e)
+{
+  llvm::Value* l = gen(e.left());
+  llvm::Value* r = gen(e.right());
+  return build.CreateSub(l, r);
+}
+
+
+llvm::Value*
+Generator::gen(Mul_expr const& e)
+{
+  llvm::Value* l = gen(e.left());
+  llvm::Value* r = gen(e.right());
+  return build.CreateMul(l, r);
+}
+
+
+llvm::Value*
+Generator::gen(Div_expr const& e)
+{
+  llvm::Value* l = gen(e.left());
+  llvm::Value* r = gen(e.right());
+  return build.CreateSDiv(l, r);
+}
+
+
+// FIXME: decide on unsigned or signed remainder
+// based on types of expressions
+llvm::Value*
+Generator::gen(Rem_expr const& e)
+{
+  llvm::Value* l = gen(e.left());
+  llvm::Value* r = gen(e.right());
+  return build.CreateURem(l, r);
+}
+
+
+llvm::Value*
+Generator::gen(Neg_expr const& e)
+{
+  llvm::Value* zero = build.getInt32(0);
+  llvm::Value* val = gen(e.operand());
+  return build.CreateSub(zero, val);
+}
+
+
+llvm::Value*
+Generator::gen(Pos_expr const& e)
+{
+  return gen(e.operand());
+}
+
+
+llvm::Value*
+Generator::gen(Eq_expr const& e)
+{
+  llvm::Value* l = gen(e.left());
+  llvm::Value* r = gen(e.right());
+  return build.CreateICmpEQ(l, r);
+}
+
+
+llvm::Value*
+Generator::gen(Ne_expr const& e)
+{
+  llvm::Value* l = gen(e.left());
+  llvm::Value* r = gen(e.right());
+  return build.CreateICmpNE(l, r);
+}
+
+
+llvm::Value*
+Generator::gen(Lt_expr const& e)
+{
+  llvm::Value* l = gen(e.left());
+  llvm::Value* r = gen(e.right());
+  return build.CreateICmpSLT(l, r);
+}
+
+
+llvm::Value*
+Generator::gen(Gt_expr const& e)
+{
+  llvm::Value* l = gen(e.left());
+  llvm::Value* r = gen(e.right());
+  return build.CreateICmpSGT(l, r);
+}
+
+
+llvm::Value*
+Generator::gen(Le_expr const& e)
+{
+  llvm::Value* l = gen(e.left());
+  llvm::Value* r = gen(e.right());
+  return build.CreateICmpSLE(l, r);
+}
+
+
+llvm::Value*
+Generator::gen(Ge_expr const& e)
+{
+  llvm::Value* l = gen(e.left());
+  llvm::Value* r = gen(e.right());
+  return build.CreateICmpSGE(l, r);
+}
+
+
+// The comparison function doesn't compute -1, 0 or 1. Instead, it computes
+// <0, 0, or >0 as the result of subtraction. Fixing the end values to -1 or
+// 1 requires branches.
+//
+// TODO: Convert operands to signed values first since this isn't guaranteed
+// to be valid for unsigned integers...
+llvm::Value*
+Generator::gen(Cmp_expr const& e)
+{
+  llvm::Value* l = gen(e.left());
+  llvm::Value* r = gen(e.right());
+  return build.CreateSub(l, r);
+}
+
+
+// -------------------------------------------------------------------------- //
+// Generation of logical expressions
+
+llvm::Value*
+Generator::gen(And_expr const& e)
+{
+  llvm::BasicBlock* head_block = build.GetInsertBlock();
+  llvm::BasicBlock* tail_block = llvm::BasicBlock::Create(cxt, "", fn, head_block->getNextNode());
+  llvm::BasicBlock* then_block = llvm::BasicBlock::Create(cxt, "", fn, tail_block);
+
+  // Generate code for the left operand.
+  llvm::Value* left = gen(e.left());
+  build.CreateCondBr(left, then_block, tail_block);
+  build.SetInsertPoint(then_block);
+
+  // Generate code for the right operand.
+  llvm::Value* right = gen(e.right());
+  build.CreateBr(tail_block);
+  build.SetInsertPoint(tail_block);
+
+  llvm::PHINode* phi_inst = build.CreatePHI(build.getInt1Ty(), 2);
+  phi_inst->addIncoming(build.getFalse(), head_block);
+  phi_inst->addIncoming(right, then_block);
+  return phi_inst;
+}
+
+
+llvm::Value*
+Generator::gen(Or_expr const& e)
+{
+  llvm::BasicBlock* head_block = build.GetInsertBlock();
+  llvm::BasicBlock* tail_block = llvm::BasicBlock::Create(cxt, "", fn, head_block->getNextNode());
+  llvm::BasicBlock* then_block = llvm::BasicBlock::Create(cxt, "", fn, tail_block);
+
+  // Generate code for the left operand.
+  llvm::Value* left = gen(e.left());
+  build.CreateCondBr(left, tail_block, then_block);
+  build.SetInsertPoint(then_block);
+
+  // Generate code for the right operand.
+  llvm::Value* right = gen(e.right());
+  build.CreateBr(tail_block);
+  build.SetInsertPoint(tail_block);
+
+  llvm::PHINode* phi_inst = build.CreatePHI(build.getInt1Ty(), 2);
+  phi_inst->addIncoming(build.getTrue(), head_block);
+  phi_inst->addIncoming(right, then_block);
+  return phi_inst;
+}
+
+
+// Logical not is a simple XOR with the value true:
+//
+//    1 xor 1 = 0
+//    0 xor 1 = 1
+llvm::Value*
+Generator::gen(Not_expr const& e)
+{
+  llvm::Value* one = build.getTrue();
+  llvm::Value* operand = gen(e.operand());
+  return build.CreateXor(one, operand);
+}
+
+
+// -------------------------------------------------------------------------- //
+// Generation of conversions
+
+
+// Conversion from an object to a value is just a load.
+llvm::Value*
+Generator::gen(Value_conv const& e)
+{
+  llvm::Value* v = gen(e.source());
+  return build.CreateLoad(v);
+}
+
+
+// Convert to a boolean value. Behavior depends on the source type.
+//
+//    - integer type: the source is truncated to i1
+//    - floating point type: the result is fp-converted to i1.
+//
+// Note that the source will never have boolean type.
+llvm::Value*
+Generator::gen(Boolean_conv const& e)
+{
+  llvm::Value* src = gen(e.source());
+  llvm::Type* dst = build.getInt1Ty();
+
+  // Build the corresponding conversion.
+  Type const& t = e.source().type();
+  if (is_integer_type(t))
+    return build.CreateTrunc(src, dst);
+
+  lingo_unhandled(t);
+}
 
 
 
-
-
-
-
+#if 0
 namespace
 {
 
@@ -690,7 +773,6 @@ Generator::gen_init(llvm::Value* ptr, Default_init const* e)
   throw std::runtime_error("unhahndled default initializer");
 }
 
-
 #endif
 
 
@@ -715,7 +797,7 @@ Generator::gen(Stmt const& s)
     void operator()(Break_stmt const& s)       { g.gen(s); }
     void operator()(Continue_stmt const& s)    { g.gen(s); }
     void operator()(Declaration_stmt const& s) { g.gen(s); }
-    void operator()(Expression_stmt const& s) { g.gen(s); }
+    void operator()(Expression_stmt const& s)  { g.gen(s); }
   };
   apply(s, Fn{*this});
 }
@@ -897,11 +979,8 @@ Generator::gen(Stmt_list const& s)
     gen(stmt);
 }
 
-
 #if 0
-
-
-
+// Note that the result of the expression is discarded.
 void
 Generator::gen(Assign_stmt const* s)
 {
@@ -920,6 +999,7 @@ Generator::gen(Expression_stmt const* s)
 
 
 #endif
+
 void
 Generator::gen(Expression_stmt const& s)
 {
@@ -1071,6 +1151,7 @@ Generator::gen(Function_decl const& d)
 {
   String name = get_name(d);
   llvm::Type* type = get_type(d.type());
+
   // Build the function.
   llvm::FunctionType* ftype = llvm::cast<llvm::FunctionType>(type);
   fn = llvm::Function::Create(
@@ -1089,7 +1170,6 @@ Generator::gen(Function_decl const& d)
 
   // Assign names to each parameter.
   {
-
     auto ai = fn->arg_begin();
     auto pi = d.parameters().begin();
     while (ai != fn->arg_end()) {

@@ -539,7 +539,7 @@ void
 Printer::primary_type(Tuple_type const& t)
 {
   token(lbrace_tok);
-  Type_list const& p = t.type_list();
+  Type_list const& p = t.element_types();
   for (auto iter = p.begin(); iter != p.end(); ++iter) {
     type(*iter);
     if (std::next(iter) != p.end())

@@ -126,7 +126,7 @@ main(int argc, char* argv[])
     std::cout << stmt << '\n';
   }
   else if (opts.emit == "llvm") {
-    ll::Generator gen;
+    ll::Generator gen(cxt);
     gen(stmt);
   }
 

@@ -68,6 +68,7 @@ struct Builder
   Pointer_type&   get_pointer_type(Type&);
   Reference_type& get_reference_type(Type&);
   Array_type&     get_array_type(Type&, Expr&);
+  Tuple_type&     get_tuple_type(Type_list&&);
   Tuple_type&     get_tuple_type(Type_list const&);
   Slice_type&     get_slice_type(Type&);
   Dynarray_type&  get_dynarray_type(Type&, Expr&);
@@ -92,6 +93,8 @@ struct Builder
   Integer_expr&   get_zero(Type&);
   Integer_expr&   get_int(Integer const&);
   Integer_expr&   get_uint(Integer const&);
+  Tuple_expr&     make_tuple(Type&, Expr_list&&);
+
   Object_expr&    make_reference(Variable_decl&);
   Object_expr&    make_reference(Object_parm&);
   Function_expr&  make_reference(Function_decl&);
@@ -99,6 +102,7 @@ struct Builder
   Field_expr&     make_member_reference(Expr&, Field_decl&);
   Method_expr&    make_member_reference(Expr&, Method_decl&);
   Member_expr&    make_member_reference(Expr&, Overload_set&);
+
   Check_expr&     make_check(Concept_decl&, Term_list const&);
 
   And_expr&       make_and(Type&, Expr&, Expr&);
@@ -125,7 +129,6 @@ struct Builder
   Bit_not_expr&   make_bit_not(Type&, Expr&);
   Call_expr&      make_call(Type&, Expr&, Expr_list const&);
   Call_expr&      make_call(Type&, Function_decl&, Expr_list const&);
-  Tuple_expr&     make_tuple_expr(Type&, Expr_list const&);
   Requires_expr&  make_requires(Decl_list const&, Decl_list const&, Req_list const&);
   Synthetic_expr& synthesize_expression(Decl&);
 

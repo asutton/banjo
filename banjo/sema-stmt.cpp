@@ -2,7 +2,11 @@
 // All rights reserved
 
 #include "parser.hpp"
-#include "ast-stmt.hpp"
+#include "printer.hpp"
+#include "ast.hpp"
+#include "conversion.hpp"
+
+#include <iostream>
 
 namespace banjo
 {
@@ -39,9 +43,21 @@ Parser::on_empty_statement()
 Stmt&
 Parser::on_return_statement(Token, Expr& e)
 {
-  // FIXME: Verify that the return statement matches the
-  // declared type of the function.
-  return cxt.make_return_statement(e);
+  // FIXME: This is very, very wrong. We need to convert e to the return 
+  // type of the current function, not simply convert to its non-reference
+  // type (that's stupid).
+  Type& t = e.type().non_reference_type();
+  Expr& c = standard_conversion(e, t);
+  std::cout << "TEST: " << c << '\n';
+
+  return cxt.make_return_statement(c);
+}
+
+
+Stmt&
+Parser::on_yield_statement(Token, Expr& e)
+{
+ return build.make_yield_statement(e);
 }
 
 
@@ -58,11 +74,6 @@ Parser::on_if_statement(Expr& e, Stmt& s1, Stmt& s2)
   return cxt.make_if_statement(e, s1, s2);
 }
 
-Stmt&
-Parser::on_yield_statement(Token, Expr& e)
-{
- return build.make_yield_statement(e);
-}
 
 Stmt&
 Parser::on_while_statement(Expr& e, Stmt& s)

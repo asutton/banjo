@@ -99,6 +99,10 @@ PUBLIC
 add_executable(banjo-compile main.cpp)
 target_link_libraries(banjo-compile banjo)
 
+# A simple expression calculator.
+add_executable(banjo-calc calc.cpp)
+target_link_libraries(banjo-calc banjo)
+
 
 # Add an executable test program.
 macro(add_test_program target)

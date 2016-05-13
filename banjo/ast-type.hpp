@@ -221,17 +221,24 @@ struct Array_type : Type
 };
 
 
+// A tuple type.
 struct Tuple_type : Type
 {
-  Tuple_type(Type_list const& t) : ty(t) {} 
+  Tuple_type(Type_list&& t) 
+    : types_(std::move(t))
+  { }
+
+  Tuple_type(Type_list const& t) 
+    : types_(t) 
+  { } 
   
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
   
-  Type_list const& type_list() const { return ty; }
-  Type_list&       type_list()       { return ty; }
+  Type_list const& element_types() const { return types_; }
+  Type_list&       element_types()       { return types_; }
   
-  Type_list ty;
+  Type_list types_;
 };
 
 

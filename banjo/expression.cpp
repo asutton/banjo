@@ -77,7 +77,7 @@ make_tuple_expr(Context& cxt, Expr_list& es)
     ts.push_back(i->type());
   Type& t = make_tuple_type(cxt, ts);
   
-  return cxt.make_tuple_expr(t, cs);
+  return cxt.make_tuple(t, std::move(cs));
 }
 
 

@@ -18,14 +18,14 @@ namespace banjo
 {
 
 
-// Apply the usual arithmetic conversions. The result type of
-// the expression is that determined by the conversions.
+// Apply the usual arithmetic conversions for operands to relational
+// expressions. The result type is bool.
 template<typename Make>
 static Expr&
 make_standard_relational_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
 {
   Expr_pair conv = arithmetic_conversion(e1, e2);
-  Type& t = e1.type();
+  Type& t = cxt.get_bool_type();
   return make(t, conv.first, conv.second);
 }
 

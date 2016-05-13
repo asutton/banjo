@@ -1,19 +1,20 @@
 
-def f0 : () -> void { }
+// def f0 : () -> void { }
+
 def f1 : (x : int, y : int) -> int { return x; }
-def f2 : (x, y) -> int { return x; }
-def f3 : (x, y) -> int = x;
 
-def f4 : (x, y) { return x; }
-def f5 : (x, y) = x;
-def f6 : (x, y) x;
+// def f2 : (x, y) -> int { return x; }
+// def f3 : (x, y) -> int = x;
+
+// def f4 : (x, y) { return x; }
+// def f5 : (x, y) = x;
+// def f6 : (x, y) x;
 
 
-def g : (x : int) -> int {
-  var y : int = 5;
-  while (true) {
-    break;
-  }
-  return 0;
-}
-
+// def g : (x : int) -> int {
+//   var y : int = 5;
+//   while (true) {
+//     break;
+//   }
+//   return 0;
+// }
