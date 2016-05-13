@@ -99,6 +99,7 @@ Evaluator::evaluate(Expr const& e)
     Value operator()(Expr const& e) { banjo_unhandled_case(e); }
     Value operator()(Boolean_expr const& e) { return self.boolean(e); }
     Value operator()(Integer_expr const& e) { return self.integer(e); }
+    Value operator()(Tuple_expr const& e)   { return self.tuple(e); }
     Value operator()(Decl_expr const& e)    { return self.ref(e); }
     Value operator()(Call_expr const& e)    { return self.call(e); }
     Value operator()(And_expr const& e)     { return self.logical_and(e); }
@@ -144,7 +145,12 @@ Evaluator::integer(Integer_expr const& e)
 Value
 Evaluator::tuple(Tuple_expr const& e)
 {
-  lingo_unreachable();
+  Expr_list const& elems = e.elements();
+  Tuple_value ret(elems.size());
+  for (std::size_t i = 0; i < elems.size(); ++i) {
+    ret[i] = evaluate(*elems[i]);
+  }
+  return ret;
 }
 
 
@@ -473,9 +479,52 @@ Evaluator::elaborate_object(Object_decl const& d)
 // -------------------------------------------------------------------------- //
 // Reduction
 
+static Expr& lift_value(Context&, Type&, Value const&);
 
-Expr&
-reduce(Context& cxt, Expr& e)
+
+// FIXME: What is the location of this error?
+static Expr& 
+lift_error(Context& cxt, Type&, Error_value const& v) 
+{
+  error(cxt, "non-constant expression");
+  throw Evaluation_error(); 
+};
+
+
+static Expr&
+lift_integer(Context& cxt, Type& t, Integer_value const& v)
+{
+  if (is_integer_type(t))
+    return cxt.get_integer(t, v); 
+  if (is_boolean_type(t))
+    return cxt.get_bool(v);
+
+  // TODO: What other kinds of integer representation do we have?
+  lingo_unreachable();
+}
+
+
+// Construct a tuple expression from the values. 
+static Expr&
+lift_tuple(Context& cxt, Type& t, Tuple_value const& v)
+{
+  // Only tuple types evaluate to tuples. We need the element
+  // types to reconstruct the elements.
+  Type_list& types = cast<Tuple_type>(t).element_types();
+  
+  // Populate the element list for the tuple.
+  Expr_list elems;
+  elems.resize(v.size());
+  for (std::size_t i = 0; i < v.size(); ++i) {
+    Type& t = *types[i];
+    elems[i] = &lift_value(cxt, t, v[i]);
+  }
+  return cxt.make_tuple(t, std::move(elems));
+}
+
+
+static Expr&
+lift_value(Context& cxt, Type& t, Value const& v)
 {
   struct fn
   {
@@ -486,29 +535,22 @@ reduce(Context& cxt, Expr& e)
     Context& cxt;
     Type&    type;
 
-    Expr& operator()(Error_value const& v) {
-      error(cxt, "non-constant expression");
-      throw Evaluation_error(); 
-    };
-
-    Expr& operator()(Integer_value const& v) {
-      if (is_integer_type(type))
-        return cxt.get_integer(type, v); 
-      if (is_boolean_type(type))
-        return cxt.get_bool(v);
-
-      // TODO: What other kinds of integer representation do we have?
-      lingo_unreachable();
-    };
-
+    Expr& operator()(Error_value const& v)     { return lift_error(cxt, type, v); }
+    Expr& operator()(Integer_value const& v)   { return lift_integer(cxt, type, v); }
     Expr& operator()(Float_value const& v)     { lingo_unreachable(); }
     Expr& operator()(Function_value const& v)  { lingo_unreachable(); }
     Expr& operator()(Reference_value const& v) { lingo_unreachable(); }
     Expr& operator()(Array_value const& v)     { lingo_unreachable(); }
-    Expr& operator()(Tuple_value const& v)     { lingo_unreachable(); }
-
+    Expr& operator()(Tuple_value const& v)     { return lift_tuple(cxt, type, v); }
   };
-  return apply(evaluate(e), fn{cxt, e.type()});
+  return apply(v, fn{cxt, t});
+}
+
+
+Expr&
+reduce(Context& cxt, Expr& e)
+{
+  return lift_value(cxt, e.type(), evaluate(e));
 }
 
 

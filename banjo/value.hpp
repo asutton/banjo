@@ -44,12 +44,29 @@ using Reference_value = Value*;
 
 // The common structure of array and tuple values.
 //
-// FIXME: Memory allocated to this array is never freed. It probably
-// should be managed a little better.
+// FIXME: Memory allocated to this array is never freed. Stop leaking
+// memory. Either make this a regular type with move semantics or use a 
+// shared pointer for for the underlying structure.
+//
+// TODO: Consider making this vector<Value>. Note that vector may not be
+// defined for an incomplete type (should be fixed in C++17?).
 struct Aggregate_value
 {
   Aggregate_value(std::size_t n);
+  Aggregate_value(char const*);
   Aggregate_value(char const*, std::size_t n);
+
+  std::size_t size() const { return len; }
+
+  Value const& operator[](std::size_t) const;
+  Value&       operator[](std::size_t);
+
+  // Iterators
+  Value const* begin() const;
+  Value const* end() const;
+
+  Value* begin();
+  Value* end();
 
   std::size_t len;
   Value*      data;
@@ -362,6 +379,74 @@ Value::accept(Mutator& v)
 
 
 // -------------------------------------------------------------------------- //
+// Aggregate implementations
+//
+// These must appear after the definition of Value because they require
+// it to be a complete type.
+
+inline
+Aggregate_value::Aggregate_value(std::size_t n)
+  : len(n), data(new Value[n])
+{ }
+
+
+inline
+Aggregate_value::Aggregate_value(char const* s)
+  : Aggregate_value(std::strlen(s))
+{ }
+
+
+inline
+Aggregate_value::Aggregate_value(char const* s, std::size_t n)
+  : Aggregate_value(n)
+{
+  std::copy(s, s + n, data);
+}
+
+
+inline Value const&
+Aggregate_value::operator[](std::size_t n) const
+{
+  return data[n];
+}
+
+
+inline Value&
+Aggregate_value::operator[](std::size_t n)
+{
+  return data[n];
+}
+
+
+inline Value const*
+Aggregate_value::begin() const
+{ 
+  return data; 
+}
+
+
+inline Value const*
+Aggregate_value::end() const  
+{ 
+  return data + len; 
+}
+
+
+inline Value*
+Aggregate_value::begin()
+{ 
+  return data; 
+}
+
+
+inline Value*
+Aggregate_value::end()  
+{ 
+  return data + len; 
+}
+
+
+// -------------------------------------------------------------------------- //
 // Generic visitors
 
 template<typename F, typename T>
@@ -413,24 +498,6 @@ apply(Value& v, F fn)
 {
   Generic_value_mutator<F, T> vis(fn);
   return accept(v, vis);
-}
-
-
-
-// -------------------------------------------------------------------------- //
-// Aggregate values
-
-inline
-Aggregate_value::Aggregate_value(std::size_t n)
-  : len(n), data(new Value[n])
-{ }
-
-
-inline
-Aggregate_value::Aggregate_value(char const* s, std::size_t n)
-  : Aggregate_value(n)
-{
-  std::copy(s, s + n, data);
 }
 
 

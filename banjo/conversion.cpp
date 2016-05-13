@@ -213,12 +213,12 @@ is_similar(Array_type const& a, Array_type const& b)
 bool
 is_similar(Tuple_type const& a, Tuple_type const& b)
 {
-  auto ita = a.type_list().begin();
-  auto itb = b.type_list().begin();
+  auto ita = a.element_types().begin();
+  auto itb = b.element_types().begin();
   do {
     if(!is_similar(*ita,*itb)) return false;
     ita++;itb++;
-  } while(ita != a.type_list().end() && itb != b.type_list().end());
+  } while(ita != a.element_types().end() && itb != b.element_types().end());
   return true;
 }
 
@@ -412,10 +412,12 @@ standard_conversion(Expr& e, Type& t)
 }
 
 
-bool is_tuple_equiv_to_array(Tuple_type& t1, Array_type& t2)
+bool 
+is_tuple_equiv_to_array(Tuple_type& t1, Array_type& t2)
 {
-  for(auto it = t1.type_list().begin(); it != t1.type_list().end(); it++) {
-    if(!is_equivalent(*it,t2.type())) return false;
+  for(auto i = t1.element_types().begin(); i != t1.element_types().end(); i++) {
+    if(!is_equivalent(*i, t2.type())) 
+      return false;
   }
   return true;
 }

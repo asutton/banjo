@@ -307,6 +307,13 @@ Builder::get_array_type(Type& t, Expr& e)
 
 
 Tuple_type&
+Builder::get_tuple_type(Type_list&& t)
+{
+  return make<Tuple_type>(std::move(t));
+}
+
+
+Tuple_type&
 Builder::get_tuple_type(Type_list const& t)
 {
   return make<Tuple_type>(t);
@@ -446,6 +453,13 @@ Builder::get_uint(Integer const& n)
 {
   // lingo_assert(n.is_nonnegative(n));
   return get_integer(get_uint_type(), n);
+}
+
+
+Tuple_expr&
+Builder::make_tuple(Type& t, Expr_list&& l)
+{
+  return make<Tuple_expr>(t, std::move(l));
 }
 
 
@@ -679,12 +693,6 @@ Call_expr&
 Builder::make_call(Type& t, Function_decl& f, Expr_list const& a)
 {
   return make_call(t, make_reference(f), a);
-}
-
-Tuple_expr&
-Builder::make_tuple_expr(Type& t, Expr_list const& l)
-{
-  return make<Tuple_expr>(t,l);
 }
 
 

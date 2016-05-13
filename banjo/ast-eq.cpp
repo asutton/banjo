@@ -206,7 +206,7 @@ is_equivalent(Array_type const& t1, Array_type const& t2)
 bool
 is_equivalent(Tuple_type const& t1, Tuple_type const& t2)
 {
-  return is_equivalent(t1.type_list(), t2.type_list());
+  return is_equivalent(t1.element_types(), t2.element_types());
 }
 
 
