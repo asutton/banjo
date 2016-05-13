@@ -56,6 +56,7 @@ Generator::get_type(Type const& t)
     llvm::Type* operator()(Boolean_type const& t)  { return g.get_type(t); }
     llvm::Type* operator()(Integer_type const& t)  { return g.get_type(t); }
     llvm::Type* operator()(Float_type const& t)    { return g.get_type(t); }
+    llvm::Type* operator()(Tuple_type const& t)    { return g.get_type(t); }
     llvm::Type* operator()(Function_type const& t) { return g.get_type(t); }
     llvm::Type* operator()(Array_type const& t)    { return g.get_type(t); }
     llvm::Type* operator()(Dynarray_type const& t) { return g.get_type(t); }
@@ -96,6 +97,25 @@ Generator::get_type(Float_type const&)
 }
 
 
+// Return a tuple type.
+llvm::Type*
+Generator::get_type(Tuple_type const& t)
+{
+  Type_list const& ts = t.element_types();
+  
+  // Handle the empty case specially.
+  if (ts.empty())
+    return llvm::StructType::get(cxt);
+
+  // Generate a literal struct type.
+  std::vector<llvm::Type*> types;
+  types.reserve(t.element_types().size());
+  for (Type const& t1 : t.element_types())
+    types.push_back(get_type(t1));
+  return llvm::StructType::get(cxt, types);
+}
+
+
 // Return a function type.
 llvm::Type*
 Generator::get_type(Function_type const& t)
@@ -109,7 +129,7 @@ Generator::get_type(Function_type const& t)
 }
 
 
-//return an array type
+// Return an array type
 llvm::Type*
 Generator::get_type(Array_type const& t) 
 {
@@ -119,7 +139,7 @@ Generator::get_type(Array_type const& t)
 }
 
 
-//return an array type
+// Return an array type
 llvm::Type*
 Generator::get_type(Dynarray_type const& t) 
 {
@@ -153,6 +173,7 @@ Generator::gen(Expr const& e)
     llvm::Value* operator()(Expr const& e)         { lingo_unhandled(e); }
     llvm::Value* operator()(Boolean_expr const& e) { return g.gen(e); }
     llvm::Value* operator()(Integer_expr const& e) { return g.gen(e); }
+    llvm::Value* operator()(Tuple_expr const& e)   { return g.gen(e); }
 
     llvm::Value* operator()(Object_expr const& e)  { return g.gen(e); }
 
@@ -201,6 +222,23 @@ llvm::Value*
 Generator::gen(Integer_expr const& e)
 {
   return build.getInt(e.value().impl());
+}
+
+
+// Build a tuple value.
+llvm::Value*
+Generator::gen(Tuple_expr const& e)
+{
+  llvm::Type* type = get_type(e.type());
+  llvm::Value* agg = llvm::UndefValue::get(type);
+
+  // Build the tuple through a sequence of insertvalues, putting a
+  // new value into each index.
+  int n = 0;
+  for (Expr const& elem : e.elements())
+    agg = build.CreateInsertValue(agg, gen(elem), n++);
+
+  return agg;
 }
 
 
@@ -685,7 +723,7 @@ Generator::gen(Stmt const& s)
     void operator()(Break_stmt const& s)       { g.gen(s); }
     void operator()(Continue_stmt const& s)    { g.gen(s); }
     void operator()(Declaration_stmt const& s) { g.gen(s); }
-    // void operator()(Expression_stmt const& s) { g.gen(s); }
+    void operator()(Expression_stmt const& s)  { g.gen(s); }
   };
   apply(s, Fn{*this});
 }
@@ -860,28 +898,13 @@ Generator::gen(Stmt_list const& s)
 }
 
 
-#if 0
-
-
-
+// Note that the result of the expression is discarded.
 void
-Generator::gen(Assign_stmt const* s)
+Generator::gen(Expression_stmt const& s)
 {
-  llvm::Value* lhs = gen(s->object());
-  llvm::Value* rhs = gen(s->value());
-  build.CreateStore(rhs, lhs);
+  gen(s.expression());
 }
 
-
-
-void
-Generator::gen(Expression_stmt const* s)
-{
-  gen(s->expression());
-}
-
-
-#endif
 
 // -------------------------------------------------------------------------- //
 // Code generation for declarations

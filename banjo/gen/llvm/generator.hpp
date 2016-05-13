@@ -59,6 +59,7 @@ struct Generator
   llvm::Type* get_type(Boolean_type const&);
   llvm::Type* get_type(Integer_type const&);
   llvm::Type* get_type(Float_type const&);
+  llvm::Type* get_type(Tuple_type const&);
   llvm::Type* get_type(Function_type const&);
   llvm::Type* get_type(Array_type const&);
   llvm::Type* get_type(Dynarray_type const&);
@@ -67,6 +68,7 @@ struct Generator
   llvm::Value* gen(Expr const&);
   llvm::Value* gen(Boolean_expr const&);
   llvm::Value* gen(Integer_expr const&);
+  llvm::Value* gen(Tuple_expr const&);
   llvm::Value* gen(Object_expr const&);
 
   // Arithmetic expressions
