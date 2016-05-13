@@ -48,7 +48,7 @@ using Type_env = Environment<Decl const*, llvm::Type*>;
 
 struct Generator
 {
-  Generator();
+  Generator(Context&);
 
   llvm::Module* operator()(Stmt const&);
 
@@ -67,6 +67,9 @@ struct Generator
   llvm::Value* gen(Expr const&);
   llvm::Value* gen(Boolean_expr const&);
   llvm::Value* gen(Integer_expr const&);
+  llvm::Value* gen(Object_expr const&);
+
+  // Arithmetic expressions
   llvm::Value* gen(Real_expr const&);
   llvm::Value* gen(Add_expr const&);
   llvm::Value* gen(Sub_expr const&);
@@ -75,6 +78,8 @@ struct Generator
   llvm::Value* gen(Rem_expr const&);
   llvm::Value* gen(Neg_expr const&);
   llvm::Value* gen(Pos_expr const&);
+
+  // Relational expressions
   llvm::Value* gen(Eq_expr const&);
   llvm::Value* gen(Ne_expr const&);
   llvm::Value* gen(Lt_expr const&);
@@ -82,10 +87,16 @@ struct Generator
   llvm::Value* gen(Le_expr const&);
   llvm::Value* gen(Ge_expr const&);
   llvm::Value* gen(Cmp_expr const&);
+
+  // Logical expressions
   llvm::Value* gen(And_expr const&);
   llvm::Value* gen(Or_expr const&);
   llvm::Value* gen(Not_expr const&);
   llvm::Value* gen(Call_expr const&);
+
+  // Conversions
+  llvm::Value* gen(Value_conv const&);
+  llvm::Value* gen(Boolean_conv const&);
 
   void gen(Stmt const&);
   void gen(Empty_stmt const&);
@@ -123,6 +134,9 @@ struct Generator
   void declare(Decl const&, llvm::Value*);
   llvm::Value* lookup(Decl const&);
 
+  // The Banjo context.
+  Context& banjo; 
+
   // The context and default IR builder.
   llvm::LLVMContext cxt;
   llvm::IRBuilder<> build;
@@ -149,8 +163,8 @@ struct Generator
 
 
 inline
-Generator::Generator()
-  : cxt(), build(cxt), mod(nullptr), declcxt(invalid_cxt)
+Generator::Generator(Context& bc)
+  : banjo(bc), cxt(), build(cxt), mod(nullptr), declcxt(invalid_cxt)
 { }
 
 
