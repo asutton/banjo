@@ -34,8 +34,8 @@ struct Error_value { };
 
 // Representation of fundamental value categories.
 //
-// TODO: Use lingo::Integer and lingo::Real for the integer
-// and float values.
+// TODO: Use lingo::Integer and lingo::Real for the integer and 
+// float values.
 using Integer_value = int64_t;
 using Float_value = double;
 using Function_value = Function_decl const*;
@@ -73,6 +73,7 @@ struct Tuple_value : Aggregate_value
 };
 
 
+// The underlying representation of the value variant.
 union Value_rep
 {
   Value_rep() : err_() { }
@@ -380,15 +381,6 @@ struct Generic_value_visitor : Value::Visitor, lingo::Generic_visitor<F, T>
 };
 
 
-template<typename F, typename T = typename std::result_of<F(Error_value const&)>::type>
-inline decltype(auto)
-apply(Value const& v, F fn)
-{
-  Generic_value_visitor<F, T> vis(fn);
-  return accept(v, vis);
-}
-
-
 template<typename F, typename T>
 struct Generic_value_mutator : Value::Mutator, lingo::Generic_mutator<F, T>
 {
@@ -404,6 +396,15 @@ struct Generic_value_mutator : Value::Mutator, lingo::Generic_mutator<F, T>
   void visit(Array_value& v)     { this->invoke(v); };
   void visit(Tuple_value& v)     { this->invoke(v); };
 };
+
+
+template<typename F, typename T = typename std::result_of<F(Error_value const&)>::type>
+inline decltype(auto)
+apply(Value const& v, F fn)
+{
+  Generic_value_visitor<F, T> vis(fn);
+  return accept(v, vis);
+}
 
 
 template<typename F, typename T = typename std::result_of<F(Error_value&)>::type>

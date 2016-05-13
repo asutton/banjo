@@ -53,13 +53,31 @@ public:
   Value operator()(Expr const& e) { return evaluate(e); }
 
   Value evaluate(Expr const&);
-  Value evaluate_boolean(Boolean_expr const&);
-  Value evaluate_integer(Integer_expr const&);
-  Value evaluate_reference(Decl_expr const&);
-  Value evaluate_call(Call_expr const&);
-  Value evaluate_and(And_expr const&);
-  Value evaluate_or(Or_expr const&);
-  Value evaluate_not(Not_expr const&);
+
+  Value boolean(Boolean_expr const&);
+  Value integer(Integer_expr const&);
+  Value tuple(Tuple_expr const&);
+  Value ref(Decl_expr const&);
+  Value call(Call_expr const&);
+  Value logical_and(And_expr const&);
+  Value logical_or(Or_expr const&);
+  Value logical_not(Not_expr const&);
+
+  Value add(Add_expr const&);
+  Value sub(Sub_expr const&);
+  Value mul(Mul_expr const&);
+  Value div(Div_expr const&);
+  Value rem(Rem_expr const&);
+  Value pos(Pos_expr const&);
+  Value neg(Neg_expr const&);
+
+  Value eq(Eq_expr const&);
+  Value ne(Ne_expr const&);
+  Value lt(Lt_expr const&);
+  Value gt(Gt_expr const&);
+  Value le(Le_expr const&);
+  Value ge(Ge_expr const&);
+  Value cmp(Cmp_expr const&);
 
   Control evaluate(Stmt const&, Value&);
   Control evaluate_block(Compound_stmt const&, Value&);

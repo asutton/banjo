@@ -97,27 +97,43 @@ Evaluator::evaluate(Expr const& e)
   {
     Evaluator& self;
     Value operator()(Expr const& e) { banjo_unhandled_case(e); }
-    Value operator()(Boolean_expr const& e) { return self.evaluate_boolean(e); }
-    Value operator()(Integer_expr const& e) { return self.evaluate_integer(e); }
-    Value operator()(Decl_expr const& e)    { return self.evaluate_reference(e); }
-    Value operator()(Call_expr const& e)    { return self.evaluate_call(e); }
-    Value operator()(And_expr const& e)     { return self.evaluate_and(e); }
-    Value operator()(Or_expr const& e)      { return self.evaluate_or(e); }
-    Value operator()(Not_expr const& e)     { return self.evaluate_not(e); }
+    Value operator()(Boolean_expr const& e) { return self.boolean(e); }
+    Value operator()(Integer_expr const& e) { return self.integer(e); }
+    Value operator()(Decl_expr const& e)    { return self.ref(e); }
+    Value operator()(Call_expr const& e)    { return self.call(e); }
+    Value operator()(And_expr const& e)     { return self.logical_and(e); }
+    Value operator()(Or_expr const& e)      { return self.logical_or(e); }
+    Value operator()(Not_expr const& e)     { return self.logical_not(e); }
+
+    Value operator()(Add_expr const& e)     { return self.add(e); }
+    Value operator()(Sub_expr const& e)     { return self.sub(e); }
+    Value operator()(Mul_expr const& e)     { return self.mul(e); }
+    Value operator()(Div_expr const& e)     { return self.div(e); }
+    Value operator()(Rem_expr const& e)     { return self.rem(e); }
+    Value operator()(Pos_expr const& e)     { return self.pos(e); }
+    Value operator()(Neg_expr const& e)     { return self.neg(e); }
+
+    Value operator()(Eq_expr const& e)      { return self.eq(e); }
+    Value operator()(Ne_expr const& e)      { return self.ne(e); }
+    Value operator()(Lt_expr const& e)      { return self.lt(e); }
+    Value operator()(Gt_expr const& e)      { return self.gt(e); }
+    Value operator()(Le_expr const& e)      { return self.le(e); }
+    Value operator()(Ge_expr const& e)      { return self.ge(e); }
+    Value operator()(Cmp_expr const& e)     { return self.cmp(e); }
   };
   return apply(e, fn{*this});
 }
 
 
 Value
-Evaluator::evaluate_boolean(Boolean_expr const& e)
+Evaluator::boolean(Boolean_expr const& e)
 {
   return e.value();
 }
 
 
 Value
-Evaluator::evaluate_integer(Integer_expr const& e)
+Evaluator::integer(Integer_expr const& e)
 {
   // FIXME: Eh? Is this right? Does it matter? It wouldn't if the
   // value contained an actual integer.
@@ -125,17 +141,24 @@ Evaluator::evaluate_integer(Integer_expr const& e)
 }
 
 
+Value
+Evaluator::tuple(Tuple_expr const& e)
+{
+  lingo_unreachable();
+}
+
+
 // Returns the object or function referred to by the
 // given declaration.
 Value
-Evaluator::evaluate_reference(Decl_expr const& e)
+Evaluator::ref(Decl_expr const& e)
 {
   return alias(e.declaration());
 }
 
 
 Value
-Evaluator::evaluate_call(Call_expr const& e)
+Evaluator::call(Call_expr const& e)
 {
   Value v = evaluate(e.function());
   Function_decl const& f = *v.get_function();
@@ -163,9 +186,7 @@ Evaluator::evaluate_call(Call_expr const& e)
     Expr const& arg = *ai;
     Decl const& parm = *pi;
 
-    // TODO: Parameters are copy-initialized. Reuse initialization
-    // here, insted of this kind of direct storage. Use alloca
-    // and then dispatch to the initializer.
+    // TODO: Parameters are copy-initialized. 
     store(parm, evaluate(arg));
   }
 
@@ -184,7 +205,7 @@ Evaluator::evaluate_call(Call_expr const& e)
 
 
 Value
-Evaluator::evaluate_and(And_expr const& e)
+Evaluator::logical_and(And_expr const& e)
 {
   Value v = evaluate(e.left());
   if (!v.get_integer())
@@ -195,7 +216,7 @@ Evaluator::evaluate_and(And_expr const& e)
 
 
 Value
-Evaluator::evaluate_or(Or_expr const& e)
+Evaluator::logical_or(Or_expr const& e)
 {
   Value v = evaluate(e.left());
   if (v.get_integer())
@@ -206,10 +227,152 @@ Evaluator::evaluate_or(Or_expr const& e)
 
 
 Value
-Evaluator::evaluate_not(Not_expr const& e)
+Evaluator::logical_not(Not_expr const& e)
 {
   Value v = evaluate(e.operand());
   return !v.get_integer();
+}
+
+
+// -------------------------------------------------------------------------- //
+// Evaluation of arithmetic expressions
+//
+// TODO: This implementation assumes that all arithmetic operands have 
+// integer values. However, we'll need to dispatch based on the type.
+//
+// TODO: Check for various forms of undefined behavior and throw an
+// appropriate exception.
+
+Value
+Evaluator::add(Add_expr const& e)
+{
+  Value v1 = evaluate(e.left());
+  Value v2 = evaluate(e.right());
+  return v1.get_integer() + v2.get_integer();
+}
+
+
+Value
+Evaluator::sub(Sub_expr const& e)
+{
+  Value v1 = evaluate(e.left());
+  Value v2 = evaluate(e.right());
+  return v1.get_integer() - v2.get_integer();
+}
+
+
+Value
+Evaluator::mul(Mul_expr const& e)
+{
+  Value v1 = evaluate(e.left());
+  Value v2 = evaluate(e.right());
+  return v1.get_integer() * v2.get_integer();
+}
+
+
+Value
+Evaluator::div(Div_expr const& e)
+{
+  Value v1 = evaluate(e.left());
+  Value v2 = evaluate(e.right());
+  return v1.get_integer() / v2.get_integer();
+}
+
+
+Value
+Evaluator::rem(Rem_expr const& e)
+{
+  Value v1 = evaluate(e.left());
+  Value v2 = evaluate(e.right());
+  return v1.get_integer() % v2.get_integer();
+}
+
+
+Value
+Evaluator::pos(Pos_expr const& e)
+{
+  return evaluate(e.operand());
+}
+
+
+Value
+Evaluator::neg(Neg_expr const& e)
+{
+  Value v = evaluate(e.operand());
+  return -v.get_integer();
+}
+
+
+// -------------------------------------------------------------------------- //
+// Evaluation of relational expressions
+//
+// TODO: This implementation assumes that all relational operands have 
+// integer values. However, we'll need to dispatch based on the type.
+
+Value
+Evaluator::eq(Eq_expr const& e)
+{
+  Value v1 = evaluate(e.left());
+  Value v2 = evaluate(e.right());
+  return v1.get_integer() == v2.get_integer();
+}
+
+
+Value
+Evaluator::ne(Ne_expr const& e)
+{
+  Value v1 = evaluate(e.left());
+  Value v2 = evaluate(e.right());
+  return v1.get_integer() != v2.get_integer();
+}
+
+
+Value
+Evaluator::lt(Lt_expr const& e)
+{
+  Value v1 = evaluate(e.left());
+  Value v2 = evaluate(e.right());
+  return v1.get_integer() < v2.get_integer();
+}
+
+
+Value
+Evaluator::gt(Gt_expr const& e)
+{
+  Value v1 = evaluate(e.left());
+  Value v2 = evaluate(e.right());
+  return v1.get_integer() > v2.get_integer();
+}
+
+
+Value
+Evaluator::le(Le_expr const& e)
+{
+  Value v1 = evaluate(e.left());
+  Value v2 = evaluate(e.right());
+  return v1.get_integer() <= v2.get_integer();
+}
+
+
+Value
+Evaluator::ge(Ge_expr const& e)
+{
+  Value v1 = evaluate(e.left());
+  Value v2 = evaluate(e.right());
+  return v1.get_integer() >= v2.get_integer();
+}
+
+
+Value
+Evaluator::cmp(Cmp_expr const& e)
+{
+  Value v1 = evaluate(e.left());
+  Value v2 = evaluate(e.right());
+  if (v1.get_integer() < v2.get_integer())
+    return -1;
+  if (v1.get_integer() > v2.get_integer())
+    return 1;
+  return 0;
 }
 
 
@@ -317,18 +480,26 @@ reduce(Context& cxt, Expr& e)
   struct fn
   {
     fn(Context& c, Type& t)
-      : cxt(c), type(t), build(c)
+      : cxt(c), type(t)
     { }
 
     Context& cxt;
     Type&    type;
-    Builder  build;
 
-    Expr& operator()(Error_value const& v)     { throw Evaluation_error("did not evaluate"); };
+    Expr& operator()(Error_value const& v) {
+      error(cxt, "non-constant expression");
+      throw Evaluation_error(); 
+    };
 
-    // FIXME: If e.type() is boolean, this this is giving the
-    // wrong kind of expression.
-    Expr& operator()(Integer_value const& v)   { return build.get_integer(type, v); };
+    Expr& operator()(Integer_value const& v) {
+      if (is_integer_type(type))
+        return cxt.get_integer(type, v); 
+      if (is_boolean_type(type))
+        return cxt.get_bool(v);
+
+      // TODO: What other kinds of integer representation do we have?
+      lingo_unreachable();
+    };
 
     Expr& operator()(Float_value const& v)     { lingo_unreachable(); }
     Expr& operator()(Function_value const& v)  { lingo_unreachable(); }
