@@ -151,6 +151,8 @@ struct Generator
   // Information about coroutine
   llvm::BasicBlock* leave; // Coroutine yield
   llvm::BasicBlock* reenter; // Should be where the corouitine goes.
+  llvm::Type*       firstCall;
+  std::vector<llvm::BasicBlock*> blocks; // Holds all of the blocks between yield statments
 
   // Environment.
   int           declcxt; // The current declaration context

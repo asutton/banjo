@@ -1089,6 +1089,7 @@ Generator::gen(Function_decl const& d)
 
   // Assign names to each parameter.
   {
+
     auto ai = fn->arg_begin();
     auto pi = d.parameters().begin();
     while (ai != fn->arg_end()) {
@@ -1162,19 +1163,19 @@ Generator::gen(Function_decl const& d)
   fn = nullptr;
 }
 
-// TODO: Code gen coroutines
 void
 Generator::gen(Coroutine_decl const& d)
 {
   String name = get_name(d);
   llvm::Type* type = get_type(d.type());
-  //llvm::Instruction address; // Address of the block;
   std::vector<llvm::BlockAddress*> labels; // This will hold the labels and use an indirect branch inst;
   std::vector<llvm::Type*> ts;
   // The parameters of the coroutine become members of the class, should also probably grab them from the definition.
   for(auto &mem : d.parameters()){
     ts.push_back(get_type(mem.type()));
   }
+  firstCall = llvm::Type::getInt1Ty(cxt);
+  ts.push_back(firstCall); // This will need to be set in the constructor.
   llvm::Type* t = llvm::StructType::create(cxt, ts, get_name(d));
   types.bind(&d, t);
   // Generate the call function
@@ -1184,6 +1185,8 @@ Generator::gen(Coroutine_decl const& d)
 
   gen_coroutine_definition(def, d.type());
 
+  ret = nullptr;
+  fn = nullptr;
 }
 // Probably need all of the variables in the def to add them as members of the struct.
 void
