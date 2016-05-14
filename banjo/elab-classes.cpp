@@ -144,6 +144,7 @@ partition_members(Class_def& def, Decl& d)
     void operator()(Super_decl& d)    { save_base(def, d); } 
     void operator()(Variable_decl& d) { /* Do nothing. */ } 
     void operator()(Function_decl& d) { /* Do nothing. */ } 
+    void operator()(Class_decl& d)    { /* Do nothing. */ } 
   };
   apply(d, fn{def});
 }
