@@ -68,6 +68,29 @@ Elaborate_overloads::declaration_statement(Declaration_stmt& s)
 // -------------------------------------------------------------------------- //
 // Declarations
 
+
+template<typename Iter>
+static void
+check_declarations(Context& cxt, Decl const& decl, Iter first, Iter last)
+{
+  bool ok = true;
+   while (first != last) {
+    try {
+      check_declarations(cxt, decl, *first);
+    } catch (...) {
+      ok = false;
+    }
+    ++first;
+  }
+  if (!ok)
+    throw Declaration_error();
+}
+
+
+// TODO: This is a really funky little function. It's trying to accommodate
+// lookups between saved and non-saved scopes. It might just be a better
+// idea to always save scopes, so we never have to think about declaring
+// entities in *every* elaboration pass.
 void
 Elaborate_overloads::declaration(Decl& decl)
 {
@@ -81,35 +104,26 @@ Elaborate_overloads::declaration(Decl& decl)
     return;
   }
 
-  // Find the position of the declaration within the overload
-  // set. We only need to compare it with declarations "down stream"
-  // since we will have validated all preceding declarations.
+  // Find the position of the declaration within the overload set.
   auto iter = std::find_if(ovl->begin(), ovl->end(), [&decl](Decl& d) {
     return &decl == &d;
   });
 
-  // Check each downstream declaration in turn, trapping declaration
-  // errors so we can diagnose as many as possible.
-  bool ok = true;
-  for (++iter ; iter != ovl->end(); ++iter) {
-    try {
-      check_declarations(cxt, decl, *iter);
-    } catch (...) {
-      ok = false;
-    }
+  // Check a subset of declarations based on whether decl is in the
+  // set or not.
+  if (iter == ovl->end()) {
+    check_declarations(cxt, decl, ovl->begin(), ovl->end());
+    ovl->insert(decl);
   }
-  if (!ok)
-    throw Declaration_error();
+  else
+    check_declarations(cxt, decl, ++iter, ovl->end());
 
-  // If we get here, the declaration is valid. Add it to the overload 
-  // set so we can check other declarations against it.
-  ovl->insert(decl);
 
   // Otherwise, potentially recurse.
   struct fn
   {
     Self& elab;
-    void operator()(Decl& d)          { lingo_unhandled(d); }
+    void operator()(Decl& d)          { /* Do nothing. */ }
     void operator()(Function_decl& d) { elab.function_declaration(d); }
     void operator()(Class_decl& d)    { elab.class_declaration(d); }
   };

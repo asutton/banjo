@@ -4,6 +4,7 @@
 #include "parser.hpp"
 #include "printer.hpp"
 #include "ast-stmt.hpp"
+#include "elab-declarations.hpp"
 #include "elab-overloads.hpp"
 #include "elab-classes.hpp"
 #include "elab-expressions.hpp"
@@ -27,15 +28,18 @@ Parser::on_translation_unit(Decl& d, Stmt_list&& ss)
   Translation_unit& tu = cast<Translation_unit>(d);
   tu.stmts_ = std::move(ss);
 
-  Elaborate_overloads   overloads(*this);
-  Elaborate_classes     classes(*this);
-  Elaborate_expressions expressions(*this);
+  Elaborate_declarations declarations(*this);
+  Elaborate_overloads    overloads(*this);
+  Elaborate_classes      classes(*this);
+  Elaborate_expressions  expressions(*this);
 
-  elaborate_declarations(tu.statements()); // Assign types to names
+  declarations(tu); // Assign types to declarations
 
-  overloads(tu);   // Check and merge declarations
-  classes(tu);     // Complete class definitions
-  expressions(tu); // Parse and type expressions
+  // TODO: Transform abbreviated templates into templates.
+
+  overloads(tu);    // Analyze overloaded/reopened declarations
+  classes(tu);      // Complete class definitions
+  expressions(tu);  // Update expressions
 
   return tu;
 }

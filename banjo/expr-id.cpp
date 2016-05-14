@@ -63,7 +63,12 @@ make_reference(Context& cxt, Simple_id& id)
     return make_reference(cxt, decls.front());
 
   // TODO: Return a reference to an overload set.
-  banjo_unhandled_case(id);
+  std::cout << "REF: " << id << '\n';
+  std::cout << "WTF? " << decls.size() << '\n';
+  std::cout << cxt.current_scope() << '\n';
+  for (Decl& d : decls)
+    std::cout << d << '\n';
+  lingo_unhandled(id);
 }
 
 

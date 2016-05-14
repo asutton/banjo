@@ -29,9 +29,10 @@ operator<<(std::ostream& os, Scope const& scope)
   else 
     os << "==== unnamed scope ====\n";
 
+  // TODO: Print the actual declarations?
   for (auto const& bind : scope.names) {
     Name const* name = bind.first;
-    std::cout << *name << '\n';
+    os << *name << '\n';
   }
 
   return os;

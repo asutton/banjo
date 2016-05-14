@@ -1845,10 +1845,9 @@ Printer::requirement(Deduction_req const& r)
 
 
 void
-Printer::translation_unit(Translation_unit const& s)
+Printer::translation_unit(Translation_unit const& tu)
 {
-  std::cout << "HERE " << s.statements().size() << '\n';
-  statement_seq(s.statements());
+  statement_seq(tu.statements());
 }
 
 

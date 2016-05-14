@@ -451,6 +451,8 @@ struct Parameter_decl : T
 // TODO: Object parameters have single-value indexes because
 // we don't allow nested parameters. How important is it that we
 // actually store the index of a parameter.
+//
+// FIXME: Rename as Variable_parm?
 struct Object_parm : Parameter_decl<Object_decl>
 {
   Object_parm(Name& n, Type& t)
