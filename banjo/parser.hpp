@@ -34,7 +34,7 @@ struct Parser
     : cxt(cxt), build(cxt), tokens(ts), state()
   { }
 
-  Stmt& operator()();
+  Decl& operator()() { return translation_unit(); }
 
   // Syntactic forms
   Operator_kind any_operator();
@@ -180,7 +180,7 @@ struct Parser
   Req_list usage_seq();
 
   // Toplevel structure
-  Stmt& translation_unit();
+  Decl& translation_unit();
   Stmt_list toplevel_statement_seq();
   Stmt& toplevel_statement();
 
@@ -190,7 +190,6 @@ struct Parser
   
   template<typename P>
   Expr& unparsed_expression(P);
-
 
   // Type elaboration
   void elaborate_declarations(Stmt_list&);
@@ -342,7 +341,7 @@ struct Parser
   Req& on_deduction_requirement(Expr&, Type&);
 
   // Toplevel structure
-  Stmt& on_translation_unit(Stmt_list&&);
+  Decl& on_translation_unit(Decl&, Stmt_list&&);
 
 
   // Token matching.

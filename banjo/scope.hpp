@@ -119,6 +119,10 @@ Scope::lookup(Name const& n)
 }
 
 
+// Debugging
+std::ostream& operator<<(std::ostream&, Scope const&);
+
+
 } // namespace banjo
 
 

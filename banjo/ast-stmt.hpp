@@ -46,43 +46,23 @@ struct Empty_stmt : Stmt
 
 
 // A helper node that represents all kinds of statement sequences.
-struct Multiple_stmt : Stmt
+struct Compound_stmt : Stmt
 {
-  Multiple_stmt()
+  Compound_stmt()
     : Stmt()
   { }
 
-  Multiple_stmt(Stmt_list&& ss)
+  Compound_stmt(Stmt_list&& ss)
     : Stmt(), stmts(std::move(ss))
   { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
   Stmt_list const& statements() const { return stmts; }
   Stmt_list&       statements()       { return stmts; }
 
   Stmt_list stmts;
-};
-
-
-// A sequence of statements representing a complete translation unit.
-//
-// FIXME: I hate this class. This should be named Translation_unit, and
-// it should probably be a declaration.
-struct Translation_stmt : Multiple_stmt
-{
-  using Multiple_stmt::Multiple_stmt;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-};
-
-
-// A sequence of statements to be executed within a function.
-struct Compound_stmt : Multiple_stmt
-{
-  using Multiple_stmt::Multiple_stmt;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 

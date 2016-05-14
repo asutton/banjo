@@ -23,9 +23,9 @@ struct Elaborate_expressions
 
   Elaborate_expressions(Parser&);
 
-  void operator()(Translation_stmt& s) { translation_unit(s); }
+  void operator()(Translation_unit& s) { translation_unit(s); }
 
-  void translation_unit(Translation_stmt&);
+  void translation_unit(Translation_unit&);
 
   void statement(Stmt&);
   void statement_seq(Stmt_list&);

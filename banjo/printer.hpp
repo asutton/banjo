@@ -135,7 +135,6 @@ struct Printer
   void statement(Unparsed_stmt const&);
   void statement_seq(Stmt_list const&);
   void empty_statement(Empty_stmt const&);
-  void translation_statement(Translation_stmt const&);
   void compound_statement(Compound_stmt const&);
   void return_statement(Return_stmt const&);
   void yield_statement(Yield_stmt const&);
@@ -221,6 +220,9 @@ struct Printer
   void requirement(Basic_req const&);
   void requirement(Conversion_req const&);
   void requirement(Deduction_req const&);
+
+  // Toplevel
+  void translation_unit(Translation_unit const&);
 
   // Constraints
   // These don't really have an external syntax, but it's

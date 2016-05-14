@@ -14,22 +14,30 @@
 namespace banjo
 {
 
-Stmt&
-Parser::on_translation_unit(Stmt_list&& ss)
+// Analyze the remainder of the translation unit and assign assign the
+// statement sequence to the unit.
+//
+// NOTE: The level of semantic analysis can be varied by adding, removing,
+// or interchanging the elaboration passes. Also note that non-modifying
+// checks can be run in parallel, not sequentially.
+Decl&
+Parser::on_translation_unit(Decl& d, Stmt_list&& ss)
 {
-  Translation_stmt& unit = cxt.make_translation_unit(std::move(ss));
+  // Add statements to the translation unit.
+  Translation_unit& tu = cast<Translation_unit>(d);
+  tu.stmts_ = std::move(ss);
 
   Elaborate_overloads   overloads(*this);
   Elaborate_classes     classes(*this);
   Elaborate_expressions expressions(*this);
 
-  elaborate_declarations(unit.statements()); // Assign types to names
+  elaborate_declarations(tu.statements()); // Assign types to names
 
-  overloads(unit);   // Check and merge declarations
-  classes(unit);     // Complete class definitions
-  expressions(unit); // Parse and type expressions
+  overloads(tu);   // Check and merge declarations
+  classes(tu);     // Complete class definitions
+  expressions(tu); // Parse and type expressions
 
-  return unit;
+  return tu;
 }
 
 

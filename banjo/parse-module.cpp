@@ -18,13 +18,17 @@ namespace banjo
 // A translation unit is physically comprised of a sequence of input 
 // files. The order in which these files appear in the translation is 
 // not consequential, except in some cases.
-Stmt&
+Decl&
 Parser::translation_unit()
 {
-  // TODO: We should enter the global scope and not create a temporary.
-  Enter_scope scope(cxt);
+  // Build the initial translation unit so we can get an associated
+  // scope for lookup.
+  Translation_unit& tu = cxt.make_translation_unit();
+  Enter_scope scope(cxt, cxt.saved_scope(tu));
+  
   Stmt_list ss = toplevel_statement_seq();
-  return on_translation_unit(std::move(ss));
+  
+  return on_translation_unit(tu, std::move(ss));
 }
 
 

@@ -129,7 +129,6 @@ struct Builder
   Synthetic_expr& synthesize_expression(Decl&);
 
   // Statements
-  Translation_stmt& make_translation_unit(Stmt_list&&);
   Compound_stmt&    make_compound_statement(Stmt_list&&);
   Empty_stmt&       make_empty_statement();
   Return_stmt&      make_return_statement(Expr&);
@@ -205,6 +204,10 @@ struct Builder
   Basic_req&      make_basic_requirement(Expr&, Type&);
   Conversion_req& make_conversion_requirement(Expr&, Type&);
   Syntactic_req&  make_syntactic_requirement(Expr&);
+
+  // Toplevel structures
+  Translation_unit& make_translation_unit();
+  Translation_unit& make_translation_unit(Stmt_list&&);
 
 
   // Constraints

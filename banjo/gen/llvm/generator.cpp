@@ -659,7 +659,6 @@ Generator::gen(Stmt const& s)
     Generator& g;
     void operator()(Stmt const& s)             { lingo_unhandled(s); }
     void operator()(Empty_stmt const& s)       { g.gen(s); }
-    void operator()(Translation_stmt const& s) { g.gen(s); }
     void operator()(Compound_stmt const& s)    { g.gen(s); }
     void operator()(Return_stmt const& s)      { g.gen(s); }
     void operator()(If_then_stmt const& s)     { g.gen(s); }
@@ -678,28 +677,6 @@ void
 Generator::gen(Empty_stmt const& s)
 {
   // Do nothing.
-}
-
-
-void 
-Generator::gen(Translation_stmt const& s)
-{
-  Enter_context dc(*this, global_cxt);
-
-  // Build the module. Name it "a.ll" by default.
-  //
-  // TODO: Get the output module from the program options.
-  lingo_assert(!mod);
-  mod = new llvm::Module("a.ll", cxt);
-
-  gen(s.statements());
-
-  // Dump the code to stdout.
-  //
-  // FIXME: This is stupid. Actually dump it to a file.
-  std::error_code err;
-  llvm::raw_fd_ostream ofs(STDOUT_FILENO, false);
-  ofs << *mod;
 }
 
 
@@ -875,15 +852,43 @@ Generator::gen(Decl const& d)
   struct Fn
   {
     Generator& g;
-    void operator()(Decl const& d)          { lingo_unhandled(d); }
-    void operator()(Variable_decl const& d) { return g.gen(d); }
-    void operator()(Function_decl const& d) { return g.gen(d); }
+    void operator()(Decl const& d)             { lingo_unhandled(d); }
+    void operator()(Translation_unit const& d) { return g.gen(d); }
+    void operator()(Variable_decl const& d)    { return g.gen(d); }
+    void operator()(Function_decl const& d)    { return g.gen(d); }
 
     // void operator()(Record_decl const& d)    { return g.gen(d); }
     // void operator()(Field_decl const& d)     { return g.gen(d); }
     // void operator()(Method_decl const& d)    { return g.gen(d); }
   };
   return apply(d, Fn{*this});
+}
+
+
+// -------------------------------------------------------------------------- //
+// Code generation for translation units
+
+// Generate the translation unit. This must be called only once per
+// translation.
+void 
+Generator::gen(Translation_unit const& s)
+{
+  Enter_context dc(*this, global_cxt);
+
+  // Build the module. Name it "a.ll" by default.
+  //
+  // TODO: Get the output module from the program options.
+  lingo_assert(!mod);
+  mod = new llvm::Module("a.ll", cxt);
+
+  gen(s.statements());
+
+  // Dump the code to stdout.
+  //
+  // FIXME: This is stupid. Actually dump it to a specified output file.
+  std::error_code err;
+  llvm::raw_fd_ostream ofs(STDOUT_FILENO, false);
+  ofs << *mod;
 }
 
 
@@ -1305,10 +1310,10 @@ Generator::gen_vref(Record_decl const* r, llvm::Value* obj)
 #endif
 
 llvm::Module*
-Generator::operator()(Stmt const& s)
+Generator::operator()(Decl const& d)
 {
-  assert(is<Translation_stmt>(s));
-  gen(s);
+  assert(is<Translation_unit>(d));
+  gen(cast<Translation_unit>(d));
   return mod;
 }
 

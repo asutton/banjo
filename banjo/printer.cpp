@@ -1092,7 +1092,6 @@ Printer::statement(Stmt const& s)
     Printer& p;
     void operator()(Stmt const& s)             { lingo_unhandled(s); }
     void operator()(Unparsed_stmt const& s)    { p.statement(s); }
-    void operator()(Translation_stmt const& s) { p.translation_statement(s); }
     void operator()(Compound_stmt const& s)    { p.compound_statement(s); }
     void operator()(Return_stmt const& s)      { p.return_statement(s); }
     void operator()(Yield_stmt const& s)       { p.yield_statement(s); }
@@ -1134,13 +1133,6 @@ void
 Printer::empty_statement(Empty_stmt const& s)
 {
   token(semicolon_tok);
-}
-
-
-void
-Printer::translation_statement(Translation_stmt const& s)
-{
-  statement_seq(s.statements());
 }
 
 
@@ -1279,12 +1271,13 @@ Printer::declaration(Decl const& d)
   {
     Printer& p;
 
-    void operator()(Decl const& d)           { lingo_unhandled(d); }
-    void operator()(Super_decl const& d)     { p.super_declaration(d); }
-    void operator()(Variable_decl const& d)  { p.variable_declaration(d); }
-    void operator()(Function_decl const& d)  { p.function_declaration(d); }
-    void operator()(Class_decl const& d)     { p.class_declaration(d); }
-    void operator()(Coroutine_decl const& d) { p.coroutine_delcaration(d); }
+    void operator()(Decl const& d)             { lingo_unhandled(d); }
+    void operator()(Translation_unit const& d) { p.translation_unit(d); }
+    void operator()(Variable_decl const& d)    { p.variable_declaration(d); }
+    void operator()(Super_decl const& d)       { p.super_declaration(d); }
+    void operator()(Function_decl const& d)    { p.function_declaration(d); }
+    void operator()(Class_decl const& d)       { p.class_declaration(d); }
+    void operator()(Coroutine_decl const& d)   { p.coroutine_delcaration(d); }
 
     // Support emitting these here so we can print parameters without
     // an appropriate context.
@@ -1844,6 +1837,18 @@ Printer::requirement(Deduction_req const& r)
   token(colon_tok);
   type(r.type());
   token(semicolon_tok);
+}
+
+
+// -------------------------------------------------------------------------- //
+// Toplevel
+
+
+void
+Printer::translation_unit(Translation_unit const& s)
+{
+  std::cout << "HERE " << s.statements().size() << '\n';
+  statement_seq(s.statements());
 }
 
 

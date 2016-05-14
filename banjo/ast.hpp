@@ -20,21 +20,5 @@
 #include "ast-eq.hpp"
 #include "ast-hash.hpp"
 
-namespace banjo
-{
-
-
-// -------------------------------------------------------------------------- //
-// Miscellaneous
-
-// TODO: I'm not currently using this, but it might be useful.
-struct Translation_unit : Term
-{
-  Decl_list first;
-};
-
-
-} // namespace banjo
-
 
 #endif

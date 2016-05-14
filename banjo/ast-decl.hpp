@@ -19,12 +19,15 @@ namespace banjo
 // to parameters in quite the same way. Parameters have default arguments.
 // Note that we could simply interpret a default argument as an optionally
 // specified definition.
-//
-// FIXME: Do I really need all of these constructors?
 struct Decl : Term
 {
   struct Visitor;
   struct Mutator;
+
+  // This is only used by translation unit.
+  Decl()
+    : cxt_(), name_(), type_(), spec_()
+  { }
 
   // Constructors for untyped declarations.
   Decl(Name& n)
@@ -72,9 +75,15 @@ struct Decl : Term
   Name const& name() const { return *name_; }
   Name&       name()       { return *name_; }
 
+  // Returns true if the declaration has a name.
+  bool is_named() const { return name_; }
+
   // Returns the type associated with the name.
   Type const& type() const { return *type_; }
   Type&       type()       { return *type_; }
+
+  // Returns true if the declaration has a type.
+  bool is_typed() const { return type_; }
 
   // Returns the set of declaration specifiers for the declaration.
   Specifier_set specifiers() const { return spec_; }
@@ -104,6 +113,33 @@ struct Decl::Mutator
 #define define_node(Node) virtual void visit(Node&) = 0;
 #include "ast-decl.def"
 #undef define_node
+};
+
+
+
+// Represents a unit of translation: a sequence of statements comprising
+// a part of a program or module. 
+//
+// This is modeled as a declaration even though it has no name or type.
+// We do this because many of the translation facilities are defined in
+// terms of associations with declarations. It would be nice if translation
+// units were not declarations, but this would be a big change.
+struct Translation_unit : Decl
+{
+  Translation_unit() { }
+
+  Translation_unit(Stmt_list&& ss)
+    : stmts_(std::move(ss))
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the list of statements.
+  Stmt_list const& statements() const { return stmts_; }
+  Stmt_list&       statements()       { return stmts_; }
+  
+  Stmt_list stmts_;
 };
 
 

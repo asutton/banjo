@@ -22,7 +22,7 @@ namespace banjo
 // Statements
 
 void
-Elaborate_expressions::translation_unit(Translation_stmt& s)
+Elaborate_expressions::translation_unit(Translation_unit& s)
 {
   statement_seq(s.statements());
 }

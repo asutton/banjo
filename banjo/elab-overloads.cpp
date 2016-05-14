@@ -22,9 +22,10 @@ Elaborate_overloads::Elaborate_overloads(Parser& p)
 // Statements
 
 void
-Elaborate_overloads::translation_unit(Translation_stmt& s)
+Elaborate_overloads::translation_unit(Translation_unit& tu)
 {
-  statement_seq(s.statements());
+  Enter_scope(cxt, cxt.saved_scope(tu));
+  statement_seq(tu.statements());
 }
 
 
@@ -70,20 +71,27 @@ Elaborate_overloads::declaration_statement(Declaration_stmt& s)
 void
 Elaborate_overloads::declaration(Decl& decl)
 {
+  // Lookup the declaration. If it hasn't been found, then it's the
+  // first (in a non-saved scope), and we can just add it. Otherwise,
+  // we need to check it against other entities in the overload set.
   Name& name = decl.name();
-  Overload_set& ovl = *cxt.current_scope().lookup(name);
+  Overload_set* ovl = cxt.current_scope().lookup(name);
+  if (!ovl) {
+    declare(cxt, decl);
+    return;
+  }
 
   // Find the position of the declaration within the overload
   // set. We only need to compare it with declarations "down stream"
   // since we will have validated all preceding declarations.
-  auto iter = std::find_if(ovl.begin(), ovl.end(), [&decl](Decl& d) {
+  auto iter = std::find_if(ovl->begin(), ovl->end(), [&decl](Decl& d) {
     return &decl == &d;
   });
 
   // Check each downstream declaration in turn, trapping declaration
   // errors so we can diagnose as many as possible.
   bool ok = true;
-  for (++iter ; iter != ovl.end(); ++iter) {
+  for (++iter ; iter != ovl->end(); ++iter) {
     try {
       check_declarations(cxt, decl, *iter);
     } catch (...) {
@@ -92,6 +100,10 @@ Elaborate_overloads::declaration(Decl& decl)
   }
   if (!ok)
     throw Declaration_error();
+
+  // If we get here, the declaration is valid. Add it to the overload 
+  // set so we can check other declarations against it.
+  ovl->insert(decl);
 
   // Otherwise, potentially recurse.
   struct fn
@@ -103,8 +115,6 @@ Elaborate_overloads::declaration(Decl& decl)
   };
   apply(decl, fn{*this});
 }
-
-
 
 // TODO: Parse default arguments.
 //
@@ -120,6 +130,12 @@ Elaborate_overloads::function_declaration(Function_decl& d)
     void operator()(Function_def& d)   { elab.statement(d.statement()); }
     void operator()(Expression_def& d) { /* Do nothing. */ }
   };
+
+  // Declare parameters.
+  Enter_scope scope(cxt);
+  for (Decl& p : d.parameters())
+    declare(cxt, p);
+
   apply(d.definition(), fn{*this});
 }
 
@@ -133,6 +149,8 @@ Elaborate_overloads::class_declaration(Class_decl& d)
     void operator()(Def& d)       { lingo_unhandled(d); }
     void operator()(Class_def& d) { elab.statement_seq(d.statements()); }
   };
+
+  Enter_scope(cxt, cxt.saved_scope(d));
   apply(d.definition(), fn{*this});
 }
 

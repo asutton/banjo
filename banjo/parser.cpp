@@ -291,15 +291,4 @@ Parser::current_scope()
 }
 
 
-// -------------------------------------------------------------------------- //
-// Miscellaneous parsing
-
-
-Stmt&
-Parser::operator()()
-{
-  return translation_unit();
-}
-
-
 } // namespace banjo

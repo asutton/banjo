@@ -705,13 +705,6 @@ Builder::synthesize_expression(Decl& d)
 // -------------------------------------------------------------------------- //
 // Statements
 
-Translation_stmt&
-Builder::make_translation_unit(Stmt_list&& ss)
-{
-  return make<Translation_stmt>(std::move(ss));
-}
-
-
 Compound_stmt&
 Builder::make_compound_statement(Stmt_list&& ss)
 {
@@ -1118,6 +1111,23 @@ Syntactic_req&
 Builder::make_syntactic_requirement(Expr& e)
 {
   return make<Syntactic_req>(e);
+}
+
+
+// -------------------------------------------------------------------------- //
+// Statements
+
+Translation_unit&
+Builder::make_translation_unit()
+{
+  return make<Translation_unit>();
+}
+
+
+Translation_unit&
+Builder::make_translation_unit(Stmt_list&& ss)
+{
+  return make<Translation_unit>(std::move(ss));
 }
 
 
