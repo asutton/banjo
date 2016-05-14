@@ -33,7 +33,6 @@ add_library(banjo
   sema-req.cpp
   elab-decl.cpp
   elab-overloads.cpp
-  elab-partials.cpp
   elab-classes.cpp
   elab-expressions.cpp
   printer.cpp

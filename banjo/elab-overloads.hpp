@@ -17,6 +17,10 @@ struct Parser;
 // At the time of elaboration, all types of expressions shall be complete
 // or completable. In other words, there shall be no cycles of type 
 // dependence.
+//
+// TODO: Is there a way that we can just apply this directly to the
+// scope and overload sets and not the grammer? There's a linear
+// search cost for every overloaded declaration in scope.
 struct Elaborate_overloads
 {
   using Self = Elaborate_overloads;

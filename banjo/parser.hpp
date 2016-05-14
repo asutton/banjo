@@ -204,14 +204,6 @@ struct Parser
   void elaborate_coroutine_declaration(Coroutine_decl&);
   Type& elaborate_type(Type&);
 
-  // Overloading
-  void elaborate_overloads(Stmt_list&);
-  void elaborate_overloads(Stmt&);
-  void elaborate_overloads(Decl&);
-
-  // Partial definitions
-  void elaborate_partials(Stmt_list&);
-
 
   // Semantics actions
 

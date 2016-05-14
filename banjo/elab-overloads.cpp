@@ -1,7 +1,7 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#include "elab-expressions.hpp"
+#include "elab-overloads.hpp"
 #include "parser.hpp"
 #include "printer.hpp"
 #include "ast.hpp"
@@ -68,10 +68,10 @@ Elaborate_overloads::declaration_statement(Declaration_stmt& s)
 // Declarations
 
 void
-Elaborate_overloads::declaration(Decl& d)
+Elaborate_overloads::declaration(Decl& decl)
 {
   Name& name = decl.name();
-  Overload_set& ovl = *current_scope().lookup(name);
+  Overload_set& ovl = *cxt.current_scope().lookup(name);
 
   // Find the position of the declaration within the overload
   // set. We only need to compare it with declarations "down stream"
@@ -90,12 +90,10 @@ Elaborate_overloads::declaration(Decl& d)
       ok = false;
     }
   }
-
-  // If we got an error, rethrow it.
   if (!ok)
     throw Declaration_error();
 
-  // Otherwise, recurse.
+  // Otherwise, potentially recurse.
   struct fn
   {
     Self& elab;
@@ -103,7 +101,7 @@ Elaborate_overloads::declaration(Decl& d)
     void operator()(Function_decl& d) { elab.function_declaration(d); }
     void operator()(Class_decl& d)    { elab.class_declaration(d); }
   };
-  apply(d, fn{*this});
+  apply(decl, fn{*this});
 }
 
 
@@ -119,19 +117,9 @@ Elaborate_overloads::function_declaration(Function_decl& d)
   {
     Self& elab;
     void operator()(Def& d)            { lingo_unhandled(d); }
-    void operator()(Expression_def& d) { d.expr_ = &elab.expression(d.expression()); }
+    void operator()(Function_def& d)   { elab.statement(d.statement()); }
+    void operator()(Expression_def& d) { /* Do nothing. */ }
   };
-
-  // Declare parameters.
-  //
-  // TODO: Do as C++ does and forbid the declaration of locals within
-  // the function block having the same name as a parameter. We could
-  // do this by declaring them directly in the function block before
-  // any locals (this is a better idea than what I'm doing here).
-  Enter_scope scope(cxt);
-  for (Decl& p : d.parameters())
-    declare(cxt, p);
-
   apply(d.definition(), fn{*this});
 }
 
@@ -148,66 +136,5 @@ Elaborate_overloads::class_declaration(Class_decl& d)
   apply(d.definition(), fn{*this});
 }
 
-
-// -------------------------------------------------------------------------- //
-// Expressions
-
-// Parse the expression as needed, returning its fully elaborated form.
-Expr&
-Elaborate_overloads::expression(Expr& e)
-{
-  if (Unparsed_expr* u = as<Unparsed_expr>(&e)) {
-    Save_input_location loc(cxt);
-    Token_stream ts(u->tokens());
-    Parser p(cxt, ts);
-    return p.expression();    
-  }
-  return e;
-}
-
-
 } // namespace banjo
 
-
-// Copyright (c) 2015-2016 Andrew Sutton
-// All rights reserved
-
-#include "parser.hpp"
-#include "printer.hpp"
-#include "ast.hpp"
-#include "declaration.hpp"
-
-#include <iostream>
-
-
-namespace banjo
-{
-
-
-void
-Parser::elaborate_overloads(Stmt_list& ss)
-{
-  for (Stmt& s : ss)
-    elaborate_overloads(s);
-}
-
-
-void
-Parser::elaborate_overloads(Stmt& s)
-{
-  if (Declaration_stmt* s1 = as<Declaration_stmt>(&s))
-    elaborate_overloads(s1->declaration());
-  
-  if (Compound_stmt* s1 = as<Compound_stmt>(&s))
-    elaborate_overloads(s1->statements());
-}
-
-
-void
-Parser::elaborate_overloads(Decl& decl)
-{
-
-}
-
-
-} // namespace banjo
