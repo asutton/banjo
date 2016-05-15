@@ -8,6 +8,7 @@
 #include "elab-overloads.hpp"
 #include "elab-classes.hpp"
 #include "elab-expressions.hpp"
+#include "elaboration.hpp"
 
 #include <iostream>
 
