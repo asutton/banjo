@@ -58,12 +58,15 @@ struct Generator
   llvm::Type* get_type(Void_type const&);
   llvm::Type* get_type(Boolean_type const&);
   llvm::Type* get_type(Integer_type const&);
+  llvm::Type* get_type(Byte_type const&);
   llvm::Type* get_type(Float_type const&);
   llvm::Type* get_type(Tuple_type const&);
   llvm::Type* get_type(Function_type const&);
   llvm::Type* get_type(Array_type const&);
   llvm::Type* get_type(Dynarray_type const&);
   llvm::Type* get_type(Auto_type const&);
+  llvm::Type* get_type(Coroutine_type const&);
+  llvm::Type* get_type(Class_type const&);
 
   llvm::Value* gen(Expr const&);
   llvm::Value* gen(Boolean_expr const&);
@@ -104,6 +107,7 @@ struct Generator
   void gen(Empty_stmt const&);
   void gen(Compound_stmt const&);
   void gen(Return_stmt const&);
+  void gen(Yield_stmt const&);
   void gen(If_then_stmt const&);
   void gen(If_else_stmt const&);
   void gen(While_stmt const&);
@@ -128,8 +132,11 @@ struct Generator
   void gen_function_definition(Function_def const&);
   void gen(Type_decl const&);
   void gen(Object_parm const&);
+  void gen(Coroutine_decl const&);
+  void gen(Class_decl const&);
+  void gen_coroutine_definition(Function_def const&, Type const&);
 
-  // Name bindings
+  // Name  bindings
   void declare(Decl const&, llvm::Value*);
   llvm::Value* lookup(Decl const&);
 
@@ -150,6 +157,12 @@ struct Generator
   llvm::BasicBlock* exit;  // Function exit
   llvm::BasicBlock* top;   // Loop top
   llvm::BasicBlock* bot;   // Loop bottom
+
+  // Information about coroutines
+  llvm::BasicBlock* leave;   // Coroutine yield
+  llvm::BasicBlock* reenter; // Should be where the corouitine goes.
+  llvm::Type*       first;   // First call
+  std::vector<llvm::BasicBlock*> blocks; // Holds all of the blocks between yield statments
 
   // Environment.
   int           declcxt; // The current declaration context

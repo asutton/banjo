@@ -21,6 +21,10 @@ Type&
 make_type(Context& cxt, Simple_id& id)
 {
   Decl& d = simple_lookup(cxt, id);
+  if (is<Coroutine_decl>(d)) {
+    Coroutine_decl& decl = cast<Coroutine_decl>(d);
+    return cxt.get_coroutine_type(decl);
+  }
   if (!is<Class_decl>(d)) {
     error(cxt, "'{}' does not name a type", d);
     throw Type_error("not a type");

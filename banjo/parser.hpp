@@ -79,6 +79,7 @@ struct Parser
   Type& grouped_type();
   Type& function_type();
   Type& decltype_type();
+  Type& coroutine_type();
   Type_list type_list();
 
   // Expressions
@@ -224,6 +225,7 @@ struct Parser
   Type& on_array_type(Type&, Expr&);
   Type& on_tuple_type(Type_list&);
   Type& on_dynarray_type(Type&, Expr&);
+  Type& on_coroutine_type(Token);
 
   // Expressions
   Expr& on_logical_and_expression(Token, Expr&, Expr&);

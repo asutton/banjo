@@ -51,17 +51,21 @@ Generator::get_type(Type const& t)
   struct fn
   {
     Generator& g;
-    llvm::Type* operator()(Type const& t)          { lingo_unhandled(t); }
-    llvm::Type* operator()(Void_type const& t)     { return g.get_type(t); }
-    llvm::Type* operator()(Boolean_type const& t)  { return g.get_type(t); }
-    llvm::Type* operator()(Integer_type const& t)  { return g.get_type(t); }
-    llvm::Type* operator()(Float_type const& t)    { return g.get_type(t); }
+
+    llvm::Type* operator()(Type const& t)           { lingo_unhandled(t); }
+    llvm::Type* operator()(Void_type const& t)      { return g.get_type(t); }
+    llvm::Type* operator()(Boolean_type const& t)   { return g.get_type(t); }
+    llvm::Type* operator()(Integer_type const& t)   { return g.get_type(t); }
+    llvm::Type* operator()(Byte_type const& t)      { return g.get_type(t); }
+    llvm::Type* operator()(Float_type const& t)     { return g.get_type(t); }
+    llvm::Type* operator()(Function_type const& t)  { return g.get_type(t); }
+    llvm::Type* operator()(Coroutine_type const& t) { return g.get_type(t); }
+    llvm::Type* operator()(Class_type const& t)     { return g.get_type(t); }
+    llvm::Type* operator()(Auto_type const& t)      { return g.get_type(t); }
+    llvm::Type* operator()(Array_type const& t)     { return g.get_type(t); }
+    llvm::Type* operator()(Dynarray_type const& t)  { return g.get_type(t); }
     llvm::Type* operator()(Tuple_type const& t)    { return g.get_type(t); }
-    llvm::Type* operator()(Function_type const& t) { return g.get_type(t); }
-    llvm::Type* operator()(Array_type const& t)    { return g.get_type(t); }
-    llvm::Type* operator()(Dynarray_type const& t) { return g.get_type(t); }
-    llvm::Type* operator()(Auto_type const& t)     { return g.get_type(t); }
-  };
+   };
   return apply(t, fn{*this});
 }
 
@@ -88,6 +92,12 @@ Generator::get_type(Integer_type const& t)
   return build.getInt32Ty();
 }
 
+llvm::Type*
+Generator::get_type(Byte_type const& t)
+{
+  return build.getInt8Ty();
+}
+
 
 // FIXME: This isn't realistic.
 llvm::Type*
@@ -102,7 +112,7 @@ llvm::Type*
 Generator::get_type(Tuple_type const& t)
 {
   Type_list const& ts = t.element_types();
-  
+
   // Handle the empty case specially.
   if (ts.empty())
     return llvm::StructType::get(cxt);
@@ -128,6 +138,29 @@ Generator::get_type(Function_type const& t)
   return llvm::FunctionType::get(ret, parms, false);
 }
 
+llvm::Type*
+Generator::get_type(Coroutine_type const& t)
+{
+  auto const* bind = types.lookup(&t.declaration());
+  if(!bind)
+  {
+    gen(as<Coroutine_decl>(t.declaration()));
+    bind = types.lookup(&t.declaration());
+  }
+  return bind->second;
+}
+
+llvm::Type*
+Generator::get_type(Class_type const& t)
+{
+  auto const* bind = types.lookup(&t.declaration());
+  if (!bind)
+  {
+    gen(as<Class_decl>(t.declaration()));
+    bind = types.lookup(&t.declaration());
+  }
+  return bind->second;
+}
 
 // Return an array type
 llvm::Type*
@@ -173,10 +206,6 @@ Generator::gen(Expr const& e)
     llvm::Value* operator()(Expr const& e)         { lingo_unhandled(e); }
     llvm::Value* operator()(Boolean_expr const& e) { return g.gen(e); }
     llvm::Value* operator()(Integer_expr const& e) { return g.gen(e); }
-    llvm::Value* operator()(Tuple_expr const& e)   { return g.gen(e); }
-
-    llvm::Value* operator()(Object_expr const& e)  { return g.gen(e); }
-
     llvm::Value* operator()(Add_expr const& e)     { return g.gen(e); }
     llvm::Value* operator()(Sub_expr const& e)     { return g.gen(e); }
     llvm::Value* operator()(Mul_expr const& e)     { return g.gen(e); }
@@ -193,10 +222,12 @@ Generator::gen(Expr const& e)
     llvm::Value* operator()(And_expr const& e)     { return g.gen(e); }
     llvm::Value* operator()(Or_expr const& e)      { return g.gen(e); }
     llvm::Value* operator()(Not_expr const& e)     { return g.gen(e); }
+    llvm::Value* operator()(Tuple_expr const& e)   { return g.gen(e); }
+    llvm::Value* operator()(Object_expr const& e)  { return g.gen(e); }
 
     llvm::Value* operator()(Value_conv const& e)   { return g.gen(e); }
     llvm::Value* operator()(Boolean_conv const& e) { return g.gen(e); }
-    
+
     // llvm::Value* operator()(Call_expr const* e) const { return g.gen(e); }
     // llvm::Value* operator()(Dot_expr const* e) const { return g.gen(e); }
     // llvm::Value* operator()(Field_expr const* e) const { return g.gen(e); }
@@ -224,7 +255,6 @@ Generator::gen(Integer_expr const& e)
   return build.getInt(e.value().impl());
 }
 
-
 // Build a tuple value.
 llvm::Value*
 Generator::gen(Tuple_expr const& e)
@@ -241,6 +271,46 @@ Generator::gen(Tuple_expr const& e)
   return agg;
 }
 
+// Return the value corresponding to a literal expression.
+//llvm::Value*
+//Generator::gen(Literal_expr const* e)
+//{
+//  // TODO: Write better type queries.
+//  //
+//  // TODO: Write a better interface for values.
+//  Value v = evaluate(e);
+//  Type const* t = e->type();
+//  if (t == get_boolean_type())
+//    return build.getInt1(v.get_integer());
+//  if (t == get_character_type())
+//    return build.getInt8(v.get_integer());
+//  if (t == get_integer_type())
+//    return build.getInt32(v.get_integer());
+//
+//  // FIXME: How should we generate array literals? Are
+//  // these global constants or are they local alloca
+//  // objects. Does it depend on context?
+//
+//  // A string literal produces a new global string constant.
+//  // and returns a pointer to an array of N characters.
+//  if (is_string(t)) {
+//    Array_value a = v.get_array();
+//    String s = a.get_string();
+//
+//    // FIXME: This does not unify equivalent strings.
+//    // Maybe we needt maintain a mapping in order to
+//    // avoid redunancies.
+//    auto iter = strings.find(s);
+//    if (iter == strings.end()) {
+//      llvm::Value* v = build.CreateGlobalString(s);
+//      iter = strings.emplace(s, v).first;
+//    }
+//    return iter->second;
+//  }
+//
+//  else
+//    throw std::runtime_error("cannot generate function literal");
+//}
 
 // Return the address of the object referenced by the expression.
 llvm::Value*
@@ -250,9 +320,7 @@ Generator::gen(Object_expr const& e)
   return ret;
 }
 
-
 #if 0
-
 
 llvm::Value*
 Generator::gen(Id_expr const* e)
@@ -275,9 +343,7 @@ Generator::gen(Decl_expr const* e)
     return build.CreateLoad(result);
   return result;
 }
-
 #endif
-
 llvm::Value*
 Generator::gen(Add_expr const& e)
 {
@@ -395,8 +461,8 @@ Generator::gen(Ge_expr const& e)
 }
 
 
-// The comparison function doesn't compute -1, 0 or 1. Instead, it computes 
-// <0, 0, or >0 as the result of subtraction. Fixing the end values to -1 or 
+// The comparison function doesn't compute -1, 0 or 1. Instead, it computes
+// <0, 0, or >0 as the result of subtraction. Fixing the end values to -1 or
 // 1 requires branches.
 //
 // TODO: Convert operands to signed values first since this isn't guaranteed
@@ -487,7 +553,7 @@ Generator::gen(Value_conv const& e)
 }
 
 
-// Convert to a boolean value. Behavior depends on the source type. 
+// Convert to a boolean value. Behavior depends on the source type.
 //
 //    - integer type: the source is truncated to i1
 //    - floating point type: the result is fp-converted to i1.
@@ -498,7 +564,7 @@ Generator::gen(Boolean_conv const& e)
 {
   llvm::Value* src = gen(e.source());
   llvm::Type* dst = build.getInt1Ty();
-  
+
   // Build the corresponding conversion.
   Type const& t = e.source().type();
   if (is_integer_type(t))
@@ -624,6 +690,13 @@ Generator::gen(Index_expr const* e)
 }
 
 
+llvm::Value*
+Generator::gen(Value_conv const* e)
+{
+
+  llvm::Value* v = gen(e->source());
+  return build.CreateLoad(v);
+}
 
 llvm::Value*
 Generator::gen(Promote_conv const* e)
@@ -716,6 +789,7 @@ Generator::gen(Stmt const& s)
     void operator()(Empty_stmt const& s)       { g.gen(s); }
     void operator()(Compound_stmt const& s)    { g.gen(s); }
     void operator()(Return_stmt const& s)      { g.gen(s); }
+    void operator()(Yield_stmt const& s)       { g.gen(s); }
     void operator()(If_then_stmt const& s)     { g.gen(s); }
     void operator()(If_else_stmt const& s)     { g.gen(s); }
     void operator()(While_stmt const& s)       { g.gen(s); }
@@ -751,7 +825,7 @@ Generator::gen(Compound_stmt const& s)
 }
 
 
-// Generate a return statement. Note that this does not return diretctly. 
+// Generate a return statement. Note that this does not return directly.
 // We store the return value and then branch to the exit block. This strategy 
 // allows us to execute destructors in the exit block.
 void
@@ -760,6 +834,14 @@ Generator::gen(Return_stmt const& s)
   llvm::Value* v = gen(s.expression());
   build.CreateStore(v, ret);
   build.CreateBr(exit);
+}
+
+void
+Generator::gen(Yield_stmt const& s)
+{
+  llvm::Value* v = gen(s.expression());
+  build.CreateStore(v, ret);
+  build.CreateBr(leave);
 }
 
 
@@ -874,14 +956,32 @@ Generator::gen(Stmt_list const& s)
     gen(stmt);
 }
 
-
+#if 0
 // Note that the result of the expression is discarded.
+void
+Generator::gen(Assign_stmt const* s)
+{
+  llvm::Value* lhs = gen(s->object());
+  llvm::Value* rhs = gen(s->value());
+  build.CreateStore(rhs, lhs);
+}
+
+
+
+void
+Generator::gen(Expression_stmt const* s)
+{
+  gen(s->expression());
+}
+
+
+#endif
+
 void
 Generator::gen(Expression_stmt const& s)
 {
   gen(s.expression());
 }
-
 
 // -------------------------------------------------------------------------- //
 // Code generation for declarations
@@ -896,6 +996,7 @@ Generator::gen(Decl const& d)
     void operator()(Translation_unit const& d) { return g.gen(d); }
     void operator()(Variable_decl const& d)    { return g.gen(d); }
     void operator()(Function_decl const& d)    { return g.gen(d); }
+    void operator()(Coroutine_decl const& d)   { return g.gen(d); }
 
     // void operator()(Record_decl const& d)    { return g.gen(d); }
     // void operator()(Field_decl const& d)     { return g.gen(d); }
@@ -1146,6 +1247,109 @@ Generator::gen(Function_decl const& d)
   fn = nullptr;
 }
 
+void
+Generator::gen(Coroutine_decl const& d)
+{
+  String name = get_name(d);
+  // llvm::Type* type = get_type(d.type());
+  
+  // This will hold the labels and use an indirect branch inst;
+  std::vector<llvm::BlockAddress*> labels; 
+
+  // The parameters of the coroutine become members of the class, should 
+  // also probably grab them from the definition.
+  std::vector<llvm::Type*> ts;
+  for(auto &mem : d.parameters())
+    ts.push_back(get_type(mem.type()));
+
+  // Create a member variable that stores the execution state of
+  // the coroutne.
+  first = llvm::Type::getInt1Ty(cxt);
+  ts.push_back(first); // This will need to be set in the constructor.
+  llvm::Type* t = llvm::StructType::create(cxt, ts, get_name(d));
+  types.bind(&d, t);
+
+  // Generate the call function
+  Function_def def = as<Function_def>(d.definition());
+
+  gen_coroutine_definition(def, d.type());
+
+  ret = nullptr;
+  fn = nullptr;
+}
+
+// Probably need all of the variables in the def to add them as members 
+// of the struct.
+void
+Generator::gen_coroutine_definition(Function_def const& d, Type const& t)
+{
+  // Probably need to do something else here since yield should set 
+  // a label pointer
+  String name = "call";
+  llvm::Type* type = get_type(t);
+  type->dump();
+  llvm::FunctionType* ftype = llvm::FunctionType::get(get_type(t),false);
+  fn = llvm::Function::Create(
+    ftype,                           // function type
+    llvm::Function::ExternalLinkage, // linkage
+    name,                            // name
+    mod);                            // owning module
+
+  // Build the entry and exit blocks for the function.
+  entry = llvm::BasicBlock::Create(cxt, "entry", fn);
+  exit  = llvm::BasicBlock::Create(cxt, "exit");
+  leave = llvm::BasicBlock::Create(cxt, "leave");
+  reenter = llvm::BasicBlock::Create(cxt, "reenter");
+  build.SetInsertPoint(entry);
+  if (!is<Void_type>(t))
+    ret = build.CreateAlloca(fn->getReturnType());
+  else
+    ret = nullptr;
+
+  // Create a new binding for the variable.
+  gen_function_definition(d);
+}
+
+
+void
+Generator::gen(Class_decl const& d)
+{
+  // Check if class has already been declared
+  if (types.lookup(&d))
+    return;
+
+  // Holds the types and also the super classes.
+  // Super classes should be put at the head of the vector
+  std::vector<llvm::Type*> ts;
+
+  // Check for parent classes and add them to ts
+  Class_def def = as<Class_def>(d.definition());
+
+  // Construct the type over only the fields. If the record
+  // is empty, generate a struct with exactly one  byte so that
+  // we never have a type with 0 size.
+  if (def.objects().empty()) {
+    ts.push_back(build.getInt8Ty());
+  } else {
+    for (Decl const& mem : def.objects())
+      ts.push_back(get_type(mem.type()));
+  }
+
+  // Create the llvm type
+  llvm::Type* t = llvm::StructType::create(cxt, ts, get_name(d));
+  types.bind(&d,t);
+
+  // Now, generate code for all other members.
+  // FIXME: Re-enable the emission of methods, and functions for
+  //
+  // for (Stmt& m : def.methods())
+  //   gen(m);
+
+  // Enter a new context for the type
+  Enter_context scope(*this, type_cxt);
+
+}
+
 
 void 
 Generator::gen_function_definition(Def const& d)
@@ -1348,6 +1552,12 @@ Generator::gen_vref(Record_decl const* r, llvm::Value* obj)
 
 
 #endif
+
+void
+Generator::gen(Type_decl const& d)
+{
+  lingo_unimplemented("Gen type decl");
+}
 
 llvm::Module*
 Generator::operator()(Decl const& d)
