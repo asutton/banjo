@@ -12,9 +12,9 @@
 namespace banjo
 {
 
-// Handle the declaration of the class.
+// Build and declare the class.
 Decl&
-Parser::on_class_declaration(Name& n, Type& t)
+Parser::start_class_declaration(Name& n, Type& t)
 {
   Decl& d = cxt.make_class_declaration(n, t);
   declare(cxt, current_scope(), d);
@@ -24,7 +24,7 @@ Parser::on_class_declaration(Name& n, Type& t)
 
 // Associate the class with it's definition.
 Decl&
-Parser::on_class_definition(Decl& decl, Def& def)
+Parser::finish_class_definition(Decl& decl, Def& def)
 {
   Class_decl& cls = cast<Class_decl>(decl);
   cls.def_ = &def;
@@ -32,6 +32,7 @@ Parser::on_class_definition(Decl& decl, Def& def)
 }
 
 
+// Build a class definition from the statement sequence.
 Def&
 Parser::on_class_body(Stmt_list&& ss)
 {
@@ -46,9 +47,6 @@ Parser::on_super_declaration(Name& n, Type& t)
   declare(cxt, d);
   return d;
 }
-
-
-
 
 
 } // namespace banjo

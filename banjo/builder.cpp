@@ -705,17 +705,24 @@ Builder::synthesize_expression(Decl& d)
 // -------------------------------------------------------------------------- //
 // Statements
 
-Compound_stmt&
-Builder::make_compound_statement(Stmt_list&& ss)
-{
-  return make<Compound_stmt>(std::move(ss));
-}
-
-
 Empty_stmt&
 Builder::make_empty_statement()
 {
   return make<Empty_stmt>();
+}
+
+
+Compound_stmt&
+Builder::make_compound_statement()
+{
+  return make<Compound_stmt>();
+}
+
+
+Compound_stmt&
+Builder::make_compound_statement(Stmt_list&& ss)
+{
+  return make<Compound_stmt>(std::move(ss));
 }
 
 
@@ -851,31 +858,46 @@ Builder::make_variable_declaration(char const* s, Type& t, Expr& i)
 }
 
 
-// Create a new function. The type is synthesized from the parameter
-// and return types, and the definition is synthesized from the given
-// expression.
+// Create a new function with an empty definition. The type is synthesized 
+// from the parameter and return types.
 Function_decl&
-Builder::make_function_declaration(Name& n, Decl_list const& p, Type& t, Expr& e)
+Builder::make_function_declaration(Name& n, Decl_list const& p, Type& t)
 {
   Type& r = get_function_type(p, t);
-  Def& d = make_expression_definition(e);
+  Def& d = make_empty_definition();
   return make<Function_decl>(n, r, p, d);
 }
 
 
-// Create a new function. The type is synthesized from the parameter
-// and return types, and the definition is synthesized from the given
-// statement.
-Function_decl&
-Builder::make_function_declaration(Name& n, Decl_list const& p, Type& t, Stmt& s)
+// Create a new method with an empty definition. The type is synthesized 
+// from the parameter and return types.
+Method_decl&
+Builder::make_method_declaration(Name& n, Decl_list const& p, Type& t)
 {
   Type& r = get_function_type(p, t);
-  Def& d = make_function_definition(s);
-  return make<Function_decl>(n, r, p, d);
+  Def& d = make_empty_definition();
+  return make<Method_decl>(n, r, p, d);
 }
 
 
-// Make an incomplete class declaration with an empty definition. 
+
+// Create a function definition for the given statement.
+Function_def&
+Builder::make_function_definition(Stmt& s)
+{
+  return make<Function_def>(s);
+}
+
+
+// Create an expression definition.
+Expression_def&
+Builder::make_function_definition(Expr& e)
+{
+  return make<Expression_def>(e);
+}
+
+
+// Make a class declaration with an empty definition. 
 Class_decl&
 Builder::make_class_declaration(Name& n, Type& t)
 {
@@ -913,25 +935,6 @@ Builder::make_field_declaration(Name& n, Type& t, Expr& e)
   Def& d = make_expression_definition(e);
   return make<Field_decl>(n, t, d);
 }
-
-
-Method_decl&
-Builder::make_method_declaration(Name& n, Decl_list const& p, Type& t, Expr& e)
-{
-  Type& r = get_function_type(p, t);
-  Def& d = make_expression_definition(e);
-  return make<Method_decl>(n, r, p, d);
-}
-
-
-Method_decl&
-Builder::make_method_declaration(Name& n, Decl_list const& p, Type& t, Stmt& s)
-{
-  Type& r = get_function_type(p, t);
-  Def& d = make_function_definition(s);
-  return make<Method_decl>(n, r, p, d);
-}
-
 
 
 Template_decl&
@@ -1066,13 +1069,6 @@ Expression_def&
 Builder::make_expression_definition(Expr& e)
 {
   return make<Expression_def>(e);
-}
-
-
-Function_def&
-Builder::make_function_definition(Stmt& s)
-{
-  return make<Function_def>(s);
 }
 
 

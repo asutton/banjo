@@ -22,9 +22,10 @@ namespace banjo
 // Statements
 
 void
-Elaborate_expressions::translation_unit(Translation_unit& s)
+Elaborate_expressions::translation_unit(Translation_unit& tu)
 {
-  statement_seq(s.statements());
+  Enter_scope scope(cxt, tu);
+  statement_seq(tu.statements());
 }
 
 
@@ -61,6 +62,7 @@ Elaborate_expressions::statement_seq(Stmt_list& ss)
 void
 Elaborate_expressions::compound_statement(Compound_stmt& s)
 {
+  Enter_scope scope(cxt, s);
   statement_seq(s.statements());
 }
 
@@ -162,21 +164,29 @@ Elaborate_expressions::function_declaration(Function_decl& d)
   {
     Self& elab;
     void operator()(Def& d)            { lingo_unhandled(d); }
-    void operator()(Expression_def& d) { d.expr_ = &elab.expression(d.expression()); }
-    void operator()(Function_def& d)   { elab.statement(d.statement()); }
+    void operator()(Expression_def& d) { elab.function_definition(d); }
+    void operator()(Function_def& d)   { elab.function_definition(d); }
   };
 
-  // Declare parameters.
-  //
-  // TODO: Do as C++ does and forbid the declaration of locals within
-  // the function block having the same name as a parameter. We could
-  // do this by declaring them directly in the function block before
-  // any locals (this is a better idea than what I'm doing here).
-  Enter_scope scope(cxt);
-  for (Decl& p : d.parameters())
-    declare(cxt, p);
-
+  Enter_scope scope(cxt, d);
   apply(d.definition(), fn{*this});
+}
+
+
+void
+Elaborate_expressions::function_definition(Function_def& d)
+{
+  statement(d.statement());
+}
+
+
+void
+Elaborate_expressions::function_definition(Expression_def& d)
+{
+  // We've previously declared parameters for the expression. Ensure
+  // those are available here.
+  Enter_scope scope(cxt, d.expression());
+  d.expr_ = &expression(d.expression());
 }
 
 
@@ -189,6 +199,8 @@ Elaborate_expressions::class_declaration(Class_decl& d)
     void operator()(Def& d)       { lingo_unhandled(d); }
     void operator()(Class_def& d) { elab.statement_seq(d.statements()); }
   };
+
+  Enter_scope scope(cxt, d);
   apply(d.definition(), fn{*this});
 }
 

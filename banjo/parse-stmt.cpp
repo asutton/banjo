@@ -99,13 +99,17 @@ Parser::empty_statement()
 Stmt&
 Parser::compound_statement()
 {
-  Enter_scope scope(cxt);
+  // Build the compound statement so that we can save its scope.
+  Stmt& s = start_compound_statement();
+  Enter_scope scope(cxt, s);
+
+  // Match the enclosed statements.
   Stmt_list ss;
   match(lbrace_tok);
   if (lookahead() != rbrace_tok)
     ss = statement_seq();
   match(rbrace_tok);
-  return on_compound_statement(std::move(ss));
+  return finish_compound_statement(s, std::move(ss));
 }
 
 

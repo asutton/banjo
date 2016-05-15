@@ -8,10 +8,21 @@ namespace banjo
 {
 
 
+// Build an empty compound statement.
 Stmt&
-Parser::on_compound_statement(Stmt_list&& ss)
+Parser::start_compound_statement()
 {
-  return cxt.make_compound_statement(std::move(ss));
+  return cxt.make_compound_statement();
+}
+
+
+// Assign the set of statements to the compound statement.
+Stmt&
+Parser::finish_compound_statement(Stmt& s, Stmt_list&& ss)
+{
+  Compound_stmt& cs = cast<Compound_stmt>(s);
+  cs.stmts_ = std::move(ss);
+  return cs;
 }
 
 

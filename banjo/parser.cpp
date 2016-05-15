@@ -291,4 +291,21 @@ Parser::current_scope()
 }
 
 
+// -------------------------------------------------------------------------- //
+// Parsing state
+
+
+// Returns true if it looks like we're declaring a non-static member
+// of a user-defined type.
+//
+// TODO: Clean this up a bit.  
+bool
+Parser::parsing_nonstatic_member() const
+{
+  bool in_udt = is<Class_decl>(cxt.current_context());
+  bool is_static = decl_specs() & static_spec;
+  return in_udt && !is_static;
+}
+
+
 } // namespace banjo

@@ -41,13 +41,13 @@ Parser::class_declaration()
   }
 
   // Point of declaration.
-  Decl& decl = on_class_declaration(name, *kind);
+  Decl& decl = start_class_declaration(name, *kind);
   Enter_scope scope(cxt, cxt.saved_scope(decl));
 
   // Match the class body.
   Def& def = class_body();
   
-  return on_class_definition(decl, def);
+  return finish_class_definition(decl, def);
 };
 
 

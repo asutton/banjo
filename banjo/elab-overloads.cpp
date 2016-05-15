@@ -24,7 +24,7 @@ Elaborate_overloads::Elaborate_overloads(Parser& p)
 void
 Elaborate_overloads::translation_unit(Translation_unit& tu)
 {
-  Enter_scope(cxt, cxt.saved_scope(tu));
+  Enter_scope(cxt, tu);
   statement_seq(tu.statements());
 }
 
@@ -54,6 +54,7 @@ Elaborate_overloads::statement_seq(Stmt_list& ss)
 void
 Elaborate_overloads::compound_statement(Compound_stmt& s)
 {
+  Enter_scope scope(cxt, s);
   statement_seq(s.statements());
 }
 
@@ -87,10 +88,6 @@ check_declarations(Context& cxt, Decl const& decl, Iter first, Iter last)
 }
 
 
-// TODO: This is a really funky little function. It's trying to accommodate
-// lookups between saved and non-saved scopes. It might just be a better
-// idea to always save scopes, so we never have to think about declaring
-// entities in *every* elaboration pass.
 void
 Elaborate_overloads::declaration(Decl& decl)
 {
@@ -98,26 +95,14 @@ Elaborate_overloads::declaration(Decl& decl)
   // first (in a non-saved scope), and we can just add it. Otherwise,
   // we need to check it against other entities in the overload set.
   Name& name = decl.name();
-  Overload_set* ovl = cxt.current_scope().lookup(name);
-  if (!ovl) {
-    declare(cxt, decl);
-    return;
-  }
+  Overload_set& ovl = *cxt.current_scope().lookup(name);
 
   // Find the position of the declaration within the overload set.
-  auto iter = std::find_if(ovl->begin(), ovl->end(), [&decl](Decl& d) {
+  auto iter = std::find_if(ovl.begin(), ovl.end(), [&decl](Decl& d) {
     return &decl == &d;
   });
-
-  // Check a subset of declarations based on whether decl is in the
-  // set or not.
-  if (iter == ovl->end()) {
-    check_declarations(cxt, decl, ovl->begin(), ovl->end());
-    ovl->insert(decl);
-  }
-  else
-    check_declarations(cxt, decl, ++iter, ovl->end());
-
+  lingo_assert(iter != ovl.end());
+  check_declarations(cxt, decl, ++iter, ovl.end());
 
   // Otherwise, potentially recurse.
   struct fn
@@ -145,11 +130,7 @@ Elaborate_overloads::function_declaration(Function_decl& d)
     void operator()(Expression_def& d) { /* Do nothing. */ }
   };
 
-  // Declare parameters.
-  Enter_scope scope(cxt);
-  for (Decl& p : d.parameters())
-    declare(cxt, p);
-
+  Enter_scope scope(cxt, d);
   apply(d.definition(), fn{*this});
 }
 
@@ -164,7 +145,7 @@ Elaborate_overloads::class_declaration(Class_decl& d)
     void operator()(Class_def& d) { elab.statement_seq(d.statements()); }
   };
 
-  Enter_scope(cxt, cxt.saved_scope(d));
+  Enter_scope scope(cxt, d);
   apply(d.definition(), fn{*this});
 }
 

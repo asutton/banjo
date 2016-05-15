@@ -260,7 +260,8 @@ struct Parser
   Expr& on_unparsed_expression(Token_seq&&);
 
   // Statements
-  Stmt& on_compound_statement(Stmt_list&&);
+  Stmt& start_compound_statement();
+  Stmt& finish_compound_statement(Stmt&, Stmt_list&&);
   Stmt& on_empty_statement();
   Stmt& on_return_statement(Token, Expr&);
   Stmt& on_yield_statement(Token, Expr&);
@@ -281,12 +282,13 @@ struct Parser
   Decl& on_super_declaration(Name&, Type&);
 
   // Functions
-  Decl& on_function_declaration(Name&, Decl_list&, Type&, Expr&);
-  Decl& on_function_declaration(Name&, Decl_list&, Type&, Stmt&);
+  Decl& start_function_declaration(Name&, Decl_list&, Type&);
+  Decl& finish_function_declaration(Decl&, Expr&);
+  Decl& finish_function_declaration(Decl&, Stmt&);
 
   // Classes
-  Decl& on_class_declaration(Name&, Type&);
-  Decl& on_class_definition(Decl&, Def&);
+  Decl& start_class_declaration(Name&, Type&);
+  Decl& finish_class_definition(Decl&, Def&);
   Def& on_class_body(Stmt_list&&);
 
   // Coroutine declarations
@@ -326,7 +328,8 @@ struct Parser
   Req& on_deduction_requirement(Expr&, Type&);
 
   // Toplevel structure
-  Decl& on_translation_unit(Decl&, Stmt_list&&);
+  Decl& start_translation_unit();
+  Decl& finish_translation_unit(Decl&, Stmt_list&&);
 
 
   // Token matching.
@@ -345,10 +348,12 @@ struct Parser
   void       expect(Token_kind);
   Token      accept();
 
-  template<typename... Kinds>
-  bool next_token_is_one_of(Token_kind, Kinds...);
+  template<typename... Kinds> bool next_token_is_one_of(Token_kind, Kinds...);
 
   bool next_token_is_one_of();
+
+  // Tree matching
+  template<typename T> T* match_if(T& (Parser::* p)());
 
   // Braces
   void open_brace(Token);
@@ -363,8 +368,9 @@ struct Parser
   Specs  take_decl_specs();
   void   clear_decl_specs();
 
-  // Tree matching.
-  template<typename T> T* match_if(T& (Parser::* p)());
+  // Parse state
+  bool parsing_nonstatic_member() const;
+
 
   // Resources
   Symbol_table& symbols();
@@ -554,7 +560,7 @@ struct Trial_parser
     // detet failures?
     if (fail) {
       parser.tokens.reposition(pos);
-      parser.cxt.set_scope(*scope);
+      parser.cxt.leave_scope(scope);
       parser.state = state;
     }
   }

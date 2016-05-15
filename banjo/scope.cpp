@@ -24,10 +24,9 @@ Scope::bind(Decl& d)
 std::ostream& 
 operator<<(std::ostream& os, Scope const& scope)
 {
-  if (scope.context() && scope.context()->is_named())
-    os << "==== scope for " << scope.context()->name() << " ====\n";
-  else 
-    os << "==== unnamed scope ====\n";
+  // TODO: Print the name of the associated declaration, if there
+  // is one.
+  os << "==== scope ====\n";
 
   // TODO: Print the actual declarations?
   for (auto const& bind : scope.names) {

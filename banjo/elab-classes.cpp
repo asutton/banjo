@@ -23,9 +23,10 @@ namespace banjo
 // Statements
 
 void
-Elaborate_classes::translation_unit(Translation_unit& s)
+Elaborate_classes::translation_unit(Translation_unit& tu)
 {
-  statement_seq(s.statements());
+  Enter_scope scope(cxt, tu);
+  statement_seq(tu.statements());
 }
 
 
@@ -54,6 +55,7 @@ Elaborate_classes::statement_seq(Stmt_list& ss)
 void
 Elaborate_classes::compound_statement(Compound_stmt& s)
 {
+  Enter_scope scope(cxt, s);
   statement_seq(s.statements());
 }
 
@@ -97,11 +99,7 @@ Elaborate_classes::function_declaration(Function_decl& d)
     void operator()(Function_def& d)   { elab.statement(d.statement()); }
   };
 
-  // Declare parameters. We do this for decltypes.
-  Enter_scope scope(cxt);
-  for (Decl& p : d.parameters())
-    declare(cxt, p);
-
+  Enter_scope scope(cxt, d);
   apply(d.definition(), fn{*this});
 }
 
@@ -182,6 +180,10 @@ Elaborate_classes::class_declaration(Class_decl& decl)
 
   // TODO: By the time this function completes, all compile-time properties
   // of the class must be known (e.g., size, layout, alignment, etc).
+
+  // Recursively analyze members.
+  Enter_scope scope(cxt, decl);
+  statement_seq(def.statements());
 }
 
 

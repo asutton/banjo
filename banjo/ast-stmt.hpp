@@ -48,21 +48,19 @@ struct Empty_stmt : Stmt
 // A helper node that represents all kinds of statement sequences.
 struct Compound_stmt : Stmt
 {
-  Compound_stmt()
-    : Stmt()
-  { }
+  Compound_stmt() = default;
 
   Compound_stmt(Stmt_list&& ss)
-    : Stmt(), stmts(std::move(ss))
+    : Stmt(), stmts_(std::move(ss))
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
-  Stmt_list const& statements() const { return stmts; }
-  Stmt_list&       statements()       { return stmts; }
+  Stmt_list const& statements() const { return stmts_; }
+  Stmt_list&       statements()       { return stmts_; }
 
-  Stmt_list stmts;
+  Stmt_list stmts_;
 };
 
 

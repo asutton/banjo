@@ -21,14 +21,12 @@ namespace banjo
 Decl&
 Parser::translation_unit()
 {
-  // Build the initial translation unit so we can get an associated
-  // scope for lookup.
-  Translation_unit& tu = cxt.make_translation_unit();
+  // Create the translation unit and its associated global scope.
+  Decl& tu = start_translation_unit();
   Enter_scope scope(cxt, cxt.saved_scope(tu));
   
   Stmt_list ss = toplevel_statement_seq();
-  
-  return on_translation_unit(tu, std::move(ss));
+  return finish_translation_unit(tu, std::move(ss));
 }
 
 

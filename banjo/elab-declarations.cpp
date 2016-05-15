@@ -24,7 +24,7 @@ namespace banjo
 void
 Elaborate_declarations::translation_unit(Translation_unit& tu)
 {
-  Enter_scope scope(cxt, cxt.saved_scope(tu));
+  Enter_scope scope(cxt, tu);
   statement_seq(tu.statements());
 }
 
@@ -54,6 +54,7 @@ Elaborate_declarations::statement_seq(Stmt_list& ss)
 void
 Elaborate_declarations::compound_statement(Compound_stmt& s)
 {
+  Enter_scope scope(cxt, cxt.saved_scope(s));
   statement_seq(s.statements());
 }
 
@@ -99,13 +100,11 @@ Elaborate_declarations::super_declaration(Super_decl& d)
 }
 
 
-// FIXME: Finish rewriting this as a template!
 void
 Elaborate_declarations::function_declaration(Function_decl& decl)
 {
   // Create a new scope for the function and elaborate parameter
   // declarations. Note that we're going 
-  Enter_scope scope(cxt);
   Decl_list& parms = decl.parameters();
   for (Decl& p : parms)
     parameter(p);
@@ -119,6 +118,8 @@ Elaborate_declarations::function_declaration(Function_decl& decl)
   // FIXME: Rewrite expression definitions into function definitions
   // to simplify later analysis and code gen.
   
+  // Enter the function scope and recurse through the definition.
+  Enter_scope scope(cxt, decl);
   if (Function_def* def = as<Function_def>(&decl.definition()))
     statement(def->statement());
 }
@@ -130,18 +131,21 @@ Elaborate_declarations::function_declaration(Function_decl& decl)
 // TODO: Is this the appropriate place to transform a couroutine
 // into a class. Perhaps...
 void
-Elaborate_declarations::coroutine_declaration(Coroutine_decl &d)
+Elaborate_declarations::coroutine_declaration(Coroutine_decl &decl)
 {
   // Elaborate the parameters.
-  Enter_scope scope(cxt);
-  Decl_list& parms = d.parameters();
+  Decl_list& parms = decl.parameters();
   for (Decl& p : parms)
     parameter(p);
   
   // Elaborate the return type of the coroutine
-  d.ret_ = &type(d.type());
+  decl.ret_ = &type(decl.type());
 
   // FIXME: Don't we have to set the coroutine type here?
+
+  Enter_scope scope(cxt, decl);
+  if (Function_def* def = as<Function_def>(&decl.definition()))
+    statement(def->statement());
 }
 
 
@@ -158,7 +162,7 @@ Elaborate_declarations::class_declaration(Class_decl& d)
   // Update the class kind/metatype
   d.kind_ = &type(d.kind());
 
-  Enter_scope scope(cxt, cxt.saved_scope(d));
+  Enter_scope scope(cxt, d);
   apply(d.definition(), fn{*this});
 }
 

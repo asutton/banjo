@@ -41,6 +41,8 @@ struct Elaborate_expressions
   void declaration(Decl&);
   void variable_declaration(Variable_decl&);
   void function_declaration(Function_decl&);
+  void function_definition(Function_def&);
+  void function_definition(Expression_def&);
   void class_declaration(Class_decl&);
 
   Expr& expression(Expr&);

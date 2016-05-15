@@ -15,7 +15,7 @@ namespace banjo
 
 Context::Context()
   : Builder(*this), syms()
-  , global(&make_scope()), scope(nullptr)
+  , global(nullptr), scope(nullptr)
   , id(0)
   , diags(false)
 {
@@ -30,26 +30,29 @@ Context::Context()
 }
 
 
-// Returns the context associated with the current scope or nullptr if
-// there is none.
-Decl*
-Context::immediate_context()
+// If the current scope is associated with a declaration, make that
+// the current declaration. This must be called just after entering 
+// a new scope.
+//
+// Do not call this function directly. Use Enter_scope instead.
+void
+Context::enter_context()
 {
-  return scope->context();
+  if (Decl* d = as<Decl>(&scope->context()))
+    cxt.push_back(d);
 }
 
 
-// Returns the innermost declaration context, or nullptr if there is none.
-Decl*
-Context::current_context()
+// If the current scope is associated with a declaration, restore the
+// previous context. This must be called just prior to restoring a 
+// previous scope.
+//
+// Do not call this function directly. Use Enter_scope instead.
+void
+Context::leave_context()
 {
-  Scope* p = scope;
-  while (p) {
-    if (Decl* d = p->context())
-      return d;
-    p = p->enclosing_scope();
-  }
-  return nullptr;
+  if (is<Decl>(&scope->context()))
+    cxt.pop_back();
 }
 
 

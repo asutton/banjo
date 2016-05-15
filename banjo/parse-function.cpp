@@ -16,19 +16,16 @@ namespace banjo
 // Parse a function definition.
 //
 //    function-definition:
-//      'def' identifier ':' [template-header] parameter-clause '->' type compound-statement
-//      'def' identifier ':' [template-header] parameter-clause compound-statement
-//      'def' identifier ':' [template-header] parameter-clause '->' type '=' expression-statement
-//      'def' identifier ':' [template-header] parameter-clause '=' expression-statement
-//      'def' identifier ':' [template-header] parameter-clause expression-statement
+//      'def' identifier ':' parameter-clause ['->' type] ';'
+//      'def' identifier ':' parameter-clause ['->' type] function-body
+//      'def' identifier ':' parameter-clause ['->' type] '=' expression-statement
+//      'def' identifier ':' parameter-clause expression-statement
 //
 //    parameter-spec:
 //      '(' [parameter-list] ')'
 //
 //    function-body:
 //      compound-statement
-//      '=' delete
-//      '=' expression-statement
 //
 // Note that that the last form cannot have a type annotation because there
 // is no token delimiting for the start of the definition.
@@ -43,6 +40,9 @@ namespace banjo
 // Note that not all functions can have named returns (e.g., void functions,
 // functions returning references, etc.). This also leaks implementation
 // details into the interface.
+//
+// TODO: Allow empty definitions for functions. Functions with empty 
+// definitions are either foreign or synthesized.
 Decl&
 Parser::function_declaration()
 {
@@ -56,8 +56,9 @@ Parser::function_declaration()
   // Optional colon.
   match_if(colon_tok);
 
-  // NOTE: We don't have to enter a scope because we aren't doing
-  // lookup in the first pass.
+  // NOTE: We don't have to enter a new scope because parameters are 
+  // declared as top-level members of the function body. That happens
+  // in finish_function_declaration.
   Decl_list parms = parameter_clause();
 
   // Match the return type.
@@ -67,19 +68,24 @@ Parser::function_declaration()
   else
     ret = &cxt.make_auto_type();
 
+  // Declare the function and establish the function scope.
+  Decl& fn = start_function_declaration(name, parms, *ret);
+  Enter_scope scope(cxt, cxt.saved_scope(fn));
+
   // Match the function definition.
-  if (match_if(eq_tok)) {
-    // TODO: Handle default and deleted functions.
+  //
+  // TODO: Handle default and deleted functions.
+  if (match_if(eq_tok)) { // '=' ...
     Expr& expr = unparsed_expression(end_expr);
     match(semicolon_tok);
-    return on_function_declaration(name, parms, *ret, expr);
-  } else if (next_token_is(lbrace_tok)) {
+    return finish_function_declaration(fn, expr);
+  } else if (next_token_is(lbrace_tok)) { // '{' ... '}'
     Stmt& stmt = compound_statement();
-    return on_function_declaration(name, parms, *ret, stmt);
+    return finish_function_declaration(fn, stmt);
   } else {
     Expr& expr = unparsed_expression(end_expr);
     match(semicolon_tok);
-    return on_function_declaration(name, parms, *ret, expr);
+    return finish_function_declaration(fn, expr);
   }
 }
 

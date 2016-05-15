@@ -12,50 +12,67 @@
 namespace banjo
 {
 
-
-// Returns true if it looks like we're declaring a non-static member
-// of a user-defined type.
-//
-// FIXME: This appears in sema-decl.cpp also.
-inline static bool
-declaring_member(Parser& p)
+// Create a saved scope for the function body and add the parameters 
+// to it. This will allow parameter names to be looked up during
+// subsequent elaboration. Note that name hiding will also be diagnosed
+// later.
+static void
+declare_parms(Context& cxt, Term& t, Decl_list& parms)
 {
-  bool in_udt = is<Class_decl>(p.cxt.immediate_context());
-  bool is_static = p.decl_specs() & static_spec;
-  return in_udt && !is_static;
+  Enter_scope scope(cxt, cxt.saved_scope(t));
+  for (Decl& p : parms)
+    declare(cxt, p);
 }
 
 
+// Build and declare the function or method. A method is a non-static
+// function declared in class scope.
 Decl&
-Parser::on_function_declaration(Name& n, Decl_list& p, Type& t, Expr& e)
+Parser::start_function_declaration(Name& n, Decl_list& p, Type& t)
 {
-  Decl* ret;
-  if (declaring_member(*this))
-    ret = &cxt.make_method_declaration(n, p, t, e);
-  else
-    ret = &cxt.make_function_declaration(n, p, t, e);
-  ret->spec_ = take_decl_specs();
-  declare(cxt, *ret);
-  return *ret;
+  Decl& decl = parsing_nonstatic_member()
+    ? cxt.make_method_declaration(n, p, t)
+    : cxt.make_function_declaration(n, p, t);
+  decl.spec_ = take_decl_specs();
+  declare(cxt, decl);
+  return decl;
 }
 
 
+// Declare parameters and update the definition.
 Decl&
-Parser::on_function_declaration(Name& n, Decl_list& p, Type& t, Stmt& s)
+Parser::finish_function_declaration(Decl& decl, Expr& expr)
 {
-  Decl* ret;
-  if (declaring_member(*this))
-    ret = &cxt.make_method_declaration(n, p, t, s);
-  else
-    ret = &cxt.make_function_declaration(n, p, t, s);
-  ret->spec_ = take_decl_specs();
-  declare(cxt, *ret);
-  return *ret;
+  Function_decl& fn = cast<Function_decl>(decl);
+  declare_parms(cxt, expr, fn.parameters());
+  fn.def_ = &cxt.make_function_definition(expr);
+  return decl;
 }
 
 
-// In the first pass, just create the parameter. We'll declare it
-// during elaboration of the function's definition.
+// Declare parameters and update the definition.
+Decl&
+Parser::finish_function_declaration(Decl& decl, Stmt& stmt)
+{
+  Function_decl& fn = cast<Function_decl>(decl);
+  declare_parms(cxt, stmt, fn.parameters());
+  fn.def_ = &cxt.make_function_definition(stmt);
+  return decl;
+}
+
+
+// TODO: Declare parameters as we do above.
+Decl&
+Parser::on_coroutine_declaration(Name& n, Decl_list& p, Type& t, Stmt& s)
+{
+  Decl& d = build.make_coroutine_declaration(n, p, t, s);
+  declare(cxt, current_scope(), d);
+  return d;
+}
+
+
+// In the first pass, just create the parameter. It is declared into the
+// function body.
 Decl&
 Parser::on_function_parameter(Name& n, Type& t)
 {
@@ -64,43 +81,6 @@ Parser::on_function_parameter(Name& n, Type& t)
   return d;
 }
 
-
-// FIXME: These should go away.
-
-Def&
-Parser::on_function_definition(Decl& d, Stmt& s)
-{
-  // Def& def = build.make_function_definition(s);
-  // return define_function(d, def);
-  lingo_unreachable();
-}
-
-
-Def&
-Parser::on_deleted_definition(Decl& d)
-{
-  // Def& def = build.make_deleted_definition();
-  // return define_entity(d, def);
-  lingo_unreachable();
-}
-
-
-Def&
-Parser::on_defaulted_definition(Decl& d)
-{
-  // Def& def = build.make_defaulted_definition();
-  // return define_function(d, def);
-  lingo_unreachable();
-}
-
-
-Decl&
-Parser::on_coroutine_declaration(Name& n,Decl_list& p, Type& t, Stmt& s)
-{
-  Decl& d = build.make_coroutine_declaration(n,p,t,s);
-  declare(cxt, current_scope(), d);
-  return d;
-}
 
 
 } // namespace banjo
