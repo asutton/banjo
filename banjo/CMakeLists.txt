@@ -12,6 +12,7 @@ add_library(banjo
   token.cpp
   lexer.cpp
   parser.cpp
+  parse-tu.cpp
   parse-id.cpp
   parse-type.cpp
   parse-expr.cpp
@@ -19,8 +20,8 @@ add_library(banjo
   parse-decl.cpp
   parse-function.cpp
   parse-class.cpp
-  parse-module.cpp
   parse-req.cpp
+  sema-tu.cpp
   sema-id.cpp
   sema-type.cpp
   sema-expr.cpp
@@ -29,7 +30,6 @@ add_library(banjo
   sema-decl.cpp
   sema-function.cpp
   sema-class.cpp
-  sema-module.cpp
   sema-req.cpp
   elab-declarations.cpp
   elab-overloads.cpp
