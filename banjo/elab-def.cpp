@@ -18,9 +18,8 @@ namespace banjo
 void
 Parser::elaborate_definitions(Stmt_list& ss)
 {
-  for (Stmt& s : ss) {
+  for (Stmt& s : ss)
     elaborate_definition(s);
-  }
 }
 
 // If the statement is a declaration, elaborate its declared type.
@@ -41,8 +40,8 @@ Parser::elaborate_definition(Decl& d)
     void operator()(Decl& d)          { lingo_unhandled(d); }
     void operator()(Variable_decl& d) { p.elaborate_variable_initializer(d); }
     void operator()(Function_decl& d) { p.elaborate_function_definition(d); }
-    void operator()(Class_decl& d)    { p.elaborate_class_definition(d); }
     void operator()(Coroutine_decl& d){ p.elaborate_coroutine_definition(d); }
+    void operator()(Class_decl& d)    { p.elaborate_class_definition(d); }
     void operator()(Super_decl& d)    { /* Nothing to do. */ }
   };
   apply(d, fn{*this});
@@ -93,6 +92,7 @@ Parser::elaborate_function_definition(Function_decl& d)
   apply(d.definition(), fn{*this, d});
 }
 
+
 void
 Parser::elaborate_coroutine_definition(Coroutine_decl &decl){
   Enter_scope scope(cxt);
@@ -108,6 +108,7 @@ Parser::elaborate_coroutine_definition(Coroutine_decl &decl){
   def->stmt_ = &stmt;
   decl.def_ = def;
 }
+
 
 void
 Parser::elaborate_function_definition(Function_decl& decl, Expression_def& def)
@@ -175,11 +176,11 @@ Parser::elaborate_class_definition(Class_decl& decl, Class_def& def)
   Enter_scope scope(cxt, cxt.saved_scope(decl));
 
   // Elaborate the definition's statement, possibly parsing it.
-  Stmt& stmt = elaborate_member_statement(def.body());
+  // Stmt& stmt = elaborate_member_statement(def.body());
 
   // Update the definition with the new statement. We don't need
   // to update the declaration.
-  def.body_ = &stmt;
+  // def.body_ = &stmt;
 }
 
 
@@ -212,12 +213,12 @@ Parser::elaborate_compound_statement(Stmt& s)
 Stmt&
 Parser::elaborate_member_statement(Stmt& s)
 {
-  if (Unparsed_stmt* soup = as<Unparsed_stmt>(&s)) {
-    Save_input_location loc(cxt);
-    Token_stream ts(soup->tokens());
-    Parser parse(cxt, ts);
-    return parse.member_statement();
-  }
+  // if (Unparsed_stmt* soup = as<Unparsed_stmt>(&s)) {
+  //   Save_input_location loc(cxt);
+  //   Token_stream ts(soup->tokens());
+  //   Parser parse(cxt, ts);
+  //   return parse.member_statement();
+  // }
   return s;
 }
 

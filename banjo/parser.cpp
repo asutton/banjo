@@ -292,30 +292,19 @@ Parser::current_scope()
 
 
 // -------------------------------------------------------------------------- //
-// Miscellaneous parsing
+// Parsing state
 
-// Parse a translation unit.
+
+// Returns true if it looks like we're declaring a non-static member
+// of a user-defined type.
 //
-//    input:
-//      [statement-list]
-//
-// FIXME: This should return a single node, not a sequence.
-Stmt&
-Parser::translation()
+// TODO: Clean this up a bit.  
+bool
+Parser::parsing_nonstatic_member() const
 {
-  // TODO: We should enter the global scope and not create a temporary
-  // one.
-  Enter_scope scope(cxt);
-
-  Stmt_list ss = statement_seq();
-  return on_translation_statement(std::move(ss));
-}
-
-
-Stmt&
-Parser::operator()()
-{
-  return translation();
+  bool in_udt = is<Class_decl>(cxt.current_context());
+  bool is_static = decl_specs() & static_spec;
+  return in_udt && !is_static;
 }
 
 

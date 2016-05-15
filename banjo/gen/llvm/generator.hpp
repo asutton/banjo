@@ -50,7 +50,7 @@ struct Generator
 {
   Generator(Context&);
 
-  llvm::Module* operator()(Stmt const&);
+  llvm::Module* operator()(Decl const&);
 
   String get_name(Decl const&);
 
@@ -102,8 +102,6 @@ struct Generator
 
   void gen(Stmt const&);
   void gen(Empty_stmt const&);
-  void gen(Translation_stmt const&);
-  void gen(Member_stmt const&);
   void gen(Compound_stmt const&);
   void gen(Return_stmt const&);
   void gen(If_then_stmt const&);
@@ -117,6 +115,7 @@ struct Generator
 
 
   void gen(Decl const&);
+  void gen(Translation_unit const&);
   void gen(Variable_decl const&);
   void gen_local_variable(Variable_decl const&);
   void gen_global_variable(Variable_decl const&);
@@ -124,8 +123,6 @@ struct Generator
   void gen_global_init(llvm::Value*, Def const&);
   void gen_init(llvm::Value*, Empty_def const&);
   void gen_init(llvm::Value*, Expression_def const&);
-
-
   void gen(Function_decl const&);
   void gen_function_definition(Def const&);
   void gen_function_definition(Function_def const&);

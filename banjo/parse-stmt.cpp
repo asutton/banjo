@@ -26,7 +26,7 @@ Stmt&
 Parser::statement()
 {
   switch (lookahead()) {
-    // Declaration specifiers start declarations.
+    // Declaration specifiers.
     case virtual_tok:
     case abstract_tok:
     case static_tok:
@@ -40,7 +40,7 @@ Parser::statement()
     case super_tok:
     case var_tok:
     case def_tok:
-    case coroutine_tok: // co_def
+    case coroutine_tok:
     case class_tok:
     case concept_tok:
       return declaration_statement();
@@ -56,6 +56,9 @@ Parser::statement()
 
     case while_tok:
       return while_statement();
+    
+    case for_tok:
+      return for_statement();
 
     case break_tok:
       return break_statement();
@@ -96,64 +99,71 @@ Parser::empty_statement()
 Stmt&
 Parser::compound_statement()
 {
-  Enter_scope scope(cxt);
+  // Build the compound statement so that we can save its scope.
+  Stmt& s = start_compound_statement();
+  Enter_scope scope(cxt, s);
+
+  // Match the enclosed statements.
   Stmt_list ss;
   match(lbrace_tok);
   if (lookahead() != rbrace_tok)
     ss = statement_seq();
   match(rbrace_tok);
-  return on_compound_statement(std::move(ss));
+  return finish_compound_statement(s, std::move(ss));
 }
 
 
-// Parse a member statement, which represents the body of a class.
+// Parse a return statement.
 //
-//    member-statement:
-//      '{' [statement-seq] '}'
-//
-// Note that that the scope into which declarations are added is
-// pushed prior to the parsing of the member statement.
-Stmt&
-Parser::member_statement()
-{
-  Stmt_list ss;
-  match(lbrace_tok);
-  if (lookahead() != rbrace_tok)
-    ss = statement_seq();
-  match(rbrace_tok);
-  return on_member_statement(std::move(ss));
-}
-
-
+//    return-statement:
+//      'return' ';'
+//      'return' expression ';'
 Stmt&
 Parser::return_statement()
 {
+  Match_token_pred end_expr(*this, semicolon_tok);
+
   Token tok = require(return_tok);
-  Expr& e = expression();
+  Expr& e = unparsed_expression(end_expr);
   match(semicolon_tok);
   return on_return_statement(tok, e);
 }
 
+
+// Parse a yield statement.
+//
+//    yield-statement:
+//      'yield' ';'
+//      'yield' expression ';'
 Stmt&
 Parser::yield_statement()
 {
+  Match_token_pred end_expr(*this, semicolon_tok);
+  
   Token tok = require(yield_tok);
-  Expr&e = expression();
+  Expr&e = unparsed_expression(end_expr);
   match(semicolon_tok);
   return on_yield_statement(tok, e);
 }
 
+
 // Parse an if statement.
 //
 //    if-statement:
-//      'if' '(' expression ')' statement
-//      'if' '(' expression ')' statement 'else' statement
+//      'if' '(' condition ')' statement
+//      'if' '(' condition ')' statement 'else' statement
+//
+// TODO: Allow a declaration in the condition. This is not quite
+// the same as a 'let' since the name is bound until the end of the
+// statement.
 Stmt&
 Parser::if_statement()
 {
+  Match_token_pred end_cond(*this, rparen_tok);
+
   require(if_tok);
   match(lparen_tok);
-  Expr& cond = expression();
+  Expr& cond = unparsed_expression(end_cond);
   match(rparen_tok);
   Stmt& branch1 = statement();
   if (match_if(else_tok)) {
@@ -165,15 +175,43 @@ Parser::if_statement()
 }
 
 
+// Parse a while statement.
+//
+//    while-statement:
+//      'while' '(' condition ')' statement
+//
+// TODO: Allow a declaration in the condition?
 Stmt&
 Parser::while_statement()
 {
+  Match_token_pred end_cond(*this, rparen_tok);
+  
   require(while_tok);
   match(lparen_tok);
-  Expr& cond = expression();
+  Expr& cond = unparsed_expression(end_cond);
   match(rparen_tok);
   Stmt& body = statement();
   return on_while_statement(cond, body);
+}
+
+
+// Parse a for statement.
+//
+//    for-statement:
+//      'for' '(' variable-declaration [condition] ';' [expression] ')' statement
+//      'for' '(' expression-statement [condition] ';' [expression] ')' statement
+//      'for' '(' parameter-declaration 'in' expression ')' statement
+//
+// TODO: Nail down the parse semantics for the for loop. We can probably
+// find some way of unifying the first term.
+//
+// TODO: Implement a parse for the range-based for. This will require
+// lookahead for the first non-nested ';' in order to determine if
+// we have a range-for or a normal for.
+Stmt&
+Parser::for_statement()
+{
+  lingo_unimplemented("for loop");
 }
 
 
@@ -196,6 +234,9 @@ Parser::continue_statement()
 
 
 // Parse a declaration-statement.
+//
+//    declaration-statement:
+//      declaration
 Stmt&
 Parser::declaration_statement()
 {
@@ -211,7 +252,8 @@ Parser::declaration_statement()
 Stmt&
 Parser::expression_statement()
 {
-  Expr& e = expression();
+  Match_token_pred end_expr(*this, semicolon_tok);
+  Expr& e = unparsed_expression(end_expr);
   Stmt& s = on_expression_statement(e);
   match(semicolon_tok);
   return s;
@@ -234,8 +276,11 @@ Parser::statement_seq()
   do {
     Stmt& s = statement();
     ss.push_back(s);
-  } while (!is_eof() && next_token_is_not(rbrace_tok));
+  } while (next_token_is_not(rbrace_tok));
+  
+  // Process statements in the block?
   on_statement_seq(ss);
+  
   return ss;
 }
 

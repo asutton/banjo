@@ -46,54 +46,21 @@ struct Empty_stmt : Stmt
 
 
 // A helper node that represents all kinds of statement sequences.
-struct Multiple_stmt : Stmt
+struct Compound_stmt : Stmt
 {
-  Multiple_stmt()
-    : Stmt()
+  Compound_stmt() = default;
+
+  Compound_stmt(Stmt_list&& ss)
+    : Stmt(), stmts_(std::move(ss))
   { }
 
-  Multiple_stmt(Stmt_list&& ss)
-    : Stmt(), stmts(std::move(ss))
-  { }
-
-  Stmt_list const& statements() const { return stmts; }
-  Stmt_list&       statements()       { return stmts; }
-
-  Stmt_list stmts;
-};
-
-
-// A sequence of statements representing a complete translation unit.
-struct Translation_stmt : Multiple_stmt
-{
-  using Multiple_stmt::Multiple_stmt;
-
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-};
 
+  Stmt_list const& statements() const { return stmts_; }
+  Stmt_list&       statements()       { return stmts_; }
 
-// A sequence of statements representing the body of a type.
-//
-// Note that this term only follows the declaration of a type as a form
-// of its definition. It is otherwise syntactically identical to compound
-// statement, but with different semantics.
-struct Member_stmt : Multiple_stmt
-{
-  using Multiple_stmt::Multiple_stmt;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-};
-
-
-// A sequence of statements to be executed within a function.
-struct Compound_stmt : Multiple_stmt
-{
-  using Multiple_stmt::Multiple_stmt;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
+  Stmt_list stmts_;
 };
 
 
@@ -102,17 +69,17 @@ struct Compound_stmt : Multiple_stmt
 struct Expression_stmt : Stmt
 {
   Expression_stmt(Expr& e)
-    : expr(&e)
+    : expr_(&e)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the expression of the statement.
-  Expr const& expression() const { return *expr; }
-  Expr&       expression()       { return *expr; }
+  Expr const& expression() const { return *expr_; }
+  Expr&       expression()       { return *expr_; }
 
-  Expr* expr;
+  Expr* expr_;
 };
 
 
@@ -120,17 +87,17 @@ struct Expression_stmt : Stmt
 struct Declaration_stmt : Stmt
 {
   Declaration_stmt(Decl& d)
-    : decl(&d)
+    : decl_(&d)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the declaration of the statement.
-  Decl const& declaration() const { return *decl; }
-  Decl&       declaration()       { return *decl; }
+  Decl const& declaration() const { return *decl_; }
+  Decl&       declaration()       { return *decl_; }
 
-  Decl* decl;
+  Decl* decl_;
 };
 
 
@@ -138,33 +105,33 @@ struct Declaration_stmt : Stmt
 struct Return_stmt : Stmt
 {
   Return_stmt(Expr& e)
-    : expr(&e)
+    : expr_(&e)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the expression returned by the statement.
-  Expr const& expression() const { return *expr; }
-  Expr&       expression()       { return *expr; }
+  Expr const& expression() const { return *expr_; }
+  Expr&       expression()       { return *expr_; }
 
-  Expr* expr;
+  Expr* expr_;
 };
 
 // A yield statement.
 struct Yield_stmt : Stmt
 {
   Yield_stmt(Expr& e)
-    : expr(&e)
+    : expr_(&e)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator &v)       { v.visit(*this); }
 
-  Expr const& expression() const { return *expr; }
-  Expr&       expression()       { return *expr; }
+  Expr const& expression() const { return *expr_; }
+  Expr&       expression()       { return *expr_; }
 
-  Expr* expr;
+  Expr* expr_;
 };
 
 // An if-then statement.

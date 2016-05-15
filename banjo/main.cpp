@@ -26,7 +26,7 @@ struct Options
 {
   ~Options();
 
-  String   emit    = "bano";
+  String   emit    = "banjo";
   File_seq inputs  = {};
 };
 
@@ -120,14 +120,14 @@ main(int argc, char* argv[])
   // Perform syntactic analysis.
   Token_stream ts(toks);
   Parser parse(cxt, ts);
-  Stmt& stmt = parse();
+  Decl& tu = parse();
 
   if (opts.emit == "banjo") {
-    std::cout << stmt << '\n';
+    std::cout << tu << '\n';
   }
   else if (opts.emit == "llvm") {
     ll::Generator gen(cxt);
-    gen(stmt);
+    gen(tu);
   }
 
 }

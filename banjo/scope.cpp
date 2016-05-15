@@ -3,20 +3,38 @@
 
 #include "scope.hpp"
 #include "ast.hpp"
+#include "printer.hpp"
+
+#include <iostream>
 
 
 namespace banjo
 {
 
-// For convenience.
-using Binding = Scope::Binding;
-
-
 // Register a name binding for the declaration `d`.
-Binding&
+Scope::Binding&
 Scope::bind(Decl& d)
 {
   return bind(d.name(), d);
+}
+
+
+// Streaming
+
+std::ostream& 
+operator<<(std::ostream& os, Scope const& scope)
+{
+  // TODO: Print the name of the associated declaration, if there
+  // is one.
+  os << "==== scope ====\n";
+
+  // TODO: Print the actual declarations?
+  for (auto const& bind : scope.names) {
+    Name const* name = bind.first;
+    os << *name << '\n';
+  }
+
+  return os;
 }
 
 

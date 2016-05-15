@@ -12,24 +12,21 @@ namespace banjo
 {
 
 
+// Build an empty compound statement.
 Stmt&
-Parser::on_translation_statement(Stmt_list&& ss)
+Parser::start_compound_statement()
 {
-  return cxt.make_translation_statement(std::move(ss));
+  return cxt.make_compound_statement();
 }
 
 
+// Assign the set of statements to the compound statement.
 Stmt&
-Parser::on_compound_statement(Stmt_list&& ss)
+Parser::finish_compound_statement(Stmt& s, Stmt_list&& ss)
 {
-  return cxt.make_compound_statement(std::move(ss));
-}
-
-
-Stmt&
-Parser::on_member_statement(Stmt_list&& ss)
-{
-  return cxt.make_member_statement(std::move(ss));
+  Compound_stmt& cs = cast<Compound_stmt>(s);
+  cs.stmts_ = std::move(ss);
+  return cs;
 }
 
 
@@ -40,16 +37,19 @@ Parser::on_empty_statement()
 }
 
 
+// TODO: The typing should move toward the AST or into an elaborator.
 Stmt&
 Parser::on_return_statement(Token, Expr& e)
 {
+  // Don't perform analysis on unparsed expressions.
+  if (is<Unparsed_expr>(e))
+    return cxt.make_return_statement(e);
+
   // FIXME: This is very, very wrong. We need to convert e to the return 
   // type of the current function, not simply convert to its non-reference
   // type (that's stupid).
   Type& t = e.type().non_reference_type();
   Expr& c = standard_conversion(e, t);
-  std::cout << "TEST: " << c << '\n';
-
   return cxt.make_return_statement(c);
 }
 
@@ -125,14 +125,14 @@ Parser::on_unparsed_statement(Token_seq&& toks)
 void
 Parser::on_statement_seq(Stmt_list& ss)
 {
-  // Second pass: Resolve declared types.
-  elaborate_declarations(ss);
+  // // Second pass: Resolve declared types.
+  // elaborate_declarations(ss);
 
-  elaborate_partials(ss);
-  elaborate_overloads(ss);
+  // elaborate_partials(ss);
+  // elaborate_overloads(ss);
 
-  // Third pass: Resolve definitions.
-  elaborate_definitions(ss);
+  // // Third pass: Resolve definitions.
+  // elaborate_definitions(ss);
 }
 
 

@@ -1,4 +1,5 @@
 
+
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
@@ -132,10 +133,9 @@ struct Builder
   Synthetic_expr& synthesize_expression(Decl&);
 
   // Statements
-  Translation_stmt& make_translation_statement(Stmt_list&&);
-  Member_stmt&      make_member_statement(Stmt_list&&);
-  Compound_stmt&    make_compound_statement(Stmt_list&&);
   Empty_stmt&       make_empty_statement();
+  Compound_stmt&    make_compound_statement();
+  Compound_stmt&    make_compound_statement(Stmt_list&&);
   Return_stmt&      make_return_statement(Expr&);
   Yield_stmt&       make_yield_statement(Expr&);
   If_then_stmt&     make_if_statement(Expr&, Stmt&);
@@ -151,20 +151,19 @@ struct Builder
   Variable_decl&  make_variable_declaration(Name&, Type&, Expr&);
   Variable_decl&  make_variable_declaration(char const*, Type&, Expr&);
 
-  // Functions
-  Function_decl&  make_function_declaration(Name&, Decl_list const&, Type&, Expr&);
-  Function_decl&  make_function_declaration(Name&, Decl_list const&, Type&, Stmt&);
-
-  // Coroutine
+  // Functions, methods and coroutines
+  Function_decl&  make_function_declaration(Name&, Decl_list const&, Type&);
+  Method_decl&    make_method_declaration(Name&, Decl_list const&, Type&);
   Coroutine_decl& make_coroutine_declaration(Name&, Decl_list&, Type&, Stmt&);
+  Function_def&   make_function_definition(Stmt&);
+  Expression_def& make_function_definition(Expr&);
 
-  // Types and members
-  Class_decl&     make_class_declaration(Name&, Type&, Stmt&);
-  Field_decl&     make_field_declaration(Name&, Type&);
-  Field_decl&     make_field_declaration(Name&, Type&, Expr&);
-  Method_decl&    make_method_declaration(Name&, Decl_list const&, Type&, Expr&);
-  Method_decl&    make_method_declaration(Name&, Decl_list const&, Type&, Stmt&);
-  Super_decl&     make_super_declaration(Type&);
+  // Classes
+  Class_decl&  make_class_declaration(Name&, Type&);
+  Class_def&   make_class_definition(Stmt_list&&);
+  Field_decl&  make_field_declaration(Name&, Type&);
+  Field_decl&  make_field_declaration(Name&, Type&, Expr&);
+  Super_decl&  make_super_declaration(Type&);
 
   // Templates
   Template_decl&  make_template(Decl_list const&, Decl&);
@@ -188,13 +187,9 @@ struct Builder
   Deleted_def&    make_deleted_definition();
   Defaulted_def&  make_defaulted_definition();
   Expression_def& make_expression_definition(Expr&);
-  Function_def&   make_function_definition(Stmt&);
+  Function_def&   make_coroutine_definition(Stmt&);
 
-  // Coroutines use function defs
-  Function_def&  make_coroutine_definition(Stmt&);
-
-  Class_def&      make_class_definition(Stmt&);
-
+  // Concepts
   Concept_def&    make_concept_definition(Req_list const&);
 
   // Parameters
@@ -211,6 +206,11 @@ struct Builder
   Basic_req&      make_basic_requirement(Expr&, Type&);
   Conversion_req& make_conversion_requirement(Expr&, Type&);
   Syntactic_req&  make_syntactic_requirement(Expr&);
+
+  // Toplevel structures
+  Translation_unit& make_translation_unit();
+  Translation_unit& make_translation_unit(Stmt_list&&);
+
 
   // Constraints
   // Note that constraints are canonicalized in order

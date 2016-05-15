@@ -20,12 +20,11 @@ namespace banjo
 using Name_map = std::unordered_map<Name const*, Overload_set, Name_hash, Name_eq>;
 
 
-// A scope defines a maximal lexical region of text where an
-// entity may be referred to without qualification. A scope can
-// be (but is not always) associated with a declaration.
+// A scope defines a maximal lexical region of text where an entity may be 
+// referred to without qualification. Scope objects are associated with the
+// term defining their enclosing region of text.
 //
-// The scope class also defines a region of text where a dependent
-// expression may occur.
+// TODO: Do all scopes have an associated term? Probably.
 struct Scope
 {
   using Binding = Name_map::value_type;
@@ -34,33 +33,25 @@ struct Scope
   // used to create scopes that are not affiliated with a
   // declaration.
   Scope(Scope& p)
-    : parent(&p), decl(nullptr)
-  { }
-
-  // Construct a scope for the given declaration, but with
-  // no enclosing scope. 
-  Scope(Decl& d)
-    : parent(nullptr), decl(&d)
+    : parent(&p), cxt(nullptr)
   { }
 
   // Construct a scope having the given parent and affiliated with
   // the declaration.
-  Scope(Scope& p, Decl& d)
-    : parent(&p), decl(&d)
+  Scope(Scope& p, Term& t)
+    : parent(&p), cxt(&t)
   { }
 
   virtual ~Scope() { }
 
-  // Returns the enclosing scope, if any. Only the global
-  // namespace does not have an enclosing scope.
+  // Returns the enclosing scope, if any. Only the global namespace does 
+  // not have an enclosing scope.
   Scope const* enclosing_scope() const { return parent; }
   Scope*       enclosing_scope()       { return parent; }
 
-  // Returns the declaration associated with the scope.
-  // Not all scopes are associated with a declaration
-  // (e.g., block scope).
-  Decl const* context() const { return decl; }
-  Decl*       context()       { return decl; }
+  // Returns the syntactic construct that defines the scope.
+  Term const& context() const { return *cxt; }
+  Term&       context()       { return *cxt; }
 
   // Create a name binding for the given declaration. Behavior
   // is undefined if a name binding already exists.
@@ -78,7 +69,7 @@ struct Scope
   std::size_t count(Name const& n) const { return names.count(&n); }
 
   Scope*   parent;
-  Decl*    decl;
+  Term*    cxt;
   Name_map names;
 };
 
@@ -117,6 +108,10 @@ Scope::lookup(Name const& n)
   else
     return nullptr;
 }
+
+
+// Debugging
+std::ostream& operator<<(std::ostream&, Scope const&);
 
 
 } // namespace banjo

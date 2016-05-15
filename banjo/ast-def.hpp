@@ -106,7 +106,8 @@ struct Expression_def : Def
 
 // A function declaration can be initialized by a compound statement.
 //
-// FIXME: Rename this to something more meaningful.
+// TODO: Are there any interesting properties of the function definition
+// that are not related to its body?
 struct Function_def : Def
 {
   Function_def(Stmt& s)
@@ -136,19 +137,34 @@ struct Function_def : Def
 // kind of definition for each entity.
 struct Class_def : Def
 {
-  Class_def(Stmt& s)
-    : body_(&s)
+  Class_def(Stmt_list&& ss)
+    : stmts_(std::move(ss))
   { }
 
   void accept(Visitor& v) const { return v.visit(*this); }
   void accept(Mutator& v)       { return v.visit(*this); }
 
-  // Returns the list of member declarations.
-  Stmt const& body() const { return *body_; }
-  Stmt&       body()       { return *body_; }
+  // Returns the list of member statements.
+  Stmt_list const& statements() const { return stmts_; }
+  Stmt_list&       statements()       { return stmts_; }
 
-  Stmt* body_;
+  // Returns the list of base classes.
+  Decl_list const& base_classes() const { return bases_; }
+  Decl_list&       base_classes()       { return bases_; }
+
+  // Returns the list of member variables.
+  Decl_list const& objects() const { return objs_; }
+  Decl_list&       objects()       { return objs_; }
+
+  // Returns the list of constructors.
+  Decl_list const& constructors() const;
+  Decl_list&       constructors();
+
+  Stmt_list stmts_;
+  Decl_list bases_;
+  Decl_list objs_;
 };
+
 
 // A concept body is a sequence of statements.
 struct Concept_def : Def

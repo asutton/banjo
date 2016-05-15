@@ -34,7 +34,7 @@ struct Parser
     : cxt(cxt), build(cxt), tokens(ts), state()
   { }
 
-  Stmt& operator()();
+  Decl& operator()() { return translation_unit(); }
 
   // Syntactic forms
   Operator_kind any_operator();
@@ -65,8 +65,6 @@ struct Parser
   // Resolved names
   Decl& template_name();
   Decl& concept_name();
-
-  // Specifiers
 
   // Types
   Type& type();
@@ -111,12 +109,12 @@ struct Parser
   // Statements
   Stmt& statement();
   Stmt& compound_statement();
-  Stmt& member_statement();
   Stmt& empty_statement();
   Stmt& return_statement();
   Stmt& yield_statement();
   Stmt& if_statement();
   Stmt& while_statement();
+  Stmt& for_statement();
   Stmt& break_statement();
   Stmt& continue_statement();
   Stmt& declaration_statement();
@@ -135,15 +133,11 @@ struct Parser
 
   // Variables
   Decl& variable_declaration();
+  Decl& super_declaration();
   Type& unparsed_variable_type();
   Expr& unparsed_variable_initializer();
-
   Expr& initializer(Decl&);
-  Expr& equal_initializer(Decl&);
-  Expr& paren_initializer(Decl&);
-  Expr& brace_initializer(Decl&);
   
-
   // Functions
   Decl& function_declaration();
   Decl& coroutine_declaration();
@@ -153,16 +147,12 @@ struct Parser
   Type& unparsed_parameter_type();
   Type& unparsed_return_type();
   Expr& unparsed_expression_body();
-  Stmt& unparsed_function_body();
-  Def& function_definition(Decl&);
 
-  // Types
+  // Classes
   Decl& class_declaration();
-  Type& unparsed_class_kind();
-  Stmt& unparsed_class_body();
-
-  // Base classes.
-  Decl& super_declaration();
+  Def& class_body();
+  Stmt_list member_statement_seq();
+  Stmt& member_statement();
 
   // Templates
   Decl& template_declaration();
@@ -189,47 +179,15 @@ struct Parser
   Req& usage_requirement();
   Req_list usage_seq();
 
-  // Modules
-  Stmt& translation();
+  // Toplevel structure
+  Decl& translation_unit();
+  Stmt_list toplevel_statement_seq();
+  Stmt& toplevel_statement();
 
-  // Type elaboration
-  void elaborate_declarations(Stmt_list&);
-  void elaborate_declaration(Stmt&);
-  void elaborate_declaration(Decl&);
-  void elaborate_object_declaration(Object_decl&);
-  void elaborate_function_declaration(Function_decl&);
-  void elaborate_parameter_declaration(Object_parm&);
-  void elaborate_class_declaration(Class_decl&);
-  void elaborate_coroutine_declaration(Coroutine_decl&);
-  Type& elaborate_type(Type&);
+  // Unparsed terms
+  template<typename P> Type& unparsed_type(P);
+  template<typename P> Expr& unparsed_expression(P);
 
-  // Overloading
-  void elaborate_overloads(Stmt_list&);
-  void elaborate_overloads(Stmt&);
-  void elaborate_overloads(Decl&);
-
-  // Partial definitions
-  void elaborate_partials(Stmt_list&);
-
-  // Definition elaboration
-  void elaborate_definitions(Stmt_list&);
-  void elaborate_definition(Stmt&);
-  void elaborate_definition(Decl&);
-  void elaborate_super_initializer(Super_decl&);
-  void elaborate_super_initializer(Super_decl&, Empty_def&);
-  void elaborate_super_initializer(Super_decl&, Expression_def&);
-  void elaborate_variable_initializer(Variable_decl&);
-  void elaborate_variable_initializer(Variable_decl&, Empty_def&);
-  void elaborate_variable_initializer(Variable_decl&, Expression_def&);
-  void elaborate_function_definition(Function_decl&);
-  void elaborate_function_definition(Function_decl&, Expression_def&);
-  void elaborate_function_definition(Function_decl&, Function_def&);
-  void elaborate_class_definition(Class_decl&);
-  void elaborate_class_definition(Class_decl&, Class_def&);
-  void elaborate_coroutine_definition(Coroutine_decl&);
-  Expr& elaborate_expression(Expr&);
-  Stmt& elaborate_compound_statement(Stmt&);
-  Stmt& elaborate_member_statement(Stmt&);
 
   // Semantics actions
 
@@ -302,14 +260,11 @@ struct Parser
   Expr& on_unparsed_expression(Token_seq&&);
 
   // Statements
-  Stmt& on_translation_statement(Stmt_list&&);
-  Stmt& on_member_statement(Stmt_list&&);
-  Stmt& on_compound_statement(Stmt_list&&);
-  Stmt& on_yield_statement(Token, Expr&);
-
-
+  Stmt& start_compound_statement();
+  Stmt& finish_compound_statement(Stmt&, Stmt_list&&);
   Stmt& on_empty_statement();
   Stmt& on_return_statement(Token, Expr&);
+  Stmt& on_yield_statement(Token, Expr&);
   Stmt& on_if_statement(Expr&, Stmt&);
   Stmt& on_if_statement(Expr&, Stmt&, Stmt&);
   Stmt& on_while_statement(Expr&, Stmt&);
@@ -320,19 +275,21 @@ struct Parser
   Stmt& on_unparsed_statement(Token_seq&&);
   void on_statement_seq(Stmt_list&);
 
-  // Super declarations
-  Decl& on_super_declaration(Name&, Type&);
 
-  // Variable declarations
+  // Variables
   Decl& on_variable_declaration(Name&, Type&);
   Decl& on_variable_declaration(Name&, Type&, Expr&);
+  Decl& on_super_declaration(Name&, Type&);
 
-  // Function declarations
-  Decl& on_function_declaration(Name&, Decl_list&, Type&, Expr&);
-  Decl& on_function_declaration(Name&, Decl_list&, Type&, Stmt&);
+  // Functions
+  Decl& start_function_declaration(Name&, Decl_list&, Type&);
+  Decl& finish_function_declaration(Decl&, Expr&);
+  Decl& finish_function_declaration(Decl&, Stmt&);
 
-  // Type declarations
-  Decl& on_class_declaration(Name&, Type&, Stmt&);
+  // Classes
+  Decl& start_class_declaration(Name&, Type&);
+  Decl& finish_class_definition(Decl&, Def&);
+  Def& on_class_body(Stmt_list&&);
 
   // Coroutine declarations
   Decl& on_coroutine_declaration(Name&, Decl_list&, Type&, Stmt&);
@@ -370,6 +327,11 @@ struct Parser
   Req& on_conversion_requirement(Expr&, Type&);
   Req& on_deduction_requirement(Expr&, Type&);
 
+  // Toplevel structure
+  Decl& start_translation_unit();
+  Decl& finish_translation_unit(Decl&, Stmt_list&&);
+
+
   // Token matching.
   Token      peek() const;
   Token_kind lookahead() const;
@@ -386,10 +348,12 @@ struct Parser
   void       expect(Token_kind);
   Token      accept();
 
-  template<typename... Kinds>
-  bool next_token_is_one_of(Token_kind, Kinds...);
+  template<typename... Kinds> bool next_token_is_one_of(Token_kind, Kinds...);
 
   bool next_token_is_one_of();
+
+  // Tree matching
+  template<typename T> T* match_if(T& (Parser::* p)());
 
   // Braces
   void open_brace(Token);
@@ -402,9 +366,11 @@ struct Parser
   Specs  decl_specs() const { return state.specs; }
   Specs& decl_specs()       { return state.specs; }
   Specs  take_decl_specs();
+  void   clear_decl_specs();
 
-  // Tree matching.
-  template<typename T> T* match_if(T& (Parser::* p)());
+  // Parse state
+  bool parsing_nonstatic_member() const;
+
 
   // Resources
   Symbol_table& symbols();
@@ -419,12 +385,8 @@ struct Parser
   // and restoring parse state.
   struct State
   {
-    State()
-      : braces(), specs()
-    { }
-
-    Braces  braces;
-    Specs   specs;
+    Braces  braces; // Current nesting level
+    Specs   specs;  // Parsed specifiers
 
     Decl_list implicit_parms; // Implicit template parameters
   };
@@ -456,14 +418,118 @@ Parser::next_token_is_one_of()
 }
 
 
-// Return the current specifiers, resetting them to
-// their default value.
+// Return the current specifiers, resetting them to their default value.
 inline Parser::Specs
 Parser::take_decl_specs()
 {
   Specs s = decl_specs();
-  decl_specs() = Specs();
+  decl_specs() = {};
   return s;
+}
+
+
+// Reset declaration specifiers.
+inline void
+Parser::clear_decl_specs()
+{
+  decl_specs() = {};
+}
+
+
+// This class defines a predicate that can be tested to determine if the
+// current token is in the same nesting level as when this object is
+// constructed.
+struct Match_braces
+{
+  Match_braces(Parser& p)
+    : parser(p), level(p.brace_level())
+  { }
+
+  bool operator()() const
+  {
+    return parser.in_level(level);
+  }
+
+  Parser& parser;
+  int     level;
+};
+
+
+struct Match_token_pred
+{
+  Match_token_pred(Parser& p, Token_kind k)
+    : p(p), k(k)
+  { }
+
+  bool operator()() const
+  {
+    return p.next_token_is(k);
+  }
+
+  Parser&    p;
+  Token_kind k;
+};
+
+
+// TODO: Handle the 4 case.
+struct Match_any_token_pred
+{
+  Match_any_token_pred(Parser& p, Token_kind k1, Token_kind k2)
+    : p(p), n(2), k1(k1), k2(k2)
+  { 
+  }
+
+  Match_any_token_pred(Parser& p, Token_kind k1, Token_kind k2, Token_kind k3)
+    : p(p), n(2), k1(k1), k2(k2), k3(k3)
+  { 
+  }
+
+  bool operator()() const
+  {
+    if (n == 2)
+      return p.next_token_is_one_of(k1, k2);
+    if (n == 3)
+      return p.next_token_is_one_of(k1, k2, k3);
+    lingo_unreachable();
+  }
+
+  Parser&    p;
+  int        n;
+  Token_kind k1, k2, k3;
+};
+
+
+// Consume tokens until we reach the current token satisfied pred
+// at the same level brace nesting level.
+template<typename P>
+inline Type&
+Parser::unparsed_type(P pred)
+{
+  Token_seq toks;
+  Match_braces is_non_nested(*this);
+  while (!is_eof()) {
+    if (pred() && is_non_nested())
+      break;
+    toks.push_back(accept());
+  }
+  return on_unparsed_type(std::move(toks));
+}
+
+
+// Consume tokens until we reach the current token satisfied pred
+// at the same level brace nesting level.
+template<typename P>
+inline Expr&
+Parser::unparsed_expression(P pred)
+{
+  Token_seq toks;
+  Match_braces is_non_nested(*this);
+  while (!is_eof()) {
+    if (pred() && is_non_nested())
+      break;
+    toks.push_back(accept());
+  }
+  return on_unparsed_expression(std::move(toks));
 }
 
 
@@ -494,7 +560,7 @@ struct Trial_parser
     // detet failures?
     if (fail) {
       parser.tokens.reposition(pos);
-      parser.cxt.set_scope(*scope);
+      parser.cxt.leave_scope(scope);
       parser.state = state;
     }
   }
@@ -520,25 +586,6 @@ Parser::match_if(R& (Parser::* f)())
   }
   return nullptr;
 }
-
-
-// This class defines a predicate that can be tested to determine if the
-// current token is in the same nesting level as when this object is
-// constructed.
-struct Brace_matching_sentinel
-{
-  Brace_matching_sentinel(Parser& p)
-    : parser(p), level(p.brace_level())
-  { }
-
-  bool operator()() const
-  {
-    return parser.in_level(level);
-  }
-
-  Parser& parser;
-  int     level;
-};
 
 
 } // nammespace banjo

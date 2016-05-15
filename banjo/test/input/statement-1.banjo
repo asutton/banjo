@@ -1,0 +1,19 @@
+
+def f : () -> int 
+{
+  if (true) {
+    return 1;
+  }
+  
+  if (true) 
+    return 2; 
+  else 
+    return 3;
+  
+  while (false || true && 0 != 1)
+    continue;
+  
+  while (true) {
+    break;
+  }
+}

@@ -1,0 +1,39 @@
+
+var t : T1;
+
+class T1 { }
+
+
+// Test simple recursive types.
+class List 
+{
+  var next : *List;
+  
+  def ptr(p : *List) -> int { return 0; }
+
+  def f(a :*List) { }
+  def f(b :List) { }
+}
+
+
+// Test less simple recursive types.
+
+class Expr
+{
+  
+}
+
+class Unary_expr
+{
+  super : Expr; 
+  
+  var arg : *Expr;
+}
+
+class Binary_expr
+{
+  super : Expr; 
+  
+  var left  : *Expr;
+  var right : *Expr;
+}

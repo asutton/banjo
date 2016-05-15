@@ -135,8 +135,6 @@ struct Printer
   void statement(Unparsed_stmt const&);
   void statement_seq(Stmt_list const&);
   void empty_statement(Empty_stmt const&);
-  void translation_statement(Translation_stmt const&);
-  void member_statement(Member_stmt const&);
   void compound_statement(Compound_stmt const&);
   void return_statement(Return_stmt const&);
   void yield_statement(Yield_stmt const&);
@@ -186,6 +184,9 @@ struct Printer
   void class_declaration(Class_decl const&);
   void class_definition(Def const&);
   void class_definition(Class_def const&);
+  void class_body(Class_def const&);
+  void member_statement_seq(Stmt_list const&);
+  void member_statement(Stmt const&);
 
   // Coroutine
   void coroutine_delcaration(Coroutine_decl const&);
@@ -219,6 +220,9 @@ struct Printer
   void requirement(Basic_req const&);
   void requirement(Conversion_req const&);
   void requirement(Deduction_req const&);
+
+  // Toplevel
+  void translation_unit(Translation_unit const&);
 
   // Constraints
   // These don't really have an external syntax, but it's

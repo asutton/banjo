@@ -19,23 +19,6 @@ namespace banjo
 // Declaration of names
 
 
-// Returns true if d can be added to the overload set. This case when
-//
-//    - d has an unparsed type, or if not that,
-//    - d does not conflict with any previous declarations
-//      in the overload set.
-//
-// This will throw in the presence of errors.
-static inline void
-check_declarations(Context& cxt, Overload_set& ovl, Decl& decl)
-{
-  if (is<Unparsed_type>(decl.type()))
-    return;
-  for (Decl& prev : ovl)
-    check_declarations(cxt, decl, prev);
-}
-
-
 // Save d in the given overload set. If d conflicts with any errors,
 // this function diagnoses the error and throws an exception.
 //
@@ -44,7 +27,6 @@ check_declarations(Context& cxt, Overload_set& ovl, Decl& decl)
 static inline void
 declare(Context& cxt, Overload_set& ovl, Decl& decl)
 {
-  check_declarations(cxt, ovl, decl);
   ovl.push_back(decl);
 }
 
@@ -95,7 +77,7 @@ declare_required_expression(Context& cxt, Expr& e)
 //      - d1 and d2 are functions that cannot be overloaded, or
 //      - d1 and d2 are types having different kinds.
 //
-// Note that d1 preceeds d2 in lexical order.
+// Note that d1 precedes d2 in lexical order.
 //
 // TODO: Would it make sense to poison the declaration so that it's not
 // analyzed in subsequent passes? We could essentially replace the existing

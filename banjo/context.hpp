@@ -15,8 +15,14 @@ namespace banjo
 struct Scope;
 
 
-// Used to associate scopes with declarations.
-using Scope_map = std::unordered_map<Decl*, Scope*>;
+// Used to associate scopes with terms: the translation unit, classes,
+// functions, and compound statements.
+using Scope_map = std::unordered_map<Term*, Scope*>;
+
+
+// Used to manage the current declaration context. The top is either the
+// translation unit, a function, or a class.
+using Context_stack = std::vector<Decl*>;
 
 
 // A repository of information to support translation.
@@ -45,14 +51,26 @@ struct Context : Builder
 
   // Scope management
   Scope& make_scope();
-  Scope& make_scope(Decl&);
-  Scope& saved_scope(Decl&);
-  void   set_scope(Scope&);
-  Scope& current_scope();
-  Scope& global_scope();
+  Scope& make_scope(Term&);
+  Scope& saved_scope(Term&);
+  void enter_scope(Scope*);
+  void leave_scope(Scope*);
+  
+  // Returns the current scope.
+  Scope const& current_scope() const { return *scope; }
+  Scope&       current_scope()       { return *scope; }
 
-  Decl* immediate_context();
-  Decl* current_context();
+  // Returns the global scope.
+  Scope const& global_scope() const { return *global; }
+  Scope&       global_scope()       { return *global; }
+
+  // Declaration contexts.
+  void enter_context();
+  void leave_context();
+  
+  // Returns the current declaration context.
+  Decl const& current_context() const { return *cxt.back(); }
+  Decl&       current_context()       { return *cxt.back(); }
 
   // Diagnostic state
   bool diagnose_errors() const { return diags; }
@@ -60,10 +78,11 @@ struct Context : Builder
   Symbol_table syms;   // The symbol table
   Location     input;  // The input location
  
-  // Scope information
-  Scope*       global; // The global scope
-  Scope*       scope;  // The current scope
-  Scope_map    saved;  // Saved scopes.
+  // Scope and context.
+  Scope*        global; // The global scope
+  Scope*        scope;  // The current scope
+  Scope_map     saved;  // Saved scopes
+  Context_stack cxt;    // Declaration context
 
   // Store information for generating unique names.
   int             id;     // The current id counter
@@ -81,49 +100,56 @@ Context::make_scope()
 }
 
 
-// Returns a new general purpose scope bound to the given declaration.
+// Returns a new general purpose scope bound to the given term.
 inline Scope&
-Context::make_scope(Decl& d)
+Context::make_scope(Term& t)
 {
-  return *new Scope(current_scope(), d);
+  return *new Scope(current_scope(), t);
 }
 
 
 // Retrieve the saved scope for the declaration. If no such scope exists,
-// create one. Note that newly created saved scopes are linked to the current
-// scope.
+// create one. Note that newly created saved scopes are linked to the 
+// current scope.
 inline Scope&
-Context::saved_scope(Decl& d)
+Context::saved_scope(Term& t)
 {
-  auto iter = saved.find(&d);
+  auto iter = saved.find(&t);
   if (iter != saved.end()) {
     return *iter->second;
   } else {
-    Scope& s = make_scope(d);
-    saved.emplace(&d, &s);
+    Scope& s = make_scope(t);
+    saved.emplace(&t, &s);
     return s;
   }
 }
 
 
-// Enter the given scope. Unless `s` is the scope of the global
-// namespace, `s` must be linked through its enclosing scopes
-// to the global namespace.
+// Enter the given scope. Note that the scope must be chained to its
+// enclosing scope.
 //
-// Do not call this function directly. Use Context::Scope_sentinel
-// to enter a new scope, and guarantee cleanup and scope exit.
+// This will establish the declaration used as the global scope if
+// it has not been previously established.
+//
+// Do not call this function directly. Use Enter_scope to enter a new 
+// scope, and guarantee cleanup and scope exit.
 inline void
-Context::set_scope(Scope& s)
+Context::enter_scope(Scope* s)
 {
-  scope = &s;
+  if (!scope)
+    global = s;
+  scope = s;
 }
 
 
-// Returns the current scope.
-inline Scope&
-Context::current_scope()
+// Leave the current scope and make the new scope s.
+//
+// Do not call this function directly. Use Enter_scope to enter a new 
+// scope, and guarantee cleanup and scope exit.
+inline void
+Context::leave_scope(Scope* s)
 {
-  return *scope;
+  scope = s;
 }
 
 
@@ -140,32 +166,32 @@ Context::get_unique_id()
 // An RAII helper that manages the entry and exit of scopes.
 struct Enter_scope
 {
-  Enter_scope(Context&);
   Enter_scope(Context&, Scope&);
+  Enter_scope(Context&, Term&);
   ~Enter_scope();
 
   Context& cxt;
   Scope*   prev;  // The previous scope.
-  Scope*   alloc; // An owned scope.
 };
-
-
-// Enter a new purpose scope. This scope is destroyed when the sentinel
-// goes out of scope.
-inline
-Enter_scope::Enter_scope(Context& cxt)
-  : cxt(cxt), prev(&cxt.current_scope()), alloc(&cxt.make_scope())
-{
-  cxt.set_scope(*alloc);
-}
 
 
 // Enter the given scope.
 inline
 Enter_scope::Enter_scope(Context& c, Scope& s)
-  : cxt(c), prev(&c.current_scope()), alloc(nullptr)
+  : cxt(c), prev(&c.current_scope())
 {
-  cxt.set_scope(s);
+  cxt.enter_scope(&s);
+  cxt.enter_context();
+}
+
+
+// Enter the scope associated with the given term.
+inline
+Enter_scope::Enter_scope(Context& c, Term& t)
+  : cxt(c), prev(&c.current_scope())
+{
+  cxt.enter_scope(&cxt.saved_scope(t));
+  cxt.enter_context();
 }
 
 
@@ -173,8 +199,8 @@ Enter_scope::Enter_scope(Context& c, Scope& s)
 inline
 Enter_scope::~Enter_scope()
 {
-  cxt.set_scope(*prev);
-  delete alloc;
+  cxt.leave_context();
+  cxt.leave_scope(prev);
 }
 
 
