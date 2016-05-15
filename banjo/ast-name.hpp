@@ -11,7 +11,7 @@
 namespace banjo
 {
 
-// A name denotes an entity in a progam. Most forms of names are
+// A name denotes an entity in a program. Most forms of names are
 // ids, which denote use the of those entities in expressions, or
 // types.
 struct Name : Term

@@ -77,6 +77,7 @@ struct Builder
   Class_type&     get_class_type(Type_decl&);
   Typename_type&  get_typename_type(Type_decl&);
   Coroutine_type& get_coroutine_type(Type_decl&);
+  Coroutine_type& get_coroutine_type();
   Auto_type&      get_auto_type(Type_decl&);
   Type_type&      get_type_type();
 

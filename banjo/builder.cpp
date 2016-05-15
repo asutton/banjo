@@ -4,6 +4,7 @@
 #include "builder.hpp"
 #include "context.hpp"
 #include "ast.hpp"
+#include "parser.hpp"
 
 #include <unordered_set>
 
@@ -371,6 +372,8 @@ Builder::get_type_type()
   static Type_type t;
   return t;
 }
+
+
 
 
 // Synthesize a type from the given parameter. This is used to generate
@@ -924,6 +927,14 @@ Builder::make_class_definition(Stmt_list&& s)
 Coroutine_decl&
 Builder::make_coroutine_declaration(Name&n, Decl_list&p, Type& t, Stmt& s)
 {
+  // Parse the type of the yield
+  if(Unparsed_type* up = as<Unparsed_type>(&t)){
+    Token_stream ts = up->toks;
+    Parser parse(cxt, ts);
+    Type& ret = parse.type();
+    Def& d = make_coroutine_definition(s);
+    return make<Coroutine_decl>(n,ret,p,d);
+  }
   Def& d = make_coroutine_definition(s);
   return make<Coroutine_decl>(n,t,p,d);
 }

@@ -341,9 +341,6 @@ struct Coroutine_type : Class_type
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
-  Coroutine_decl const& declaration() const;
-  Coroutine_decl&       declaration();
-
   // Returns the list of parameters used to initialize the
   // coroutine closure.
   Type_list const& parameter_types() const { return params; }

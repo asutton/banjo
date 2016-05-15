@@ -6,6 +6,7 @@
 #include "context.hpp"
 #include "scope.hpp"
 #include "printer.hpp"
+#include "parser.hpp"
 
 #include <iostream>
 
@@ -88,15 +89,78 @@ qualified_lookup(Context& cxt, Scope& scope, Name const& name)
 // Perform qualified lookup. This searches the scope of the user-defined 
 // type t and its base classes for the declared name n. If lookup fails, 
 // the program is ill-formed.
+//
+// FIXME: This is fundamentally broken. 
 Decl_list
 qualified_lookup(Context& cxt, Type& type, Name const& name)
 {
   // TODO: This probably needs to strip of all reference qualifiers,
   // not just &.
   Type& t1 = type.non_reference_type();
-  
+
+  // Parse the type if it has not been parsed yet.
+  if(is<Unparsed_type>(t1)){
+    Unparsed_type up = as<Unparsed_type>(t1);
+    Token_stream ts = up.toks;
+    Parser p(cxt, ts);
+    Type& t2 = p.type();
+
+    if (!is<Declared_type>(t2)) {
+      error("'{}' is not a user-defined type", t2);
+      throw Lookup_error("wrong type");
+    }
+    Decl& decl = cast<Declared_type>(t2).declaration();
+
+    // Check if it is a class then parse its type and definition if needed.
+    //
+    // FIXME: Rewrite this.
+#if 0
+    if(is<Class_decl>(decl)){
+      Class_decl cd = as<Class_decl>(decl);
+      Class_def def = as<Class_def>(cd.definition());
+      if(Unparsed_stmt* up = as<Unparsed_stmt>(&def.body())){
+        Token_stream ts = up->toks;
+        Parser p(cxt, ts);
+        def.body_ = &p.statement();
+        cd.def_ = &def;
+      }
+      // At this point we should have a fully parsed declared type both 
+      // its type and definition.
+      Decl& decl = cd;
+      Decl_list decls = qualified_lookup(cxt, cxt.saved_scope(decl), name);
+      return decls;
+    }
+
+    // Check if it is a Coroutine then parse its definition.
+    if(is<Coroutine_decl>(decl)){
+      Coroutine_decl cd = as<Coroutine_decl>(decl);
+      // Coroutines use function defs
+      Function_def def = as<Function_def>(cd.definition());
+      if(Unparsed_stmt* up = as<Unparsed_stmt>(&def.statement())){
+        Token_stream ts = up->toks;
+        Parser p(cxt, ts);
+        def.stmt_ = &p.statement();
+        cd.def_ = &def;
+      }
+      // At this point we should have a fully parsed declared type both its type and definition.
+      Decl& decl = cd;
+      Decl_list decls = qualified_lookup(cxt, cxt.saved_scope(decl), name);
+      return decls;
+    }
+#endif
+
+    // Start by searching this scope.
+    Decl_list decls = qualified_lookup(cxt, cxt.saved_scope(decl), name);
+
+    // TODO: Search (all) bases for a member with the given name.
+    // Note that multiple members can be found in multiple base classes.
+    // That would constitute an ambiguous lookup.
+
+    return decls;
+  }
+
   if (!is<Declared_type>(t1)) {
-    error("'{}' is not a user-defined type");
+    error("'{}' is not a user-defined type", t1);
     throw Lookup_error("wrong type");
   }
   Decl& decl = cast<Declared_type>(t1).declaration();

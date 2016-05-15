@@ -180,7 +180,22 @@ Parser::elaborate_class_definition(Class_decl& decl, Class_def& def)
 
   // Update the definition with the new statement. We don't need
   // to update the declaration.
+<<<<<<< HEAD
   // def.body_ = &stmt;
+=======
+  def.body_ = &stmt;
+  Member_stmt& ms = as<Member_stmt>(*def.body_);
+  for (auto& s : ms.stmts) {
+    auto declaration = as<Declaration_stmt>(s);
+    if (Field_decl* d = as<Field_decl>(&declaration.declaration()))
+    {
+      def.variables().push_back(d);
+    }else
+    {
+      def.methods().push_back(s);
+    }
+  }
+>>>>>>> b7be86a14bd496c17f20f7ca5114ba1d6fc0388f
 }
 
 

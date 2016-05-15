@@ -31,7 +31,7 @@ declare(Context& cxt, Overload_set& ovl, Decl& decl)
 }
 
 
-// Atdd the declaration d to the given scope.
+// Add the declaration d to the given scope.
 void
 declare(Context& cxt, Scope& scope, Decl& decl)
 {

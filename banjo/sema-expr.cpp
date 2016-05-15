@@ -196,6 +196,9 @@ Parser::on_tuple_expression(Expr_list& es)
 Expr&
 Parser::on_dot_expression(Expr& e, Name& n)
 {
+  // Check to see if the type of e has been parsed yet.
+  // If it has not then we elaborate the type.
+  // Type& t1 = e.type().non_reference_type();
   return make_member_reference(cxt, e, n);
 }
 
