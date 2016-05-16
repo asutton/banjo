@@ -96,13 +96,13 @@ struct Builder
   Integer_expr&   get_uint(Integer const&);
   Tuple_expr&     make_tuple(Type&, Expr_list&&);
 
-  Object_expr&    make_reference(Variable_decl&);
-  Object_expr&    make_reference(Object_parm&);
-  Function_expr&  make_reference(Function_decl&);
-  Overload_expr&  make_reference(Overload_set&);
-  Field_expr&     make_member_reference(Expr&, Field_decl&);
-  Method_expr&    make_member_reference(Expr&, Method_decl&);
-  Member_expr&    make_member_reference(Expr&, Overload_set&);
+  Object_expr&    make_object_reference(Type&, Object_decl&);
+  Value_expr&     make_value_reference(Type&, Value_decl&);
+  Function_expr&  make_function_reference(Type&, Function_decl&);
+  Overload_expr&  make_overload_reference(Name&, Decl_list&&);
+  Field_expr&     make_field_reference(Type&, Expr&, Field_decl&);
+  Method_expr&    make_method_reference(Type&, Expr&, Method_decl&);
+  Member_expr&    make_member_reference(Expr&, Name&, Decl_list&&);
 
   Check_expr&     make_check(Concept_decl&, Term_list const&);
 
@@ -147,10 +147,12 @@ struct Builder
   Expression_stmt&  make_expression_statement(Expr&);
   Declaration_stmt& make_declaration_statement(Decl&);
 
-  // Variables
+  // Variables and constants
   Variable_decl&  make_variable_declaration(Name&, Type&);
   Variable_decl&  make_variable_declaration(Name&, Type&, Expr&);
   Variable_decl&  make_variable_declaration(char const*, Type&, Expr&);
+  Constant_decl&  make_constant_declaration(Name&, Type&, Expr&);
+  Constant_decl&  make_constant_declaration(char const*, Type&, Expr&);
 
   // Functions, methods and coroutines
   Function_decl&  make_function_declaration(Name&, Decl_list const&, Type&);

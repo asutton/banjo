@@ -9,19 +9,9 @@
 #include "context.hpp"
 #include "value.hpp"
 
-#include <lingo/environment.hpp>
-
 
 namespace banjo
 {
-
-// TODO: Specialize the store and call stack to use load and store
-// instead of lookup and bind. That's a bit more conventional for
-// the kinds of operations here.
-
-
-// Dynamic binding of declarations to their values.
-using Store = Environment<Decl const*, Value>;
 
 
 // The store stack maintains the dynamic binding between symbols
@@ -49,7 +39,9 @@ enum Control
 // FIXME: 
 struct Evaluator
 {
-public:
+  Evaluator(Context&);
+  ~Evaluator();
+
   Value operator()(Expr const& e) { return evaluate(e); }
 
   Value evaluate(Expr const&);
@@ -99,8 +91,27 @@ public:
 
   struct Enter_frame;
 
+  Context&   cxt;
   Call_stack stack;
 };
+
+
+// Initialize the evaluator. Push the constant value store as the
+// first "stack frame". This allows lookup of all previously defined
+// constants.
+inline
+Evaluator::Evaluator(Context& c)
+  : cxt(c)
+{
+  stack.push(c.constants());
+}
+
+
+inline
+Evaluator::~Evaluator()
+{
+  stack.pop();
+}
 
 
 // A helper class for managing stack frames.
@@ -126,9 +137,9 @@ struct Evaluator::Enter_frame
 
 // Evaluate the given expression.
 inline Value
-evaluate(Expr const& e)
+evaluate(Context& cxt, Expr const& e)
 {
-  Evaluator eval;
+  Evaluator eval(cxt);
   return eval(e);
 }
 

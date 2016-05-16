@@ -167,17 +167,19 @@ llvm::Type*
 Generator::get_type(Array_type const& t) 
 {
   llvm::Type* t1 = get_type(t.type());
-  Value v = evaluate(t.extent());
+  Value v = evaluate(banjo, t.extent());
   return llvm::ArrayType::get(t1, v.get_integer());
 }
 
 
-// Return an array type
+// Return an array type.
+//
+// FIXME: This is wrong. This should just return a pointer.
 llvm::Type*
 Generator::get_type(Dynarray_type const& t) 
 {
   llvm::Type* t1 = get_type(t.type());
-  Value v = evaluate(t.extent());
+  Value v = evaluate(banjo, t.extent());
   return llvm::ArrayType::get(t1, v.get_integer());
 }
 

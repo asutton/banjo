@@ -70,6 +70,7 @@ Parser::toplevel_statement()
     case protected_tok:
     // Declaration introducers.
     case var_tok:
+    case const_tok:
     case def_tok:
     case class_tok:
     case template_tok:

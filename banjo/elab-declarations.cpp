@@ -77,6 +77,7 @@ Elaborate_declarations::declaration(Decl& d)
     Self& elab;
     void operator()(Decl& d)           { lingo_unhandled(d); }
     void operator()(Variable_decl& d)  { elab.variable_declaration(d); }
+    void operator()(Constant_decl& d)  { elab.constant_declaration(d); }
     void operator()(Super_decl& d)     { elab.super_declaration(d); }
     void operator()(Function_decl& d)  { elab.function_declaration(d); }
     void operator()(Coroutine_decl& d) { elab.coroutine_declaration(d); }
@@ -88,6 +89,13 @@ Elaborate_declarations::declaration(Decl& d)
 
 void
 Elaborate_declarations::variable_declaration(Variable_decl& d)
+{
+  d.type_ = &type(d.type());
+}
+
+
+void
+Elaborate_declarations::constant_declaration(Constant_decl& d)
 {
   d.type_ = &type(d.type());
 }
@@ -123,7 +131,6 @@ Elaborate_declarations::function_declaration(Function_decl& decl)
   if (Function_def* def = as<Function_def>(&decl.definition()))
     statement(def->statement());
 }
-
 
 
 // TODO: We should probably be doing more checking here.

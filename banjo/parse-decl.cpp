@@ -165,6 +165,7 @@ Parser::parameter_specifier_seq()
 //
 //    basic-declaration:
 //      variable-declaration
+//      constant-declaration
 //      function-declaration
 //      type-declaration
 //      concept-declaration
@@ -177,6 +178,10 @@ Parser::declaration()
   switch (lookahead()) {
     case var_tok:
       return variable_declaration();
+
+    case const_tok:
+      return constant_declaration();
+    
     case def_tok:
       return function_declaration();
 
@@ -240,6 +245,44 @@ Parser::variable_declaration()
   // Otherwise, match the "name : type ;" form.
   match(semicolon_tok);
   return on_variable_declaration(name, type);
+}
+
+
+// -------------------------------------------------------------------------- //
+// Variable declarations
+
+// Parse a constant declaration.
+//
+//    variable-declaration:
+//      'const' identifier ':' [template-header] type '=' initializer ';'
+//      'const' identifier ':' '=' initializer ';'
+Decl&
+Parser::constant_declaration()
+{
+  // Helper functions.
+  Match_any_token_pred end_type(*this, eq_tok, semicolon_tok);
+  Match_token_pred     end_init(*this, semicolon_tok);
+
+  require(const_tok);
+  Name& name = identifier();
+  match(colon_tok);
+
+  // Match the ":=" form.
+  if (match_if(eq_tok)) {
+    Type& type = cxt.make_auto_type();
+    Expr& init = unparsed_expression(end_init);
+    match(semicolon_tok);
+    return on_constant_declaration(name, type, init);
+  }
+
+  // Match the type.
+  Type& type = unparsed_type(end_type);
+
+  // Match the "name : type =" form.
+  match_if(eq_tok);
+  Expr& init = unparsed_expression(end_init);
+  match(semicolon_tok);
+  return on_constant_declaration(name, type, init);
 }
 
 

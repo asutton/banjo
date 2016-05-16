@@ -523,7 +523,7 @@ lift_value(Context& cxt, Type& t, Value const& v)
 Expr&
 reduce(Context& cxt, Expr& e)
 {
-  return lift_value(cxt, e.type(), evaluate(e));
+  return lift_value(cxt, e.type(), evaluate(cxt, e));
 }
 
 

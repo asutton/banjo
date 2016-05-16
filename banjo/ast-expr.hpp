@@ -146,25 +146,6 @@ struct Real_expr : Literal_expr<lingo::Real>
 };
 
 
-// The base class of all ids that refer to declarations. 
-struct Id_expr : Expr
-{
-  Id_expr(Name& n)
-    : Expr(untyped), name_(&n)
-  { }
-
-  Id_expr(Type& t, Name& n)
-    : Expr(t), name_(&n)
-  { }
-
-  // Returns the original id of the expression.
-  Name const& id() const { return *name_; }
-  Name&       id()       { return *name_; }
-
-  Name* name_;
-};
-
-
 // Represents a tuple value; a sequence of expressions comprising a
 // single value.
 struct Tuple_expr : Expr
@@ -182,6 +163,24 @@ struct Tuple_expr : Expr
   Expr_list elems;
 };
 
+
+// The base class of all ids that refer to declarations. 
+struct Id_expr : Expr
+{
+  Id_expr(Name& n)
+    : Expr(untyped), name_(&n)
+  { }
+
+  Id_expr(Type& t, Name& n)
+    : Expr(t), name_(&n)
+  { }
+
+  // Returns the original id of the expression.
+  Name const& id() const { return *name_; }
+  Name&       id()       { return *name_; }
+
+  Name* name_;
+};
 
 
 // The base class of all identifiers that resolved to a single declaration.
@@ -213,6 +212,20 @@ struct Object_expr : Decl_expr
 };
 
 
+// A name that refers to a constant value.
+struct Value_expr : Decl_expr
+{
+  using Decl_expr::Decl_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the referenced variable or parameter.
+  Constant_decl const& declaration() const;
+  Constant_decl&       declaration();
+};
+
+
 // A name that refers to a function.
 struct Function_expr : Decl_expr
 {
@@ -230,18 +243,22 @@ struct Function_expr : Decl_expr
 // A name that refers to a set of declarations.
 struct Overload_expr : Id_expr
 {
-  Overload_expr(Name& n, Overload_set& o)
-    : Id_expr(n), ovl_(&o)
+  Overload_expr(Name& n, Decl_list& ds)
+    : Id_expr(n), decls_(ds)
+  { }
+
+  Overload_expr(Name& n, Decl_list&& ds)
+    : Id_expr(n), decls_(std::move(ds))
   { }
   
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the referenced declaration.
-  Overload_set const& declarations() const { return *ovl_; }
-  Overload_set&       declarations()       { return *ovl_; }
+  Decl_list const& declarations() const { return decls_; }
+  Decl_list&       declarations()       { return decls_; }
 
-  Overload_set* ovl_;
+  Decl_list decls_;
 };
 
 

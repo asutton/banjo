@@ -6,6 +6,7 @@
 #include "template.hpp"
 #include "context.hpp"
 #include "lookup.hpp"
+#include "type.hpp"
 #include "printer.hpp"
 
 #include <iostream>
@@ -14,37 +15,10 @@
 namespace banjo
 {
 
-// Return a reference to the given declaration.
-//
-// FIXME: Specialize the reference based on whether it's a variable
-// or function? Also, handle all of the other things that can be
-// referred to (e.g., overload sets, parameters, etc).
-Expr&
-make_reference(Context& cxt, Decl& d)
+// The identifier is not an object or function.
+static Expr&
+make_error_ref(Context& cxt, Decl& d)
 {
-  // TODO: What other kinds of objects do we have here...
-  //
-  // TODO: Dispatch.
-  if (Variable_decl* v = as<Variable_decl>(&d))
-    return cxt.make_reference(*v);
-  if (Object_parm* p = as<Object_parm>(&d))
-    return cxt.make_reference(*p);
-  if (Function_decl* f = as<Function_decl>(&d))
-    return cxt.make_reference(*f);
-//  if (Coroutine_decl *c = as<Coroutine_decl>(&d))
-//    return cxt.make_reference(*c);
-
-  // If it's a template name, then it must almost certainly
-  // refer to a function template.
-  #if 0
-  if (Template_decl* t = as<Template_decl>(&d)) {
-    Decl& p = t->parameterized_declaration();
-    if (is<Function_decl>(&p))
-      return cxt.make_reference(*t);
-    throw Type_error("'{}' cannot be used as an expression");
-  }
-  #endif
-
   // Here are some things that lookup can find that are not
   // valid expressions.
   //
@@ -52,25 +26,80 @@ make_reference(Context& cxt, Decl& d)
   if (Type_decl* t = as<Type_decl>(&d))
     throw Type_error("'{}' is not an object or function", t->name());
 
-  banjo_unhandled_case(d);
+  lingo_unhandled(d);
+}
+
+
+// Returns a reference to the declared object. The type of the
+// expression is a reference to the declared type of the object.
+static Expr&
+make_object_ref(Context& cxt, Object_decl& d)
+{
+  Type& t = make_reference_type(cxt, d.type());
+  return cxt.make_object_reference(t, d);
+}
+
+
+// Returns a reference to the declared constant. The type is a non-reference
+// to the declared type of the constant.
+static Expr&
+make_value_ref(Context& cxt, Value_decl& d)
+{
+  return cxt.make_value_reference(d.type(), d);
+}
+
+
+// Returns a reference to a single function. The type of the expression is 
+// a reference to the function type.
+static Expr&
+make_function_ref(Context& cxt, Function_decl& d)
+{
+  Type& t = make_reference_type(cxt, d.type());
+  return cxt.make_function_reference(t, d);
+}
+
+
+// Return a reference to the given declaration.
+//
+// FIXME: Specialize the reference based on whether it's a variable
+// or function? Also, handle all of the other things that can be
+// referred to.
+static Expr&
+make_decl_ref(Context& cxt, Decl& decl)
+{
+  struct fn
+  {
+    Context& cxt;
+    Expr& operator()(Decl& d)          { lingo_unhandled(d); }
+    Expr& operator()(Object_decl& d)   { return make_object_ref(cxt, d); }
+    Expr& operator()(Value_decl& d)    { return make_value_ref(cxt, d); }
+    Expr& operator()(Function_decl& d) { return make_function_ref(cxt, d); }
+  };
+  return apply(decl, fn{cxt});
+}
+
+
+// Return a reference to an overload set.
+static Expr&
+make_ovl_ref(Context& cxt, Name& n, Decl_list&& ds)
+{
+  return cxt.make_overload_reference(n, std::move(ds));
 }
 
 
 // Perform unqualified lookup.
+//
+// TODO: Allow an lookup to fail, indicating that we could not find
+// a name. In function calls, this could be used to perform class
+// lookup for member functions.
 Expr&
 make_reference(Context& cxt, Simple_id& id)
 {
   Decl_list decls = unqualified_lookup(cxt, id);
   if (decls.size() == 1)
-    return make_reference(cxt, decls.front());
-
-  // TODO: Return a reference to an overload set.
-  std::cout << "REF: " << id << '\n';
-  std::cout << "WTF? " << decls.size() << '\n';
-  std::cout << cxt.current_scope() << '\n';
-  for (Decl& d : decls)
-    std::cout << d << '\n';
-  lingo_unhandled(id);
+    return make_decl_ref(cxt, decls.front());
+  else
+    return make_ovl_ref(cxt, id, std::move(decls));
 }
 
 
@@ -98,8 +127,6 @@ make_reference(Context& cxt, Template_id& id)
 Expr&
 make_reference(Context& cxt, Concept_id& id)
 {
-  Builder build(cxt);
-
   // FIXME: There are a lot of questions to ask here... Presumably,
   // I must ensure that this resoles to a legitimate check, and the
   // arguments should match in kind (and type?). What if they don't.
@@ -111,7 +138,7 @@ make_reference(Context& cxt, Concept_id& id)
   // scope?
   //
   // As mentioned... lots of interesting things to do here.
-  return build.make_check(id.declaration(), id.arguments());
+  return cxt.make_check(id.declaration(), id.arguments());
 }
 
 
@@ -133,46 +160,74 @@ make_reference(Context& cxt, Name& n)
 // -------------------------------------------------------------------------- //
 // Member references
 
-
-// FIXME: Can we actually have variables in a member? Probably, if it's a
-// static member variable. Same goes for member functions.
-Expr&
-make_member_reference(Context& cxt, Expr& obj, Decl& decl)
+// Returns an expression referring to a class field.
+static Expr&
+make_field_ref(Context& cxt, Expr& e, Field_decl& d)
 {
-  // References to non-static members.
-  if (Field_decl* v = as<Field_decl>(&decl))
-    return cxt.make_member_reference(obj, *v);
-  if (Method_decl* f = as<Method_decl>(&decl))
-    return cxt.make_member_reference(obj, *f);
-
-  // References to static members.
-  if (Variable_decl* v = as<Variable_decl>(&decl))
-    return cxt.make_reference(*v);
-  if (Function_decl* f = as<Function_decl>(&decl))
-    return cxt.make_reference(*f);
-
-  if (is<Type_decl>(&decl)) {
-    error(cxt, "'{}' does not name a member variable or member function", decl.name());
-    throw Type_error("invalid reference");
-  }
-
-  lingo_unhandled(decl);
+  Type& t = make_reference_type(cxt, d.type());
+  return cxt.make_field_reference(t, e, d);
 }
 
 
+// Returns an expression referring to a class method.
+static Expr&
+make_method_ref(Context& cxt, Expr& e, Method_decl& d)
+{
+  Type& t = make_reference_type(cxt, d.type());
+  return cxt.make_method_reference(t, e, d);
+}
+
+
+// Note that member references to static data members are not
+// actually member expressions; we can discard the computed object
+// and simply refer to the core value.
+static Expr&
+make_member_decl_ref(Context& cxt, Expr& obj, Decl& decl)
+{
+  struct fn
+  {
+    Context& cxt;
+    Expr& obj;
+
+    Expr& operator()(Decl& d)          { return make_error_ref(cxt, d); }
+
+    // Scoped non-members.
+    Expr& operator()(Object_decl& d)   { return make_object_ref(cxt, d); }
+    Expr& operator()(Value_decl& d)    { return make_value_ref(cxt, d); }
+    Expr& operator()(Function_decl& d) { return make_function_ref(cxt, d); }
+    
+    // Scoped members.
+    Expr& operator()(Field_decl& d)    { return make_field_ref(cxt, obj, d); }
+    Expr& operator()(Method_decl& d)   { return make_method_ref(cxt, obj, d); }
+  };
+  return apply(decl, fn{cxt, obj});
+}
+
+
+// Construct a reference to an unresolved (overloaded) member.
+static Expr&
+make_member_ovl_ref(Context& cxt, Expr& obj, Name& name, Decl_list&& ds)
+{
+  return cxt.make_member_reference(obj, name, std::move(ds));
+}
+
 
 // Perform qualified lookup to resolve the declaration referred to by obj.n.
-Expr&
-make_member_reference(Context& cxt, Expr& obj, Simple_id& name)
+//
+// TODO: Allow class lookup to find 
+static Expr&
+make_member_ref(Context& cxt, Expr& obj, Simple_id& name)
 {
   Type& type = obj.type();
   Decl_list decls = qualified_lookup(cxt, type, name);
   if (decls.size() == 1)
-    return make_member_reference(cxt, obj, decls.front());
-  lingo_unreachable();
+    return make_member_decl_ref(cxt, obj, decls.front());
+  else
+    return make_member_ovl_ref(cxt, obj, name, std::move(decls));
 }
 
 
+// Return an expression that refers to a name scoped to object.
 Expr&
 make_member_reference(Context& cxt, Expr& obj, Name& n)
 {
@@ -181,7 +236,7 @@ make_member_reference(Context& cxt, Expr& obj, Name& n)
     Context& cxt;
     Expr&    obj;
     Expr& operator()(Name& n)      { lingo_unhandled(n); }
-    Expr& operator()(Simple_id& n) { return make_member_reference(cxt, obj, n); }
+    Expr& operator()(Simple_id& n) { return make_member_ref(cxt, obj, n); }
   };
   return apply(n, fn{cxt, obj});
 }

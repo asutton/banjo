@@ -8,7 +8,6 @@
 #include "specifier.hpp"
 
 
-
 namespace banjo
 {
 
@@ -143,11 +142,15 @@ struct Translation_unit : Decl
 };
 
 
-// The base class of declarations that denote objects. The type of an object 
-// declaration is a reference to the declared type of the object.
-//
-// TODO: Verify that the type is a reference type.
+// The base class of declarations that denote objects.
 struct Object_decl : Decl
+{
+  using Decl::Decl;
+};
+
+
+// The base class of all declarations that denote values.
+struct Value_decl : Decl
 {
   using Decl::Decl;
 };
@@ -158,6 +161,24 @@ struct Variable_decl : Object_decl
 {
   Variable_decl(Name& n, Type& t, Def& d)
     : Object_decl(n, t), def_(&d)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the initializer for the variable.
+  Def const& initializer() const { return *def_; }
+  Def&       initializer()       { return *def_; }
+
+  Def*  def_;
+};
+
+
+// Declares a constant.
+struct Constant_decl : Value_decl
+{
+  Constant_decl(Name& n, Type& t, Def& d)
+    : Value_decl(n, t), def_(&d)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }

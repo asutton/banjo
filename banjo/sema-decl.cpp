@@ -48,6 +48,27 @@ Parser::on_variable_declaration(Name& n, Type& t, Expr& e)
 
 
 // -------------------------------------------------------------------------- //
+// Constants
+
+
+Decl&
+Parser::on_constant_declaration(Name& n, Type& t, Expr& e)
+{
+  // A constant declaration has static storage.
+  //
+  // TODO: Make this implicit in its construction or not?
+  decl_specs() |= static_spec;
+
+  // Build the declaration.
+  Decl& decl = cxt.make_constant_declaration(n, t, e);
+  decl.spec_ = take_decl_specs();
+  
+  declare(cxt, decl);
+  return decl;
+}
+
+
+// -------------------------------------------------------------------------- //
 // Templates
 
 Decl&

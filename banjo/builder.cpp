@@ -466,60 +466,63 @@ Builder::make_tuple(Type& t, Expr_list&& l)
 }
 
 
-// Get an expression that refers to a variable. The type is a reference to 
-// the declared type of the variable.
+// Create a reference to a declared object (variable or parameter).
 Object_expr&
-Builder::make_reference(Variable_decl& d)
+Builder::make_object_reference(Type& t, Object_decl& d)
 {
-  Type& t = get_reference_type(d.type());
-  Name& n = d.name();
-  return make<Object_expr>(t, n, d);
+  lingo_assert(is_reference_type(t));
+  return make<Object_expr>(t, d.name(), d);
 }
 
 
-// Get an expression that refers to a parameter. The type is a reference to 
-// the declared type of the parameter.
-Object_expr&
-Builder::make_reference(Object_parm& d)
+// Create a reference to a declared value (constant).
+Value_expr&
+Builder::make_value_reference(Type& t, Value_decl& d)
 {
-  Type& t = get_reference_type(d.type());
-  Name& n = d.name();
-  return make<Object_expr>(t, n, d);
+  lingo_assert(!is_reference_type(t));
+  return make<Value_expr>(t, d.name(), d);
 }
 
 
-// FIXME: Do I want functions to be references or not?
+// Create a reference to a function.
 Function_expr&
-Builder::make_reference(Function_decl& d)
+Builder::make_function_reference(Type& t, Function_decl& d)
 {
-  Type& t = get_reference_type(d.type());
+  lingo_assert(is_reference_type(t));
   Name& n = d.name();
   return make<Function_expr>(t, n, d);
 }
 
 
-Field_expr&
-Builder::make_member_reference(Expr& e, Field_decl& d)
+Overload_expr&
+Builder::make_overload_reference(Name& n, Decl_list&& ds)
 {
-  Type& t = get_reference_type(d.type());
+  return make<Overload_expr>(n, std::move(ds));
+}
+
+
+Field_expr&
+Builder::make_field_reference(Type& t, Expr& e, Field_decl& d)
+{
+  lingo_assert(is_reference_type(t));
   Name& n = d.name();
   return make<Field_expr>(t, e, n, d);
 }
 
 
 Method_expr&
-Builder::make_member_reference(Expr& e, Method_decl& d)
+Builder::make_method_reference(Type& t, Expr& e, Method_decl& d)
 {
-  Type& t = get_reference_type(d.type());
+  lingo_assert(is_reference_type(t));
   Name& n = d.name();
   return make<Method_expr>(t, e, n, d);
 }
 
 
 Member_expr&
-Builder::make_member_reference(Expr& e, Overload_set& ovl)
+Builder::make_member_reference(Expr& e, Name& n, Decl_list&& ds)
 {
-  lingo_unimplemented("");
+  lingo_unimplemented("member overloads");
 }
 
 
@@ -695,7 +698,7 @@ Builder::make_call(Type& t, Expr& f, Expr_list const& a)
 Call_expr&
 Builder::make_call(Type& t, Function_decl& f, Expr_list const& a)
 {
-  return make_call(t, make_reference(f), a);
+  return make_call(t, make_function_reference(f.type(), f), a);
 }
 
 
@@ -866,6 +869,23 @@ Variable_decl&
 Builder::make_variable_declaration(char const* s, Type& t, Expr& i)
 {
   return make_variable_declaration(get_id(s), t, i);
+}
+
+
+// Create a constant declaration.
+Constant_decl&
+Builder::make_constant_declaration(Name& n, Type& t, Expr& e)
+{
+  Def& d = make_expression_definition(e);
+  return make<Constant_decl>(n, t, d);
+}
+
+
+// Create a constant declaration with the name s.
+Constant_decl&
+Builder::make_constant_declaration(char const* s, Type& t, Expr& i)
+{
+  return make_constant_declaration(get_id(s), t, i);
 }
 
 

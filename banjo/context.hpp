@@ -7,6 +7,9 @@
 #include "prelude.hpp"
 #include "builder.hpp"
 #include "scope.hpp"
+#include "value.hpp"
+
+#include <lingo/environment.hpp>
 
 
 namespace banjo
@@ -23,6 +26,11 @@ using Scope_map = std::unordered_map<Term*, Scope*>;
 // Used to manage the current declaration context. The top is either the
 // translation unit, a function, or a class.
 using Context_stack = std::vector<Decl*>;
+
+
+// Dynamic binding of declarations to their values.
+using Store = Environment<Decl const*, Value>;
+
 
 
 // A repository of information to support translation.
@@ -72,6 +80,13 @@ struct Context : Builder
   Decl const& current_context() const { return *cxt.back(); }
   Decl&       current_context()       { return *cxt.back(); }
 
+  // Constant value store
+  Store const& constants() const { return values; }
+  Store&       constants()       { return values; }
+  void store(Decl&, Value&&);
+  void store(Decl&, Value const&);
+  Value const& load(Decl&);
+
   // Diagnostic state
   bool diagnose_errors() const { return diags; }
 
@@ -83,6 +98,9 @@ struct Context : Builder
   Scope*        scope;  // The current scope
   Scope_map     saved;  // Saved scopes
   Context_stack cxt;    // Declaration context
+
+  // Constant value store.
+  Store         values;
 
   // Store information for generating unique names.
   int             id;     // The current id counter
@@ -150,6 +168,27 @@ inline void
 Context::leave_scope(Scope* s)
 {
   scope = s;
+}
+
+
+// Store the value of the given constant.
+//
+// TODO: Support moves into the store.
+inline void
+Context::store(Decl& d, Value const& v)
+{
+  lingo_assert(values.count(&d) == 0);
+  values.emplace(&d, v);
+}
+
+
+// Load the value associated with the constant.
+inline Value const& 
+Context::load(Decl& d)
+{
+  lingo_assert(values.count(&d) == 1);
+  auto iter = values.find(&d);
+  return iter->second;
 }
 
 

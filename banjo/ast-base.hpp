@@ -37,6 +37,7 @@ struct Req;
 struct Stmt;
 struct Decl;
 struct Object_decl;
+struct Value_decl;
 struct Type_decl;
 struct Def;
 struct Cons;

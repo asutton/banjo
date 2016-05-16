@@ -163,11 +163,12 @@ struct Printer
   // Supers
   void super_declaration(Super_decl const&);
 
-  // Variables
+  // Variables and constant
   void variable_declaration(Variable_decl const&);
-  void variable_initializer(Def const&);
-  void variable_initializer(Empty_def const&);
-  void variable_initializer(Expression_def const&);
+  void constant_declaration(Constant_decl const&);
+  void initializer(Def const&);
+  void initializer(Empty_def const&);
+  void initializer(Expression_def const&);
 
   // Functions
   void function_declaration(Function_decl const&);

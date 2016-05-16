@@ -1275,6 +1275,7 @@ Printer::declaration(Decl const& d)
     void operator()(Decl const& d)             { lingo_unhandled(d); }
     void operator()(Translation_unit const& d) { p.translation_unit(d); }
     void operator()(Variable_decl const& d)    { p.variable_declaration(d); }
+    void operator()(Constant_decl const& d)    { p.constant_declaration(d); }
     void operator()(Super_decl const& d)       { p.super_declaration(d); }
     void operator()(Function_decl const& d)    { p.function_declaration(d); }
     void operator()(Class_decl const& d)       { p.class_declaration(d); }
@@ -1373,20 +1374,33 @@ Printer::variable_declaration(Variable_decl const& d)
   identifier(d);
   binary_operator(colon_tok);
   type(d.type());
-  variable_initializer(d.initializer());
+  initializer(d.initializer());
   token(semicolon_tok);
 }
 
 
 void
-Printer::variable_initializer(Def const& d)
+Printer::constant_declaration(Constant_decl const& d)
+{
+  token(const_tok);
+  space();
+  identifier(d);
+  binary_operator(colon_tok);
+  type(d.type());
+  initializer(d.initializer());
+  token(semicolon_tok);
+}
+
+
+void
+Printer::initializer(Def const& d)
 {
   struct fn
   {
     Printer& p;
     void operator()(Def const& d)            { lingo_unhandled(d); }
-    void operator()(Empty_def const& d)      { p.variable_initializer(d); }
-    void operator()(Expression_def const& d) { p.variable_initializer(d); }
+    void operator()(Empty_def const& d)      { p.initializer(d); }
+    void operator()(Expression_def const& d) { p.initializer(d); }
   };
   apply(d, fn{*this});
 }
@@ -1394,12 +1408,12 @@ Printer::variable_initializer(Def const& d)
 
 // TODO: Maybe print a comment?
 void
-Printer::variable_initializer(Empty_def const& d)
+Printer::initializer(Empty_def const& d)
 { }
 
 
 void
-Printer::variable_initializer(Expression_def const& d)
+Printer::initializer(Expression_def const& d)
 {
   binary_operator(eq_tok);
   expression(d.expression());

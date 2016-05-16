@@ -98,6 +98,7 @@ Parser::member_statement_seq()
 //
 //    member-declaration:
 //      variable-declaration
+//      constant-declaration
 //      super-declaration
 //      function-declaration
 //      class-declaration
@@ -120,6 +121,7 @@ Parser::member_statement()
     case protected_tok:
     // Declaration introducers.
     case var_tok:
+    case const_tok:
     case super_tok:
     case def_tok:
     case class_tok:

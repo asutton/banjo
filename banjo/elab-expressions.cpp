@@ -6,6 +6,7 @@
 #include "printer.hpp"
 #include "ast.hpp"
 #include "declaration.hpp"
+#include "evaluation.hpp"
 
 #include <iostream>
 
@@ -131,6 +132,7 @@ Elaborate_expressions::declaration(Decl& d)
     Self& elab;
     void operator()(Decl& d)          { lingo_unhandled(d); }
     void operator()(Variable_decl& d) { elab.variable_declaration(d); }
+    void operator()(Constant_decl& d) { elab.constant_declaration(d); }
     void operator()(Super_decl& d)    { /* Do nothing. */ }
     void operator()(Function_decl& d) { elab.function_declaration(d); }
     void operator()(Class_decl& d)    { elab.class_declaration(d); }
@@ -139,6 +141,7 @@ Elaborate_expressions::declaration(Decl& d)
 }
 
 
+// FIXME: Actually check that the initializer matches the declared type!
 void
 Elaborate_expressions::variable_declaration(Variable_decl& d)
 {
@@ -150,6 +153,28 @@ Elaborate_expressions::variable_declaration(Variable_decl& d)
     void operator()(Expression_def& d) { d.expr_ = &elab.expression(d.expression()); }
   };
   apply(d.initializer(), fn{*this});
+}
+
+
+// FIXME: Actually check that the initializer matches the declared type!
+void
+Elaborate_expressions::constant_declaration(Constant_decl& d)
+{
+  struct fn
+  {
+    Self& elab;
+    void operator()(Def& d)            { lingo_unhandled(d); }
+    void operator()(Empty_def& d)      { /* Do nothing. */ }
+    void operator()(Expression_def& d) { d.expr_ = &elab.expression(d.expression()); }
+  };
+  apply(d.initializer(), fn{*this});
+
+
+  // Evaluate the initializer and store it.
+  if (Expression_def* def = as<Expression_def>(&d.initializer())) {
+    Value v = evaluate(cxt, def->expression());  
+    cxt.store(d, v);
+  }
 }
 
 

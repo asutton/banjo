@@ -32,6 +32,7 @@ struct Elaborate_declarations
 
   void declaration(Decl&);
   void variable_declaration(Variable_decl&);
+  void constant_declaration(Constant_decl&);
   void super_declaration(Super_decl&);
   void function_declaration(Function_decl&);
   void coroutine_declaration(Coroutine_decl&);

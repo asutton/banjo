@@ -106,11 +106,15 @@ make_slice_type(Context& cxt, Type& t)
 }
 
 
-// Returns a reference-to-T.
+// Returns a reference-to-t. Note references collapse: &(&t) is equivalent 
+// to &t.
 Type&
 make_reference_type(Context& cxt, Type& t)
 {
-  return cxt.get_reference_type(t);
+  if (is_reference_type(t))
+    return t;
+  else
+    return cxt.get_reference_type(t);
 }
 
 

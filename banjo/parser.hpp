@@ -134,6 +134,7 @@ struct Parser
 
   // Variables
   Decl& variable_declaration();
+  Decl& constant_declaration();
   Decl& super_declaration();
   Type& unparsed_variable_type();
   Expr& unparsed_variable_initializer();
@@ -281,6 +282,7 @@ struct Parser
   // Variables
   Decl& on_variable_declaration(Name&, Type&);
   Decl& on_variable_declaration(Name&, Type&, Expr&);
+  Decl& on_constant_declaration(Name&, Type&, Expr&);
   Decl& on_super_declaration(Name&, Type&);
 
   // Functions
