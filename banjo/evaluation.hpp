@@ -43,6 +43,7 @@ struct Evaluator
   ~Evaluator();
 
   Value operator()(Expr const& e) { return evaluate(e); }
+  void  operator()(Decl const& e) { return elaborate(e); }
 
   Value evaluate(Expr const&);
 
@@ -81,13 +82,17 @@ struct Evaluator
   Control evaluate_return(Return_stmt const&, Value&);
 
   void elaborate(Decl const&);
-  void elaborate_object(Object_decl const&);
+  void variable(Variable_decl const&);
+  void constant(Constant_decl const&);
+
+  void initialize(Decl const&, Expr const&);
+  void initialize(Decl const&, Copy_init const&);
 
   // Load/store functions
+  Value& alloc(Decl const&);
   Value  alias(Decl const&);
   Value  load(Decl const&);
   Value& store(Decl const&, Value const&);
-  Value& alloca(Decl const&);
 
   struct Enter_frame;
 
@@ -141,6 +146,16 @@ evaluate(Context& cxt, Expr const& e)
 {
   Evaluator eval(cxt);
   return eval(e);
+}
+
+
+// Elaborate the declaration. Note that d must be fully defined. Declarations
+// do not yield values, so the return value is void.
+inline void
+evaluate(Context& cxt, Decl const& d)
+{
+  Evaluator eval(cxt);
+  eval(d);
 }
 
 

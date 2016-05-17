@@ -37,6 +37,18 @@ Evaluator::load(Decl const& d)
 }
 
 
+// Allocate storage for the declaration. This effectively reserves
+// storage for the object's associated value. The initial value is 
+// an error value.
+//
+// TODO: The initial value should be an indeterminate value.
+Value&
+Evaluator::alloc(Decl const& d)
+{
+  return stack.top().bind(&d, Value{}).second;
+}
+
+
 // Stores a value in the object corresponding to the given
 // declaration. This copies the value into the object, and
 // returns a reference to that value.
@@ -428,7 +440,7 @@ Evaluator::evaluate_return(Return_stmt const& s, Value& r)
 
 
 // -------------------------------------------------------------------------- //
-// Evaluation of declarations
+// Evaluation of declarations.
 
 void
 Evaluator::elaborate(Decl const& d)
@@ -436,18 +448,64 @@ Evaluator::elaborate(Decl const& d)
   struct fn
   {
     Evaluator& self;
-    void operator()(Decl const& d)        { banjo_unhandled_case(d); }
-    void operator()(Object_decl const& d) { self.elaborate_object(d); }
+    void operator()(Decl const& d)          { lingo_unhandled(d); }
+    void operator()(Variable_decl const& d) { self.variable(d); }
+    void operator()(Constant_decl const& d) { self.constant(d); }
   };
   return apply(d, fn{*this});
 }
 
 
 void
-Evaluator::elaborate_object(Object_decl const& d)
+Evaluator::variable(Variable_decl const& decl)
 {
-  lingo_unreachable();
+  struct fn
+  {
+    Evaluator&  self;
+    Decl const& decl;
+    void operator()(Def const& d)            { lingo_unhandled(d); }
+    void operator()(Expression_def const& d) { self.initialize(decl, d.expression()); }
+  };
+  apply(decl.initializer(), fn{*this, decl});
 }
+
+
+void
+Evaluator::constant(Constant_decl const& decl)
+{
+  struct fn
+  {
+    Evaluator&  self;
+    Decl const& decl;
+    void operator()(Def const& d)            { lingo_unhandled(d); }
+    void operator()(Expression_def const& d) { self.initialize(decl, d.expression()); }
+  };
+  apply(decl.initializer(), fn{*this, decl});
+}
+
+
+void
+Evaluator::initialize(Decl const& decl, Expr const& e)
+{
+  struct fn
+  {
+    Evaluator&  self;
+    Decl const& decl;
+    void operator()(Expr const& e)      { lingo_unhandled(e); }
+    void operator()(Copy_init const& e) { self.initialize(decl, e); }
+  };
+  apply(e, fn{*this, decl});
+}
+
+
+void
+Evaluator::initialize(Decl const& decl, Copy_init const& init)
+{
+  Value v = evaluate(init.expression());
+  alloc(decl);
+  store(decl, v);
+}
+
 
 
 // -------------------------------------------------------------------------- //
