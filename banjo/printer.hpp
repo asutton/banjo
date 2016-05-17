@@ -113,6 +113,7 @@ struct Printer
   void postfix_expression(Numeric_conv const&);
   void postfix_expression(Dependent_conv const&);
   void postfix_expression(Ellipsis_conv const&);
+  void postfix_expression(Copy_init const&);
   void subscript_expression(Expr const&);
   void primary_expression(Expr const&);
   void grouped_expression(Expr const&);

@@ -2,11 +2,11 @@
 // All rights reserved
 
 #include "substitution.hpp"
+#include "printer.hpp"
 #include "ast.hpp"
 #include "context.hpp"
 #include "expression.hpp"
 #include "declaration.hpp"
-#include "printer.hpp"
 
 #include <iostream>
 
@@ -16,6 +16,15 @@ namespace banjo
 
 // -------------------------------------------------------------------------- //
 // Substitution class
+
+
+// Insert an empty mapping for the placeholder type or type parameter.
+inline void
+Substitution::seed_with(Type& t)
+{
+  Declared_type& type = cast<Declared_type>(t);
+  emplace(&type.declaration(), nullptr);
+}
 
 
 // Helper debug output.
@@ -56,6 +65,8 @@ unify(Context& cxt, Substitution& global, Substitution& local)
   }
 }
 
+
+#if 0
 
 // -------------------------------------------------------------------------- //
 // Substitution helpers
@@ -449,5 +460,6 @@ substitute(Context& cxt, Cons& c, Substitution& sub)
   return apply(c, fn{cxt, sub});
 }
 
+#endif
 
 } // namespace banjo

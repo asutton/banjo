@@ -133,27 +133,4 @@ make_fresh_type(Context& cxt)
   return cxt.make_auto_type();
 }
 
-
-// -------------------------------------------------------------------------- //
-// Placeholders
-
-
-// Collect a list of placeholder types in the declared type t.
-//
-// TODO: Finish implementing me.
-Type_list 
-get_placeholders(Type& t)
-{
-  struct fn
-  {
-    Type_list& ts;
-    void operator()(Type& t) { }
-    void operator()(Auto_type& t) { ts.push_back(t); }
-  };
-  Type_list ts;
-  apply(t, fn{ts});
-  return ts;
-}
-
-
 } // namespace banjo

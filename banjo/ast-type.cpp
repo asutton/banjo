@@ -40,7 +40,7 @@ Declared_type::declaration()
 // Dependent types
 
 inline bool
-any_dependent_type(Type_list const& ts)
+any_dependent_types(Type_list const& ts)
 {
   return std::any_of(ts.begin(), ts.end(), is_dependent_type);
 }
@@ -49,7 +49,7 @@ any_dependent_type(Type_list const& ts)
 inline bool
 is_dependent_function_type(Function_type const& t)
 {
-  return any_dependent_type(t.parameter_types())
+  return any_dependent_types(t.parameter_types())
       || is_dependent_type(t.return_type());
 }
 
@@ -69,8 +69,9 @@ is_dependent_type(Type const& t)
     bool operator()(Reference_type const& t) { return is_dependent_type(t.type()); }
     bool operator()(Pointer_type const& t)   { return is_dependent_type(t.type()); }
     bool operator()(Array_type const& t)     { return is_dependent_type(t.type()); }
-    bool operator()(Tuple_type const& t)     { return any_dependent_type(t.element_types()); }
+    bool operator()(Tuple_type const& t)     { return any_dependent_types(t.element_types()); }
     bool operator()(Dynarray_type const& t)  { return is_dependent_type(t.type()); }
+    bool operator()(Auto_type const& t)      { return true; }
   };
   return apply(t, fn{});
 }

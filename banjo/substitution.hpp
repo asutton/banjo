@@ -25,9 +25,11 @@ namespace banjo
 struct Substitution : std::unordered_map<Decl*, Term*>
 {
   Substitution();
+  Substitution(Type_list&);
   Substitution(Decl_list&);
   Substitution(Decl_list&, Term_list&);
 
+  void seed_with(Type& d);
   void seed_with(Decl& d);
   void map_to(Decl& d, Term& t);
 
@@ -64,18 +66,28 @@ Substitution::Substitution()
 { }
 
 
-// Initialize a partial substitution for the purpose of deducing mappings
-// to parameters. Initially map each parameter to a null pointer.
+// Initialize the substitution with an empty mapping for each type in the
+// given list.
+inline
+Substitution::Substitution(Type_list& ts)
+{
+  for (Type& t : ts)
+    seed_with(t);
+}
+
+
+// Initialize the substitution with an empty mapping for each declaration 
+// in the given list.
 inline
 Substitution::Substitution(Decl_list& p)
 {
   for (Decl& d : p)
-    insert({&d, nullptr});
+    seed_with(d);
 }
 
 
-// Initialize the substitution with a mapping from each
-// `pi` in `p` to its corresponding `ai` in `a`.
+// Initialize the substitution with a mapping from each `pi` in `p` to 
+// its corresponding `ai` in `a`.
 inline
 Substitution::Substitution(Decl_list& p, Term_list& a)
   : ok(true)

@@ -18,7 +18,7 @@ enum untyped_t
 };
 
 
-// The base class of all expresions.
+// The base class of all expressions.
 struct Expr : Term
 {
   struct Visitor;

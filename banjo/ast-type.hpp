@@ -530,6 +530,7 @@ is_scalar_type(Type const& t)
 }
 
 
+bool is_simple_type(Type const&);
 bool is_object_type(Type const&);
 bool is_dependent_type(Type const&);
 

@@ -6,6 +6,8 @@
 #include "printer.hpp"
 #include "ast.hpp"
 #include "declaration.hpp"
+#include "deduction.hpp"
+#include "initialization.hpp"
 #include "evaluation.hpp"
 
 #include <iostream>
@@ -124,6 +126,25 @@ Elaborate_expressions::expression_statement(Expression_stmt& s)
 // -------------------------------------------------------------------------- //
 // Declarations
 
+// Perform a series of checks and transformations on the declared
+// type of d to yield a complete, deduced type.
+template<typename Init>
+static Type&
+get_complete_type(Context& cxt, Init& decl)
+{
+  deduce_declared_type(cxt, decl, decl.initializer());
+  
+  // Ensure the completeness of the type's definition. Most types are
+  // always complete. Class types are complete only when they have been
+  // fully elaborated. The completeness of array and tuple types depend
+  // on the completeness of their members, etc.
+  //
+  // FIXME: Implement this.
+
+  return decl.type();
+}
+
+
 void
 Elaborate_expressions::declaration(Decl& d)
 {
@@ -141,7 +162,6 @@ Elaborate_expressions::declaration(Decl& d)
 }
 
 
-// FIXME: Actually check that the initializer matches the declared type!
 void
 Elaborate_expressions::variable_declaration(Variable_decl& d)
 {
@@ -153,12 +173,14 @@ Elaborate_expressions::variable_declaration(Variable_decl& d)
     void operator()(Expression_def& d) { d.expr_ = &elab.expression(d.expression()); }
   };
   apply(d.initializer(), fn{*this});
+
+  // FIXME: Perform initialization.
+  // get_complete_type(cxt, d);
 }
 
 
-// FIXME: Actually check that the initializer matches the declared type!
 void
-Elaborate_expressions::constant_declaration(Constant_decl& d)
+Elaborate_expressions::constant_declaration(Constant_decl& decl)
 {
   struct fn
   {
@@ -167,13 +189,15 @@ Elaborate_expressions::constant_declaration(Constant_decl& d)
     void operator()(Empty_def& d)      { /* Do nothing. */ }
     void operator()(Expression_def& d) { d.expr_ = &elab.expression(d.expression()); }
   };
-  apply(d.initializer(), fn{*this});
+  apply(decl.initializer(), fn{*this});
 
+  Type& type = get_complete_type(cxt, decl);
 
-  // Evaluate the initializer and store it.
-  if (Expression_def* def = as<Expression_def>(&d.initializer())) {
-    Value v = evaluate(cxt, def->expression());  
-    cxt.store(d, v);
+  // Evaluate and cache the initializer based on its kind.
+  if (Expression_def* def = as<Expression_def>(&decl.initializer())) {
+    // Update the initializer and evaluate the constant.
+    def->expr_ = &copy_initialize(cxt, type, def->expression());
+    evaluate(cxt, decl);
   }
 }
 

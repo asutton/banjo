@@ -836,6 +836,8 @@ Printer::postfix_expression(Expr const& e)
     void operator()(Numeric_conv const& e)       { p.postfix_expression(e); }
     void operator()(Dependent_conv const& e)     { p.postfix_expression(e); }
     void operator()(Ellipsis_conv const& e)      { p.postfix_expression(e); }
+    void operator()(Init const& e)               { lingo_unhandled(e); }
+    void operator()(Copy_init const& e)          { p.postfix_expression(e); }
   };
   apply(e, fn{*this});
 }
@@ -884,7 +886,7 @@ Printer::postfix_expression(Tuple_expr const& e)
 void
 Printer::postfix_expression(Value_conv const& e)
 {
-  token("__convert_to_value");
+  token("__value_conversion");
   token(lparen_tok);
   expression(e.source());
   token(rparen_tok);
@@ -895,7 +897,7 @@ void
 Printer::postfix_expression(Qualification_conv const& e)
 {
   // TODO: Be more specific about the qualification added.
-  token("__adjust_qualification");
+  token("__qualification_conversion");
   token(lparen_tok);
   expression(e.source());
   token(rparen_tok);
@@ -905,7 +907,7 @@ Printer::postfix_expression(Qualification_conv const& e)
 void
 Printer::postfix_expression(Boolean_conv const& e)
 {
-  token("__convert_to_bool");
+  token("__boolean_conversion");
   token(lparen_tok);
   expression(e.source());
   token(rparen_tok);
@@ -915,7 +917,7 @@ Printer::postfix_expression(Boolean_conv const& e)
 void
 Printer::postfix_expression(Integer_conv const& e)
 {
-  token("__widen_integer");
+  token("__integer_promotion");
   token(lparen_tok);
   expression(e.source());
   token(rparen_tok);
@@ -925,7 +927,7 @@ Printer::postfix_expression(Integer_conv const& e)
 void
 Printer::postfix_expression(Float_conv const& e)
 {
-  token("__widen_float");
+  token("__floating_point_promotion");
   token(lparen_tok);
   expression(e.source());
   token(rparen_tok);
@@ -935,7 +937,7 @@ Printer::postfix_expression(Float_conv const& e)
 void
 Printer::postfix_expression(Numeric_conv const& e)
 {
-  token("__convert_to_float");
+  token("__floating_point_conversion");
   token(lparen_tok);
   expression(e.source());
   token(rparen_tok);
@@ -945,7 +947,7 @@ Printer::postfix_expression(Numeric_conv const& e)
 void
 Printer::postfix_expression(Dependent_conv const& e)
 {
-  token("__dependent_conversion");
+  token("__implicit_conversion");
   token(lt_tok);
   type(e.type());
   token(gt_tok);
@@ -958,9 +960,19 @@ Printer::postfix_expression(Dependent_conv const& e)
 void
 Printer::postfix_expression(Ellipsis_conv const& e)
 {
-  token("__convert_to_ellipsis");
+  token("__ellipsis_conversion");
   token(lparen_tok);
   expression(e.source());
+  token(rparen_tok);
+}
+
+
+void
+Printer::postfix_expression(Copy_init const& e)
+{
+  token("__copy_initialization");
+  token(lparen_tok);
+  expression(e.expression());
   token(rparen_tok);
 }
 
