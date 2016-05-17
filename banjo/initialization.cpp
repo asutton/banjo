@@ -115,8 +115,6 @@ value_initialize(Context& cxt, Type& t)
 Expr&
 copy_initialize(Context& cxt, Type& t, Expr& e)
 {
-  Builder build(cxt);
-
   // If the destination type is a T&, then perform reference
   // initialization.
   if (is_reference_type(t))
@@ -160,7 +158,7 @@ copy_initialize(Context& cxt, Type& t, Expr& e)
   // TODO: Catch exceptions and restructure the error with
   // the conversion error as an explanation.
   Expr& c = standard_conversion(e, t);
-  return build.make_copy_init(t, c);
+  return cxt.make_copy_init(t, c);
 }
 
 
