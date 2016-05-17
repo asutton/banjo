@@ -839,6 +839,13 @@ Builder::make_aggregate_init(Type& t, Expr_list const& es)
 }
 
 
+Aggregate_init&
+Builder::make_aggregate_init(Type& t, Expr_list&& es)
+{
+  return make<Aggregate_init>(t, std::move(es));
+}
+
+
 // -------------------------------------------------------------------------- //
 // Declarations
 

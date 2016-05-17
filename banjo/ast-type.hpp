@@ -315,6 +315,10 @@ struct Class_type : Declared_type
 {
   using Declared_type::Declared_type;
 
+  // Returns the declaration of the class type.
+  Class_decl const& declaration() const;
+  Class_decl&       declaration();
+
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 };

@@ -87,6 +87,7 @@ struct Evaluator
 
   void initialize(Decl const&, Expr const&);
   void initialize(Decl const&, Copy_init const&);
+  void initialize(Decl const&, Aggregate_init const&);
 
   // Load/store functions
   Value& alloc(Decl const&);

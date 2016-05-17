@@ -184,6 +184,7 @@ struct Builder
   Bind_init&      make_bind_init(Type&, Expr&);
   Direct_init&    make_direct_init(Type&, Decl&, Expr_list const&);
   Aggregate_init& make_aggregate_init(Type&, Expr_list const&);
+  Aggregate_init& make_aggregate_init(Type&, Expr_list&&);
 
   // Definitions
   Empty_def&      make_empty_definition();

@@ -838,6 +838,7 @@ Printer::postfix_expression(Expr const& e)
     void operator()(Ellipsis_conv const& e)      { p.postfix_expression(e); }
     void operator()(Init const& e)               { lingo_unhandled(e); }
     void operator()(Copy_init const& e)          { p.postfix_expression(e); }
+    void operator()(Aggregate_init const& e)     { p.postfix_expression(e); }
   };
   apply(e, fn{*this});
 }
@@ -859,12 +860,7 @@ Printer::postfix_expression(Call_expr const& e)
 {
   postfix_expression(e.function());
   token(lparen_tok);
-  Expr_list const& p = e.arguments();
-  for (auto iter = p.begin(); iter != p.end(); ++iter) {
-    expression(*iter);
-    if (std::next(iter) != p.end())
-      token(comma_tok);
-  }
+  expression_list(e.arguments());
   token(rparen_tok);
 }
 
@@ -973,6 +969,16 @@ Printer::postfix_expression(Copy_init const& e)
   token("__copy_initialization");
   token(lparen_tok);
   expression(e.expression());
+  token(rparen_tok);
+}
+
+
+void
+Printer::postfix_expression(Aggregate_init const& e)
+{
+  token("__aggregate_initialization");
+  token(lparen_tok);
+  expression_list(e.initializers());
   token(rparen_tok);
 }
 
@@ -1091,6 +1097,18 @@ Printer::requires_expression(Requires_expr const& e)
   usage_seq(e.requirements());
   newline_and_undent();
   token(rbrace_tok);
+}
+
+
+void
+Printer::expression_list(Expr_list const& es)
+{
+  for (auto iter = es.begin(); iter != es.end(); ++iter) {
+    expression(*iter);
+    if (std::next(iter) != es.end())
+      token(comma_tok);
+  }
+  token(rparen_tok);
 }
 
 

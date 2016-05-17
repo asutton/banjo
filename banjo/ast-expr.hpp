@@ -932,11 +932,15 @@ struct Aggregate_init : Init
     : Init(t), inits(es)
   { }
 
+  Aggregate_init(Type& t, Expr_list&& es)
+    : Init(t), inits(std::move(es))
+  { }
+
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
-  // Returns a sequence of selected initializers for
-  // a compound target type.
+  // Returns a sequence of selected initializers for a compound target 
+  // type. Each of these is an initializer.
   Expr_list const& initializers() const { return inits; }
   Expr_list&       initializers()       { return inits; }
 

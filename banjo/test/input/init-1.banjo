@@ -1,2 +1,9 @@
 
 const x := {1, 2, false};
+
+class C {
+  var x : int;
+  var y : bool;
+}
+
+const y : C = {0, true};

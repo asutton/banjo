@@ -41,6 +41,19 @@ Function_decl::return_type()
 }
 
 
+Decl_list const& 
+Class_decl::objects() const 
+{ 
+  return cast<Class_def>(def_)->objects();
+}
+
+Decl_list& 
+Class_decl::objects() 
+{ 
+  return cast<Class_def>(def_)->objects();
+}
+
+
 // -------------------------------------------------------------------------- //
 // Declared type
 

@@ -114,6 +114,7 @@ struct Printer
   void postfix_expression(Dependent_conv const&);
   void postfix_expression(Ellipsis_conv const&);
   void postfix_expression(Copy_init const&);
+  void postfix_expression(Aggregate_init const&);
   void subscript_expression(Expr const&);
   void primary_expression(Expr const&);
   void grouped_expression(Expr const&);
@@ -128,7 +129,7 @@ struct Printer
 
   void requires_expression(Requires_expr const&);
 
-  Expr_list expression_list();
+  void expression_list(Expr_list const&);
 
 
   // Statements

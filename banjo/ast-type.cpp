@@ -36,6 +36,20 @@ Declared_type::declaration()
 }
 
 
+Class_decl const&
+Class_type::declaration() const
+{
+  return cast<Class_decl>(*decl_);
+}
+
+
+Class_decl&
+Class_type::declaration()
+{
+  return cast<Class_decl>(*decl_);
+}
+
+
 // -------------------------------------------------------------------------- //
 // Dependent types
 

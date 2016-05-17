@@ -112,9 +112,16 @@ value_initialize(Context& cxt, Type& t)
 //
 // This also applies in parameter passing, function return, exception
 // throwing, and handling.
+//
+// TODO: If either t or e is dependent, then we should perform dependent
+// initialization -- that needs to be the first.
 Expr&
 copy_initialize(Context& cxt, Type& t, Expr& e)
 {
+  // If e is a tuple, the object is tuple-initialized. 
+  if (Tuple_expr* tup = as<Tuple_expr>(&e))
+    return tuple_initialize(cxt, t, *tup);
+
   // If the destination type is a T&, then perform reference
   // initialization.
   if (is_reference_type(t))
@@ -127,19 +134,23 @@ copy_initialize(Context& cxt, Type& t, Expr& e)
     return cxt.make_copy_init(t, c);
   }
 
-  // If the destination type is T[N] or T[] and the initializer
+  // FIXME: These aren't right.
+  /*
+  // Otherwise, if the destination type is T[N] or T[] and the initializer
   // is `= s` where `s` is a string literal, perform string
   // initialization.
   if (is_array_type(t)) {
-    Expr& a_expr = array_initialize(t, e);
-    return cxt.make_copy_init(t, a_expr);
+    Expr& init = array_initialize(t, e);
+    return cxt.make_copy_init(t, init);
   }
   
+  // Initialize a tuple from another tuple, allowing conversion of 
+  // elements in the source expression to the target type.
   if (is_tuple_type(t)) {
-    Expr& t_expr = tuple_initialize(t,e);
-    return cxt.make_copy_init(t,t_expr);
+    Expr& init = tuple_initialize(t,e);
+    return cxt.make_copy_init(t,init);
   }
-  
+  */
 
   // If the initializer has a source type, then try to find a
   // user-defined conversion from s to the destination type, which
@@ -177,18 +188,98 @@ array_initialize(Type& t, Expr& e)
 }
 
 
-//tuple compared with tuple or array
-Expr&
-tuple_initialize(Type& t, Expr& e)
+// Diagnose the initialization error.
+static Expr&
+tuple_init_error(Context& cxt, Type& t, Expr& e)
 {
-  Type& et = e.type();
-  if(is_equivalent(t,et))
-    return e;
+  error(cxt, "cannot initialize an object of type '{}' with '{}'", e, t);
+  throw Type_error();
+}
+
+
+// Initialize a tuple-typed object with a tuple-expression.
+//
+// TODO: This is really a form of aggregate initialization. We want to
+// initialize each object of a target tuple.
+static Expr&
+tuple_init(Context& cxt, Tuple_type& t, Tuple_expr& e)
+{
+  // TODO: Initialize each element type of t with the corresponding
+  // element of e.
+  if (is_equivalent(t, e.type()))
+    return cxt.make_copy_init(t, e);
+
+  error(cxt, "cannot initialize an object of type '{}' with '{}'", e, t);
+  throw Type_error();
+}
+
+
+// Initialize an array-typed object with a tuple-expression.
+//
+// TODO: This is really a form of aggregate initialization. We want to
+// initialize each object of a target tuple.
+//
+// TODO: Implement the type checking.
+static Expr&
+tuple_init(Context& cxt, Array_type& t, Tuple_expr& e)
+{
+  lingo_unreachable();
+}
+
+
+static Expr&
+tuple_init(Context& cxt, Class_type& t, Tuple_expr& e)
+{
+  // FIXME: I am currently assuming that all classes are aggregates. This
+  // is clearly not correct. For non-aggregates, we should search for a
+  // constructor.
+
+  Decl_list& mem = t.declaration().objects();
+  Expr_list& els = e.elements();
   
-  if(is_array_type(e.type())) {
-    return tuple_array_init(t,e);
+  // Check for argument size mismatch.
+  //
+  // TODO: Can aggregates have default member initializers? How does that
+  // work here?
+  if (mem.size() < els.size()) {
+    error(cxt, "cannot initialize an object of type '{}' with '{}'", e, t);
+    note ("initializer has too few elements");
+    throw Type_error();
   }
-  throw std::runtime_error("cannot initialize tuple type");
+  if (mem.size() > els.size()) {
+    error(cxt, "cannot initialize an object of type '{}' with '{}'", e, t);
+    note ("initializer has too few elements");
+    throw Type_error();
+  }
+
+  Expr_list inits;
+  for (std::size_t i = 0; i < mem.size(); ++i) {
+    Decl& var = *mem[i];
+    Expr& elem = *els[i];
+
+    // FIXME: This is probably just normal initialization.
+    Expr& init = copy_initialize(cxt, var.type(), elem);
+    inits.push_back(init);
+  }
+
+  return cxt.make_aggregate_init(t, std::move(inits));
+}
+
+
+// Tuple compared with tuple or array
+Expr&
+tuple_initialize(Context& cxt, Type& t, Tuple_expr& e)
+{
+  struct fn
+  {
+    Context&    cxt;
+    Tuple_expr& e;
+    Expr& operator()(Type& t)       { return tuple_init_error(cxt, t, e); }
+    Expr& operator()(Tuple_type& t) { return tuple_init(cxt, t, e); }
+    Expr& operator()(Array_type& t) { return tuple_init(cxt, t, e); }
+    Expr& operator()(Class_type& t) { return tuple_init(cxt, t, e); }
+  };
+  return apply(t, fn{cxt, e});
 }
 
 

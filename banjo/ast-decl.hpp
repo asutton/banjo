@@ -266,6 +266,10 @@ struct Class_decl : Type_decl
   Def const& definition() const { return *def_; }
   Def&       definition()       { return *def_; }
 
+  // Returns the list of member variables.
+  Decl_list const& objects() const;
+  Decl_list&       objects();
+
   Type*  kind_;
   Def*   def_;
 };

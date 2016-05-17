@@ -491,8 +491,9 @@ Evaluator::initialize(Decl const& decl, Expr const& e)
   {
     Evaluator&  self;
     Decl const& decl;
-    void operator()(Expr const& e)      { lingo_unhandled(e); }
-    void operator()(Copy_init const& e) { self.initialize(decl, e); }
+    void operator()(Expr const& e)           { lingo_unhandled(e); }
+    void operator()(Copy_init const& e)      { self.initialize(decl, e); }
+    void operator()(Aggregate_init const& e) { self.initialize(decl, e); }
   };
   apply(e, fn{*this, decl});
 }
@@ -506,6 +507,18 @@ Evaluator::initialize(Decl const& decl, Copy_init const& init)
   store(decl, v);
 }
 
+
+void
+Evaluator::initialize(Decl const& decl, Aggregate_init const& init)
+{
+  // FIXME: The "shape" of the object is determined by the type of the
+  // declaration. We should actually recursively construct a value with
+  // the determined shape of the object so that we can diagnose very
+  // specific errors.
+  alloc(decl);
+
+  // FIXME: Walk the allocated object and apply each initializer in turn.
+}
 
 
 // -------------------------------------------------------------------------- //
