@@ -175,6 +175,7 @@ struct Printer
   // Functions
   void function_declaration(Function_decl const&);
   void function_definition(Def const&);
+  void function_definition(Empty_def const&);
   void function_definition(Expression_def const&);
   void function_definition(Function_def const&);
   void function_definition(Deleted_def const&);

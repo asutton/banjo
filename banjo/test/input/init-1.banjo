@@ -8,3 +8,9 @@ class C {
 
 const y : C = {0, true};
 const z : C = y;
+
+def f() -> int 
+{
+  compiler.show(0 + 2 * 3);
+  return compiler.version;
+}

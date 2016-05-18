@@ -4,7 +4,6 @@
 - Operator names and overloading
 - Re-enable overload resolution
 - Class member lookup
-- Qualified name lookup
 - Base class conversions
 
 - Constructors and destructors
@@ -30,6 +29,12 @@
   - Allow the declaration of foreign functions
 
 - Builtin types and functions
+
+- Qualified names
+  - Guarantee that every declaration is mapped to its enclosing
+    declaration so that we can generate qualified names
+  - Parse nested name specifiers
+  - Support qualified name lookup
 
 ## Bigger language tasks
 
@@ -58,6 +63,9 @@
 
 
 ## Framework tasks
+
+- Cosntant folding - Write an elaboration (?) pass that actually folds 
+  constant expressions in contexts where they weren't already folded.
 
 - Use the elaboration framework for elaborators
 

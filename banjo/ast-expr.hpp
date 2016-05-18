@@ -116,6 +116,22 @@ struct Binary_expr : Expr
 };
 
 
+// An expression of type void. This is useful for defining intrinsics
+// that have no return value.
+//
+// Note that (currently) it is impossible to grammatically construct
+// a void expression. 
+struct Void_expr : Expr
+{
+  Void_expr(Type& t)
+    : Expr(t)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
 // A boolean literal.
 struct Boolean_expr : Literal_expr<bool>
 {
@@ -1018,7 +1034,7 @@ struct Generic_expr_mutator : Expr::Mutator, Generic_mutator<F, T>
 
 
 // Apply a function to the given type.
-template<typename F, typename T = typename std::result_of<F(Boolean_expr const&)>::type>
+template<typename F, typename T = typename std::result_of<F(Void_expr const&)>::type>
 inline decltype(auto)
 apply(Expr const& e, F fn)
 {
@@ -1028,7 +1044,7 @@ apply(Expr const& e, F fn)
 
 
 // Apply a function to the given type.
-template<typename F, typename T = typename std::result_of<F(Boolean_expr&)>::type>
+template<typename F, typename T = typename std::result_of<F(Void_expr&)>::type>
 inline decltype(auto)
 apply(Expr& e, F fn)
 {

@@ -1108,7 +1108,6 @@ Printer::expression_list(Expr_list const& es)
     if (std::next(iter) != es.end())
       token(comma_tok);
   }
-  token(rparen_tok);
 }
 
 
@@ -1319,7 +1318,6 @@ Printer::declaration(Decl const& d)
     void operator()(Template_parm const& d)  { p.template_template_parameter(d); }
   };
 
-  // Print specifiers before the declaration.
   specifier_seq(d.specifiers());
   apply(d, fn{*this});
 }
@@ -1420,7 +1418,11 @@ Printer::constant_declaration(Constant_decl const& d)
 {
   token(const_tok);
   space();
+
+  // FIXME: We probably want to print the qualified name of 
+  // the constant... depends on the current context.
   identifier(d);
+
   binary_operator(colon_tok);
   type(d.type());
   initializer(d.initializer());
@@ -1496,6 +1498,7 @@ Printer::function_definition(Def const& d)
   {
     Printer& p;
     void operator()(Def const& d)            { lingo_unhandled(d); }
+    void operator()(Empty_def const& d)      { p.function_definition(d); }
     void operator()(Function_def const& d)   { p.function_definition(d); }
     void operator()(Expression_def const& d) { p.function_definition(d); }
     void operator()(Deleted_def const& d)    { p.function_definition(d); }
@@ -1503,6 +1506,14 @@ Printer::function_definition(Def const& d)
   };
   apply(d, fn{*this});
 }
+
+
+void
+Printer::function_definition(Empty_def const& d)
+{
+  token(semicolon_tok);
+}
+
 
 void
 Printer::function_definition(Function_def const& d)
@@ -1669,10 +1680,13 @@ Printer::type_template_parameter(Type_parm const& d)
 
 // FIXME: Default arguments.
 void
-Printer::value_template_parameter(Value_parm const& d)
+Printer::value_template_parameter(Value_parm const& p)
 {
   token(const_tok);
-  id(d.name());
+  space();
+  identifier(p);
+  binary_operator(colon_tok);
+  type(p.type());
 }
 
 

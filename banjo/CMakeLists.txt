@@ -8,6 +8,7 @@ add_library(banjo
   context.cpp
   builder.cpp
   builtin.cpp
+  intrinsic.cpp
 
   # TODO: Factor this out to support multiple front ends.
   # Lexical and syntactic components

@@ -220,6 +220,10 @@ make_member_ref(Context& cxt, Expr& obj, Simple_id& name)
 {
   Type& type = obj.type();
   Decl_list decls = qualified_lookup(cxt, type, name);
+  if (decls.empty()) {
+    error(cxt, "no matching declaration for '{}'", name);
+    throw Lookup_error();
+  }
   if (decls.size() == 1)
     return make_member_decl_ref(cxt, obj, decls.front());
   else

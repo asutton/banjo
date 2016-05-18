@@ -402,6 +402,13 @@ Builder::make_auto_type()
 // -------------------------------------------------------------------------- //
 // Expressions
 
+Void_expr&
+Builder::get_void()
+{
+  return make<Void_expr>(get_void_type());
+}
+
+
 Boolean_expr&
 Builder::get_bool(bool b)
 {
@@ -916,6 +923,27 @@ Builder::make_function_declaration(Name& n, Decl_list const& p, Type& t)
 }
 
 
+// Create a new function with an empty definition. The type is synthesized 
+// from the parameter and return types.
+Function_decl&
+Builder::make_function_declaration(Name& n, Decl_list&& p, Type& t)
+{
+  Type& r = get_function_type(p, t);
+  Def& d = make_empty_definition();
+  return make<Function_decl>(n, r, std::move(p), d);
+}
+
+
+// Create a new function. The type is synthesized from the parameter 
+// and return types.
+Function_decl&
+Builder::make_function_declaration(Name& n, Decl_list&& p, Type& t, Def& d)
+{
+  Type& r = get_function_type(p, t);
+  return make<Function_decl>(n, r, std::move(p), d);
+}
+
+
 // Create a new method with an empty definition. The type is synthesized 
 // from the parameter and return types.
 Method_decl&
@@ -941,6 +969,22 @@ Expression_def&
 Builder::make_function_definition(Expr& e)
 {
   return make<Expression_def>(e);
+}
+
+
+// Returns a function definition that evaluates the given function.
+Intrinsic_def&
+Builder::make_function_definition(Nullary_fn f)
+{
+  return make<Intrinsic_def>(f);
+}
+
+
+// Returns a function definition that evaluates the given function.
+Intrinsic_def&
+Builder::make_function_definition(Unary_fn f)
+{
+  return make<Intrinsic_def>(f);
 }
 
 

@@ -184,6 +184,48 @@ struct Concept_def : Def
 };
 
 
+// Intrinsic function types.
+using Nullary_fn = Expr& (*)(Context&);
+using Unary_fn   = Expr& (*)(Context&, Expr&);
+using Binary_fn  = Expr& (*)(Context&, Expr&, Expr&);
+using Ternary_fn = Expr& (*)(Context&, Expr&, Expr&, Expr&);
+
+// An intrinsic function definition exposes some feature of the
+// compiler (diagnostics, debugging, information).
+struct Intrinsic_def : Def
+{
+  union Rep {
+    Nullary_fn nullary;
+    Unary_fn   unary;
+    Binary_fn  binary;
+    Ternary_fn ternary;
+  };
+
+  Intrinsic_def(Nullary_fn f)
+  { fn_.nullary = f; }
+
+  Intrinsic_def(Unary_fn f)
+  { fn_.unary = f; }
+
+  Intrinsic_def(Binary_fn f)
+  { fn_.binary = f; }
+
+  Intrinsic_def(Ternary_fn f)
+  { fn_.ternary = f; }
+
+  void accept(Visitor& v) const { return v.visit(*this); }
+  void accept(Mutator& v)       { return v.visit(*this); }
+
+  Nullary_fn nullary() const { return fn_.nullary; }
+  Unary_fn   unary() const   { return fn_.unary; }
+  Binary_fn  binary() const  { return fn_.binary; }
+  Ternary_fn ternary() const { return fn_.ternary; }
+
+  Rep fn_;
+};
+
+
+
 // -------------------------------------------------------------------------- //
 // Visitors
 

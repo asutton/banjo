@@ -2,6 +2,7 @@
 // All rights reserved
 
 // Literals and primary expressions
+define_node(Void_expr)
 define_node(Boolean_expr)
 define_node(Integer_expr)
 define_node(Real_expr)

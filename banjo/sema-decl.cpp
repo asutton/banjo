@@ -62,7 +62,7 @@ Parser::on_constant_declaration(Name& n, Type& t, Expr& e)
   // Build the declaration.
   Decl& decl = cxt.make_constant_declaration(n, t, e);
   decl.spec_ = take_decl_specs();
-  
+
   declare(cxt, decl);
   return decl;
 }

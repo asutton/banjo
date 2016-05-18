@@ -87,6 +87,7 @@ struct Builder
   Synthetic_type& synthesize_type(Decl&);
 
   // Expressions
+  Void_expr&      get_void();
   Boolean_expr&   get_bool(bool);
   Boolean_expr&   get_true();
   Boolean_expr&   get_false();
@@ -157,10 +158,16 @@ struct Builder
 
   // Functions, methods and coroutines
   Function_decl&  make_function_declaration(Name&, Decl_list const&, Type&);
+  Function_decl&  make_function_declaration(Name&, Decl_list&&, Type&);
+  Function_decl&  make_function_declaration(Name&, Decl_list&&, Type&, Def&);
+  
   Method_decl&    make_method_declaration(Name&, Decl_list const&, Type&);
   Coroutine_decl& make_coroutine_declaration(Name&, Decl_list&, Type&, Stmt&);
+  
   Function_def&   make_function_definition(Stmt&);
   Expression_def& make_function_definition(Expr&);
+  Intrinsic_def&  make_function_definition(Nullary_fn);
+  Intrinsic_def&  make_function_definition(Unary_fn);
 
   // Classes
   Class_decl&  make_class_declaration(Name&, Type&);

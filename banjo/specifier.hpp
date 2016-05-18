@@ -11,7 +11,7 @@ namespace banjo
 // A specifier set records a set of declaration specifiers.
 enum Specifier_set
 {
-  empty_spec    = 0,
+  empty_spec     = 0,
   static_spec    = 1 << 0,
   dynamic_spec   = 1 << 1,  // TODO: Find a use.
   implicit_spec  = 1 << 2,  // TODO: Find a use.
@@ -28,7 +28,7 @@ enum Specifier_set
   consume_spec   = 1 << 13,
   forward_spec   = 1 << 14,
   const_spec     = 1 << 15,
-  internal_spec  = 1 << 31, // Internal to the language
+  internal_spec  = 1 << 30, // Internal to the language
 };
 
 

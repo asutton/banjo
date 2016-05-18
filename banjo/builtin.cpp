@@ -4,6 +4,7 @@
 #include "builtin.hpp"
 #include "ast.hpp"
 #include "context.hpp"
+#include "intrinsic.hpp"
 #include "declaration.hpp"
 #include "printer.hpp"
 
@@ -20,7 +21,6 @@ static Translation_unit&
 make_translation_unit(Context& cxt)
 {
   Translation_unit& tu = cxt.make_translation_unit();
-  tu.spec_ |= internal_spec;
   cxt.tu_ = &tu;
   return tu;
 }
@@ -33,19 +33,50 @@ make_translation_unit(Context& cxt)
 // compiler and its flags, and also operations that expose language
 // specific operations (e.g., diagnostics, queries, and reflection).
 
+
+// Generate the constant
+//
+//    static const version = ...;
+//
+// TODO: The compiler version is hard-coded as 1. This should be pulled
+// from the build environment.
 static Declaration_stmt&
-make_compiler_version(Context& cxt, Class_def& def)
+make_compiler_version(Context& cxt)
 {
   Name& name = cxt.get_id("version");
   Type& type = cxt.get_int_type();
   Expr& init = cxt.get_integer(type, 1);
   Decl& decl = cxt.make_constant_declaration(name, type, init);
   decl.spec_ |= internal_spec;
+  decl.spec_ |= static_spec;
 
   declare(cxt, decl);
 
   return cxt.make_declaration_statement(decl);
 }
+
+
+// Generate the function
+//
+//    static def show(const n : int) -> void
+static Declaration_stmt&
+make_compiler_show_int(Context& cxt)
+{
+  Name& name = cxt.get_id("show");
+  Decl_list parms {
+    &cxt.make_value_parm(cxt.get_id("n"), cxt.get_int_type())
+  };
+  Type& ret = cxt.get_void_type();
+  Def& def = cxt.make_function_definition(&intrinsic::show_value);
+  Decl& decl = cxt.make_function_declaration(name, std::move(parms), ret, def);
+  decl.spec_ |= internal_spec;
+  decl.spec_ |= static_spec;
+
+  declare(cxt, decl);
+
+  return cxt.make_declaration_statement(decl);
+}
+
 
 
 static Class_decl& 
@@ -60,14 +91,15 @@ make_compiler_class(Context& cxt)
   // Build the members of the class.
   Enter_scope scope(cxt, cls);
   std::vector<Declaration_stmt*> decls {
-    &make_compiler_version(cxt, def)
+    &make_compiler_version(cxt),
+    &make_compiler_show_int(cxt)
     // ...
   };
   for (Declaration_stmt* s : decls)
     def.statements().push_back(*s);
-
-  std::cout << cls << '\n';
-
+  
+  declare(cxt, cls);
+  
   cxt.comp_class_ = &cls;
   return cls;
 }
@@ -86,16 +118,9 @@ make_compiler(Context& cxt)
   Constant_decl& decl = cxt.make_constant_declaration(name, type);
   decl.spec_ |= internal_spec;
 
-  std::cout << decl << '\n';
-
-  // TODO: Declare this and evaluate it.
-  //
-  // TODO: Presumably, the compile has some constant fields associated
-  // with it (vendor, version, etc.). In order to initialize these, we
-  // need to create a tuple containing the relevant fields.
+  declare(cxt, decl);
 
   cxt.comp_ = &decl;
-
   return decl;
 }
 
@@ -110,7 +135,7 @@ init_builtins(Context& cxt)
   Translation_unit& tu = make_translation_unit(cxt);
   
   // Create builtin declarations.
-  Enter_scope(cxt, tu);
+  Enter_scope scope(cxt, tu);
   make_compiler_class(cxt);
   make_compiler(cxt);
 }
