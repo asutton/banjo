@@ -64,8 +64,12 @@
 
 ## Framework tasks
 
-- Cosntant folding - Write an elaboration (?) pass that actually folds 
-  constant expressions in contexts where they weren't already folded.
+- Cosntant folding
+  - Write an elaboration (?) pass that actually folds 
+    constant expressions in contexts where they weren't already folded.
+  - Include a notion of functions that are always constexpr evaluated.
+  - Consider making a new kind of function: macro that always constexp
+    folds.
 
 - Use the elaboration framework for elaborators
 
