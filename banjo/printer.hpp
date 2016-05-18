@@ -186,7 +186,9 @@ struct Printer
   // Classes
   void class_declaration(Class_decl const&);
   void class_definition(Def const&);
+  void class_definition(Empty_def const&);
   void class_definition(Class_def const&);
+  void class_definition(Deleted_def const&);
   void class_body(Class_def const&);
   void member_statement_seq(Stmt_list const&);
   void member_statement(Stmt const&);

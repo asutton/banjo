@@ -28,6 +28,7 @@ enum Specifier_set
   consume_spec   = 1 << 13,
   forward_spec   = 1 << 14,
   const_spec     = 1 << 15,
+  internal_spec  = 1 << 31, // Internal to the language
 };
 
 

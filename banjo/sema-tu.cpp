@@ -16,11 +16,11 @@
 namespace banjo
 {
 
-// Build the translation unit.
+// Returns the translation unit.
 Decl&
 Parser::start_translation_unit()
 {
-  return cxt.make_translation_unit();
+  return cxt.translation_unit();
 }
 
 

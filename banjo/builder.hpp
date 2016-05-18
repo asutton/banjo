@@ -151,6 +151,7 @@ struct Builder
   Variable_decl&  make_variable_declaration(Name&, Type&);
   Variable_decl&  make_variable_declaration(Name&, Type&, Expr&);
   Variable_decl&  make_variable_declaration(char const*, Type&, Expr&);
+  Constant_decl&  make_constant_declaration(Name&, Type&);
   Constant_decl&  make_constant_declaration(Name&, Type&, Expr&);
   Constant_decl&  make_constant_declaration(char const*, Type&, Expr&);
 
@@ -163,6 +164,7 @@ struct Builder
 
   // Classes
   Class_decl&  make_class_declaration(Name&, Type&);
+  Class_decl&  make_class_declaration(Name&, Type&, Def&);
   Class_def&   make_class_definition(Stmt_list&&);
   Field_decl&  make_field_declaration(Name&, Type&);
   Field_decl&  make_field_declaration(Name&, Type&, Expr&);

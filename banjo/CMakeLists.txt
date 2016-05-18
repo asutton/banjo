@@ -6,6 +6,8 @@ add_library(banjo
   prelude.cpp
   error.cpp
   context.cpp
+  builder.cpp
+  builtin.cpp
 
   # TODO: Factor this out to support multiple front ends.
   # Lexical and syntactic components
@@ -39,7 +41,6 @@ add_library(banjo
   printer.cpp
 
   # Core facilities
-  builder.cpp
   ast.cpp
   ast-base.cpp
   ast-name.cpp

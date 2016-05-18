@@ -6,6 +6,7 @@
 
 #include "prelude.hpp"
 #include "builder.hpp"
+#include "builtin.hpp"
 #include "scope.hpp"
 #include "value.hpp"
 
@@ -38,7 +39,7 @@ using Store = Environment<Decl const*, Value>;
 // TODO: Add an allocator/object pool and management support.
 //
 // TODO: Integrate diagnostics.
-struct Context : Builder
+struct Context : Builder, Builtins
 {
   Context();
 
@@ -59,7 +60,7 @@ struct Context : Builder
 
   // Scope management
   Scope& make_scope();
-  Scope& make_scope(Term&);
+  Scope& make_scope(Term&);  
   Scope& saved_scope(Term&);
   void enter_scope(Scope*);
   void leave_scope(Scope*);
@@ -69,8 +70,8 @@ struct Context : Builder
   Scope&       current_scope()       { return *scope; }
 
   // Returns the global scope.
-  Scope const& global_scope() const { return *global; }
-  Scope&       global_scope()       { return *global; }
+  Scope const& global_scope() const;
+  Scope&       global_scope();
 
   // Declaration contexts.
   void enter_context();
@@ -94,7 +95,6 @@ struct Context : Builder
   Location     input;  // The input location
  
   // Scope and context.
-  Scope*        global; // The global scope
   Scope*        scope;  // The current scope
   Scope_map     saved;  // Saved scopes
   Context_stack cxt;    // Declaration context
@@ -146,16 +146,11 @@ Context::saved_scope(Term& t)
 // Enter the given scope. Note that the scope must be chained to its
 // enclosing scope.
 //
-// This will establish the declaration used as the global scope if
-// it has not been previously established.
-//
 // Do not call this function directly. Use Enter_scope to enter a new 
 // scope, and guarantee cleanup and scope exit.
 inline void
 Context::enter_scope(Scope* s)
 {
-  if (!scope)
-    global = s;
   scope = s;
 }
 

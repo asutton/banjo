@@ -879,6 +879,15 @@ Builder::make_variable_declaration(char const* s, Type& t, Expr& i)
 }
 
 
+// Create a constant declaration with an empty definition.
+Constant_decl&
+Builder::make_constant_declaration(Name& n, Type& t)
+{
+  Def& d = make_empty_definition();
+  return make<Constant_decl>(n, t, d);
+}
+
+
 // Create a constant declaration.
 Constant_decl&
 Builder::make_constant_declaration(Name& n, Type& t, Expr& e)
@@ -939,7 +948,14 @@ Builder::make_function_definition(Expr& e)
 Class_decl&
 Builder::make_class_declaration(Name& n, Type& t)
 {
-  Def& d = make_empty_definition();
+  return make_class_declaration(n, t, make_empty_definition());
+}
+
+
+// Create a class having the given definition.
+Class_decl&
+Builder::make_class_declaration(Name& n, Type& t, Def& d)
+{
   return make<Class_decl>(n, t, d);
 }
 

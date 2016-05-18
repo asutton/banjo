@@ -1390,6 +1390,12 @@ Printer::specifier_seq(Specifier_set s)
     specifier(consume_tok);
   if (s & const_spec)
     specifier(const_tok);
+  
+  // Fake specifiers
+  if (s & internal_spec) {
+    token("__internal");
+    space();
+  }
 }
 
 
@@ -1553,6 +1559,7 @@ Printer::class_definition(Def const& d)
   {
     Printer& p;
     void operator()(Def const& d)         { lingo_unhandled(d); }
+    void operator()(Empty_def const& d)   { p.class_definition(d); }
     void operator()(Class_def const& d)   { p.class_definition(d); }
     void operator()(Deleted_def const& d) { p.class_definition(d); }
   };
@@ -1561,10 +1568,25 @@ Printer::class_definition(Def const& d)
 
 
 void
+Printer::class_definition(Empty_def const& d)
+{
+  token(semicolon_tok);
+}
+
+
+void
 Printer::class_definition(Class_def const& d)
 {
   newline();
   class_body(d);
+}
+
+
+void
+Printer::class_definition(Deleted_def const& d)
+{
+  binary_operator(eq_tok);
+  token(delete_tok);
 }
 
 

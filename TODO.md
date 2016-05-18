@@ -29,6 +29,7 @@
 - Foreign functions
   - Allow the declaration of foreign functions
 
+- Builtin types and functions
 
 ## Bigger language tasks
 
