@@ -221,8 +221,8 @@ struct Value_expr : Decl_expr
   void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the referenced variable or parameter.
-  Constant_decl const& declaration() const;
-  Constant_decl&       declaration();
+  Value_decl const& declaration() const;
+  Value_decl&       declaration();
 };
 
 

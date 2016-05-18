@@ -23,6 +23,20 @@ Object_expr::declaration()
 }
 
 
+Value_decl const&
+Value_expr::declaration() const
+{
+  return cast<Value_decl>(*decl_);
+}
+
+
+Value_decl&
+Value_expr::declaration()
+{
+  return cast<Value_decl>(*decl_);
+}
+
+
 Function_decl const&
 Function_expr::declaration() const
 {

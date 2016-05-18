@@ -202,7 +202,7 @@ struct Generator::Enter_context
     : gen(g), prev(g.declcxt)
   {
     gen.declcxt = c;
-    gen.stack.push();
+    gen.stack.push(&env);
   }
 
   ~Enter_context()
@@ -212,6 +212,7 @@ struct Generator::Enter_context
   }
 
   Generator& gen;
+  Symbol_env env;
   int        prev;
 };
 

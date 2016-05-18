@@ -29,11 +29,7 @@ Evaluator::alias(Decl const& d)
 Value
 Evaluator::load(Decl const& d)
 {
-  if (Object_decl const* var = as<Object_decl>(&d))
-    return stack.lookup(var)->second;
-
-  // What else?
-  banjo_unhandled_case(d);
+  return stack.lookup(&d)->second;
 }
 
 
@@ -76,6 +72,7 @@ Evaluator::evaluate(Expr const& e)
     Value operator()(Integer_expr const& e) { return self.integer(e); }
     Value operator()(Tuple_expr const& e)   { return self.tuple(e); }
     Value operator()(Object_expr const& e)  { return self.object(e); }
+    Value operator()(Value_expr const& e)   { return self.value(e); }
     Value operator()(Call_expr const& e)    { return self.call(e); }
     Value operator()(And_expr const& e)     { return self.logical_and(e); }
     Value operator()(Or_expr const& e)      { return self.logical_or(e); }
@@ -122,9 +119,8 @@ Evaluator::tuple(Tuple_expr const& e)
 {
   Expr_list const& elems = e.elements();
   Tuple_value ret(elems.size());
-  for (std::size_t i = 0; i < elems.size(); ++i) {
+  for (std::size_t i = 0; i < elems.size(); ++i)
     ret[i] = evaluate(*elems[i]);
-  }
   return ret;
 }
 
@@ -134,6 +130,14 @@ Value
 Evaluator::object(Object_expr const& e)
 {
   return alias(e.declaration());
+}
+
+
+// Returns the value of the referred-to object.
+Value
+Evaluator::value(Value_expr const& e)
+{
+  return load(e.declaration());
 }
 
 
@@ -148,7 +152,7 @@ Evaluator::call(Call_expr const& e)
   // There should probably be a body for the function.
   //
   // FIXME: What if the function is = default. How do we determine
-  // what that behavior should be? Synthesize a new kind of defintion
+  // what that behavior should be? Synthesize a new kind of definition
   // that explicitly performs that behavior?
   //
   // TODO: It would be more elegant to simply dispatch on the
@@ -484,40 +488,56 @@ Evaluator::constant(Constant_decl const& decl)
 }
 
 
+// Allocate storage for the declared object and then initialize it.
+//
+// TODO: Should allocation lay out the shape of the object in memory?
+// Right now, we just build values based on initialization pattern. It
+// works, but it's not quite true to the abstract machine.
 void
 Evaluator::initialize(Decl const& decl, Expr const& e)
+{
+  Value& obj = alloc(decl);
+  initialize(obj, e);
+}
+
+
+void
+Evaluator::initialize(Value& obj, Expr const& init)
 {
   struct fn
   {
     Evaluator&  self;
-    Decl const& decl;
+    Value&      v;
     void operator()(Expr const& e)           { lingo_unhandled(e); }
-    void operator()(Copy_init const& e)      { self.initialize(decl, e); }
-    void operator()(Aggregate_init const& e) { self.initialize(decl, e); }
+    void operator()(Copy_init const& e)      { self.initialize(v, e); }
+    void operator()(Aggregate_init const& e) { self.initialize(v, e); }
   };
-  apply(e, fn{*this, decl});
+  apply(init, fn{*this, obj});
 }
 
 
+// Copy the initial value into the stored object.
 void
-Evaluator::initialize(Decl const& decl, Copy_init const& init)
+Evaluator::initialize(Value& obj, Copy_init const& init)
 {
-  Value v = evaluate(init.expression());
-  alloc(decl);
-  store(decl, v);
+  obj = evaluate(init.expression());
 }
 
 
+// Build an aggregate value, initializing each element in turn.
+//
+// TODO: See the comments above on allocation. Instead of assigning
+// to obj, we could be casting to an already create aggregate.
 void
-Evaluator::initialize(Decl const& decl, Aggregate_init const& init)
+Evaluator::initialize(Value& obj, Aggregate_init const& init)
 {
-  // FIXME: The "shape" of the object is determined by the type of the
-  // declaration. We should actually recursively construct a value with
-  // the determined shape of the object so that we can diagnose very
-  // specific errors.
-  alloc(decl);
-
-  // FIXME: Walk the allocated object and apply each initializer in turn.
+  Expr_list const& inits = init.initializers();
+  Tuple_value agg(inits.size());
+  for (std::size_t i = 0; i < inits.size(); ++i) {
+    agg[i] = Value{};
+    initialize(agg[i], *inits[i]);
+  }
+  obj = agg;
 }
 
 

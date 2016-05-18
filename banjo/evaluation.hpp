@@ -51,6 +51,7 @@ struct Evaluator
   Value integer(Integer_expr const&);
   Value tuple(Tuple_expr const&);
   Value object(Object_expr const&);
+  Value value(Value_expr const&);
   Value call(Call_expr const&);
   Value logical_and(And_expr const&);
   Value logical_or(Or_expr const&);
@@ -86,8 +87,9 @@ struct Evaluator
   void constant(Constant_decl const&);
 
   void initialize(Decl const&, Expr const&);
-  void initialize(Decl const&, Copy_init const&);
-  void initialize(Decl const&, Aggregate_init const&);
+  void initialize(Value&, Expr const&);
+  void initialize(Value&, Copy_init const&);
+  void initialize(Value&, Aggregate_init const&);
 
   // Load/store functions
   Value& alloc(Decl const&);
@@ -109,7 +111,7 @@ inline
 Evaluator::Evaluator(Context& c)
   : cxt(c)
 {
-  stack.push(c.constants());
+  stack.push(&c.constants());
 }
 
 
@@ -120,13 +122,16 @@ Evaluator::~Evaluator()
 }
 
 
-// A helper class for managing stack frames.
+// A helper class for managing stack frames. Note that the stack
+// frame is valid only during the lifetime of this object.
+//
+// TODO: This should be called Activate_frame.
 struct Evaluator::Enter_frame
 {
   Enter_frame(Evaluator& e)
     : eval(e)
   {
-    eval.stack.push();
+    eval.stack.push(&frame);
   }
 
   ~Enter_frame()
@@ -135,6 +140,7 @@ struct Evaluator::Enter_frame
   }
 
   Evaluator& eval;
+  Store      frame;
 };
 
 
