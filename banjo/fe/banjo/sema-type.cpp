@@ -2,13 +2,17 @@
 // All rights reserved
 
 #include "parser.hpp"
-#include "ast-type.hpp"
-#include "type.hpp"
+
+#include <banjo/ast.hpp>
+#include <banjo/type.hpp>
 
 #include <iostream>
 
 
 namespace banjo
+{
+
+namespace fe
 {
 
 
@@ -140,5 +144,7 @@ Parser::on_unparsed_type(Token_seq&& toks)
   return *new Unparsed_type(std::move(toks));
 }
 
+
+} // namespace fe
 
 } // namespace banjo

@@ -2,56 +2,59 @@
 # All rights reserved
 
 # Construct the front-end parser library.
-add_library(banjo-fe-banjo
+add_library(banjo-fe
+  context.cpp
   token.cpp
   lexer.cpp
   parser.cpp
   parse-tu.cpp
-  # parse-id.cpp
-  # parse-type.cpp
-  # parse-expr.cpp
-  # parse-stmt.cpp
-  # parse-decl.cpp
-  # parse-function.cpp
-  # parse-class.cpp
-  # parse-req.cpp
-  # sema-tu.cpp
-  # sema-id.cpp
-  # sema-type.cpp
-  # sema-expr.cpp
-  # sema-init.cpp
-  # sema-stmt.cpp
-  # sema-decl.cpp
-  # sema-function.cpp
-  # sema-class.cpp
-  # sema-req.cpp
-  # elaboration.cpp
-  # elab-declarations.cpp
-  # elab-overloads.cpp
-  # elab-classes.cpp
-  # elab-expressions.cpp
-  # printer.cpp
+  parse-id.cpp
+  parse-type.cpp
+  parse-expr.cpp
+  parse-stmt.cpp
+  parse-decl.cpp
+  parse-function.cpp
+  parse-class.cpp
+  parse-req.cpp
+  sema-tu.cpp
+  sema-id.cpp
+  sema-type.cpp
+  sema-expr.cpp
+  sema-init.cpp
+  sema-stmt.cpp
+  sema-decl.cpp
+  sema-function.cpp
+  sema-class.cpp
+  sema-req.cpp
+  elaboration.cpp
+  elab-declarations.cpp
+  elab-overloads.cpp
+  elab-classes.cpp
+  elab-expressions.cpp
 )
-target_compile_definitions(banjo-fe-banjo PUBLIC ${LLVM_DEFINITIONS})
-target_include_directories(banjo-fe-banjo
+target_compile_definitions(banjo-fe PUBLIC ${LLVM_DEFINITIONS})
+target_include_directories(banjo-fe
   PUBLIC
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR};${PROJECT_BINARY_DIR}>"
     ${lingo_SOURCE_DIR}
     ${Boost_INCLUDE_DIRS}
     ${LLVM_INCLUDE_DIRS}
 )
-target_link_libraries(banjo-fe-banjo
+target_link_libraries(banjo-fe
 PUBLIC
-  banjo-core
+  banjo
   lingo
   ${Boost_LIBRARIES}
   ${LLVM_LIBRARIES}
 )
 
-# # The compiler is the main driver for compilation.
-# add_executable(banjo-compile main.cpp)
-# target_link_libraries(banjo-compile banjo)
 
-# # A simple expression calculator.
-# add_executable(banjo-calc calc.cpp)
-# target_link_libraries(banjo-calc banjo)
+# TODO: Consider moving these into a tools directory.
+
+# The compiler is the main driver for compilation.
+add_executable(banjo-compile compiler.cpp)
+target_link_libraries(banjo-compile banjo banjo-fe)
+
+# A simple expression calculator.
+add_executable(banjo-calc calc.cpp)
+target_link_libraries(banjo-calc banjo banjo-fe)

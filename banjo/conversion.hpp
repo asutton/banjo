@@ -1,8 +1,8 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BANJO_CORE_CONVERSION_HPP
-#define BANJO_CORE_CONVERSION_HPP
+#ifndef BANJO_CONVERSION_HPP
+#define BANJO_CONVERSION_HPP
 
 #include "prelude.hpp"
 #include "ast.hpp"

@@ -4,9 +4,9 @@
 #include "context.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
-#include "printer.hpp"
 
-#include "gen/llvm/generator.hpp"
+#include <banjo/printer.hpp>
+#include <banjo/gen/llvm/generator.hpp>
 
 #include <lingo/file.hpp>
 #include <lingo/io.hpp>
@@ -31,13 +31,11 @@ struct Options
 };
 
 
-
 Options::~Options()
 {
   for (File* f : inputs)
     delete f;
 }
-
 
 
 using Parse_fn = void (*)(int&, int, char**, Options&);
@@ -90,7 +88,7 @@ parse_args(int argc, char* argv[], Options& opts)
 int
 main(int argc, char* argv[])
 {
-  Context cxt;
+  fe::Context cxt;
 
   Options opts;
   parse_args(argc, argv, opts);
@@ -108,7 +106,7 @@ main(int argc, char* argv[])
   for (File* f : opts.inputs) {
     Character_stream cs(*f);
     Token_stream ts;
-    Lexer lex(cxt, cs, ts);
+    fe::Lexer lex(cxt, cs, ts);
 
     // Lex tokens.
     lex();
@@ -119,15 +117,17 @@ main(int argc, char* argv[])
 
   // Perform syntactic analysis.
   Token_stream ts(toks);
-  Parser parse(cxt, ts);
+  fe::Parser parse(cxt, ts);
   Decl& tu = parse();
 
   if (opts.emit == "banjo") {
     std::cout << tu << '\n';
   }
-  else if (opts.emit == "llvm") {
-    ll::Generator gen(cxt);
-    gen(tu);
-  }
+
+  // FIXME: Code generation not re-linked yet.
+  // else if (opts.emit == "llvm") {
+  //   ll::Generator gen(cxt);
+  //   gen(tu);
+  // }
 
 }

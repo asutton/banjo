@@ -1,8 +1,8 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BANJO_CORE_INSPECTION_HPP
-#define BANJO_CORE_INSPECTION_HPP
+#ifndef BANJO_INSPECTION_HPP
+#define BANJO_INSPECTION_HPP
 
 #include "token.hpp"
 #include "language.hpp"

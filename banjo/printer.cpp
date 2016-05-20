@@ -64,7 +64,15 @@ Printer::token(Symbol const& sym)
 }
 
 
-// Print a string as an identifier token.
+// Print a character as a token.
+void
+Printer::token(char c)
+{
+  os << c;
+}
+
+
+// Print a string as a token.
 void
 Printer::token(char const* str)
 {

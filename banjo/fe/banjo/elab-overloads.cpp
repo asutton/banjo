@@ -3,15 +3,18 @@
 
 #include "elab-overloads.hpp"
 #include "parser.hpp"
-#include "printer.hpp"
-#include "ast.hpp"
-#include "declaration.hpp"
 
-#include <iostream>
+#include <banjo/ast.hpp>
+#include <banjo/declaration.hpp>
+#include <banjo/printer.hpp>
 
 
 namespace banjo
 {
+
+namespace fe
+{
+
 
 Elaborate_overloads::Elaborate_overloads(Parser& p)
   : parser(p), cxt(p.cxt)
@@ -148,6 +151,9 @@ Elaborate_overloads::class_declaration(Class_decl& d)
   Enter_scope scope(cxt, d);
   apply(d.definition(), fn{*this});
 }
+
+
+} // namespace fe
 
 } // namespace banjo
 

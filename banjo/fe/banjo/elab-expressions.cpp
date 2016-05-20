@@ -3,20 +3,22 @@
 
 #include "elab-expressions.hpp"
 #include "parser.hpp"
-#include "printer.hpp"
-#include "ast.hpp"
-#include "declaration.hpp"
-#include "deduction.hpp"
-#include "initialization.hpp"
-#include "evaluation.hpp"
 
-#include <iostream>
+#include <banjo/ast.hpp>
+#include <banjo/declaration.hpp>
+#include <banjo/deduction.hpp>
+#include <banjo/initialization.hpp>
+#include <banjo/evaluation.hpp>
+#include <banjo/printer.hpp>
 
 
 namespace banjo
 {
 
- Elaborate_expressions::Elaborate_expressions(Parser& p)
+namespace fe
+{
+
+Elaborate_expressions::Elaborate_expressions(Parser& p)
   : parser(p), cxt(p.cxt)
 { }
 
@@ -270,5 +272,7 @@ Elaborate_expressions::expression(Expr& e)
   return e;
 }
 
+
+} // namespace fe
 
 } // namespace banjo

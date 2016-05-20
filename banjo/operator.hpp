@@ -1,8 +1,8 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BANJO_CORE_OPERATOR_HPP
-#define BANJO_CORE_OPERATOR_HPP
+#ifndef BANJO_OPERATOR_HPP
+#define BANJO_OPERATOR_HPP
 
 // This module contains information related to operator overloading.
 

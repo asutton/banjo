@@ -2,13 +2,14 @@
 // All rights reserved
 
 #include "parser.hpp"
-#include "printer.hpp"
-#include "ast-req.hpp"
 
-#include <iostream>
+#include <banjo/ast.hpp>
 
 
 namespace banjo
+{
+
+namespace fe
 {
 
 // Parse a type requirement.
@@ -21,7 +22,7 @@ namespace banjo
 Req&
 Parser::type_requirement()
 {
-  require(typename_tok);
+  require(tk::typename_tok);
 
   lingo_unimplemented("parse type-requirement");
 }
@@ -47,7 +48,7 @@ Req&
 Parser::expression_requirement()
 {
   Expr& e = logical_or_expression();
-  match(semicolon_tok);
+  match(tk::semicolon_tok);
   return on_expression_requirement(e);
 }
 
@@ -65,16 +66,18 @@ Parser::usage_requirement()
 {
   Expr& e = expression();
   Req* r;
-  if (match_if(colon_tok)) {
+  if (match_if(tk::colon_tok)) {
     Type& t = type();
     r = &on_basic_requirement(e, t);
-  } else if (match_if(arrow_tok)) {
+  } 
+  else if (match_if(tk::arrow_tok)) {
     Type& t = type();
     r = &on_conversion_requirement(e, t);
-  } else {
+  } 
+  else {
     r = &on_basic_requirement(e);
   }
-  match(semicolon_tok);
+  match(tk::semicolon_tok);
   return *r;
 }
 
@@ -91,9 +94,11 @@ Parser::usage_seq()
   do {
     Req& r = usage_requirement();
     rs.push_back(r);
-  } while (next_token_is_not(rbrace_tok));
+  } while (next_token_is_not(tk::rbrace_tok));
   return rs;
 }
 
+
+} // namespace fe
 
 } // namespace banjo

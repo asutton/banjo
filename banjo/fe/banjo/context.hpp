@@ -1,10 +1,10 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BANJO_CONTEXT_HPP
-#define BANJO_CONTEXT_HPP
+#ifndef BANJO_FE_CONTEXT_HPP
+#define BANJO_FE_CONTEXT_HPP
 
-#include <banjo/core/context.hpp>
+#include <banjo/context.hpp>
 
 
 namespace banjo

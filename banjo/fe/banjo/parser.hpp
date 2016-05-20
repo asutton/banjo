@@ -1,14 +1,14 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BANJO_FE_BANJO_PARSER_HPP
-#define BANJO_FE_BANJO_PARSER_HPP
+#ifndef BANJO_FE_PARSER_HPP
+#define BANJO_FE_PARSER_HPP
 
 #include "lexer.hpp"
 #include "context.hpp"
 
-#include <banjo/core/language.hpp>
-#include <banjo/core/scope.hpp>
+#include <banjo/language.hpp>
+#include <banjo/scope.hpp>
 
 
 namespace banjo
@@ -29,6 +29,17 @@ struct Braces : Token_seq
 // The parser is responsible for transforming a stream of tokens
 // into nodes. The parser owns a reference to the buffer for its
 // tokens. This supports the resolution of source code locations.
+//
+// The parser's implementation is spread across a number of files.
+//
+// TOOD: The parse-* files should not include <banjo/ast.hpp>. There
+// should be no definition dependencies in the front-end. Those should
+// exist in the semantic layer.
+//
+// TODO: Emitting diagnotics currently requires the inclusion of the
+// core language printer. That seems broken. Diagnostics should simply
+// contain trees, and be rendered by some external program that can
+// select an appropriate format.
 struct Parser
 {
   // Abbreviate token kind for scoped names.

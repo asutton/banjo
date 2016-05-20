@@ -2,15 +2,16 @@
 // All rights reserved
 
 #include "parser.hpp"
-#include "printer.hpp"
-#include "ast.hpp"
-#include "conversion.hpp"
 
-#include <iostream>
+#include <banjo/ast.hpp>
+#include <banjo/conversion.hpp>
+
 
 namespace banjo
 {
 
+namespace fe
+{
 
 // Build an empty compound statement.
 Stmt&
@@ -135,5 +136,7 @@ Parser::on_statement_seq(Stmt_list& ss)
   // elaborate_definitions(ss);
 }
 
+
+} // namespace fe
 
 } // namespace banjo

@@ -4,8 +4,7 @@
 #ifndef BANJO_FE_TOKEN_HPP
 #define BANJO_FE_TOKEN_HPP
 
-#include <banjo/core/prelude.hpp>
-#include <banjo/core/token.hpp>
+#include <banjo/token.hpp>
 
 
 namespace banjo

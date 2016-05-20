@@ -1,8 +1,8 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BANJO_CORE_EXPRESSION_HPP
-#define BANJO_CORE_EXPRESSION_HPP
+#ifndef BANJO_EXPRESSION_HPP
+#define BANJO_EXPRESSION_HPP
 
 #include "prelude.hpp"
 #include "language.hpp"

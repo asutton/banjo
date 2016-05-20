@@ -1,19 +1,21 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BANJO_ELABORATION_HPP
-#define BANJO_ELABORATION_HPP
+#ifndef BANJO_FE_ELABORATION_HPP
+#define BANJO_FE_ELABORATION_HPP
 
-#include "language.hpp"
 #include "parser.hpp"
-#include "context.hpp"
-#include "ast.hpp"
 
+#include <banjo/ast.hpp>
 
 namespace banjo
 {
 
+namespace fe
+{
+
 struct Parser;
+struct Context;
 
 
 // This defines the set of functions available to all elaborators.
@@ -364,9 +366,11 @@ template<typename F>
 inline void
 Elaborator<F>::super_declaration(Super_decl& d)
 {
-
+  vis.on_super_declaration(d);
 }
 
+
+} // namespace fe
 
 } // nammespace banjo
 

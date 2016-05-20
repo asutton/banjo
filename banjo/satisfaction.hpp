@@ -1,8 +1,8 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BANJO_CORE_SATISFACTION_HPP
-#define BANJO_CORE_SATISFACTION_HPP
+#ifndef BANJO_SATISFACTION_HPP
+#define BANJO_SATISFACTION_HPP
 
 #include "prelude.hpp"
 #include "context.hpp"

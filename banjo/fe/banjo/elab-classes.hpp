@@ -1,16 +1,20 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BANJO_ELAB_CLASSES_HPP
-#define BANJO_ELAB_CLASSES_HPP
+#ifndef BANJO_FE_ELAB_CLASSES_HPP
+#define BANJO_FE_ELAB_CLASSES_HPP
 
-#include "language.hpp"
+#include <banjo/language.hpp>
 
 
 namespace banjo
 {
 
+namespace fe
+{
+
 struct Parser;
+struct Context;
 
 
 // Recursively complete all class definitions in a translation unit.
@@ -37,6 +41,8 @@ struct Elaborate_classes
   Context& cxt;
 };
 
+
+} // namespace fe
 
 } // nammespace banjo
 

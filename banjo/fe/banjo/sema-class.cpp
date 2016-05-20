@@ -2,14 +2,15 @@
 // All rights reserved
 
 #include "parser.hpp"
-#include "printer.hpp"
-#include "ast.hpp"
-#include "declaration.hpp"
 
-#include <iostream>
+#include <banjo/ast.hpp>
+#include <banjo/declaration.hpp>
 
 
 namespace banjo
+{
+
+namespace fe
 {
 
 // Build and declare the class.
@@ -48,5 +49,7 @@ Parser::on_super_declaration(Name& n, Type& t)
   return d;
 }
 
+
+} // namespace fe
 
 } // namespace banjo

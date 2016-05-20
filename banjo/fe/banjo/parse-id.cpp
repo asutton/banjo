@@ -2,17 +2,17 @@
 // All rights reserved
 
 #include "parser.hpp"
-#include "ast-name.hpp"
-#include "ast-type.hpp"
-#include "ast-expr.hpp"
-#include "ast-decl.hpp"
-#include "printer.hpp"
+
+#include <banjo/ast.hpp>
 
 #include <iostream>
+
 
 namespace banjo
 {
 
+namespace fe
+{
 
 static inline Operator_kind
 consume_op(Parser& p, Operator_kind op)
@@ -45,24 +45,24 @@ Operator_kind
 Parser::any_operator()
 {
   switch (lookahead()) {
-    case plus_tok: return consume_op(*this, add_op);
-    case minus_tok: return consume_op(*this, sub_op);
-    case star_tok: return consume_op(*this, mul_op);
-    case slash_tok: return consume_op(*this, div_op);
-    case percent_tok: return consume_op(*this, rem_op);
-    case eq_eq_tok: return consume_op(*this, eq_op);
-    case bang_eq_tok: return consume_op(*this, ne_op);
-    case lt_tok: return consume_op(*this, lt_op);
-    case gt_tok: return consume_op(*this, gt_op);
-    case lt_eq_tok: return consume_op(*this, le_op);
-    case gt_eq_tok: return consume_op(*this, ge_op);
-    case lt_eq_gt_tok: return consume_op(*this, cmp_op);
-    case amp_amp_tok: return consume_op(*this, and_op);
-    case bar_bar_tok: return consume_op(*this, or_op);
-    case bang_tok: return consume_op(*this, not_op);
-    case eq_tok: return consume_op(*this, assign_op);
-    case lparen_tok: return consume_op(*this, rparen_tok, call_op);
-    case lbrace_tok: return consume_op(*this, rbrace_tok, index_op);
+    case tk::plus_tok: return consume_op(*this, add_op);
+    case tk::minus_tok: return consume_op(*this, sub_op);
+    case tk::star_tok: return consume_op(*this, mul_op);
+    case tk::slash_tok: return consume_op(*this, div_op);
+    case tk::percent_tok: return consume_op(*this, rem_op);
+    case tk::eq_eq_tok: return consume_op(*this, eq_op);
+    case tk::bang_eq_tok: return consume_op(*this, ne_op);
+    case tk::lt_tok: return consume_op(*this, lt_op);
+    case tk::gt_tok: return consume_op(*this, gt_op);
+    case tk::lt_eq_tok: return consume_op(*this, le_op);
+    case tk::gt_eq_tok: return consume_op(*this, ge_op);
+    case tk::lt_eq_gt_tok: return consume_op(*this, cmp_op);
+    case tk::amp_amp_tok: return consume_op(*this, and_op);
+    case tk::bar_bar_tok: return consume_op(*this, or_op);
+    case tk::bang_tok: return consume_op(*this, not_op);
+    case tk::eq_tok: return consume_op(*this, assign_op);
+    case tk::lparen_tok: return consume_op(*this, tk::rparen_tok, call_op);
+    case tk::lbrace_tok: return consume_op(*this, tk::rbrace_tok, index_op);
     default: throw Syntax_error("expected operator");
   }
 }
@@ -72,7 +72,7 @@ Parser::any_operator()
 Name&
 Parser::identifier()
 {
-  Token tok = match(identifier_tok);
+  Token tok = match(tk::identifier_tok);
   return on_simple_id(tok);
 }
 
@@ -134,15 +134,15 @@ Parser::id()
 Name&
 Parser::unqualified_id()
 {
-  if (next_token_is(tilde_tok))
+  if (next_token_is(tk::tilde_tok))
     return destructor_id();
 
-  if (Token tok = match_if(operator_tok)) {
+  if (Token tok = match_if(tk::operator_tok)) {
     Operator_kind op = any_operator();
     return on_operator_id(tok, op);
   }
 
-  Token tok = match(identifier_tok);
+  Token tok = match(tk::identifier_tok);
 
   // FIXME: For a template-id or concept-id, we need to know about the
   // name. Presumably, at this point in the parse, we should have all possible
@@ -161,7 +161,7 @@ Parser::unqualified_id()
 Name&
 Parser::destructor_id()
 {
-  Token tok = match(tilde_tok);
+  Token tok = match(tk::tilde_tok);
   Type& type = primary_type();
   return on_destructor_id(tok, type);
 }
@@ -184,10 +184,10 @@ Parser::template_id()
   // list. Replace the '>>' with a '>' so that the outer list
   // will match.
   Term_list args;
-  match(lt_tok);
-  if (lookahead() != gt_tok)
+  match(tk::lt_tok);
+  if (lookahead() != tk::gt_tok)
     args = template_argument_list();
-  match(gt_tok);
+  match(tk::gt_tok);
   return on_template_id(temp, args);
 }
 
@@ -201,10 +201,10 @@ Parser::concept_id()
 {
   Decl& con = concept_name();
   Term_list args;
-  match(lt_tok);
-  if (lookahead() != gt_tok)
+  match(tk::lt_tok);
+  if (lookahead() != tk::gt_tok)
     args = template_argument_list();
-  match(gt_tok);
+  match(tk::gt_tok);
   return on_concept_id(con, args);
 }
 
@@ -223,7 +223,7 @@ Parser::template_argument_list()
   do {
     Term& arg = template_argument();
     args.push_back(arg);
-  } while(lookahead() == comma_tok);
+  } while(lookahead() == tk::comma_tok);
   return args;
 }
 
@@ -303,7 +303,7 @@ Parser::qualified_id()
 Decl&
 Parser::template_name()
 {
-  Token id = match(identifier_tok);
+  Token id = match(tk::identifier_tok);
   return on_template_name(id);
 }
 
@@ -316,9 +316,11 @@ Parser::template_name()
 Decl&
 Parser::concept_name()
 {
-  Token id = match(identifier_tok);
+  Token id = match(tk::identifier_tok);
   return on_concept_name(id);
 }
 
+
+} // namespace fe
 
 } // namespace banjo

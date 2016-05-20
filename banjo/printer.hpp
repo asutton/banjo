@@ -1,8 +1,8 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BANJO_CORE_PRINTER_HPP
-#define BANJO_CORE_PRINTER_HPP
+#ifndef BANJO_PRINTER_HPP
+#define BANJO_PRINTER_HPP
 
 // The core printer provides the ability to pretty print banjo core
 // language constructs. Note that this class is always defined by the
@@ -43,6 +43,7 @@ struct Printer
   void newline_and_undent();
   void token(Token);
   void token(Symbol const&);
+  void token(char);
   void token(char const*);
   void token(String const&);
   void token(int);

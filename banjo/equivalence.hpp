@@ -1,8 +1,8 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BANJO_CORE_EQUIVALENCE_HPP
-#define BANJO_CORE_EQUIVALENCE_HPP
+#ifndef BANJO_EQUIVALENCE_HPP
+#define BANJO_EQUIVALENCE_HPP
 
 // This module defines the common equivalence relation on terms of the
 // language. In general, two terms are equivalent when they have the

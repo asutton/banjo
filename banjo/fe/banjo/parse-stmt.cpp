@@ -2,12 +2,14 @@
 // All rights reserved
 
 #include "parser.hpp"
-#include "printer.hpp"
-#include "ast-stmt.hpp"
 
-#include <iostream>
+#include <banjo/ast.hpp>
+
 
 namespace banjo
+{
+
+namespace fe
 {
 
 // Parse a statement.
@@ -27,49 +29,49 @@ Parser::statement()
 {
   switch (lookahead()) {
     // Declaration specifiers.
-    case virtual_tok:
-    case abstract_tok:
-    case static_tok:
-    case inline_tok:
-    case explicit_tok:
-    case implicit_tok:
-    case public_tok:
-    case private_tok:
-    case protected_tok:
+    case tk::virtual_tok:
+    case tk::abstract_tok:
+    case tk::static_tok:
+    case tk::inline_tok:
+    case tk::explicit_tok:
+    case tk::implicit_tok:
+    case tk::public_tok:
+    case tk::private_tok:
+    case tk::protected_tok:
     // Declaration introducers.
-    case super_tok:
-    case var_tok:
-    case def_tok:
-    case coroutine_tok:
-    case class_tok:
-    case concept_tok:
+    case tk::super_tok:
+    case tk::var_tok:
+    case tk::def_tok:
+    case tk::coroutine_tok:
+    case tk::class_tok:
+    case tk::concept_tok:
       return declaration_statement();
 
-    case return_tok:
+    case tk::return_tok:
       return return_statement();
 
-    case yield_tok:
+    case tk::yield_tok:
       return yield_statement();
 
-    case if_tok:
+    case tk::if_tok:
       return if_statement();
 
-    case while_tok:
+    case tk::while_tok:
       return while_statement();
     
-    case for_tok:
+    case tk::for_tok:
       return for_statement();
 
-    case break_tok:
+    case tk::break_tok:
       return break_statement();
 
-    case continue_tok:
+    case tk::continue_tok:
       return continue_statement();
 
-    case lbrace_tok:
+    case tk::lbrace_tok:
       return compound_statement();
 
-    case semicolon_tok:
+    case tk::semicolon_tok:
       return empty_statement();
 
     default:
@@ -85,7 +87,7 @@ Parser::statement()
 Stmt&
 Parser::empty_statement()
 {
-  require(semicolon_tok);
+  require(tk::semicolon_tok);
   return on_empty_statement();
 }
 
@@ -105,10 +107,10 @@ Parser::compound_statement()
 
   // Match the enclosed statements.
   Stmt_list ss;
-  match(lbrace_tok);
-  if (lookahead() != rbrace_tok)
+  match(tk::lbrace_tok);
+  if (lookahead() != tk::rbrace_tok)
     ss = statement_seq();
-  match(rbrace_tok);
+  match(tk::rbrace_tok);
   return finish_compound_statement(s, std::move(ss));
 }
 
@@ -121,11 +123,11 @@ Parser::compound_statement()
 Stmt&
 Parser::return_statement()
 {
-  Match_token_pred end_expr(*this, semicolon_tok);
+  Match_token_pred end_expr(*this, tk::semicolon_tok);
 
-  Token tok = require(return_tok);
+  Token tok = require(tk::return_tok);
   Expr& e = unparsed_expression(end_expr);
-  match(semicolon_tok);
+  match(tk::semicolon_tok);
   return on_return_statement(tok, e);
 }
 
@@ -138,11 +140,11 @@ Parser::return_statement()
 Stmt&
 Parser::yield_statement()
 {
-  Match_token_pred end_expr(*this, semicolon_tok);
+  Match_token_pred end_expr(*this, tk::semicolon_tok);
   
-  Token tok = require(yield_tok);
+  Token tok = require(tk::yield_tok);
   Expr&e = unparsed_expression(end_expr);
-  match(semicolon_tok);
+  match(tk::semicolon_tok);
   return on_yield_statement(tok, e);
 }
 
@@ -159,14 +161,14 @@ Parser::yield_statement()
 Stmt&
 Parser::if_statement()
 {
-  Match_token_pred end_cond(*this, rparen_tok);
+  Match_token_pred end_cond(*this, tk::rparen_tok);
 
-  require(if_tok);
-  match(lparen_tok);
+  require(tk::if_tok);
+  match(tk::lparen_tok);
   Expr& cond = unparsed_expression(end_cond);
-  match(rparen_tok);
+  match(tk::rparen_tok);
   Stmt& branch1 = statement();
-  if (match_if(else_tok)) {
+  if (match_if(tk::else_tok)) {
     Stmt& branch2 = statement();
     return on_if_statement(cond, branch1, branch2);
   } else {
@@ -184,12 +186,12 @@ Parser::if_statement()
 Stmt&
 Parser::while_statement()
 {
-  Match_token_pred end_cond(*this, rparen_tok);
+  Match_token_pred end_cond(*this, tk::rparen_tok);
   
-  require(while_tok);
-  match(lparen_tok);
+  require(tk::while_tok);
+  match(tk::lparen_tok);
   Expr& cond = unparsed_expression(end_cond);
-  match(rparen_tok);
+  match(tk::rparen_tok);
   Stmt& body = statement();
   return on_while_statement(cond, body);
 }
@@ -218,8 +220,8 @@ Parser::for_statement()
 Stmt&
 Parser::break_statement()
 {
-  require(break_tok);
-  match(semicolon_tok);
+  require(tk::break_tok);
+  match(tk::semicolon_tok);
   return on_break_statement();
 }
 
@@ -227,8 +229,8 @@ Parser::break_statement()
 Stmt&
 Parser::continue_statement()
 {
-  require(continue_tok);
-  match(semicolon_tok);
+  require(tk::continue_tok);
+  match(tk::semicolon_tok);
   return on_continue_statement();
 }
 
@@ -252,10 +254,10 @@ Parser::declaration_statement()
 Stmt&
 Parser::expression_statement()
 {
-  Match_token_pred end_expr(*this, semicolon_tok);
+  Match_token_pred end_expr(*this, tk::semicolon_tok);
   Expr& e = unparsed_expression(end_expr);
   Stmt& s = on_expression_statement(e);
-  match(semicolon_tok);
+  match(tk::semicolon_tok);
   return s;
 }
 
@@ -276,7 +278,7 @@ Parser::statement_seq()
   do {
     Stmt& s = statement();
     ss.push_back(s);
-  } while (next_token_is_not(rbrace_tok));
+  } while (next_token_is_not(tk::rbrace_tok));
   
   // Process statements in the block?
   on_statement_seq(ss);
@@ -284,5 +286,7 @@ Parser::statement_seq()
   return ss;
 }
 
+
+} // namespace fe
 
 } // namespace banjo

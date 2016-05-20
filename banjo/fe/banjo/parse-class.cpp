@@ -2,14 +2,15 @@
 // All rights reserved
 
 #include "parser.hpp"
-#include "printer.hpp"
-#include "ast-stmt.hpp"
 
-#include <iostream>
+#include <banjo/ast.hpp>
+
 
 namespace banjo
 {
 
+namespace fe
+{
 
 // Parse a class definition.
 //
@@ -24,15 +25,15 @@ namespace banjo
 Decl&
 Parser::class_declaration()
 {
-  Match_token_pred end_kind(*this, lbrace_tok);
+  Match_token_pred end_kind(*this, tk::lbrace_tok);
 
-  require(class_tok);
+  require(tk::class_tok);
   Name& name = identifier();
 
   // Match the metatype.
   Type* kind;
-  if (match_if(colon_tok)) {
-    if (next_token_is(lbrace_tok))
+  if (match_if(tk::colon_tok)) {
+    if (next_token_is(tk::lbrace_tok))
       kind = &cxt.get_type_type();
     else
       kind = &unparsed_type(end_kind);
@@ -66,10 +67,10 @@ Def&
 Parser::class_body()
 {
   Stmt_list ss;
-  match(lbrace_tok);
-  if (lookahead() != rbrace_tok)
+  match(tk::lbrace_tok);
+  if (lookahead() != tk::rbrace_tok)
     ss = member_statement_seq();
-  match(rbrace_tok);
+  match(tk::rbrace_tok);
   return on_class_body(std::move(ss));
 }
 
@@ -86,7 +87,7 @@ Parser::member_statement_seq()
   do {
     Stmt& s = member_statement();
     ss.push_back(s);
-  } while (lookahead() != rbrace_tok);
+  } while (lookahead() != tk::rbrace_tok);
   return ss;
 }
 
@@ -110,22 +111,22 @@ Parser::member_statement()
 {
   switch (lookahead()) {
     // Declaration specifiers.
-    case virtual_tok:
-    case abstract_tok:
-    case static_tok:
-    case inline_tok:
-    case explicit_tok:
-    case implicit_tok:
-    case public_tok:
-    case private_tok:
-    case protected_tok:
+    case tk::virtual_tok:
+    case tk::abstract_tok:
+    case tk::static_tok:
+    case tk::inline_tok:
+    case tk::explicit_tok:
+    case tk::implicit_tok:
+    case tk::public_tok:
+    case tk::private_tok:
+    case tk::protected_tok:
     // Declaration introducers.
-    case var_tok:
-    case const_tok:
-    case super_tok:
-    case def_tok:
-    case class_tok:
-    case template_tok:
+    case tk::var_tok:
+    case tk::const_tok:
+    case tk::super_tok:
+    case tk::def_tok:
+    case tk::class_tok:
+    case tk::template_tok:
       return declaration_statement();
     
     default:
@@ -134,5 +135,7 @@ Parser::member_statement()
   }
 }
 
+
+} // namespace fe
 
 } // namespace banjo

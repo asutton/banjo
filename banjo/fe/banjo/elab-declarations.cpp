@@ -3,17 +3,19 @@
 
 #include "elab-declarations.hpp"
 #include "parser.hpp"
-#include "printer.hpp"
-#include "ast.hpp"
-#include "declaration.hpp"
 
-#include <iostream>
+#include <banjo/ast.hpp>
+#include <banjo/declaration.hpp>
+#include <banjo/printer.hpp>
 
 
 namespace banjo
 {
 
- Elaborate_declarations::Elaborate_declarations(Parser& p)
+namespace fe
+{ 
+
+Elaborate_declarations::Elaborate_declarations(Parser& p)
   : parser(p), cxt(p.cxt)
 { }
 
@@ -204,6 +206,8 @@ Elaborate_declarations::type(Type& t)
   return t;
 }
 
+
+} // namespace fe
 
 } // namespace banjo
 

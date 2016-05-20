@@ -1,8 +1,8 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BANJO_CORE_CONSTRAINT_HPP
-#define BANJO_CORE_CONSTRAINT_HPP
+#ifndef BANJO_CONSTRAINT_HPP
+#define BANJO_CONSTRAINT_HPP
 
 #include "prelude.hpp"
 #include "language.hpp"

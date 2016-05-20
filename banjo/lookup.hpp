@@ -1,8 +1,8 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BANJO_CORE_LOOKUP_HPP
-#define BANJO_CORE_LOOKUP_HPP
+#ifndef BANJO_LOOKUP_HPP
+#define BANJO_LOOKUP_HPP
 
 // This module defines the basic set of lookup rules for finding names
 // in a scope.

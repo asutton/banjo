@@ -3,9 +3,7 @@
 
 #include "parser.hpp"
 
-#include <banjo/core/ast.hpp>
-
-#include <iostream>
+#include <banjo/ast.hpp>
 
 
 namespace banjo

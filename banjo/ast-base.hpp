@@ -1,8 +1,8 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BANJO_CORE_AST_BASE_HPP
-#define BANJO_CORE_AST_BASE_HPP
+#ifndef BANJO_AST_BASE_HPP
+#define BANJO_AST_BASE_HPP
 
 // This module contains declarations of the all AST nodes and various
 // supporting structures.

@@ -1,8 +1,8 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BANJO_CORE_SPECIFIER_HPP
-#define BANJO_CORE_SPECIFIER_HPP
+#ifndef BANJO_SPECIFIER_HPP
+#define BANJO_SPECIFIER_HPP
 
 
 namespace banjo

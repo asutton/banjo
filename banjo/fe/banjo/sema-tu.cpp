@@ -2,18 +2,19 @@
 // All rights reserved
 
 #include "parser.hpp"
-#include "printer.hpp"
-#include "ast-stmt.hpp"
+
 #include "elab-declarations.hpp"
 #include "elab-overloads.hpp"
 #include "elab-classes.hpp"
 #include "elab-expressions.hpp"
-#include "elaboration.hpp"
 
-#include <iostream>
+#include <banjo/ast.hpp>
 
 
 namespace banjo
+{
+
+namespace fe
 {
 
 // Returns the translation unit.
@@ -57,5 +58,7 @@ Parser::finish_translation_unit(Decl& d, Stmt_list&& ss)
   return tu;
 }
 
+
+} // namespace fe
 
 } // namespace banjo

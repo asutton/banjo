@@ -1,16 +1,20 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BANJO_ELAB_DECLARATIONS_HPP
-#define BANJO_ELAB_DECLARATIONS_HPP
+#ifndef BANJO_FE_ELAB_DECLARATIONS_HPP
+#define BANJO_FE_ELAB_DECLARATIONS_HPP
 
-#include "language.hpp"
+#include <banjo/language.hpp>
 
 
 namespace banjo
 {
 
+namespace fe
+{
+
 struct Parser;
+struct Context;
 
 
 // Recursively parse and analyze the types of all declared names. After 
@@ -47,6 +51,8 @@ struct Elaborate_declarations
   Context& cxt;
 };
 
+
+} // namespace fe
 
 } // nammespace banjo
 

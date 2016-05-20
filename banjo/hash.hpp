@@ -1,8 +1,8 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BANJO_CORE_HASH_HPP
-#define BANJO_CORE_HASH_HPP
+#ifndef BANJO_HASH_HPP
+#define BANJO_HASH_HPP
 
 // This module defines the hash function on AST nodes.
 //

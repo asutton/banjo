@@ -4,12 +4,13 @@
 #include "lexer.hpp"
 #include "context.hpp"
 
-#include "lingo/error.hpp"
+#include <lingo/error.hpp>
 
 #include <cassert>
 #include <cctype>
 #include <string>
 #include <iostream>
+
 
 namespace banjo
 {

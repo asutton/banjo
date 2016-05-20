@@ -2,8 +2,8 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BANJO_CORE_BUILDER_HPP
-#define BANJO_CORE_BUILDER_HPP
+#ifndef BANJO_BUILDER_HPP
+#define BANJO_BUILDER_HPP
 
 // The builder module defines an interface for constructing core language
 // terms. The builder manages the memory for every object (except symbols)
@@ -13,6 +13,8 @@
 
 #include "prelude.hpp"
 #include "language.hpp"
+
+#include <lingo/token.hpp>
 
 
 namespace banjo
@@ -39,6 +41,7 @@ struct Builder
   Simple_id&      get_id(std::string const&);
   Simple_id&      get_id(Symbol const&);
   Simple_id&      get_id(Symbol const*);
+  Simple_id&      get_id(Token const&);
   Placeholder_id& get_id();
   Operator_id&    get_id(Operator_kind);
   // Conversion_id&  get_id();

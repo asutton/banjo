@@ -1,17 +1,20 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BANJO_ELAB_OVERLOADS_HPP
-#define BANJO_ELAB_OVERLOADS_HPP
+#ifndef BANJO_FE_ELAB_OVERLOADS_HPP
+#define BANJO_FE_ELAB_OVERLOADS_HPP
 
-#include "language.hpp"
+#include <banjo/language.hpp>
 
 
 namespace banjo
 {
 
-struct Parser;
+namespace fe
+{
 
+struct Parser;
+struct Context;
 
 // Recursively parse and analyze expressions in the translation unit.
 // At the time of elaboration, all types of expressions shall be complete
@@ -53,6 +56,8 @@ struct Elaborate_overloads
   Context& cxt;
 };
 
+
+} // namespace fe
 
 } // nammespace banjo
 

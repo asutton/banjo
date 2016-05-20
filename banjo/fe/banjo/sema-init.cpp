@@ -2,17 +2,16 @@
 // All rights reserved
 
 #include "parser.hpp"
-#include "printer.hpp"
-#include "ast-expr.hpp"
-#include "ast-decl.hpp"
-#include "initialization.hpp"
 
-#include <iostream>
+#include <banjo/ast-expr.hpp>
+#include <banjo/initialization.hpp>
 
 
 namespace banjo
 {
 
+namespace fe
+{
 
 // Select a default initializer for `d`.
 //
@@ -64,5 +63,7 @@ Parser::on_brace_initialization(Decl& d, Expr_list& es)
   // return i;
 }
 
+
+} // namespace fe
 
 } // namespace banjo

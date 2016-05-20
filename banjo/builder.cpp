@@ -109,6 +109,14 @@ Builder::get_id(Symbol const* sym)
 }
 
 
+// Returns a simple identifier for the symbol.
+Simple_id&
+Builder::get_id(Token const& tok)
+{
+  return get_id(tok.symbol());
+}
+
+
 // Returns a placeholder for a name.
 //
 // TODO: Make placeholders unique. Globally?

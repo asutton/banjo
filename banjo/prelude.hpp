@@ -1,8 +1,8 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BANJO_CORE_PRELUDE_HPP
-#define BANJO_CORE_PRELUDE_HPP
+#ifndef BANJO_PRELUDE_HPP
+#define BANJO_PRELUDE_HPP
 
 #include <lingo/assert.hpp>
 #include <lingo/utility.hpp>

@@ -1,8 +1,8 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BANJO_CORE_AST_HPP
-#define BANJO_CORE_AST_HPP
+#ifndef BANJO_AST_HPP
+#define BANJO_AST_HPP
 
 // This module includes all of the structural and algorithm components
 // related to the abstract syntax of the language.

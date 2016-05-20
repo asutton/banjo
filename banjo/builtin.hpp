@@ -1,8 +1,8 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BANJO_CORE_BUILTIN_HPP
-#define BANJO_CORE_BUILTIN_HPP
+#ifndef BANJO_BUILTIN_HPP
+#define BANJO_BUILTIN_HPP
 
 #include "language.hpp"
 

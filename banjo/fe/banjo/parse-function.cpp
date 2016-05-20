@@ -2,14 +2,14 @@
 // All rights reserved
 
 #include "parser.hpp"
-#include "ast-name.hpp"
-#include "ast-type.hpp"
-#include "ast-decl.hpp"
-#include "printer.hpp"
 
-#include <iostream>
+#include <banjo/ast.hpp>
+
 
 namespace banjo
+{
+
+namespace fe
 {
 
 
@@ -47,14 +47,14 @@ Decl&
 Parser::function_declaration()
 {
   // Helper functions
-  Match_any_token_pred end_type(*this, lbrace_tok, eq_tok);
-  Match_token_pred     end_expr(*this, semicolon_tok);
+  Match_any_token_pred end_type(*this, tk::lbrace_tok, tk::eq_tok);
+  Match_token_pred     end_expr(*this, tk::semicolon_tok);
 
-  require(def_tok);
+  require(tk::def_tok);
   Name& name = identifier();
 
   // Optional colon.
-  match_if(colon_tok);
+  match_if(tk::colon_tok);
 
   // NOTE: We don't have to enter a new scope because parameters are 
   // declared as top-level members of the function body. That happens
@@ -63,7 +63,7 @@ Parser::function_declaration()
 
   // Match the return type.
   Type* ret;
-  if (match_if(arrow_tok))
+  if (match_if(tk::arrow_tok))
     ret = &unparsed_type(end_type);
   else
     ret = &cxt.make_auto_type();
@@ -75,16 +75,16 @@ Parser::function_declaration()
   // Match the function definition.
   //
   // TODO: Handle default and deleted functions.
-  if (match_if(eq_tok)) { // '=' ...
+  if (match_if(tk::eq_tok)) { // '=' ...
     Expr& expr = unparsed_expression(end_expr);
-    match(semicolon_tok);
+    match(tk::semicolon_tok);
     return finish_function_declaration(fn, expr);
-  } else if (next_token_is(lbrace_tok)) { // '{' ... '}'
+  } else if (next_token_is(tk::lbrace_tok)) { // '{' ... '}'
     Stmt& stmt = compound_statement();
     return finish_function_declaration(fn, stmt);
   } else {
     Expr& expr = unparsed_expression(end_expr);
-    match(semicolon_tok);
+    match(tk::semicolon_tok);
     return finish_function_declaration(fn, expr);
   }
 }
@@ -102,10 +102,10 @@ Decl_list
 Parser::parameter_clause()
 {
   Decl_list parms;
-  match(lparen_tok);
-  if (lookahead() != rparen_tok)
+  match(tk::lparen_tok);
+  if (lookahead() != tk::rparen_tok)
     parms = parameter_list();
-  match(rparen_tok);
+  match(tk::rparen_tok);
   return parms;
 }
 
@@ -122,7 +122,7 @@ Parser::parameter_list()
   while (true) {
     Decl& p = parameter_declaration();
     ps.push_back(p);
-    if (match_if(comma_tok))
+    if (match_if(tk::comma_tok))
       continue;
     else
       break;
@@ -142,26 +142,26 @@ Parser::parameter_list()
 Decl&
 Parser::parameter_declaration()
 {
-  Match_any_token_pred end_type(*this, comma_tok, rparen_tok, eq_tok);
+  Match_any_token_pred end_type(*this, tk::comma_tok, tk::rparen_tok, tk::eq_tok);
 
   // Parse and cache the optional parameter specifier.
   parameter_specifier_seq();
 
   // Parse the optional name.
   Name* name;
-  if (next_token_is_not(colon_tok))
+  if (next_token_is_not(tk::colon_tok))
     name = &identifier();
   else
     name = &cxt.get_id();
 
-  if (match_if(colon_tok)) {
-    if (next_token_is(eq_tok))
+  if (match_if(tk::colon_tok)) {
+    if (next_token_is(tk::eq_tok))
       lingo_unimplemented("default arguments");
 
     Type& type = unparsed_type(end_type);
 
     // TODO: Implement default argument types.
-    if (next_token_is(eq_tok))
+    if (next_token_is(tk::eq_tok))
       lingo_unimplemented("default arguments");
 
     return on_function_parameter(*name, type);
@@ -170,7 +170,7 @@ Parser::parameter_declaration()
   Type& type = cxt.make_auto_type();
 
   // TODO: Implement default arguments.
-  if (next_token_is(eq_tok))
+  if (next_token_is(tk::eq_tok))
     lingo_unimplemented("default arguments");
 
   return on_function_parameter(*name, type);
@@ -189,19 +189,19 @@ Parser::parameter_declaration()
 Decl&
 Parser::coroutine_declaration()
 {
-  Match_token_pred end_type(*this, lbrace_tok);
+  Match_token_pred end_type(*this, tk::lbrace_tok);
   
-  require(coroutine_tok);
+  require(tk::coroutine_tok);
 
   // Name
   Name& n = identifier(); // Name of coroutine
-  match_if(colon_tok);
+  match_if(tk::colon_tok);
   
   // Parameters.
   Decl_list params = parameter_clause(); // (...)
 
   // Return type.
-  match(arrow_tok);
+  match(tk::arrow_tok);
   Type& yield = unparsed_type(end_type);
 
   // Body.
@@ -209,5 +209,8 @@ Parser::coroutine_declaration()
   
   return on_coroutine_declaration(n, params, yield, body);
 }
+
+
+} // namespace fe
 
 } // namespace banjo

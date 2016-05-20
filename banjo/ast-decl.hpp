@@ -1,8 +1,8 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BANJO_CORE_AST_DECL_HPP
-#define BANJO_CORE_AST_DECL_HPP
+#ifndef BANJO_AST_DECL_HPP
+#define BANJO_AST_DECL_HPP
 
 #include "ast-base.hpp"
 #include "specifier.hpp"

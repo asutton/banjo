@@ -1,8 +1,8 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BANJO_CORE_SUBSUMPTION_HPP
-#define BANJO_CORE_SUBSUMPTION_HPP
+#ifndef BANJO_SUBSUMPTION_HPP
+#define BANJO_SUBSUMPTION_HPP
 
 #include "prelude.hpp"
 #include "language.hpp"

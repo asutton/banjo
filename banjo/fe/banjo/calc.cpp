@@ -4,10 +4,9 @@
 #include "context.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
-#include "printer.hpp"
-#include "evaluation.hpp"
 
-#include "gen/llvm/generator.hpp"
+#include <banjo/printer.hpp>
+#include <banjo/evaluation.hpp>
 
 #include <lingo/file.hpp>
 #include <lingo/io.hpp>
@@ -23,7 +22,7 @@ using namespace banjo;
 int
 main(int argc, char* argv[])
 {
-  Context cxt;
+  fe::Context cxt;
 
   while (true) {
     String str;
@@ -37,13 +36,13 @@ main(int argc, char* argv[])
     Token_stream ts;
 
     // Lexical analysis.
-    Lexer lex(cxt, cs, ts);
+    fe::Lexer lex(cxt, cs, ts);
     lex();
     if (error_count())
       return 1;
 
     // Syntactic and semantic analysis.
-    Parser parse(cxt, ts);
+    fe::Parser parse(cxt, ts);
     Expr& expr = parse.expression();
     
     // Print the expression in reduced form.

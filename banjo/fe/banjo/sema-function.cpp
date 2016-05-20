@@ -2,14 +2,15 @@
 // All rights reserved
 
 #include "parser.hpp"
-#include "printer.hpp"
-#include "ast.hpp"
-#include "declaration.hpp"
 
-#include <iostream>
+#include <banjo/ast.hpp>
+#include <banjo/declaration.hpp>
 
 
 namespace banjo
+{
+
+namespace fe
 {
 
 // Create a saved scope for the function body and add the parameters 
@@ -82,5 +83,6 @@ Parser::on_function_parameter(Name& n, Type& t)
 }
 
 
+} // namespace fe
 
 } // namespace banjo

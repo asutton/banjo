@@ -1,8 +1,8 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BANJO_CORE_OVERLOAD_HPP
-#define BANJO_CORE_OVERLOAD_HPP
+#ifndef BANJO_OVERLOAD_HPP
+#define BANJO_OVERLOAD_HPP
 
 #include "language.hpp"
 

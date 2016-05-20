@@ -2,16 +2,15 @@
 // All rights reserved
 
 #include "parser.hpp"
-#include "printer.hpp"
-#include "ast-expr.hpp"
-#include "ast-type.hpp"
-#include "ast-decl.hpp"
-#include "expression.hpp"
 
-#include <iostream>
+#include <banjo/ast.hpp>
+#include <banjo/expression.hpp>
 
 
 namespace banjo
+{
+
+namespace fe
 {
 
 Expr&
@@ -240,5 +239,7 @@ Parser::on_unparsed_expression(Token_seq&& toks)
   return *new Unparsed_expr(std::move(toks));
 }
 
+
+} // namespace fe
 
 } // namespace banjo

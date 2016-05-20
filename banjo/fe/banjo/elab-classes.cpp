@@ -4,17 +4,19 @@
 
 #include "elab-classes.hpp"
 #include "parser.hpp"
-#include "printer.hpp"
-#include "ast.hpp"
-#include "declaration.hpp"
 
-#include <iostream>
+#include <banjo/ast.hpp>
+#include <banjo/declaration.hpp>
+#include <banjo/printer.hpp>
 
 
 namespace banjo
 {
 
- Elaborate_classes::Elaborate_classes(Parser& p)
+namespace fe
+{
+
+Elaborate_classes::Elaborate_classes(Parser& p)
   : parser(p), cxt(p.cxt)
 { }
 
@@ -186,6 +188,8 @@ Elaborate_classes::class_declaration(Class_decl& decl)
   statement_seq(def.statements());
 }
 
+
+} // namespace fe
 
 } // namespace banjo
 

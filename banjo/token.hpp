@@ -1,8 +1,8 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BANJO_CORE_TOKEN_HPP
-#define BANJO_CORE_TOKEN_HPP
+#ifndef BANJO_TOKEN_HPP
+#define BANJO_TOKEN_HPP
 
 #include "prelude.hpp"
 

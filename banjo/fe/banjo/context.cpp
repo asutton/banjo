@@ -21,6 +21,6 @@ Context::Context()
 }
 
 
-} namespace fe
+} // namespace fe
 
 } // namespace banjo

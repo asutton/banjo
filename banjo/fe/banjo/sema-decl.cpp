@@ -2,17 +2,16 @@
 // All rights reserved
 
 #include "parser.hpp"
-#include "printer.hpp"
-#include "ast.hpp"
-#include "declaration.hpp"
 
-#include <iostream>
+#include <banjo/ast.hpp>
+#include <banjo/declaration.hpp>
 
 
 namespace banjo
 {
 
-
+namespace fe
+{
 
 // -------------------------------------------------------------------------- //
 // Variables
@@ -126,5 +125,7 @@ Parser::on_concept_definition(Decl& decl, Req_list& ds)
   return def;
 }
 
+
+} // namespace fe
 
 } // namespace banjo

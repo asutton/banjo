@@ -3,13 +3,15 @@
 // All rights reserved
 
 #include "parser.hpp"
-#include "printer.hpp"
-#include "requirement.hpp"
 
-#include <iostream>
+#include <banjo/ast.hpp>
+#include <banjo/requirement.hpp>
 
 
 namespace banjo
+{
+
+namespace fe
 {
 
 Req&
@@ -72,5 +74,7 @@ Parser::on_deduction_requirement(Expr& e, Type& t)
   // return make_deduction_requirement(cxt, e, t);
 }
 
+
+} // namespace fe
 
 } // namespace banjo
