@@ -192,23 +192,23 @@ struct Constant_decl : Value_decl
 };
 
 
-// Declares a function.
-//
-// A function has three associated expressions:
-//    - a type constraint which governs use,
-//    - a precondition which guards entry, and
-//    - a postcondition that explicitly states effects.
+// Declares a mapping from inputs to outputs. This is the base class for
+// functions and macros. All mappings have function type.
 //
 // TODO: Implement preconditions and postconditions.
-struct Function_decl : Decl
+struct Mapping_decl : Decl
 {
-  // FIXME: Consume arguments.
-  Function_decl(Name& n, Type& t, Decl_list const& p, Def& d)
+  Mapping_decl(Name& n, Type& t, Decl_list const& p, Def& d)
     : Decl(n, t), parms_(p), def_(&d)
   { }
 
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
+  Mapping_decl(Name& n, Type& t, Decl_list&& p, Def& d)
+    : Decl(n, t), parms_(std::move(p)), def_(&d)
+  { }
+
+  // Returns the list of parameter declarations for the function.
+  Decl_list const& parameters() const { return parms_; }
+  Decl_list&       parameters()       { return parms_; }
 
   // Returns the type of this declaration.
   Function_type const& type() const;
@@ -218,12 +218,8 @@ struct Function_decl : Decl
   Type const& return_type() const;
   Type&       return_type();
 
-  // Returns the list of parameter declarations for the function.
-  Decl_list const& parameters() const { return parms_; }
-  Decl_list&       parameters()       { return parms_; }
-
   // Returns the function's constraint expression. This is valid only 
-  // when  is_constrained() is true.
+  // when is_constrained() is true.
   Expr const& constraint() const { return *constr_; }
   Expr&       constraint()       { return *constr_; }
 
@@ -237,6 +233,33 @@ struct Function_decl : Decl
   Decl_list parms_;
   Expr*     constr_;
   Def*      def_;
+};
+
+
+// Declares a function. A function maps input arguments to output values.
+// Functions can be evaluated at compile time, if used within a constant
+// expression context.
+struct Function_decl : Mapping_decl
+{
+  using Mapping_decl::Mapping_decl;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// Declares a macro. A macro is a function that is always evaluated
+// at compile time.
+//
+// TODO: An alternative design would be to use a declaration specifier
+// to indicate the meta-ness of a function. That could also be applied
+// to constant declarations (meta-variables). 
+struct Macro_decl : Mapping_decl
+{
+  using Mapping_decl::Mapping_decl;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
@@ -274,7 +297,13 @@ struct Class_decl : Type_decl
   Def*   def_;
 };
 
-struct Coroutine_decl :Type_decl
+
+// A coroutine is a resumable function. This is internally represented
+// as a class type that has properties related to its declaration.
+//
+// TODO: This should be a mapping declaration that keeps a reference to
+// its associated class declaration.
+struct Coroutine_decl : Type_decl
 {
   Coroutine_decl(Name& n, Type& t, Decl_list const& p, Def& d)
     : Type_decl(n, t), ret_(&t), def_(&d), parms_(p)
@@ -282,7 +311,6 @@ struct Coroutine_decl :Type_decl
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-
 
   Def const& definition() const { return *def_; }
   Def&       definition()       { return *def_; }

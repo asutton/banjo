@@ -1305,6 +1305,7 @@ Printer::declaration(Decl const& d)
     void operator()(Constant_decl const& d)    { p.constant_declaration(d); }
     void operator()(Super_decl const& d)       { p.super_declaration(d); }
     void operator()(Function_decl const& d)    { p.function_declaration(d); }
+    void operator()(Macro_decl const& d)       { p.macro_declaration(d); }
     void operator()(Class_decl const& d)       { p.class_declaration(d); }
     void operator()(Coroutine_decl const& d)   { p.coroutine_delcaration(d); }
 
@@ -1330,19 +1331,6 @@ Printer::declaration_seq(Decl_list const& ds)
   }
 }
 
-// -------------------------------------------------------------------------- //
-// Super declarations
-
-void
-Printer::super_declaration(Super_decl const& d)
-{
-  token("super");
-  // identifier(d);
-  spaced_token(':');
-  type(d.type());
-  token(';');
-
-}
 
 // Write the specifier token followed by a space.
 void
@@ -1429,6 +1417,17 @@ Printer::constant_declaration(Constant_decl const& d)
 
 
 void
+Printer::super_declaration(Super_decl const& d)
+{
+  token("super");
+  // identifier(d);
+  spaced_token(':');
+  type(d.type());
+  token(';');
+}
+
+
+void
 Printer::initializer(Def const& d)
 {
   struct fn
@@ -1457,12 +1456,12 @@ Printer::initializer(Expression_def const& d)
 
 
 // -------------------------------------------------------------------------- //
-// Function declarations
+// Mappings declarations
 
 void
-Printer::function_declaration(Function_decl const& d)
+Printer::mapping_declaration(Mapping_decl const& d, char const* intro)
 {
-  token("def");
+  token(intro);
   space();
   identifier(d);
   spaced_token(':');
@@ -1474,6 +1473,22 @@ Printer::function_declaration(Function_decl const& d)
   function_definition(d.definition());
 }
 
+
+void
+Printer::function_declaration(Function_decl const& d)
+{
+  mapping_declaration(d, "def");
+}
+
+
+void
+Printer::macro_declaration(Macro_decl const& d)
+{
+  mapping_declaration(d, "macro");
+}
+
+
+// TODO: For some reason a coroutine is not a mapping declaration.
 void
 Printer::coroutine_delcaration(Coroutine_decl const& d)
 {
@@ -1489,6 +1504,7 @@ Printer::coroutine_delcaration(Coroutine_decl const& d)
   function_definition(d.definition());
 }
 
+
 void
 Printer::function_definition(Def const& d)
 {
@@ -1501,6 +1517,7 @@ Printer::function_definition(Def const& d)
     void operator()(Expression_def const& d) { p.function_definition(d); }
     void operator()(Deleted_def const& d)    { p.function_definition(d); }
     void operator()(Defaulted_def const& d)  { p.function_definition(d); }
+    void operator()(Intrinsic_def const& d)  { p.function_definition(d); }
   };
   apply(d, fn{*this});
 }
@@ -1543,6 +1560,14 @@ Printer::function_definition(Defaulted_def const&)
 {
   spaced_token('=');
   token("default");
+}
+
+
+void
+Printer::function_definition(Intrinsic_def const&)
+{
+  spaced_token('=');
+  token("<intrinsic>");
 }
 
 

@@ -156,12 +156,15 @@ struct Builder
   Constant_decl&  make_constant_declaration(Name&, Type&, Expr&);
   Constant_decl&  make_constant_declaration(char const*, Type&, Expr&);
 
-  // Functions, methods and coroutines
+  // Functions, macros, methods and coroutines
   Function_decl&  make_function_declaration(Name&, Decl_list const&, Type&);
   Function_decl&  make_function_declaration(Name&, Decl_list&&, Type&);
   Function_decl&  make_function_declaration(Name&, Decl_list&&, Type&, Def&);
   
+  Macro_decl&     make_macro_declaration(Name&, Decl_list&&, Type&, Def&);
+  
   Method_decl&    make_method_declaration(Name&, Decl_list const&, Type&);
+  
   Coroutine_decl& make_coroutine_declaration(Name&, Decl_list&, Type&, Stmt&);
   
   Function_def&   make_function_definition(Stmt&);

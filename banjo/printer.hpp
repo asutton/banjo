@@ -183,13 +183,16 @@ struct Printer
   void initializer(Expression_def const&);
 
   // Functions
+  void mapping_declaration(Mapping_decl const&, char const*);
   void function_declaration(Function_decl const&);
+  void macro_declaration(Macro_decl const&);
   void function_definition(Def const&);
   void function_definition(Empty_def const&);
   void function_definition(Expression_def const&);
   void function_definition(Function_def const&);
   void function_definition(Deleted_def const&);
   void function_definition(Defaulted_def const&);
+  void function_definition(Intrinsic_def const&);
   void parameter(Decl const&);
   void parameter(Object_parm const&);
   void parameter_list(Decl_list const&);

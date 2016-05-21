@@ -6,13 +6,14 @@ define_node(Translation_unit)
 define_node(Variable_decl);
 define_node(Constant_decl);
 define_node(Function_decl);
+define_node(Macro_decl);
+define_node(Coroutine_decl);
 define_node(Class_decl);
 define_node(Field_decl);
 define_node(Super_decl);
 define_node(Method_decl);
 define_node(Concept_decl);
 define_node(Template_decl);
-define_node(Coroutine_decl);
 
 define_node(Object_parm);
 define_node(Value_parm);

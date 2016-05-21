@@ -11,35 +11,36 @@
 namespace banjo
 {
 
-// Function_decl
 
 Function_type const&
-Function_decl::type() const
+Mapping_decl::type() const
 {
   return *cast<Function_type>(type_);
 }
 
 
 Function_type&
-Function_decl::type()
+Mapping_decl::type()
 {
   return *cast<Function_type>(type_);
 }
 
 
 Type const&
-Function_decl::return_type() const
+Mapping_decl::return_type() const
 {
   return type().return_type();
 }
 
 
 Type&
-Function_decl::return_type()
+Mapping_decl::return_type()
 {
   return type().return_type();
 }
 
+
+// Class_decl
 
 Decl_list const& 
 Class_decl::objects() const 

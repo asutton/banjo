@@ -69,7 +69,7 @@ make_compiler_show_int(Context& cxt)
   };
   Type& ret = cxt.get_void_type();
   Def& def = cxt.make_function_definition(&intrinsic::show_value);
-  Decl& decl = cxt.make_function_declaration(name, std::move(parms), ret, def);
+  Decl& decl = cxt.make_macro_declaration(name, std::move(parms), ret, def);
   decl.spec_ |= internal_spec;
   decl.spec_ |= static_spec;
 

@@ -944,6 +944,16 @@ Builder::make_function_declaration(Name& n, Decl_list&& p, Type& t, Def& d)
 }
 
 
+// Create a new macro. The type is synthesized from the parameter 
+// and return types.
+Macro_decl&
+Builder::make_macro_declaration(Name& n, Decl_list&& p, Type& t, Def& d)
+{
+  Type& r = get_function_type(p, t);
+  return make<Macro_decl>(n, r, std::move(p), d);
+}
+
+
 // Create a new method with an empty definition. The type is synthesized 
 // from the parameter and return types.
 Method_decl&
