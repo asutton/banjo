@@ -4,6 +4,9 @@
 #include "parser.hpp"
 
 #include <banjo/ast.hpp>
+#include <banjo/printer.hpp>
+
+#include <iostream>
 
 
 namespace banjo
@@ -401,26 +404,31 @@ Parser::primary_expression()
   switch (lookahead()) {
     case tk::true_tok:
       return on_boolean_literal(accept(), true);
+
     case tk::false_tok:
       return on_boolean_literal(accept(), false);
+
     case tk::integer_tok:
       return on_integer_literal(accept());
+
     case tk::identifier_tok:
       return id_expression();
+
     case tk::requires_tok:
       return requires_expression();
+    
+    case tk::lparen_tok:
+      return grouped_expression();
+
+    case tk::lbrace_tok:
+      return tuple_expression();
+
     default:
       break;
   }
 
-  if (lookahead() == tk::lparen_tok)
-    return grouped_expression();
-    
-  if(lookahead() == tk::lbrace_tok)
-    return tuple_expression();
-
   error(tokens.location(), "expected primary-expression");
-  throw Syntax_error("primary");
+  throw Syntax_error();
 }
 
 

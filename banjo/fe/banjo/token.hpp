@@ -16,6 +16,11 @@ namespace fe
 // The token kind class is an extensible enumeration. This class defines
 // a set of common token kinds to support various core language facilities 
 // that require knowledge of e.g., identifiers and numeric values.
+//
+// Note that the following tokens are defined in the banjo core:
+//
+//      error_tok
+//      identifier_tok
 struct Token_kind : banjo::Token_kind
 {
   enum : int 
@@ -128,7 +133,6 @@ struct Token_kind : banjo::Token_kind
     last_keyword_tok,
 
     // Character classes
-    identifier_tok,
     integer_tok,
   };
 

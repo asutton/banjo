@@ -11,6 +11,6 @@ const z : C = y;
 
 def f() -> int 
 {
-  compiler.show(0 + 2 * 3);
+  compiler.show(0);
   return compiler.version;
 }
