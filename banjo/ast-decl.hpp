@@ -87,6 +87,15 @@ struct Decl : Term
   // Returns the set of declaration specifiers for the declaration.
   Specifier_set specifiers() const { return spec_; }
 
+  // Reference specifiers
+  //
+  // TODO: These only apply to object declarations, but I've lifted
+  // them here for simplicity.
+  bool is_reference() const;
+  bool is_normal_reference() const  { return spec_ & ref_spec; }
+  bool is_consume_reference() const { return spec_ & consume_spec; }
+  bool is_forward_reference() const { return spec_ & forward_spec; }
+
   // If the declaration is a template, this returns the templated
   // declaration.
   virtual Decl const& parameterized_declaration() const { return *this; }
@@ -97,6 +106,15 @@ struct Decl : Term
   Type*         type_;
   Specifier_set spec_;
 };
+
+
+inline bool
+Decl::is_reference() const
+{
+  return is_normal_reference() 
+      || is_consume_reference() 
+      || is_forward_reference();
+}
 
 
 struct Decl::Visitor
@@ -143,6 +161,9 @@ struct Translation_unit : Decl
 
 
 // The base class of declarations that denote objects.
+//
+// Note that objects can be declared as references, meaning that they
+// don't have their own storage, but refer to existing object.
 struct Object_decl : Decl
 {
   using Decl::Decl;
@@ -150,6 +171,9 @@ struct Object_decl : Decl
 
 
 // The base class of all declarations that denote values.
+//
+// TODO: Consider merging this with object decl and using specifiers
+// to differentiate the meaning.
 struct Value_decl : Decl
 {
   using Decl::Decl;
@@ -253,10 +277,15 @@ struct Function_decl : Mapping_decl
 //
 // TODO: An alternative design would be to use a declaration specifier
 // to indicate the meta-ness of a function. That could also be applied
-// to constant declarations (meta-variables). 
-struct Macro_decl : Mapping_decl
+// to constant declarations (meta-variables).
+//
+// TODO: A macro can (probably) also be a member function if the
+// this parameter is a constant. Perhaps I should re-think my approach
+// to handling class members. I wonder how much this depends on lookup
+// semantics.
+struct Macro_decl : Function_decl
 {
-  using Mapping_decl::Mapping_decl;
+  using Function_decl::Function_decl;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }

@@ -331,44 +331,27 @@ Printer::type(Unparsed_type const& t)
 }
 
 
+// Print a suffix type.
+//
+//    suffix-type:
+//      unary-type [...]
+//
+// TODO: Actually deal with type packs.
 void
 Printer::suffix_type(Type const& t)
 {
-  if (Pack_type const* t1 = as<Pack_type>(&t))
-    suffix_type(*t1);
-  prefix_type(t);
+  unary_type(t);
 }
 
 
-void
-Printer::suffix_type(Pack_type const& t)
-{
-  type(t.type());
-  token("...");
-}
-
-
-void
-Printer::prefix_type(Type const& t)
-{
-  struct fn
-  {
-    Printer& p;
-    void operator()(Type const& t)           { p.unary_type(t); }
-    void operator()(Reference_type const& t) { p.prefix_type(t); }
-  };
-  return apply(t, fn{*this});
-}
-
-
-void
-Printer::prefix_type(Reference_type const& t)
-{
-  token('&');
-  unary_type(t.type());
-}
-
-
+// Print a unary type.
+//
+//    unary-type:
+//      '*' unary-type
+//      postfix-type
+//
+// TODO: If we have only one unary type operator, should we just
+// call it a pointer-type?
 void
 Printer::unary_type(Type const& t)
 {
@@ -377,7 +360,6 @@ Printer::unary_type(Type const& t)
     Printer& p;
     void operator()(Type const& t)           { p.postfix_type(t); }
     void operator()(Pointer_type const& t)   { p.unary_type(t); }
-    void operator()(Qualified_type const& t) { p.unary_type(t); }
   };
   return apply(t, fn{*this});
 }
@@ -391,31 +373,19 @@ Printer::unary_type(Pointer_type const& t)
 }
 
 
-void
-Printer::unary_type(Qualified_type const& t)
-{
-  if (t.is_const()) {
-    token("const");
-    space();
-  }
-  if (t.is_volatile()) {
-    token("volatile");
-    space();
-  }
-  unary_type(t.type());
-}
-
-
+// Parse a postfix type.
+//
+//    postfix-type
+//      postfix-type '[]'
+//      postfix-type '[' expression ']'
 void
 Printer::postfix_type(Type const& t)
 {
   struct fn
   {
     Printer& p;
-    void operator()(Type const& t)          { p.primary_type(t); }
-    void operator()(Array_type const& t)    { p.postfix_type(t); }
-    void operator()(Slice_type const& t)    { p.postfix_type(t); }
-    void operator()(Dynarray_type const& t) { p.postfix_type(t); }
+    void operator()(Type const& t)       { p.primary_type(t); }
+    void operator()(Array_type const& t) { p.postfix_type(t); }
   };
   return apply(t, fn{*this});
 }
@@ -424,26 +394,7 @@ Printer::postfix_type(Type const& t)
 void
 Printer::postfix_type(Array_type const& t)
 {
-  postfix_type(t.type());
-  token('[');
-  expression(t.extent());
-  token(']');
-}
-
-
-void
-Printer::postfix_type(Slice_type const& t)
-{
-  postfix_type(t.type());
-  token("[]");
-}
-
-
-// FIXME: Unify with array-type.
-void
-Printer::postfix_type(Dynarray_type const& t)
-{
-  postfix_type(t.type());
+  postfix_type(t.element_type());
   token('[');
   expression(t.extent());
   token(']');
@@ -469,6 +420,17 @@ Printer::primary_type(Type const& t)
     void operator()(Class_type const& t)     { p.id_type(t); }
     void operator()(Typename_type const& t)  { p.id_type(t); }
   };
+  
+  // Print qualifiers.
+  if (t.is_const()) {
+    token("const");
+    space();
+  }
+  if (t.is_volatile()) {
+    token("volatile");
+    space();
+  }
+
   apply(t, fn{*this});
 }
 
@@ -994,7 +956,6 @@ Printer::primary_expression(Expr const& e)
     void operator()(Real_expr const& e)      { p.literal(e); }
     void operator()(Id_expr const& e)        { p.id_expression(e); }
     void operator()(Decl_expr const& e)      { p.id_expression(e); }
-    void operator()(Check_expr const& e)     { p.id_expression(e); }
     void operator()(Synthetic_expr const& e) { p.id_expression(e); }
     void operator()(Requires_expr const& e)  { p.requires_expression(e); }
   };
@@ -1054,16 +1015,6 @@ void
 Printer::id_expression(Decl_expr const& e)
 {
   id(e.declaration().name());
-}
-
-
-void
-Printer::id_expression(Check_expr const& e)
-{
-  id(e.declaration().name());
-  token('<');
-  template_argument_list(e.arguments());
-  token('>');
 }
 
 

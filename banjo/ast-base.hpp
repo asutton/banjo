@@ -275,6 +275,9 @@ using Binary_fn  = Expr& (*)(Context&, Expr&, Expr&);
 using Ternary_fn = Expr& (*)(Context&, Expr&, Expr&, Expr&);
 
 
+enum Category : int;
+
+
 } // namespace banjo
 
 #endif

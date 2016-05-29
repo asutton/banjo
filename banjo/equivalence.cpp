@@ -181,25 +181,11 @@ is_equivalent(Function_type const& t1, Function_type const& t2)
 }
 
 
-bool
-is_equivalent(Qualified_type const& t1, Qualified_type const& t2)
-{
-  return t1.qualifier() == t2.qualifier() && is_equivalent(t1.type(), t2.type());
-}
-
-
-bool
-is_equivalent(Unary_type const& t1, Unary_type const& t2)
-{
-  return is_equivalent(t1.type(), t2.type());
-}
-
-
 // TODO: The extent of the arrays must be equivalent.
 bool
 is_equivalent(Array_type const& t1, Array_type const& t2)
 {
-  return is_equivalent(t1.type(), t2.type());
+  return is_equivalent(t1.element_type(), t2.element_type());
 }
 
 
@@ -207,13 +193,6 @@ bool
 is_equivalent(Tuple_type const& t1, Tuple_type const& t2)
 {
   return is_equivalent(t1.element_types(), t2.element_types());
-}
-
-
-bool
-is_equivalent(Dynarray_type const& t1, Dynarray_type const& t2)
-{
-  return is_equivalent(t1.type(),t2.type());
 }
 
 
@@ -242,11 +221,8 @@ is_equivalent(Type const& t1, Type const& t2)
     bool operator()(Integer_type const& t1) const   { return is_equivalent(t1, cast<Integer_type>(t2)); }
     bool operator()(Float_type const& t1) const     { return is_equivalent(t1, cast<Float_type>(t2)); }
     bool operator()(Function_type const& t1) const  { return is_equivalent(t1, cast<Function_type>(t2)); }
-    bool operator()(Qualified_type const& t1) const { return is_equivalent(t1, cast<Qualified_type>(t2)); }
-    bool operator()(Unary_type const& t1) const     { return is_equivalent(t1, cast<Unary_type>(t2)); }
     bool operator()(Array_type const& t1) const     { return is_equivalent(t1, cast<Array_type>(t2)); }
     bool operator()(Tuple_type const& t1) const     { return is_equivalent(t1, cast<Tuple_type>(t2)); }
-    bool operator()(Dynarray_type const& t1) const  { return is_equivalent(t1, cast<Dynarray_type>(t2)); }
     bool operator()(Declared_type const& t1) const  { return is_eq_declared_type(t1, cast_as(t1, t2)); }
   };
 
@@ -254,10 +230,14 @@ is_equivalent(Type const& t1, Type const& t2)
   if (&t1 == &t2)
     return true;
 
-  // Types of different kinds are not the same.
+  // Types of different kinds are not equivalent.
   std::type_index ti1 = typeid(t1);
   std::type_index ti2 = typeid(t2);
   if (ti1 != ti2)
+    return false;
+
+  // Types with different qualifications are not equivalent.
+  if (t1.qualifiers() != t2.qualifiers())
     return false;
 
   // Find a comparison of the types.

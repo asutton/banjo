@@ -5,18 +5,30 @@
 #define BANJO_CONVERSION_HPP
 
 #include "prelude.hpp"
-#include "ast.hpp"
+#include "language.hpp"
 
 
 namespace banjo
 {
 
-struct Context;
-struct Type;
-struct Expr;
-struct Conv;
+// Standard conversions
+Expr& standard_conversion(Context&, Expr&, Category, Type&);
+Expr& standard_conversion_to_value(Context&, Expr&, Type&);
+
+// Contextual conversion
+Expr& contextual_conversion_to_bool(Context&, Expr&);
+
+// Dependent conversions
+Expr& dependent_conversion(Context&, Expr&, Type&);
+
+// Arithmetic conversion
+Expr_pair arithmetic_conversions(Context&, Expr const&, Expr const&);
 
 
+// -------------------------------------------------------------------------- //
+// Comparison of conversion
+
+// FIXME: This is wrong. Use the actual qualifier set.
 using Qualifier_list = std::vector<int>;
 
 
@@ -96,12 +108,11 @@ Standard_conversion_seq::adjustment(Conv& e)
 }
 
 
-// A user-defined conversion sequence enumerates the conversion
-// needed to convert a user-defined type to a destination
-// type. This is a standard conversion sequence followed by
-// a user-defined conversion (a conversion-function call or
-// constructor invokation), followed by another standard
-// conversion sequence.
+// A user-defined conversion sequence enumerates the conversion needed to 
+// convert a user-defined type to a destination type. This is a standard 
+// conversion sequence followed by a user-defined conversion (a conversion
+// call or constructor invocation), followed by another standard conversion 
+// sequence.
 //
 // TODO: Finish implementing me.
 struct User_conversion_seq
@@ -189,12 +200,6 @@ enum Conversion_comp
 };
 
 
-// FIXME: All of these should take a context.
-
-Expr&     standard_conversion(Expr const&, Type const&);
-Expr_pair arithmetic_conversion(Expr const&, Expr const&);
-Expr&     contextual_conversion_to_bool(Context& cxt, Expr&);
-Expr&     dependent_conversion(Context& cxt, Expr&, Type&);
 
 Conversion_seq get_conversion_sequence(Expr const&);
 
@@ -203,10 +208,6 @@ Conversion_comp compare(Standard_conversion_seq const&, Standard_conversion_seq 
 
 bool is_similar(Type const&, Type const&);
 Qualifier_list get_qualification_signature(Type const&);
-
-
-bool is_tuple_equiv_to_array(Tuple_type& t1, Array_type& t2);
-
 
 
 } // namespace banjo

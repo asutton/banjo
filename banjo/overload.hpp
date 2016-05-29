@@ -27,7 +27,7 @@ struct Overload_set : Decl_list
     : Decl_list {&d}
   { }
 
-  // Returns the name of the overloaded declaratin.
+  // Returns the name of the overloaded declaration.
   Name const& name() const;
   Name&       name();
 
@@ -37,10 +37,40 @@ struct Overload_set : Decl_list
 };
 
 
-bool can_overload(Decl&, Decl&);
+
+// In overload resolution, this represents a candidate for the function
+// call. A candidate refers to the function declaration, deduced and/or
+// converted arguments, and information about viability.
+//
+// TODO: Store information about non-viable function candidates.
+struct Function_candidate
+{
+  Function_candidate(Function_decl& f, Expr_list const& a, bool v)
+    : fn(&f), args(a), viable(v)
+  { }
+
+  // Converts to true iff the candidate is viable.
+  explicit operator bool() const { return viable; }
+
+  // Returns the function declaration being called.
+  Function_decl const& function() const { return *fn; }
+  Function_decl&       function()       { return *fn; }
+
+  // Retrns the list of converted arguments.
+  Expr_list const& arguments() const { return args; }
+  Expr_list&       arguments()       { return args; }
+
+  Function_decl* fn;
+  Expr_list      args;
+  bool           viable;
+};
 
 
+// Streaming
 std::ostream& operator<<(std::ostream&, Overload_set const&);
+
+
+bool can_overload(Decl&, Decl&);
 
 
 } // namespace banjo

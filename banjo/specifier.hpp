@@ -22,12 +22,16 @@ enum Specifier_set
   public_spec    = 1 << 7,
   private_spec   = 1 << 8,
   protected_spec = 1 << 9,
-  in_spec        = 1 << 10,
-  out_spec       = 1 << 11,
-  mutable_spec   = 1 << 12,
-  consume_spec   = 1 << 13,
-  forward_spec   = 1 << 14,
-  const_spec     = 1 << 15,
+  ref_spec       = 1 << 10,
+  consume_spec   = 1 << 11,
+  in_spec        = 1 << 12,
+  out_spec       = 1 << 13,
+  mutable_spec   = 1 << 14,
+  forward_spec   = 1 << 15,
+
+  const_spec     = 1 << 16, // FIXME: Replaced by meta
+  meta_spec      = 1 << 16,
+  
   internal_spec  = 1 << 30, // Internal to the language
 };
 

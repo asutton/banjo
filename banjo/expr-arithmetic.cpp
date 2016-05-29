@@ -24,7 +24,7 @@ Expr&
 make_add(Context& cxt, Expr& e1, Expr& e2)
 {
   Type& t = cxt.get_int_type();
-  return cxt.make_add(t, e1, e2);
+  return cxt.make_add(val_expr, t, e1, e2);
 }
 
 
@@ -32,7 +32,7 @@ Expr&
 make_sub(Context& cxt, Expr& e1, Expr& e2)
 {
   Type& t = cxt.get_int_type();
-  return cxt.make_sub(t, e1, e2);
+  return cxt.make_sub(val_expr, t, e1, e2);
 }
 
 
@@ -40,7 +40,7 @@ Expr&
 make_mul(Context& cxt, Expr& e1, Expr& e2)
 {
   Type& t = cxt.get_int_type();
-  return cxt.make_mul(t, e1, e2);
+  return cxt.make_mul(val_expr, t, e1, e2);
 }
 
 
@@ -48,7 +48,7 @@ Expr&
 make_div(Context& cxt, Expr& e1, Expr& e2)
 {
   Type& t = cxt.get_int_type();
-  return cxt.make_div(t, e1, e2);
+  return cxt.make_div(val_expr, t, e1, e2);
 }
 
 
@@ -56,7 +56,7 @@ Expr&
 make_rem(Context& cxt, Expr& e1, Expr& e2)
 {
   Type& t = cxt.get_int_type();
-  return cxt.make_rem(t, e1, e2);
+  return cxt.make_rem(val_expr, t, e1, e2);
 }
 
 
@@ -64,14 +64,15 @@ Expr&
 make_neg(Context& cxt, Expr& e)
 {
   Type& t = cxt.get_int_type();
-  return cxt.make_neg(t, e);
+  return cxt.make_neg(val_expr, t, e);
 }
 
 
+// FIXME: This needs to a indirect-to-immediate value conversion.
 Expr&
 make_pos(Context& cxt, Expr& e)
 {
-  return cxt.make_pos(e.type(), e);
+  return cxt.make_pos(val_expr, e.type(), e);
 }
 
 

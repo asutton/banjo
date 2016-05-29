@@ -54,12 +54,7 @@ make_type(Context& cxt, Name& n)
 Type&
 make_qualified_type(Context& cxt, Type& t, Qualifier_set q)
 {
-  if (Qualified_type* qt = as<Qualified_type>(&t)) {
-    qt->qual |= q;
-    return *qt;
-  } else {
-    return cxt.get_qualified_type(t, q);
-  }
+  return cxt.get_qualified_type(t, q);
 }
 
 
@@ -81,48 +76,15 @@ make_pointer_type(Context& cxt, Type& t)
 Type&
 make_array_type(Context& cxt, Type& t, Expr& e)
 {
-  if(is<Integer_type>(e.type())) {
-    return cxt.get_array_type(t, e);
-  }
-  return cxt.get_dynarray_type(t,e);
+  return cxt.get_array_type(t, e);
 }
 
 
+// Returns a tuple of the given element types.
 Type&
 make_tuple_type(Context& cxt, Type_list& t)
 {
   return cxt.get_tuple_type(t);
-}
-
-
-// Returns a slice-of-T type.
-//
-// FIXME: Verify that we can actually form a slice-of-T. For example,
-// is this valid? T[N][]. Perhaps.
-Type&
-make_slice_type(Context& cxt, Type& t)
-{
-  return cxt.get_slice_type(t);
-}
-
-
-// Returns a reference-to-t. Note references collapse: &(&t) is equivalent 
-// to &t.
-Type&
-make_reference_type(Context& cxt, Type& t)
-{
-  if (is_reference_type(t))
-    return t;
-  else
-    return cxt.get_reference_type(t);
-}
-
-
-// Returns a pack type of T.
-Type&
-make_pack_type(Context& cxt, Type& t)
-{
-  return cxt.get_pack_type(t);
 }
 
 

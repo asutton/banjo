@@ -38,6 +38,30 @@
 
 ## Bigger language tasks
 
+- Rethink expression categories
+
+  I'm currently trying to represent category by type. For example lvalues
+  are always reference types (possibly const). And rvalues are non-reference 
+  types. However, we actually need some kind of prvalue type since I added
+  value parameters. We can't initialize a value parameter with any old
+  expression of type the same type (even with conversions).
+
+  In the extreme, every type would be compounded by its use: a reference,
+  a compile-time constant, or a temporary. This would definitely add a layer
+  of complexity to the type system, but it would also make it very precise.
+  Of course, those categories can also be pushed into the expression/type
+  to attain the same meaning. This is how C++ works... we would just want
+  better names.
+
+  Note that we might also rethink initialization. Perhaps it should be
+  defined as e.g.,
+
+    copy_initialize(decl, expr)
+
+  This would allow me to check declaration properties as part of the
+  initialization rules, possibly avoiding the extra
+
+
 - Constant function arguments
 - Templates and concepts
 - Move semantics

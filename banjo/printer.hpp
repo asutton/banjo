@@ -71,17 +71,12 @@ struct Printer
   void type(Type const&);
   void type(Unparsed_type const&);
   void suffix_type(Type const&);
-  void suffix_type(Pack_type const&);
   void prefix_type(Type const&);
-  void prefix_type(Reference_type const&);
   void unary_type(Type const&);
   void unary_type(Pointer_type const&);
-  void unary_type(Qualified_type const&);
   void postfix_type(Type const&);
   void postfix_type(Array_type const&);
   void postfix_type(Tuple_type const&);
-  void postfix_type(Slice_type const&);
-  void postfix_type(Dynarray_type const&);
   void primary_type(Type const&);
   void primary_type(Void_type const&);
   void primary_type(Boolean_type const&);
@@ -134,7 +129,6 @@ struct Printer
   void literal(Real_expr const&);
   void id_expression(Id_expr const&);
   void id_expression(Decl_expr const&);
-  void id_expression(Check_expr const&);
   void id_expression(Synthetic_expr const&);
 
   void requires_expression(Requires_expr const&);

@@ -17,18 +17,33 @@
 namespace banjo
 {
 
-// Unary logical expressions
+// Standard expressions
 
 // Build a standard unary logical operator. The operand is contextually
-// converted to bool, and the result type is bool.
+// converted to bool, and the result is bool value.
 template<typename Make>
 static Expr&
 make_standard_logical_expr(Context& cxt, Expr& e, Make make)
 {
   Expr& c = contextual_conversion_to_bool(cxt, e);
   Type& t = cxt.get_bool_type();
-  return make(t, c);
+  return make(integer_value, t, c);
 }
+
+// Build a standard binary logical operators. The operands are
+// contextually converted to bool, and the result type is bool.
+template<typename Make>
+static Expr&
+make_standard_logical_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
+{
+  Expr& c1 = contextual_conversion_to_bool(cxt, e1);
+  Expr& c2 = contextual_conversion_to_bool(cxt, e2);
+  Type& t = cxt.get_bool_type();
+  return make(t, c1, c2);
+}
+
+
+// User-defined expressions
 
 
 // Build a dependent unary logical expression. See comments on the
@@ -64,13 +79,6 @@ make_dependent_logical_expr(Context& cxt, Expr& e, Make make)
 }
 
 
-template<typename Make>
-static Expr&
-make_regular_logical_expr(Context& cxt, Expr& e, Make make)
-{
-  return make_standard_logical_expr(cxt, e, make);
-}
-
 
 // Determine the result type of logical expression.
 template<typename Make>
@@ -92,18 +100,6 @@ make_logical_expr(Context& cxt, Expr& e, Make make)
 
 
 // Binary logical expressions
-
-// Build a standard binary logical operators. The operands are
-// contextually converted to bool, and the result type is bool.
-template<typename Make>
-static Expr&
-make_standard_logical_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
-{
-  Expr& c1 = contextual_conversion_to_bool(cxt, e1);
-  Expr& c2 = contextual_conversion_to_bool(cxt, e2);
-  Type& t = cxt.get_bool_type();
-  return make(t, c1, c2);
-}
 
 
 // Build a dependent binary logical expression.
@@ -146,6 +142,14 @@ make_dependent_logical_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
 }
 
 
+template<typename Make>
+static Expr&
+make_regular_logical_expr(Context& cxt, Expr& e, Make make)
+{
+  // FIXME: Search for overloaded operators.
+  return make_standard_logical_expr(cxt, e, make);
+}
+
 
 // Build a non-dependent logical operator. If either e1 or e2 is
 // a user-defined type, then this may find an overloaded operator.
@@ -172,7 +176,7 @@ make_logical_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
       return make_regular_logical_expr(cxt, e1, e2, make);
   } catch (Translation_error&) {
     // FIXME: Build an expression with a poisoned type
-    // so that we can continue diagnosting errors.
+    // so that we can continue diagnosing errors.
     throw;
   }
 }
@@ -182,7 +186,7 @@ Expr&
 make_logical_and(Context& cxt, Expr& e1, Expr& e2)
 {
   auto make = [&cxt](Type& t, Expr& e1, Expr& e2) -> Expr& {
-    return cxt.make_and(t, e1, e2);
+    return cxt.make_and(val_expr, t, e1, e2);
   };
   return make_logical_expr(cxt, e1, e2, make);
 }
@@ -192,19 +196,20 @@ Expr&
 make_logical_or(Context& cxt, Expr& e1, Expr& e2)
 {
   auto make = [&cxt](Type& t, Expr& e1, Expr& e2) -> Expr& {
-    return cxt.make_or(t, e1, e2);
+    return cxt.make_or(val_expr, t, e1, e2);
   };
   return make_logical_expr(cxt, e1, e2, make);
 }
 
 
+// FIXME: Handle dependent types and overload resolution.
 Expr&
 make_logical_not(Context& cxt, Expr& e)
 {
   Builder build(cxt);
   Expr& c = contextual_conversion_to_bool(cxt, e);
   Type& t = c.type();
-  return build.make_not(t, c);
+  return build.make_not(val_expr, t, c);
 }
 
 

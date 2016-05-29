@@ -24,7 +24,7 @@ Expr&
 make_bit_and(Context& cxt, Expr& e1, Expr& e2)
 {
   Type& t = cxt.get_int_type();
-  return cxt.make_bit_and(t, e1, e2);
+  return cxt.make_bit_and(val_expr, t, e1, e2);
 }
 
 
@@ -32,7 +32,7 @@ Expr&
 make_bit_or(Context& cxt, Expr& e1, Expr& e2)
 {
   Type& t = cxt.get_int_type();
-  return cxt.make_bit_or(t, e1, e2);
+  return cxt.make_bit_or(val_expr, t, e1, e2);
 }
 
 
@@ -40,7 +40,7 @@ Expr&
 make_bit_xor(Context& cxt, Expr& e1, Expr& e2)
 {
   Type& t = cxt.get_int_type();
-  return cxt.make_bit_xor(t, e1, e2);
+  return cxt.make_bit_xor(val_expr, t, e1, e2);
 }
 
 
@@ -48,7 +48,7 @@ Expr&
 make_bit_lsh(Context& cxt, Expr& e1, Expr& e2)
 {
   Type& t = cxt.get_int_type();
-  return cxt.make_bit_lsh(t, e1, e2);
+  return cxt.make_bit_lsh(val_expr, t, e1, e2);
 }
 
 
@@ -56,7 +56,7 @@ Expr&
 make_bit_rsh(Context& cxt, Expr& e1, Expr& e2)
 {
   Type& t = cxt.get_int_type();
-  return cxt.make_bit_rsh(t, e1, e2);
+  return cxt.make_bit_rsh(val_expr, t, e1, e2);
 }
 
 
@@ -64,7 +64,7 @@ Expr&
 make_bit_not(Context& cxt, Expr& e)
 {
   Type& t = cxt.get_int_type();
-  return cxt.make_bit_not(t, e);
+  return cxt.make_bit_not(val_expr, t, e);
 }
 
 

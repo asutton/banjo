@@ -57,9 +57,9 @@ make_compiler_version(Context& cxt)
 }
 
 
-// Generate the function
+// Generate the following (static) macro.
 //
-//    static def show(const n : int) -> void
+//    static macro show(const n : int) -> void
 static Declaration_stmt&
 make_compiler_show_int(Context& cxt)
 {

@@ -52,7 +52,9 @@ define_node(Not_expr)
 define_node(Assign_expr)
 
 // Function call
-// TODO: Specialize call expression types for method call, virtual call, etc.
+// TODO: Specialize call expression types for method call, virtual 
+// call, etc. That would make it easier to specialize behaviors in
+// evaluation, code gen.
 define_node(Call_expr)
 
 // Conversions
@@ -72,9 +74,7 @@ define_node(Bind_init)
 define_node(Direct_init)
 define_node(Aggregate_init)
 
-// Concept check
-define_node(Check_expr)
+// Misc.
 define_node(Requires_expr)
 define_node(Synthetic_expr)
-
 define_node(Unparsed_expr)

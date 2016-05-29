@@ -14,7 +14,7 @@ enum Qualifier_set
   empty_qual    = 0,
   const_qual    = 1 << 0,
   volatile_qual = 1 << 1,
-  total_qual    = const_qual | volatile_qual
+  cv_qual       = const_qual | volatile_qual
 };
 
 

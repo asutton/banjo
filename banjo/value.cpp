@@ -10,15 +10,15 @@
 namespace banjo
 {
 
-// Return a string value for the arary. This is needed for any
+// Return a string value for the aggregate. This is needed for any
 // transformation to narrow string literals in the evaluation
 // character set.
-std::string
-Array_value::get_as_string() const
+String
+Aggregate_value::get_string() const
 {
-  std::string str(len, '\0');
-  std::transform(data, data + len, str.begin(), [](Value const& v) -> char {
-    return (v.is_integer() ? v.get_integer() : v.get_float());
+  String str(size(), 0);
+  std::transform(begin(), end(), str.begin(), [](Value const& v) -> char {
+    return v.get_integer();
   });
   return str;
 }
@@ -30,32 +30,13 @@ Array_value::get_as_string() const
 // enclosing characters. Make a single function.
 
 inline void
-print(std::ostream& os, Array_value const& v)
-{
-  os << '[';
-  Value const* p = v.data;
-  Value const* q = p + v.len;
-  while (p != q) {
-    os << *p;
-    if (p + 1 != q)
-      os << ',';
-    ++p;
-  }
-  os << ']';
-}
-
-
-inline void
-print(std::ostream& os, Tuple_value const& v)
+print(std::ostream& os, Aggregate_value const& v)
 {
   os << '{';
-  Value const* p = v.data;
-  Value const* q = p + v.len;
-  while (p != q) {
-    os << *p;
-    if (p + 1 != q)
+  for (auto iter = v.begin(); iter != v.end(); ++iter) {
+    os << *iter;
+    if (std::next(iter) != v.end())
       os << ',';
-    ++p;
   }
   os << '}';
 }
@@ -68,17 +49,13 @@ operator<<(std::ostream& os, Value const& v)
   {
     std::ostream& os;
 
-    void operator()(Error_value const& v) { os << "<error>"; }
-    void operator()(Integer_value const& v) { os << v; };
-    void operator()(Float_value const& v) { os << v; };
-    
-    // TODO: Print something more meaningful?
-    void operator()(Reference_value const& v) { os << '@' << &v; };
-    
-    void operator()(Array_value const& v) { print(os, v); }
-    void operator()(Tuple_value const& v) { print(os, v); }
+    void operator()(Error_value const& v)     { os << "<error>"; }
+    void operator()(Void_value const& v)      { os << "<void>"; };
+    void operator()(Integer_value const& v)   { os << v; };
+    void operator()(Float_value const& v)     { os << v; };
+    void operator()(Aggregate_value const& v) { print(os, v); }
+    void operator()(Reference_value const& v) { os << '@' << v; };
   };
-
   apply(v, Fn{os});
   return os;
 }
@@ -95,6 +72,7 @@ zero_initialize(Integer_value& v)
   v = 0;
 }
 
+
 // Set to 0.
 inline void
 zero_initialize(Float_value& v)
@@ -107,8 +85,8 @@ zero_initialize(Float_value& v)
 void
 zero_initialize(Aggregate_value& v)
 {
-  for (std::size_t i = 0; i < v.len; ++i)
-    zero_initialize(v.data[i]);
+  for (Value& elem : v)
+    zero_initialize(elem);
 }
 
 
@@ -119,11 +97,12 @@ zero_initialize(Value& v)
 {
   struct fn
   {
-    void operator()(Error_value& v)     { };
+    void operator()(Error_value& v)     { /* Do nothing. */ };
+    void operator()(Void_value& v)      { /* Do nothing. */ };
     void operator()(Integer_value& v)   { zero_initialize(v); };
     void operator()(Float_value& v)     { zero_initialize(v); };
-    void operator()(Reference_value& v) { }
     void operator()(Aggregate_value& v) { zero_initialize(v); };
+    void operator()(Reference_value& v) { /* Do nothing. */ }
   };
   apply(v, fn{});
 }

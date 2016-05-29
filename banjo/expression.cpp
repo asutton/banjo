@@ -28,7 +28,7 @@ make_required_expression(Context& cxt, Expr& e)
 // A requires expression has type bool.
 //
 // TODO: Actually validate information about the requires expression. The
-// statement cannot be emtpy. No variadic parameter, etc.
+// statement cannot be empty. No variadic parameter, etc.
 //
 // TODO: Eventually move this to a different expr_ module.
 Expr&
@@ -41,26 +41,20 @@ make_requirements(Context& cxt,
 }
 
 
-// Apply an object-to-value conversion.
+// Apply an reference-to-value conversion.
 //
 // FIXME: Move this into the conversion module.
 static inline Expr&
 convert_to_value(Context& cxt, Expr& e)
 {
-  Type& t = e.type().non_reference_type();
-  return standard_conversion(e, t);
+  Type& t = e.type();
+  return standard_conversion_to_value(cxt, e, t);
 }
 
 
-// Returns a new tuple expression. The operands are converted to values.
-// The type of a tuple expression is the tuple type comprising the types
+// A tuple expression is a value expression of tuple type. Value conversions
+// are applied to each operands. The tuple type is formed from the types
 // of the converted operands.
-//
-// The value of a tuple expression is an aggregate containing the values
-// of its operands.
-//
-// TODO: Are there any other conversions we want to perform prior to
-// converting these to values?
 Expr&
 make_tuple_expr(Context& cxt, Expr_list& es)
 {

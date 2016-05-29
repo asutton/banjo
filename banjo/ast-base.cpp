@@ -2,3 +2,12 @@
 // All rights reserved
 
 #include "ast-base.hpp"
+#include "ast-type.hpp"
+#include "ast-decl.hpp"
+
+
+namespace banjo
+{
+
+
+} // namespace banjo

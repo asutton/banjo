@@ -51,21 +51,6 @@ Function_expr::declaration()
 }
 
 
-
-Concept_decl const&
-Check_expr::declaration() const
-{
-  return cast<Concept_decl>(*con);
-}
-
-
-Concept_decl&
-Check_expr::declaration()
-{
-  return cast<Concept_decl>(*con);
-}
-
-
 // -------------------------------------------------------------------------- //
 // Operations on expressions
 
@@ -93,15 +78,7 @@ has_floating_point_type(Expr const& e)
 }
 
 
-// Returns true if `e` has reference type.
-bool
-has_reference_type(Expr const& e)
-{
-  return is_reference_type(e.type());
-}
-
-
-// Returns trhe if `e` has array type.
+// Returns true if `e` has array type.
 bool
 has_array_type(Expr const& e)
 {
@@ -109,15 +86,16 @@ has_array_type(Expr const& e)
 }
 
 
-// Returns trhe if `e` has tuple type.
+// Returns true if `e` has tuple type.
 bool
 has_tuple_type(Expr const& e)
 {
   return is_tuple_type(e.type());
 }
 
+
 // -------------------------------------------------------------------------- //
-// Depdendent expressions
+// Dependent expressions
 
 
 // Returns true if the expression is type-dependent. An expression

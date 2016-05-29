@@ -83,4 +83,5 @@ declared_type(Decl const& d)
   return declared_type(const_cast<Decl&>(d));
 }
 
+
 } // namespace banjo

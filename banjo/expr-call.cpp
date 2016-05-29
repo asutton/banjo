@@ -2,16 +2,12 @@
 // All rights reserved
 
 #include "expression.hpp"
-#include "ast-type.hpp"
-#include "ast-expr.hpp"
-#include "ast-decl.hpp"
+#include "ast.hpp"
 #include "context.hpp"
 #include "type.hpp"
 #include "template.hpp"
-#include "constraint.hpp"
 #include "lookup.hpp"
-#include "deduction.hpp"
-#include "subsumption.hpp"
+#include "initialization.hpp"
 #include "printer.hpp"
 
 #include <iostream>
@@ -19,6 +15,77 @@
 
 namespace banjo
 {
+
+
+// Initialize one parameter and advance the iterators.
+//
+// The parameter initial parameter and argument are provided to compute 
+// parameter/argument indexes. Note that with packs and variadics the
+// argument index may not match the parameter index.
+Expr&
+initialize_parameter(Context& cxt, 
+                     Decl_iter p0, Decl_iter& pi, 
+                     Expr_iter a0, Expr_iter& ai)
+{
+  // TODO: Trap errors and use these to explain failures. If we do get 
+  // errors, what should we return? Note that we probably need the candidate 
+  // in order to cache these for subsequent diagnosis.
+  Expr& e = copy_initialize(cxt, *pi, *ai);
+
+  // TODO: If the type of *p is an ellipsis or pack, do not increment 
+  // that iterator.
+  ++pi;
+  ++ai;
+
+  return e;
+}
+
+
+// Determine initialization patterns for all arguments.
+Expr_list
+initialize_parameters(Context& cxt, Decl_list& parms, Expr_list& args)
+{
+  // TODO: Handle default arguments here.
+  if (args.size() < parms.size())
+    throw std::runtime_error("too few arguments");
+
+  // Build a list of converted arguments by copy-initializing
+  // each parameter in turn.
+  Expr_list ret;
+  Decl_iter p0 = parms.begin(), pi = p0, pn = parms.end();
+  Expr_iter a0 = args.begin(), ai = a0, an = args.end();
+  while (pi != pn && ai != an) {
+    Expr& e = initialize_parameter(cxt, p0, pi, a0, ai);
+    ret.push_back(e);
+  }
+
+  return ret;
+}
+
+
+// Build a candidate for the given function. The resulting candidate may
+// be non-viable.
+//
+// TODO: Synthesize default arguments if needed.
+//
+// TODO: If the function is a template, we need to deduce arguments.
+// Presumably, that would be done via an overload of this function that
+// takes a Function_tmp.
+Function_candidate
+make_function_candidate(Context& cxt, Function_decl& f, Expr_list& args)
+{
+  try {
+    Decl_list& parms = f.parameters();
+    Expr_list conv = initialize_parameters(cxt, parms, args);
+    return {f, conv, true};
+  } 
+  catch (Compiler_error& err) {
+    // TOOD: We might want to copy the error into the candidate
+    // so we can re-throw it later. For now, just do this.
+    return {f, args, false};
+  }
+}
+
 
 #if 0
 // Attempt to resolve a dependent call to a (single) function template.
@@ -107,11 +174,20 @@ Expr&
 make_regular_call(Context& cxt, Function_expr& e, Expr_list& args)
 {
   Function_decl& fn = e.declaration();
+  Function_candidate cand = make_function_candidate(cxt, fn, args);
+  if (!cand.viable) {
+    // TODO: Diagnose the error at the call site. Also explain why.
+    error(cxt, "cannot call function '{}", fn.name());
+    throw Lookup_error();
+  }
 
-  // FIXME: check arguments.
+  // FIXME: The category is determined by the return value declaration.
+  Category c = val_expr;
 
-  Call_expr& call =  cxt.make_call(fn.return_type(), e, args);
-  return call;
+  // The type is the declared return type of the function.
+  Type& t = fn.return_type();
+
+  return cxt.make_call(c, t, e, args);
 }
 
 
@@ -119,7 +195,7 @@ make_regular_call(Context& cxt, Function_expr& e, Expr_list& args)
 //
 // FIXME: Allow calls to expressions of any function type.
 //
-// NOTE: The builtin function call operator requries an object-to-value
+// NOTE: The builtin function call operator requires an object-to-value
 // conversion on the target. Be sure to apply that.
 //
 // FIXME: If e has user-defined type then we need to look for an

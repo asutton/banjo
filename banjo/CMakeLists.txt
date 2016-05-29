@@ -38,7 +38,6 @@ add_library(banjo
   expr-arithmetic.cpp
   expr-bitwise.cpp
   expr-call.cpp  
-  call.cpp
 
   # Semantic rules and algorithms
   equivalence.cpp

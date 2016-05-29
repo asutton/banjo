@@ -20,6 +20,9 @@
 namespace banjo
 {
 
+enum Category : int;
+
+
 // An interface to an AST builder.
 //
 // TODO: Factor all the checking into a policy class provided
@@ -35,8 +38,6 @@ struct Builder
   { }
 
   // Names
-  //
-  // TODO: Implement more of these.
   Simple_id&      get_id(char const*);
   Simple_id&      get_id(std::string const&);
   Simple_id&      get_id(Symbol const&);
@@ -52,87 +53,115 @@ struct Builder
   Qualified_id&   get_qualified_id(Decl&, Name&);
   Global_id&      get_global_id();
 
-  // Types
+  // Fundamental types
   Void_type&      get_void_type();
+  Void_type&      get_void_type(Qualifier_set);
   Boolean_type&   get_bool_type();
+  Boolean_type&   get_bool_type(Qualifier_set);
   Byte_type&      get_byte_type();
+  Byte_type&      get_byte_type(Qualifier_set);
   Integer_type&   get_integer_type(bool, int);
+  Integer_type&   get_integer_type(Qualifier_set, bool, int);
   Integer_type&   get_int_type();
+  Integer_type&   get_int_type(Qualifier_set);
   Integer_type&   get_uint_type();
+  Integer_type&   get_uint_type(Qualifier_set);
   Float_type&     get_float_type();
-  Decltype_type&  get_decltype_type(Expr&);
+  Float_type&     get_float_type(Qualifier_set);
+
+  // Composite types
   Function_type&  get_function_type(Decl_list const&, Type&);
   Function_type&  get_function_type(Type_list const&, Type&);
-  Qualified_type& get_qualified_type(Type&, Qualifier_set);
-  Qualified_type& get_const_type(Type&);
-  Qualified_type& get_volatile_type(Type&);
-  Pointer_type&   get_pointer_type(Type&);
-  Reference_type& get_reference_type(Type&);
   Array_type&     get_array_type(Type&, Expr&);
   Tuple_type&     get_tuple_type(Type_list&&);
   Tuple_type&     get_tuple_type(Type_list const&);
-  Slice_type&     get_slice_type(Type&);
-  Dynarray_type&  get_dynarray_type(Type&, Expr&);
-  Pack_type&      get_pack_type(Type&);
+  Pointer_type&   get_pointer_type(Type&);
+  Pointer_type&   get_pointer_type(Qualifier_set, Type&);
+
+  // User-defined types
   Class_type&     get_class_type(Type_decl&);
+  Class_type&     get_class_type(Qualifier_set, Type_decl&);
   Typename_type&  get_typename_type(Type_decl&);
+  Typename_type&  get_typename_type(Qualifier_set, Type_decl&);
   Coroutine_type& get_coroutine_type(Type_decl&);
   Coroutine_type& get_coroutine_type();
+  
+  // Placeholder types
   Auto_type&      get_auto_type(Type_decl&);
+  Decltype_type&  get_decltype_type(Expr&);
+
+  // Qualified types
+  Type& get_qualified_type(Type&, Qualifier_set);
+  Type& get_unqualified_type(Type&);
+  Type& get_const_type(Type&);
+  Type& get_volatile_type(Type&);
+  Type& get_cv_type(Type&);
+
+  // Meta-types
   Type_type&      get_type_type();
 
-  // Placeholder types
+  // Fresh types
   Auto_type&      make_auto_type();
+  Synthetic_type& make_synthetic_type(Decl&);
 
-  Synthetic_type& synthesize_type(Decl&);
+  // Literals
+  Void_expr&     get_void();
+  Boolean_expr&  get_bool(bool);
+  Boolean_expr&  get_true();
+  Boolean_expr&  get_false();
+  Integer_expr&  get_integer(Type&, Integer const&);
+  Integer_expr&  get_zero(Type&);
+  Integer_expr&  get_int(Integer const&);
+  Integer_expr&  get_uint(Integer const&);
+  
+  // Aggregates
+  Tuple_expr&    make_tuple(Type&, Expr_list&&);
 
-  // Expressions
-  Void_expr&      get_void();
-  Boolean_expr&   get_bool(bool);
-  Boolean_expr&   get_true();
-  Boolean_expr&   get_false();
-  Integer_expr&   get_integer(Type&, Integer const&);
-  Integer_expr&   get_zero(Type&);
-  Integer_expr&   get_int(Integer const&);
-  Integer_expr&   get_uint(Integer const&);
-  Tuple_expr&     make_tuple(Type&, Expr_list&&);
+  // References
+  Object_expr&   make_reference(Category, Type&, Object_decl&);
+  Value_expr&    make_reference(Category, Type&, Value_decl&);
+  Function_expr& make_reference(Category, Type&, Function_decl&);
+  Overload_expr& make_reference(Name&, Decl_list&&);
+  Field_expr&    make_reference(Category, Type&, Expr&, Field_decl&);
+  Method_expr&   make_reference(Category, Type&, Expr&, Method_decl&);
+  Member_expr&   make_reference(Expr&, Name&, Decl_list&&);
 
-  Object_expr&    make_object_reference(Type&, Object_decl&);
-  Value_expr&     make_value_reference(Type&, Value_decl&);
-  Function_expr&  make_function_reference(Type&, Function_decl&);
-  Overload_expr&  make_overload_reference(Name&, Decl_list&&);
-  Field_expr&     make_field_reference(Type&, Expr&, Field_decl&);
-  Method_expr&    make_method_reference(Type&, Expr&, Method_decl&);
-  Member_expr&    make_member_reference(Expr&, Name&, Decl_list&&);
+  // Logical expressions
+  And_expr&       make_and(Category, Type&, Expr&, Expr&);
+  Or_expr&        make_or(Category, Type&, Expr&, Expr&);
+  Not_expr&       make_not(Category, Type&, Expr&);
 
-  Check_expr&     make_check(Concept_decl&, Term_list const&);
+  // Relational expressions
+  Eq_expr&        make_eq(Category, Type&, Expr&, Expr&);
+  Ne_expr&        make_ne(Category, Type&, Expr&, Expr&);
+  Lt_expr&        make_lt(Category, Type&, Expr&, Expr&);
+  Gt_expr&        make_gt(Category, Type&, Expr&, Expr&);
+  Le_expr&        make_le(Category, Type&, Expr&, Expr&);
+  Ge_expr&        make_ge(Category, Type&, Expr&, Expr&);
 
-  And_expr&       make_and(Type&, Expr&, Expr&);
-  Or_expr&        make_or(Type&, Expr&, Expr&);
-  Not_expr&       make_not(Type&, Expr&);
-  Eq_expr&        make_eq(Type&, Expr&, Expr&);
-  Ne_expr&        make_ne(Type&, Expr&, Expr&);
-  Lt_expr&        make_lt(Type&, Expr&, Expr&);
-  Gt_expr&        make_gt(Type&, Expr&, Expr&);
-  Le_expr&        make_le(Type&, Expr&, Expr&);
-  Ge_expr&        make_ge(Type&, Expr&, Expr&);
-  Add_expr&       make_add(Type&, Expr&, Expr&);
-  Sub_expr&       make_sub(Type&, Expr&, Expr&);
-  Mul_expr&       make_mul(Type&, Expr&, Expr&);
-  Div_expr&       make_div(Type&, Expr&, Expr&);
-  Rem_expr&       make_rem(Type&, Expr&, Expr&);
-  Neg_expr&       make_neg(Type&, Expr&);
-  Pos_expr&       make_pos(Type&, Expr&);
-  Bit_and_expr&   make_bit_and(Type&, Expr&, Expr&);
-  Bit_or_expr&    make_bit_or(Type&, Expr&, Expr&);
-  Bit_xor_expr&   make_bit_xor(Type&, Expr&, Expr&);
-  Bit_lsh_expr&   make_bit_lsh(Type&, Expr&, Expr&);
-  Bit_rsh_expr&   make_bit_rsh(Type&, Expr&, Expr&);
-  Bit_not_expr&   make_bit_not(Type&, Expr&);
-  Call_expr&      make_call(Type&, Expr&, Expr_list const&);
-  Call_expr&      make_call(Type&, Function_decl&, Expr_list const&);
+  // Arithmetic expressions
+  Add_expr&       make_add(Category, Type&, Expr&, Expr&);
+  Sub_expr&       make_sub(Category, Type&, Expr&, Expr&);
+  Mul_expr&       make_mul(Category, Type&, Expr&, Expr&);
+  Div_expr&       make_div(Category, Type&, Expr&, Expr&);
+  Rem_expr&       make_rem(Category, Type&, Expr&, Expr&);
+  Neg_expr&       make_neg(Category, Type&, Expr&);
+  Pos_expr&       make_pos(Category, Type&, Expr&);
+
+  // Bitwise expressions
+  Bit_and_expr&   make_bit_and(Category, Type&, Expr&, Expr&);
+  Bit_or_expr&    make_bit_or(Category, Type&, Expr&, Expr&);
+  Bit_xor_expr&   make_bit_xor(Category, Type&, Expr&, Expr&);
+  Bit_lsh_expr&   make_bit_lsh(Category, Type&, Expr&, Expr&);
+  Bit_rsh_expr&   make_bit_rsh(Category, Type&, Expr&, Expr&);
+  Bit_not_expr&   make_bit_not(Category, Type&, Expr&);
+
+  // Function call
+  Call_expr& make_call(Category, Type&, Expr&, Expr_list const&);
+
+  // Misc.
   Requires_expr&  make_requires(Decl_list const&, Decl_list const&, Req_list const&);
-  Synthetic_expr& synthesize_expression(Decl&);
+  Synthetic_expr& synthesize_expression(Category, Decl&);
 
   // Statements
   Empty_stmt&       make_empty_statement();
@@ -191,10 +220,10 @@ struct Builder
   Concept_decl&   make_concept(char const*, Decl_list const&, Expr&);
 
   // Initializers
-  Trivial_init&   make_trivial_init(Type&);
-  Copy_init&      make_copy_init(Type&, Expr&);
-  Bind_init&      make_bind_init(Type&, Expr&);
-  Direct_init&    make_direct_init(Type&, Decl&, Expr_list const&);
+  Trivial_init&   make_trivial_init();
+  Copy_init&      make_copy_init(Expr&);
+  Bind_init&      make_bind_init(Expr&);
+  Direct_init&    make_direct_init(Decl&, Expr_list const&);
   Aggregate_init& make_aggregate_init(Type&, Expr_list const&);
   Aggregate_init& make_aggregate_init(Type&, Expr_list&&);
 

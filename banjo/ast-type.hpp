@@ -11,28 +11,41 @@
 namespace banjo
 {
 
-// The base class of all types.
+// The base class of all types. 
+//
+// Each object type has a finite number qualified variants. Qualifiers
+// include. In particular a qualified type can be const, volatile, or
+// both. 
+//
+// Note that the qualification of a type must not be changed during
+// its lifetime. Use the builder to request types of different
+// qualification.
+//
+// TODO: Do we want more qualifiers? Atomic? Restrict?
 struct Type : Term
 {
   struct Visitor;
   struct Mutator;
 
+  Type()
+    : qual_(empty_qual)
+  { }
+
+  Type(Qualifier_set q)
+    : qual_(q)
+  { }
+
   virtual void accept(Visitor&) const = 0;
   virtual void accept(Mutator&)       = 0;
 
-  // Returns the qualifier for this type.
-  virtual Qualifier_set qualifier() const   { return empty_qual; }
-  virtual bool          is_const() const    { return false; }
-  virtual bool          is_volatile() const { return false; }
-  bool                  is_qualified() { return qualifier() != empty_qual; }
+  // Returns the qualifier for this type. 
+  Qualifier_set qualifiers() const { return qual_; }
+  bool is_qualified() const { return qual_ == empty_qual; }
+  bool is_const() const     { return qual_ & const_qual; }
+  bool is_volatile() const  { return qual_ & volatile_qual; }
+  bool is_cv() const        { return is_const() && is_volatile(); }
 
-  // Returns the unqualified version of this type.
-  virtual Type const& unqualified_type() const { return *this; }
-  virtual Type&       unqualified_type()       { return *this; }
-
-  // Returns the non-reference version of this type.
-  virtual Type const& non_reference_type() const { return *this; }
-  virtual Type&       non_reference_type()       { return *this; }
+  Qualifier_set qual_;
 };
 
 
@@ -55,6 +68,8 @@ struct Type::Mutator
 // The void type.
 struct Void_type : Type
 {
+  using Type::Type;
+
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 };
@@ -63,6 +78,8 @@ struct Void_type : Type
 // The boolean type.
 struct Boolean_type : Type
 {
+  using Type::Type;
+
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 };
@@ -77,19 +94,23 @@ struct Boolean_type : Type
 struct Integer_type : Type
 {
   Integer_type(bool s = true, int p = 32)
-    : sgn(s), prec(p)
+    : Type(), sgn_(s), prec_(p)
+  { }
+
+  Integer_type(Qualifier_set q, bool s = true, int p = 32)
+    : Type(q), sgn_(s), prec_(p)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
-  bool sign() const        { return sgn; }
-  bool is_signed() const   { return sgn; }
-  bool is_unsigned() const { return !sgn; }
-  int  precision() const   { return prec; }
+  bool sign() const        { return sgn_; }
+  bool is_signed() const   { return sgn_; }
+  bool is_unsigned() const { return !sgn_; }
+  int  precision() const   { return prec_; }
 
-  bool sgn;
-  int  prec;
+  bool sgn_;
+  int  prec_;
 };
 
 
@@ -97,6 +118,8 @@ struct Integer_type : Type
 // and is comprised of an implementation defined sequence of bits. 
 struct Byte_type : Type
 {
+  using Type::Type;
+
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 };
@@ -106,7 +129,11 @@ struct Byte_type : Type
 struct Float_type : Type
 {
   Float_type(int p = 64)
-    : prec(p)
+    : Type(), prec(p)
+  { }
+
+  Float_type(Qualifier_set q, int p = 64)
+    : Type(q), prec(p)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -119,10 +146,12 @@ struct Float_type : Type
 
 
 // A function type.
+//
+// Note that function types are never qualified.
 struct Function_type : Type
 {
   Function_type(Type_list const& p, Type& r)
-    : parms(p), ret(&r)
+    : Type(), parms(p), ret(&r)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -139,89 +168,37 @@ struct Function_type : Type
 };
 
 
-// The base class of all unary type constructors.
-struct Unary_type : Type
-{
-  Unary_type(Type& t)
-    : type_(&t)
-  { }
-
-  Type const& type() const { return *type_; }
-  Type&       type()       { return *type_; }
-
-  Type* type_;
-};
-
-
-// A qualified type.
-struct Qualified_type : Unary_type
-{
-  Qualified_type(Type& t, Qualifier_set q)
-    : Unary_type(t), qual(q)
-  {
-    lingo_assert(q != empty_qual);
-    lingo_assert(!is<Qualified_type>(t));
-  }
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the qualifier for this type. Note that these
-  // override functions in type.
-  Qualifier_set qualifiers() const   { return qual; }
-  bool          is_const() const    { return qual & const_qual; }
-  bool          is_volatile() const { return qual & volatile_qual; }
-
-  // Returns the unqualified version of this type.
-  Type const& unqualified_type() const { return type(); }
-  Type&       unqualified_type()       { return type(); }
-
-  Qualifier_set qual;
-};
-
-
-struct Pointer_type : Unary_type
-{
-  using Unary_type::Unary_type;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-};
-
-
-// Represents a reference to an object.
-struct Reference_type : Unary_type
-{
-  using Unary_type::Unary_type;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the non-reference version of this type.
-  Type const& non_reference_type() const { return type(); }
-  Type&       non_reference_type()       { return type(); }
-};
-
-
+// An array type with constant extent.
+//
+// An array type is not qualified, but its elements can be.
+//
+// TODO: Save the computed extent. In fact, should we be storing
+// the integer extend instead of the expression?
 struct Array_type : Type
 {
-  Array_type(Type& t, Expr& e) : ty(&t),ext(&e) {} 
+  Array_type(Type& t, Expr& e) 
+    : Type(), type_(&t), expr_(&e) 
+  { } 
   
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
-  Type const& type() const { return *ty; }
-  Type&       type()       { return *ty; }
+  // Returns the element type of the array.
+  Type const& element_type() const { return *type_; }
+  Type&       element_type()       { return *type_; }
 
-  Expr const& extent() const { return *ext; }
-  Expr&       extent()       { return *ext; }
+  // Returns the expression defining the extent of the array.
+  Expr const& extent() const { return *expr_; }
+  Expr&       extent()       { return *expr_; }
 
-  Type* ty;
-  Expr* ext;
+  Type* type_;
+  Expr* expr_;
 };
 
 
 // A tuple type.
+//
+// A tuple type is not cv-qualified, but its elements can be.
 struct Tuple_type : Type
 {
   Tuple_type(Type_list&& t) 
@@ -242,48 +219,25 @@ struct Tuple_type : Type
 };
 
 
-// The type of an unspecified slice of an array. This is essentially a
-// pointer to a subset of an array. This type does not contain information
-// related to offset, length, and stride.
-//
-// TODO: This type could contain information about offset, length, and
-// stride based on its construction from e.g., an array. In fact, that's
-// probably an excellent idea. We just need an expression that can construct
-// these objects.
-struct Slice_type : Unary_type
+// A pointer type.
+struct Pointer_type : Type
 {
-  using Unary_type::Unary_type;
+  Pointer_type(Type& t)
+    : Type(), type_(&t)
+  { }
+
+  Pointer_type(Qualifier_set q, Type& t)
+    : Type(q), type_(&t)
+  { }
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-};
 
+  // Returns the pointed-at type.
+  Type const& type() const { return *type_; }
+  Type&       type()       { return *type_; }
 
-struct Dynarray_type : Type
-{
-  Dynarray_type(Type& t, Expr& e) : ty(&t),ext(&e) {} 
-  
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  Type const& type() const { return *ty; }
-  Type&       type()       { return *ty; }
-
-  Expr const& extent() const { return *ext; }
-  Expr&       extent()       { return *ext; }
-
-  Type* ty;
-  Expr* ext;
-};
-
-
-// The type of a parameter pack.
-struct Pack_type : Unary_type
-{
-  using Unary_type::Unary_type;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
+  Type* type_;
 };
 
 
@@ -293,7 +247,11 @@ struct Pack_type : Unary_type
 struct Declared_type : Type
 {
   Declared_type(Decl& d)
-    : decl_(&d)
+    : Type(), decl_(&d)
+  { }
+
+  Declared_type(Qualifier_set q, Decl& d)
+    : Type(q), decl_(&d)
   { }
 
   // Returns the name of the user-defined type.
@@ -308,9 +266,7 @@ struct Declared_type : Type
 };
 
 
-// A user-defined type refers to its declaration.
-//
-// FIXME: Rename to Class_type.
+// A class type is declared by a class.
 struct Class_type : Declared_type
 {
   using Declared_type::Declared_type;
@@ -324,7 +280,7 @@ struct Class_type : Declared_type
 };
 
 
-
+// A typename type is declared by a type parameter.
 struct Typename_type : Declared_type
 {
   using Declared_type::Declared_type;
@@ -350,21 +306,19 @@ struct Coroutine_type : Class_type
   Type_list const& parameter_types() const { return params; }
   Type_list&       parameter_types()       { return params; }
 
-  // Returns the type yielded by the coroutine in every evalation.
+  // Returns the type yielded by the coroutine in every evaluation.
   Type const& return_type() const     { return *ret; }
   Type&       return_type()           { return *ret; }
 
   Type_list params;
   Type*     ret;
-
 };
 
 
 // The auto type.
 //
-// TODO: Allow a deduction constraint on placeholder types.
-// This would be checked after deduction. Extend this for
-// decltype(auto) types as well.
+// TODO: Allow a deduction constraint on placeholder types. This would be 
+// checked after deduction. Extend this for decltype(auto) types as well.
 //
 // FIXME: The model for auto types works like this:
 //
@@ -394,16 +348,6 @@ struct Auto_type : Declared_type
 };
 
 
-// The type decltype(e). The actual type is deduced from the
-// expression.
-struct Decltype_type : Type
-{
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-};
-
-
-
 // Represents a unique, uninterpreted type. The synthetic type
 // refers to the declaration from which it was synthesized.
 //
@@ -418,9 +362,29 @@ struct Synthetic_type : Declared_type
 };
 
 
-// The type of types. This is the most general kind of type.
+// The type decltype(e). The actual type is deduced from the
+// expression.
+struct Decltype_type : Type
+{
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// The type of a user-defined type.
+//
+// NOTE: This is currently used to model the "absence" of a meta-type 
+// for a class declaration. There's probably something better that
+// we could call this, or eliminate it completely in favor of a better
+// design?
+//
+// TODO: Rename to Type_kind? Something else?
 struct Type_type : Type
 {
+  Type_type()
+    : Type()
+  { }
+
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 };
@@ -483,14 +447,6 @@ is_function_type(Type const& t)
 }
 
 
-// Returns true if `t` is a reference type.
-inline bool
-is_reference_type(Type const& t)
-{
-  return is<Reference_type>(&t);
-}
-
-
 // Returns true if `t` is a pointer type.
 inline bool
 is_pointer_type(Type const& t)
@@ -515,11 +471,11 @@ is_tuple_type(Type const& t)
 }
 
 
-// Returns true if `t` is a dynarray type.
+// Returns true if `t` is a class type.
 inline bool
-is_dynarray_type(Type const& t)
+is_class_type(Type const& t)
 {
-  return is<Dynarray_type>(&t);
+  return is<Class_type>(t);
 }
 
 
@@ -531,6 +487,16 @@ is_scalar_type(Type const& t)
       || is_integer_type(t)
       || is_floating_point_type(t)
       || is_pointer_type(t);
+}
+
+
+// Returns true if t is a compound type.
+inline bool
+is_compound_type(Type const& t)
+{
+  return is_array_type(t)
+      || is_tuple_type(t)
+      || is_class_type(t);
 }
 
 

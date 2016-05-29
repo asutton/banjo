@@ -15,6 +15,24 @@
 namespace banjo
 {
 
+// -------------------------------------------------------------------------- //
+// Helper functions
+//
+// The following functions determine the type and value category of the
+// id-expressions, depending on the kind of declaration named.
+
+
+// Returns the expression category for an id referring to a declared object.
+Category
+get_category(Object_decl const& d)
+{
+  if (d.is_consume_reference())
+    return cref_expr;
+  else
+    return nref_expr;
+}
+
+
 // The identifier is not an object or function.
 static Expr&
 make_error_ref(Context& cxt, Decl& d)
@@ -30,40 +48,52 @@ make_error_ref(Context& cxt, Decl& d)
 }
 
 
-// Returns a reference to the declared object. The type of the
-// expression is a reference to the declared type of the object.
+// Returns a reference to the declared object. A name denoting a variable
+// or function parameter is a reference expression whose type is that
+// of the declared variable or parameter. If the declaration is declared
+// with the consume reference specifier, then the expression is a consumable
+// reference.
 static Expr&
 make_object_ref(Context& cxt, Object_decl& d)
 {
-  Type& t = make_reference_type(cxt, d.type());
-  return cxt.make_object_reference(t, d);
+  return cxt.make_reference(get_category(d), d.type(), d);
 }
 
 
-// Returns a reference to the declared constant. The type is a non-reference
-// to the declared type of the constant.
+// Returns a reference to the declared constant. A name denoting a value
+// is a value expression with the declared type of the value.
 static Expr&
 make_value_ref(Context& cxt, Value_decl& d)
 {
-  return cxt.make_value_reference(d.type(), d);
+  return cxt.make_reference(val_expr, d.type(), d);
 }
 
 
-// Returns a reference to a single function. The type of the expression is 
-// a reference to the function type.
+// Returns a reference to a declared function. A name denoting a function
+// declaration is a reference value whose type is the type of the function.
+//
+// TODO: Can I declare a consumed function? 
+//
+//    def f(n : int) -> int;
+//    consume f := fn; ???
+//
+// No... that wouldn't work. But this would:
+//
+//    consume f := consume fn;
+//
+// And it would have approximately the same meaning as this:
+//
+//    var x : int;
+//    consume x := consume x;
 static Expr&
 make_function_ref(Context& cxt, Function_decl& d)
 {
-  Type& t = make_reference_type(cxt, d.type());
-  return cxt.make_function_reference(t, d);
+  return cxt.make_reference(nref_expr, d.type(), d);
 }
 
 
-// Return a reference to the given declaration.
-//
-// FIXME: Specialize the reference based on whether it's a variable
-// or function? Also, handle all of the other things that can be
-// referred to.
+// Return a reference to the given declaration based on the kind
+// of the resolved declaration.
 static Expr&
 make_decl_ref(Context& cxt, Decl& decl)
 {
@@ -83,11 +113,70 @@ make_decl_ref(Context& cxt, Decl& decl)
 static Expr&
 make_ovl_ref(Context& cxt, Name& n, Decl_list&& ds)
 {
-  return cxt.make_overload_reference(n, std::move(ds));
+  return cxt.make_reference(n, std::move(ds));
 }
 
 
-// Perform unqualified lookup.
+// Returns an expression referring to a class field. A field expression
+// is a reference value expression whose type is that of the declared 
+// field. If the field is declared with the consume specifier, then the 
+// expression computes a consumable value.
+static Expr&
+make_field_ref(Context& cxt, Expr& e, Field_decl& d)
+{
+  return cxt.make_reference(get_category(d), d.type(), e, d);
+}
+
+
+// Returns an expression referring to a class method. A method expression
+// is a reference value expression whose type is that of the function.
+static Expr&
+make_method_ref(Context& cxt, Expr& e, Method_decl& d)
+{
+  return cxt.make_reference(nref_expr, d.type(), e, d);
+}
+
+
+// Note that member references to static data members are not
+// actually member expressions; we can discard the computed object
+// and simply refer to the core value.
+static Expr&
+make_member_decl_ref(Context& cxt, Expr& obj, Decl& decl)
+{
+  struct fn
+  {
+    Context& cxt;
+    Expr& obj;
+
+    Expr& operator()(Decl& d)          { return make_error_ref(cxt, d); }
+
+    // Non-members.
+    Expr& operator()(Object_decl& d)   { return make_object_ref(cxt, d); }
+    Expr& operator()(Value_decl& d)    { return make_value_ref(cxt, d); }
+    Expr& operator()(Function_decl& d) { return make_function_ref(cxt, d); }
+    Expr& operator()(Macro_decl& d)    { return make_function_ref(cxt, d); }
+    
+    // Members.
+    Expr& operator()(Field_decl& d)    { return make_field_ref(cxt, obj, d); }
+    Expr& operator()(Method_decl& d)   { return make_method_ref(cxt, obj, d); }
+  };
+  return apply(decl, fn{cxt, obj});
+}
+
+
+// Construct a reference to an unresolved (overloaded) member.
+static Expr&
+make_member_ovl_ref(Context& cxt, Expr& obj, Name& name, Decl_list&& ds)
+{
+  return cxt.make_reference(obj, name, std::move(ds));
+}
+
+
+// -------------------------------------------------------------------------- //
+// Non-member references
+
+// Perform unqualified lookup and return a kind of id-expression referring
+// to the found declaration(s).
 //
 // TODO: Allow an lookup to fail, indicating that we could not find
 // a name. In function calls, this could be used to perform class
@@ -127,6 +216,8 @@ make_reference(Context& cxt, Template_id& id)
 Expr&
 make_reference(Context& cxt, Concept_id& id)
 {
+  lingo_unreachable();
+
   // FIXME: There are a lot of questions to ask here... Presumably,
   // I must ensure that this resoles to a legitimate check, and the
   // arguments should match in kind (and type?). What if they don't.
@@ -138,10 +229,12 @@ make_reference(Context& cxt, Concept_id& id)
   // scope?
   //
   // As mentioned... lots of interesting things to do here.
-  return cxt.make_check(id.declaration(), id.arguments());
 }
 
 
+// Returns a reference to the given name.
+//
+// TODO: Support qualified names.
 Expr&
 make_reference(Context& cxt, Name& n)
 {
@@ -160,61 +253,10 @@ make_reference(Context& cxt, Name& n)
 // -------------------------------------------------------------------------- //
 // Member references
 
-// Returns an expression referring to a class field.
-static Expr&
-make_field_ref(Context& cxt, Expr& e, Field_decl& d)
-{
-  Type& t = make_reference_type(cxt, d.type());
-  return cxt.make_field_reference(t, e, d);
-}
-
-
-// Returns an expression referring to a class method.
-static Expr&
-make_method_ref(Context& cxt, Expr& e, Method_decl& d)
-{
-  Type& t = make_reference_type(cxt, d.type());
-  return cxt.make_method_reference(t, e, d);
-}
-
-
-// Note that member references to static data members are not
-// actually member expressions; we can discard the computed object
-// and simply refer to the core value.
-static Expr&
-make_member_decl_ref(Context& cxt, Expr& obj, Decl& decl)
-{
-  struct fn
-  {
-    Context& cxt;
-    Expr& obj;
-
-    Expr& operator()(Decl& d)          { return make_error_ref(cxt, d); }
-
-    // Scoped non-members.
-    Expr& operator()(Object_decl& d)   { return make_object_ref(cxt, d); }
-    Expr& operator()(Value_decl& d)    { return make_value_ref(cxt, d); }
-    Expr& operator()(Function_decl& d) { return make_function_ref(cxt, d); }
-    
-    // Scoped members.
-    Expr& operator()(Field_decl& d)    { return make_field_ref(cxt, obj, d); }
-    Expr& operator()(Method_decl& d)   { return make_method_ref(cxt, obj, d); }
-  };
-  return apply(decl, fn{cxt, obj});
-}
-
-
-// Construct a reference to an unresolved (overloaded) member.
-static Expr&
-make_member_ovl_ref(Context& cxt, Expr& obj, Name& name, Decl_list&& ds)
-{
-  return cxt.make_member_reference(obj, name, std::move(ds));
-}
-
 
 // Perform qualified lookup to resolve the declaration referred to by obj.n.
 //
-// TODO: Allow class lookup to find 
+// FIXME: This needs to perform class lookup, not qualified lookup.
 static Expr&
 make_member_ref(Context& cxt, Expr& obj, Simple_id& name)
 {

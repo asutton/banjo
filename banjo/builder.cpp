@@ -175,13 +175,20 @@ Builder::get_global_id()
 
 
 // -------------------------------------------------------------------------- //
-// Types
+// Fundamental types
 
 
 Void_type&
 Builder::get_void_type()
 {
   return make<Void_type>();
+}
+
+
+Void_type&
+Builder::get_void_type(Qualifier_set q)
+{
+  return make<Void_type>(q);
 }
 
 
@@ -192,11 +199,12 @@ Builder::get_bool_type()
 }
 
 
-Integer_type&
-Builder::get_integer_type(bool s, int p)
+Boolean_type&
+Builder::get_bool_type(Qualifier_set q)
 {
-  return make<Integer_type>(s, p);
+  return make<Boolean_type>(q);
 }
+
 
 Byte_type&
 Builder::get_byte_type()
@@ -205,7 +213,30 @@ Builder::get_byte_type()
 }
 
 
-// TODO: Default precision depends on configuration.
+Byte_type&
+Builder::get_byte_type(Qualifier_set q)
+{
+  return make<Byte_type>(q);
+}
+
+
+Integer_type&
+Builder::get_integer_type(bool s, int p)
+{
+  return make<Integer_type>(s, p);
+}
+
+
+Integer_type&
+Builder::get_integer_type(Qualifier_set q, bool s, int p)
+{
+  return make<Integer_type>(q, s, p);
+}
+
+
+
+// TODO: Default precision should depend on the target platform. That
+// information needs to be supplied by an external argument.
 Integer_type&
 Builder::get_int_type()
 {
@@ -213,11 +244,25 @@ Builder::get_int_type()
 }
 
 
-// TODO: Default precision depends on configuration.
+Integer_type&
+Builder::get_int_type(Qualifier_set q)
+{
+  return get_integer_type(q, true, 32);
+}
+
+
+// TODO: See comments above.
 Integer_type&
 Builder::get_uint_type()
 {
   return get_integer_type(false, 32);
+}
+
+
+Integer_type&
+Builder::get_uint_type(Qualifier_set q)
+{
+  return get_integer_type(q, false, 32);
 }
 
 
@@ -228,12 +273,17 @@ Builder::get_float_type()
 }
 
 
-Decltype_type&
-Builder::get_decltype_type(Expr&)
+Float_type&
+Builder::get_float_type(Qualifier_set q)
 {
-  lingo_unimplemented("decltype-type");
+  return make<Float_type>();
 }
 
+
+
+
+// -------------------------------------------------------------------------- //
+// Compound types
 
 Function_type&
 Builder::get_function_type(Decl_list const& ps, Type& r)
@@ -253,50 +303,11 @@ Builder::get_function_type(Type_list const& ts, Type& r)
   return make<Function_type>(ts, r);
 }
 
+
 Coroutine_type&
 Builder::get_coroutine_type(Type_decl& d)
 {
   return make<Coroutine_type>(d);
-}
-// TODO: Do not build qualified types for functions or arrays.
-// Is that a hard error, or do we simply fold the const into
-// the return type and/or element type?
-Qualified_type&
-Builder::get_qualified_type(Type& t, Qualifier_set qual)
-{
-  if (Qualified_type* q = as<Qualified_type>(&t)) {
-    q->qual |= qual;
-    return *q;
-  }
-  return make<Qualified_type>(t, qual);
-}
-
-
-Qualified_type&
-Builder::get_const_type(Type& t)
-{
-  return get_qualified_type(t, const_qual);
-}
-
-
-Qualified_type&
-Builder::get_volatile_type(Type& t)
-{
-  return get_qualified_type(t, volatile_qual);
-}
-
-
-Pointer_type&
-Builder::get_pointer_type(Type& t)
-{
-  return make<Pointer_type>(t);
-}
-
-
-Reference_type&
-Builder::get_reference_type(Type& t)
-{
-  return make<Reference_type>(t);
 }
 
 
@@ -321,31 +332,35 @@ Builder::get_tuple_type(Type_list const& t)
 }
 
 
-Slice_type&
-Builder::get_slice_type(Type& t)
+Pointer_type&
+Builder::get_pointer_type(Type& t)
 {
-  return make<Slice_type>(t);
+  return make<Pointer_type>(t);
 }
 
 
-Dynarray_type&
-Builder::get_dynarray_type(Type& t, Expr& e)
+Pointer_type&
+Builder::get_pointer_type(Qualifier_set q, Type& t)
 {
-  return make<Dynarray_type>(t,e);
+  return make<Pointer_type>(t);
 }
 
 
-Pack_type&
-Builder::get_pack_type(Type& t)
-{
-  return make<Pack_type>(t);
-}
+// -------------------------------------------------------------------------- //
+// User-defined types
 
 // Returns class type for the given type declaration.
 Class_type&
 Builder::get_class_type(Type_decl& d)
 {
   return make<Class_type>(d);
+}
+
+
+Class_type&
+Builder::get_class_type(Qualifier_set q, Type_decl& d)
+{
+  return make<Class_type>(q, d);
 }
 
 
@@ -357,6 +372,16 @@ Builder::get_typename_type(Type_decl& d)
 }
 
 
+Typename_type&
+Builder::get_typename_type(Qualifier_set q, Type_decl& d)
+{
+  return make<Typename_type>(q, d);
+}
+
+
+// -------------------------------------------------------------------------- //
+// Deduced types
+
 // Returns the auto type corresponding to the given declaration.
 Auto_type&
 Builder::get_auto_type(Type_decl& d)
@@ -365,6 +390,94 @@ Builder::get_auto_type(Type_decl& d)
 }
 
 
+Decltype_type&
+Builder::get_decltype_type(Expr&)
+{
+  lingo_unimplemented("decltype-type");
+}
+
+
+// -------------------------------------------------------------------------- //
+// Qualified types
+
+
+// Qualifiers on array type apply to the element type.
+static inline Type&
+get_qualified_array_type(Builder& b, Array_type& arr, Qualifier_set q)
+{
+  Type& t = b.get_qualified_type(arr.element_type(), q);
+  Expr& e = arr.extent();
+  return b.get_array_type(t, e);
+}
+
+
+// Given a type and a qualifier set, returns a variant of that type
+// with the given qualifiers. Note that when q is empty_qual, the
+// resulting type is the unqualified type.
+//
+// TODO: Make sure that this function is fully implemented.
+Type&
+Builder::get_qualified_type(Type& t, Qualifier_set q)
+{
+  struct fn
+  {
+    Builder&      self;
+    Qualifier_set q;
+    
+    Type& operator()(Type& t) { lingo_unhandled(t); }
+    
+    // Fundamental types
+    Type& operator()(Void_type& t)    { return self.get_void_type(q); }
+    Type& operator()(Boolean_type& t) { return self.get_bool_type(q); }
+    Type& operator()(Byte_type& t)    { return self.get_byte_type(q); }
+    Type& operator()(Integer_type& t) { return self.get_integer_type(q, t.sign(), t.precision()); }
+    Type& operator()(Float_type& t)   { return self.get_void_type(q); }
+
+    // Compound types
+    Type& operator()(Function_type& t) { return t; }
+    Type& operator()(Array_type& t)    { return get_qualified_array_type(self, t, q); }
+    Type& operator()(Class_type& t)    { return self.get_class_type(q, t.declaration()); }
+    Type& operator()(Pointer_type& t)  { return self.get_pointer_type(q, t.type()); }
+  };
+
+  if (t.qualifiers() != q)
+    return apply(t, fn{*this, q});
+  else
+    return t;
+}
+
+
+Type&
+Builder::get_unqualified_type(Type& t)
+{
+  return get_qualified_type(t, empty_qual);
+}
+
+
+Type&
+Builder::get_const_type(Type& t)
+{
+  return get_qualified_type(t, const_qual);
+}
+
+
+Type&
+Builder::get_volatile_type(Type& t)
+{
+  return get_qualified_type(t, volatile_qual);
+}
+
+
+Type&
+Builder::get_cv_type(Type& t)
+{
+  return get_qualified_type(t, cv_qual);
+}
+
+
+
+// -------------------------------------------------------------------------- //
+// Deduced types
 
 Type_type&
 Builder::get_type_type()
@@ -374,15 +487,8 @@ Builder::get_type_type()
 }
 
 
-
-
-// Synthesize a type from the given parameter. This is used to generate
-// fake types corresponding to type parameters.
-Synthetic_type&
-Builder::synthesize_type(Decl& d)
-{
-  return make<Synthetic_type>(d);
-}
+// -------------------------------------------------------------------------- //
+// Fresh types
 
 
 // Create a new auto placeholder type. This creates a new, unique type
@@ -395,6 +501,15 @@ Builder::make_auto_type()
   Name& n = get_id();
   Type_parm& d = make<Type_parm>(Index {}, n);
   return get_auto_type(d);
+}
+
+
+// Synthesize a type from the given parameter. This is used to generate
+// fake types corresponding to type parameters.
+Synthetic_type&
+Builder::make_synthetic_type(Decl& d)
+{
+  return make<Synthetic_type>(d);
 }
 
 
@@ -475,237 +590,219 @@ Builder::make_tuple(Type& t, Expr_list&& l)
 
 // Create a reference to a declared object (variable or parameter).
 Object_expr&
-Builder::make_object_reference(Type& t, Object_decl& d)
+Builder::make_reference(Category c, Type& t, Object_decl& d)
 {
-  lingo_assert(is_reference_type(t));
-  return make<Object_expr>(t, d.name(), d);
+  return make<Object_expr>(c, t, d.name(), d);
 }
 
 
 // Create a reference to a declared value (constant).
 Value_expr&
-Builder::make_value_reference(Type& t, Value_decl& d)
+Builder::make_reference(Category c, Type& t, Value_decl& d)
 {
-  lingo_assert(!is_reference_type(t));
-  return make<Value_expr>(t, d.name(), d);
+  return make<Value_expr>(c, t, d.name(), d);
 }
 
 
 // Create a reference to a function.
 Function_expr&
-Builder::make_function_reference(Type& t, Function_decl& d)
+Builder::make_reference(Category c, Type& t, Function_decl& d)
 {
-  lingo_assert(is_reference_type(t));
   Name& n = d.name();
-  return make<Function_expr>(t, n, d);
+  return make<Function_expr>(c, t, n, d);
 }
 
 
+// Create an expression referring to an overload set. Note that overload
+// sets are untyped and have no value category.
 Overload_expr&
-Builder::make_overload_reference(Name& n, Decl_list&& ds)
+Builder::make_reference(Name& n, Decl_list&& ds)
 {
   return make<Overload_expr>(n, std::move(ds));
 }
 
 
 Field_expr&
-Builder::make_field_reference(Type& t, Expr& e, Field_decl& d)
+Builder::make_reference(Category c, Type& t, Expr& e, Field_decl& d)
 {
-  lingo_assert(is_reference_type(t));
   Name& n = d.name();
-  return make<Field_expr>(t, e, n, d);
+  return make<Field_expr>(c, t, e, n, d);
 }
 
 
 Method_expr&
-Builder::make_method_reference(Type& t, Expr& e, Method_decl& d)
+Builder::make_reference(Category c, Type& t, Expr& e, Method_decl& d)
 {
-  lingo_assert(is_reference_type(t));
   Name& n = d.name();
-  return make<Method_expr>(t, e, n, d);
+  return make<Method_expr>(c, t, e, n, d);
 }
 
 
 Member_expr&
-Builder::make_member_reference(Expr& e, Name& n, Decl_list&& ds)
+Builder::make_reference(Expr& e, Name& n, Decl_list&& ds)
 {
-  lingo_unimplemented("member overloads");
-}
-
-
-// Make a concept check. The type is bool.
-Check_expr&
-Builder::make_check(Concept_decl& d, Term_list const& as)
-{
-  return make<Check_expr>(get_bool_type(), d, as);
+  lingo_unimplemented(__func__);
 }
 
 
 And_expr&
-Builder::make_and(Type& t, Expr& e1, Expr& e2)
+Builder::make_and(Category c, Type& t, Expr& e1, Expr& e2)
 {
-  return make<And_expr>(t, e1, e2);
+  return make<And_expr>(c, t, e1, e2);
 }
 
 
 Or_expr&
-Builder::make_or(Type& t, Expr& e1, Expr& e2)
+Builder::make_or(Category c, Type& t, Expr& e1, Expr& e2)
 {
-  return make<Or_expr>(t, e1, e2);
+  return make<Or_expr>(c, t, e1, e2);
 }
 
 
 Not_expr&
-Builder::make_not(Type& t, Expr& e)
+Builder::make_not(Category c, Type& t, Expr& e)
 {
-  return make<Not_expr>(t, e);
+  return make<Not_expr>(c, t, e);
 }
 
 
 Eq_expr&
-Builder::make_eq(Type& t, Expr& e1, Expr& e2)
+Builder::make_eq(Category c, Type& t, Expr& e1, Expr& e2)
 {
-  return make<Eq_expr>(t, e1, e2);
+  return make<Eq_expr>(c, t, e1, e2);
 }
 
 
 Ne_expr&
-Builder::make_ne(Type& t, Expr& e1, Expr& e2)
+Builder::make_ne(Category c, Type& t, Expr& e1, Expr& e2)
 {
-  return make<Ne_expr>(t, e1, e2);
+  return make<Ne_expr>(c, t, e1, e2);
 }
 
 
 Lt_expr&
-Builder::make_lt(Type& t, Expr& e1, Expr& e2)
+Builder::make_lt(Category c, Type& t, Expr& e1, Expr& e2)
 {
-  return make<Lt_expr>(t, e1, e2);
+  return make<Lt_expr>(c, t, e1, e2);
 }
 
 
 Gt_expr&
-Builder::make_gt(Type& t, Expr& e1, Expr& e2)
+Builder::make_gt(Category c, Type& t, Expr& e1, Expr& e2)
 {
-  return make<Gt_expr>(t, e1, e2);
+  return make<Gt_expr>(c, t, e1, e2);
 }
 
 
 Le_expr&
-Builder::make_le(Type& t, Expr& e1, Expr& e2)
+Builder::make_le(Category c, Type& t, Expr& e1, Expr& e2)
 {
-  return make<Le_expr>(t, e1, e2);
+  return make<Le_expr>(c, t, e1, e2);
 }
 
 
 Ge_expr&
-Builder::make_ge(Type& t, Expr& e1, Expr& e2)
+Builder::make_ge(Category c, Type& t, Expr& e1, Expr& e2)
 {
-  return make<Ge_expr>(t, e1, e2);
+  return make<Ge_expr>(c, t, e1, e2);
 }
 
 
 Add_expr&
-Builder::make_add(Type& t, Expr& e1, Expr& e2)
+Builder::make_add(Category c, Type& t, Expr& e1, Expr& e2)
 {
-  return make<Add_expr>(t, e1, e2);
+  return make<Add_expr>(c, t, e1, e2);
 }
 
 
 Sub_expr&
-Builder::make_sub(Type& t, Expr& e1, Expr& e2)
+Builder::make_sub(Category c, Type& t, Expr& e1, Expr& e2)
 {
-  return make<Sub_expr>(t, e1, e2);
+  return make<Sub_expr>(c, t, e1, e2);
 }
 
 
 Mul_expr&
-Builder::make_mul(Type& t, Expr& e1, Expr& e2)
+Builder::make_mul(Category c, Type& t, Expr& e1, Expr& e2)
 {
-  return make<Mul_expr>(t, e1, e2);
+  return make<Mul_expr>(c, t, e1, e2);
 }
 
 
 Div_expr&
-Builder::make_div(Type& t, Expr& e1, Expr& e2)
+Builder::make_div(Category c, Type& t, Expr& e1, Expr& e2)
 {
-  return make<Div_expr>(t, e1, e2);
+  return make<Div_expr>(c, t, e1, e2);
 }
 
 
 Rem_expr&
-Builder::make_rem(Type& t, Expr& e1, Expr& e2)
+Builder::make_rem(Category c, Type& t, Expr& e1, Expr& e2)
 {
-  return make<Rem_expr>(t, e1, e2);
+  return make<Rem_expr>(c, t, e1, e2);
 }
 
 
 Neg_expr&
-Builder::make_neg(Type& t, Expr& e)
+Builder::make_neg(Category c, Type& t, Expr& e)
 {
-  return make<Neg_expr>(t, e);
+  return make<Neg_expr>(c, t, e);
 }
 
 
 Pos_expr&
-Builder::make_pos(Type& t, Expr& e)
+Builder::make_pos(Category c, Type& t, Expr& e)
 {
-  return make<Pos_expr>(t, e);
+  return make<Pos_expr>(c, t, e);
 }
 
 
 Bit_and_expr&
-Builder::make_bit_and(Type& t, Expr& e1, Expr& e2)
+Builder::make_bit_and(Category c, Type& t, Expr& e1, Expr& e2)
 {
-  return make<Bit_and_expr>(t, e1, e2);
+  return make<Bit_and_expr>(c, t, e1, e2);
 }
 
 
 Bit_or_expr&
-Builder::make_bit_or(Type& t, Expr& e1, Expr& e2)
+Builder::make_bit_or(Category c, Type& t, Expr& e1, Expr& e2)
 {
-  return make<Bit_or_expr>(t, e1, e2);
+  return make<Bit_or_expr>(c, t, e1, e2);
 }
 
 
 Bit_xor_expr&
-Builder::make_bit_xor(Type& t, Expr& e1, Expr& e2)
+Builder::make_bit_xor(Category c, Type& t, Expr& e1, Expr& e2)
 {
-  return make<Bit_xor_expr>(t, e1, e2);
+  return make<Bit_xor_expr>(c, t, e1, e2);
 }
 
 
 Bit_lsh_expr&
-Builder::make_bit_lsh(Type& t, Expr& e1, Expr& e2)
+Builder::make_bit_lsh(Category c, Type& t, Expr& e1, Expr& e2)
 {
-  return make<Bit_lsh_expr>(t, e1, e2);
+  return make<Bit_lsh_expr>(c, t, e1, e2);
 }
 
 
 Bit_rsh_expr&
-Builder::make_bit_rsh(Type& t, Expr& e1, Expr& e2)
+Builder::make_bit_rsh(Category c, Type& t, Expr& e1, Expr& e2)
 {
-  return make<Bit_rsh_expr>(t, e1, e2);
+  return make<Bit_rsh_expr>(c, t, e1, e2);
 }
 
 
 Bit_not_expr&
-Builder::make_bit_not(Type& t, Expr& e)
+Builder::make_bit_not(Category c, Type& t, Expr& e)
 {
-  return make<Bit_not_expr>(t, e);
+  return make<Bit_not_expr>(c, t, e);
 }
 
 
 Call_expr&
-Builder::make_call(Type& t, Expr& f, Expr_list const& a)
+Builder::make_call(Category c, Type& t, Expr& f, Expr_list const& a)
 {
-  return make<Call_expr>(t, f, a);
-}
-
-
-Call_expr&
-Builder::make_call(Type& t, Function_decl& f, Expr_list const& a)
-{
-  return make_call(t, make_function_reference(f.type(), f), a);
+  return make<Call_expr>(c, t, f, a);
 }
 
 
@@ -717,9 +814,9 @@ Builder::make_requires(Decl_list const& tps, Decl_list const& ps, Req_list const
 
 
 Synthetic_expr&
-Builder::synthesize_expression(Decl& d)
+Builder::synthesize_expression(Category c, Decl& d)
 {
-  return make<Synthetic_expr>(declared_type(d), d);
+  return make<Synthetic_expr>(c, declared_type(d), d);
 }
 
 
@@ -812,30 +909,30 @@ Builder::make_declaration_statement(Decl& d)
 // Initializers
 
 Trivial_init&
-Builder::make_trivial_init(Type& t)
+Builder::make_trivial_init()
 {
-  return make<Trivial_init>(t);
+  return make<Trivial_init>(get_void_type());
 }
 
 
 Copy_init&
-Builder::make_copy_init(Type& t, Expr& e)
+Builder::make_copy_init(Expr& e)
 {
-  return make<Copy_init>(t, e);
+  return make<Copy_init>(get_void_type(), e);
 }
 
 
 Bind_init&
-Builder::make_bind_init(Type& t, Expr& e)
+Builder::make_bind_init(Expr& e)
 {
-  return make<Bind_init>(t, e);
+  return make<Bind_init>(get_void_type(), e);
 }
 
 
 Direct_init&
-Builder::make_direct_init(Type& t, Decl& d, Expr_list const& es)
+Builder::make_direct_init(Decl& d, Expr_list const& es)
 {
-  return make<Direct_init>(t, d, es);
+  return make<Direct_init>(get_void_type(), d, es);
 }
 
 
