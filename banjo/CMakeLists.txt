@@ -4,10 +4,9 @@
 # Add the core Banjo library.
 add_library(banjo
   prelude.cpp
-  error.cpp
   token.cpp
 
-  ast.cpp
+  # Abstract syntax
   ast-base.cpp
   ast-name.cpp
   ast-type.cpp
@@ -16,48 +15,62 @@ add_library(banjo
   ast-decl.cpp
   ast-def.cpp
   ast-req.cpp
-  operator.cpp
-  qualifier.cpp
-  specifier.cpp
-  value.cpp
+  ast.cpp
 
-  context.cpp
-  builder.cpp
-  printer.cpp
-  builtin.cpp
-  intrinsic.cpp
-
-  # Tree construction
-  type.cpp
-  declaration.cpp
-  overload.cpp
-  expression.cpp
-  expr-id.cpp
-  expr-logical.cpp
-  expr-relational.cpp
-  expr-arithmetic.cpp
-  expr-bitwise.cpp
-  expr-call.cpp  
-
-  # Semantic rules and algorithms
+  # # Non-modifying algorithms
   equivalence.cpp
-  hash.cpp
-  conversion.cpp
-  initialization.cpp
-  inheritance.cpp
-  substitution.cpp
-  deduction.cpp
-  evaluation.cpp
-  # template.cpp
-  # requirement.cpp
-  # constraint.cpp
-  # normalization.cpp
-  # satisfaction.cpp
-  # subsumption.cpp
-  inspection.cpp
+  # hash.cpp
 
-  scope.cpp
-  lookup.cpp)
+  # # Node construction
+  # build-core.cpp
+  # build-type.cpp
+  # builder.cpp
+
+  # context.cpp
+  # printer.cpp
+  # builtin.cpp
+  # intrinsic.cpp
+  
+  # Diagnostics
+  # error.cpp
+
+  # # Tree construction
+  # type.cpp
+  # declaration.cpp
+  # overload.cpp
+  # expression.cpp
+  # expr-id.cpp
+  # expr-logical.cpp
+  # expr-relational.cpp
+  # expr-arithmetic.cpp
+  # expr-bitwise.cpp
+  # expr-call.cpp
+
+
+  # # Semantic rules and algorithms
+  # conversion.cpp
+  # initialization.cpp
+  # inheritance.cpp
+  # substitution.cpp
+  # deduction.cpp
+  # # template.cpp
+  # # requirement.cpp
+  # # constraint.cpp
+  # # normalization.cpp
+  # # satisfaction.cpp
+  # # subsumption.cpp
+  # inspection.cpp
+
+  # Compile-time evaluation
+  # value.cpp
+  # evaluation.cpp
+
+  # Scope, lookup, and resolution
+  # scope.cpp
+  # lookup.cpp
+  # overload.cpp
+)
+
 target_compile_definitions(banjo PUBLIC ${LLVM_DEFINITIONS})
 target_include_directories(banjo
   PUBLIC
@@ -73,4 +86,5 @@ PUBLIC
   ${LLVM_LIBRARIES}
 )
 
-add_subdirectory(fe/banjo)
+
+# add_subdirectory(fe/banjo)

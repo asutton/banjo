@@ -11,15 +11,6 @@ namespace banjo
 {
 
 
-// Returns true.
-template<typename T>
-bool
-always_equal(T const& t1, T const& t2)
-{
-  return true;
-}
-
-
 // -------------------------------------------------------------------------- //
 // Terms
 
@@ -36,13 +27,12 @@ is_equivalent(Term const& x1, Term const& x2)
   if (ti1 != ti2)
     return false;
 
-  if (Type const* t1 = as<Type>(&x1))
-    return is_equivalent(*t1, cast<Type>(x2));
+  // FIXME: Terms are dumb because a Type is not a Term.
   if (Expr const* t1 = as<Expr>(&x1))
     return is_equivalent(*t1, cast<Expr>(x2));
   if (Decl const* t1 = as<Decl>(&x1))
     return is_equivalent(*t1, cast<Decl>(x2));
-  banjo_unhandled_case(x1);
+  lingo_unhandled(x1);
 }
 
 
@@ -60,17 +50,11 @@ is_equivalent(Simple_id const& n1, Simple_id const& n2)
 
 
 inline bool
-is_equivalent(Global_id const& n1, Global_id const& n2)
-{
-  lingo_unreachable();
-}
-
-
-inline bool
 is_equivalent(Placeholder_id const& n1, Placeholder_id const& n2)
 {
   return n1.number() == n2.number();
 }
+
 
 // they are operator-function-ids formed with the same operator
 inline bool
@@ -129,7 +113,7 @@ is_equivalent(Name const& n1, Name const& n2)
   {
     Name const& n2;
     bool operator()(Simple_id const& n1)      { return is_equivalent(n1, cast<Simple_id>(n2)); }
-    bool operator()(Global_id const& n1)      { return is_equivalent(n1, cast<Global_id>(n2)); }
+    bool operator()(Global_id const& n1)      { lingo_unreachable(); }
     bool operator()(Placeholder_id const& n1) { return is_equivalent(n1, cast<Placeholder_id>(n2)); }
     bool operator()(Operator_id const& n1)    { return is_equivalent(n1, cast<Operator_id>(n2)); }
     bool operator()(Conversion_id const& n1)  { return is_equivalent(n1, cast<Conversion_id>(n2)); }
@@ -159,89 +143,34 @@ is_equivalent(Name const& n1, Name const& n2)
 // Types
 
 
-bool
-is_equivalent(Integer_type const& t1, Integer_type const& t2)
-{
-  return t1.is_signed() == t2.is_signed() && t1.precision() == t2.precision();
-}
-
-
-bool
-is_equivalent(Float_type const& t1, Float_type const& t2)
-{
-  return t1.precision() == t2.precision();
-}
-
-
-bool
-is_equivalent(Function_type const& t1, Function_type const& t2)
-{
-  return is_equivalent(t1.parameter_types(), t2.parameter_types())
-      && is_equivalent(t1.return_type(), t2.return_type());
-}
-
-
-// TODO: The extent of the arrays must be equivalent.
-bool
-is_equivalent(Array_type const& t1, Array_type const& t2)
-{
-  return is_equivalent(t1.element_type(), t2.element_type());
-}
-
-
-bool
-is_equivalent(Tuple_type const& t1, Tuple_type const& t2)
-{
-  return is_equivalent(t1.element_types(), t2.element_types());
-}
-
-
-// Two declared types are equivalent when they have the same
-// declaration.
-bool
-is_eq_declared_type(Declared_type const& t1, Declared_type const& t2)
-{
-  return is_equivalent(t1.declaration(), t2.declaration());
-}
-
-
 // Returns true if the types a and b are equivalent.
 //
 // TODO: Finish implementing this function.
 bool
-is_equivalent(Type const& t1, Type const& t2)
+is_equivalent(Type t1, Type t2)
 {
-  struct fn
-  {
-    Type const& t2;
-    bool operator()(Type const& t1) const           { lingo_unhandled(t1); }
-    bool operator()(Void_type const& t1) const      { return always_equal(t1, cast<Void_type>(t2)); }
-    bool operator()(Boolean_type const& t1) const   { return always_equal(t1, cast<Boolean_type>(t2)); }
-    bool operator()(Byte_type const& t1) const      { return always_equal(t1, cast<Byte_type>(t2)); }
-    bool operator()(Integer_type const& t1) const   { return is_equivalent(t1, cast<Integer_type>(t2)); }
-    bool operator()(Float_type const& t1) const     { return is_equivalent(t1, cast<Float_type>(t2)); }
-    bool operator()(Function_type const& t1) const  { return is_equivalent(t1, cast<Function_type>(t2)); }
-    bool operator()(Array_type const& t1) const     { return is_equivalent(t1, cast<Array_type>(t2)); }
-    bool operator()(Tuple_type const& t1) const     { return is_equivalent(t1, cast<Tuple_type>(t2)); }
-    bool operator()(Declared_type const& t1) const  { return is_eq_declared_type(t1, cast_as(t1, t2)); }
-  };
-
-  // The same objects represent the same types.
-  if (&t1 == &t2)
-    return true;
-
-  // Types of different kinds are not equivalent.
-  std::type_index ti1 = typeid(t1);
-  std::type_index ti2 = typeid(t2);
-  if (ti1 != ti2)
+  // Types describing different entities are not the same.
+  if (t1.category() != t2.category())
     return false;
 
   // Types with different qualifications are not equivalent.
   if (t1.qualifiers() != t2.qualifiers())
     return false;
 
-  // Find a comparison of the types.
-  return apply(t1, fn{t2});
+  // Because bases are canonicalized, we can reduce a more complex
+  // comparison to object identity.
+  return &t1.basis() == &t2.basis();
+}
+
+
+// Compare two type lists.
+inline bool
+is_equivalent(Type_list const& a, Type_list const& b)
+{
+  auto cmp = [](Type x, Type y) {
+    return is_equivalent(x, y);
+  };
+  return std::equal(a.begin(), a.end(), b.begin(), b.end(), cmp);
 }
 
 
@@ -300,7 +229,7 @@ is_equivalent(Expr const& e1, Expr const& e2)
   struct fn
   {
     Expr const& e2;
-    bool operator()(Expr const& e) const          { banjo_unhandled_case(e); }
+    bool operator()(Expr const& e) const          { lingo_unhandled(e); }
     bool operator()(Boolean_expr const& e1) const { return is_equivalent(e1, cast<Boolean_expr>(e2)); }
     bool operator()(Integer_expr const& e1) const { return is_equivalent(e1, cast<Integer_expr>(e2)); }
     bool operator()(Decl_expr const& e1) const    { return is_equivalent(e1, cast<Decl_expr>(e2)); }
@@ -416,7 +345,7 @@ is_equivalent(Cons const& c1, Cons const& c2)
   struct fn
   {
     Cons const& c2;
-    bool operator()(Cons const& c1) const               { banjo_unhandled_case(c1); }
+    bool operator()(Cons const& c1) const               { lingo_unhandled(c1); }
     bool operator()(Concept_cons const& c1) const       { return is_equivalent(c1, cast<Concept_cons>(c2)); }
     bool operator()(Predicate_cons const& c1) const     { return is_equivalent(c1, cast<Predicate_cons>(c2)); }
     bool operator()(Expression_cons const& c1) const    { return is_eq_usage(c1, cast<Expression_cons>(c2)); }

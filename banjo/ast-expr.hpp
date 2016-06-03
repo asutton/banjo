@@ -10,71 +10,6 @@
 namespace banjo
 {
 
-
-// ---------------------------------------------------------------------------//
-// Expression category
-
-// The evaluation of every expression evaluates to an object, representing its
-// value. 
-//
-// In general, there are two kinds of expression.
-//
-//    - Reference expressions return references to objects residing in storage.
-//
-//    - Value expressions return objects independent of storage.
-//
-// Value expressions are so named because the computed object directly contains
-// the value of the expression.
-//
-// Note that the objects of value expressions may also reside in storage, but 
-// the storage cannot be directly accessed (you cannot take its address).
-//
-// An reference can be implicitly converted to a value. This conversion 
-// causes the stored object to be loaded so that it can be used directly.
-// In some cases, a reference can also bind to a value, either through
-// lifetime extension or accessing the address of a temporary object.
-//
-// There are also special categories of reference expressions. These extended
-// to enable certain kinds of conversions and binding.
-//
-//    - Normal reference expressions have no semantics beyond referring
-//      to objects in storage.
-//
-//    - Consumable reference expressions are reference expressions whose
-//      objects are nearing the end of their lifetime.
-//
-// NOTE: The description of consumable objects is not quite right. The lifetime
-// does not end. The current value is simply made available for transfer to
-// another objects.
-//
-// TODO: Add bitfield references to the value category.
-//
-// TODO: Differentiate between unresolved and dependent cases? 
-enum Category : int
-{
-  dep_expr,  // The depends on resolution or instantiation
-  val_expr,  // A value expressions
-  nref_expr, // A normal reference expression
-  cref_expr, // A consumable reference expression
-};
-
-
-// Returns true if k is an immediate value.
-inline bool
-is_value_expression(Category c)
-{
-  return c == val_expr;
-}
-
-
-// Returns true if k is either an indirect value.
-inline bool
-is_reference_expression(Category c)
-{
-  return nref_expr <= c && c <= cref_expr;
-}
-
-
 // This type is used to explicitly initialize an expression that does
 // not have a computed type.
 enum untyped_t
@@ -89,23 +24,16 @@ struct Expr : Term
   struct Visitor;
   struct Mutator;
 
-  Expr(Category c, Type& t)
-    : cat_(c), type_(&t)
+  Expr(Type& t)
+    : type_(&t)
   { }
 
   Expr(untyped_t)
-    : cat_(dep_expr), type_(nullptr)
+    : type_(nullptr)
   { }
 
   virtual void accept(Visitor&) const = 0;
   virtual void accept(Mutator&) = 0;
-
-  // Expression category.
-  Category category() const  { return cat_; }
-  bool is_value() const      { return is_value_expression(cat_); }  
-  bool is_reference() const  { return is_reference_expression(cat_); }
-  bool is_normal() const     { return cat_ == nref_expr; }
-  bool is_consumable() const { return cat_ == cref_expr; }
 
   // Returns the type of the expression. This is valid only when 
   // is_typed() returns true.
@@ -116,7 +44,6 @@ struct Expr : Term
   // the case.
   bool is_typed() const { return type_; }
 
-  Category cat_;
   Type*    type_;
 };
 
@@ -146,7 +73,7 @@ template<typename T>
 struct Literal_expr : Expr
 {
   Literal_expr(Type& t, T const& x)
-    : Expr(val_expr, t), val(x)
+    : Expr(t), val(x)
   { }
 
   // Returns the interpreted value of the literal.
@@ -160,8 +87,8 @@ struct Literal_expr : Expr
 // The base class of all unary expressions.
 struct Unary_expr : Expr
 {
-  Unary_expr(Category c, Type& t, Expr& e)
-    : Expr(c, t), first(&e)
+  Unary_expr(Type& t, Expr& e)
+    : Expr(t), first(&e)
   { }
 
   // Returns the operand of the unary expression.
@@ -175,8 +102,8 @@ struct Unary_expr : Expr
 // The base class of all binary expressions.
 struct Binary_expr : Expr
 {
-  Binary_expr(Category c, Type& t, Expr& e1, Expr& e2)
-    : Expr(c, t), first(&e1), second(&e2)
+  Binary_expr(Type& t, Expr& e1, Expr& e2)
+    : Expr(t), first(&e1), second(&e2)
   { }
 
   Expr const& left() const { return *first; }
@@ -197,7 +124,7 @@ struct Binary_expr : Expr
 struct Void_expr : Expr
 {
   Void_expr(Type& t)
-    : Expr(val_expr, t)
+    : Expr(t)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -257,7 +184,7 @@ struct Real_expr : Literal_expr<lingo::Real>
 struct Tuple_expr : Expr
 {
   Tuple_expr(Type& t, Expr_list const& l)
-    : Expr(val_expr, t), elems(l)
+    : Expr(t), elems(l)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -277,8 +204,8 @@ struct Id_expr : Expr
     : Expr(untyped_expr), name_(&n)
   { }
 
-  Id_expr(Category c, Type& t, Name& n)
-    : Expr(c, t), name_(&n)
+  Id_expr(Type& t, Name& n)
+    : Expr(t), name_(&n)
   { }
 
   // Returns the original id of the expression.
@@ -292,8 +219,8 @@ struct Id_expr : Expr
 // The base class of all identifiers that resolved to a single declaration.
 struct Decl_expr : Id_expr
 {
-  Decl_expr(Category c, Type& t, Name& n, Decl& d)
-    : Id_expr(c, t, n), decl_(&d)
+  Decl_expr(Type& t, Name& n, Decl& d)
+    : Id_expr(t, n), decl_(&d)
   { }
   
   // Returns the referenced declaration.
@@ -380,8 +307,8 @@ struct Dot_expr : Expr
     : Expr(untyped_expr), obj_(&e), mem_(&n)
   { }
 
-  Dot_expr(Category c, Type& t, Expr& e, Name& n)
-    : Expr(c, t), obj_(&e), mem_(&n)
+  Dot_expr(Type& t, Expr& e, Name& n)
+    : Expr(t), obj_(&e), mem_(&n)
   { }
 
   // Returns the object enclosing the member name.
@@ -402,8 +329,8 @@ struct Dot_expr : Expr
 // declaration of the member name.
 struct Member_decl_expr : Dot_expr
 {
-  Member_decl_expr(Category c, Type& t, Expr& e, Name& n, Decl& d)
-    : Dot_expr(c, t, e, n), decl_(&d)
+  Member_decl_expr(Type& t, Expr& e, Name& n, Decl& d)
+    : Dot_expr(t, e, n), decl_(&d)
   { }
 
   Decl const& declaration() const { return *decl_; }
@@ -690,8 +617,8 @@ struct Not_expr : Unary_expr
 // unresolved calls. It would simplify code generation.
 struct Call_expr : Expr
 {
-  Call_expr(Category c, Type& t, Expr& e, Expr_list const& a)
-    : Expr(c, t), fn(&e), args(a)
+  Call_expr(Type& t, Expr& e, Expr_list const& a)
+    : Expr(t), fn(&e), args(a)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -724,7 +651,7 @@ struct Assign_expr : Binary_expr
 struct Requires_expr : Expr
 {
   Requires_expr(Type& t, Decl_list const& tps, Decl_list const& nps, Req_list const& rs)
-    : Expr(val_expr, t), tparms(tps), nparms(nps), reqs(rs)
+    : Expr(t), tparms(tps), nparms(nps), reqs(rs)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -757,8 +684,8 @@ struct Requires_expr : Expr
 // values from thin air?
 struct Synthetic_expr : Expr
 {
-  Synthetic_expr(Category c, Type& t, Decl& d)
-    : Expr(c, t), decl(&d)
+  Synthetic_expr(Type& t, Decl& d)
+    : Expr(t), decl(&d)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -807,8 +734,8 @@ struct Unparsed_expr : Expr
 // reference bindings as conversions.
 struct Conv : Expr
 {
-  Conv(Category c, Type& t, Expr& e)
-    : Expr(c, t), expr(&e)
+  Conv(Type& t, Expr& e)
+    : Expr(t), expr(&e)
   { }
 
   // Returns the destination type of the conversion. This is the
@@ -928,7 +855,7 @@ struct Ellipsis_conv : Conv
 struct Init : Expr
 {
   Init(Type& t)
-    : Expr(val_expr, t)
+    : Expr(t)
   { }
 };
 
@@ -1046,8 +973,7 @@ bool has_class_type(Expr const&);
 bool is_type_dependent(Expr const&);
 bool is_type_dependent(Expr_list const&);
 
-Type const& declared_type(Expr const&);
-Type&       declared_type(Expr&);
+Type declared_type(Expr const&);
 
 
 // -------------------------------------------------------------------------- //

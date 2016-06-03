@@ -5,7 +5,6 @@
 #define BANJO_AST_NAME_HPP
 
 #include "ast-base.hpp"
-#include "operator.hpp"
 
 
 namespace banjo
@@ -89,6 +88,32 @@ struct Placeholder_id : Name
   int number() const { return num; }
 
   int num;
+};
+
+
+// Kinds of operator names.
+//
+// TODO: I'm missing bitwise and logical operators.
+enum Operator_kind : int
+{
+  add_op,    // +
+  sub_op,    // -
+  mul_op,    // *
+  div_op,    // /
+  rem_op,    // %
+  eq_op,     // ==
+  ne_op,     // !=
+  lt_op,     // <
+  gt_op,     // >
+  le_op,     // <=
+  ge_op,     // >=
+  cmp_op,    // <=>
+  and_op,    // &&
+  or_op,     // ||
+  not_op,    // !
+  call_op,   // ()
+  index_op,  // []
+  assign_op, // =
 };
 
 

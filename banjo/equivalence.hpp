@@ -9,7 +9,7 @@
 // same syntactic structure, or are identifiers that refer to the same
 // declarations.
 
-#include "ast-base.hpp"
+#include "ast.hpp"
 
 #include <algorithm>
 
@@ -19,12 +19,15 @@ namespace banjo
 
 bool is_equivalent(Term const&, Term const&);
 bool is_equivalent(Name const&, Name const&);
-bool is_equivalent(Type const&, Type const&);
 bool is_equivalent(Expr const&, Expr const&);
 bool is_equivalent(Decl const&, Decl const&);
 bool is_equivalent(Cons const&, Cons const&);
 
+bool is_equivalent(Type, Type);
+bool is_equivalent(Type_list, Type_list);
 
+
+// Compare two lists of terms (but not Types)
 template<typename T>
 inline bool
 is_equivalent(List<T> const& a, List<T> const& b)
@@ -38,7 +41,7 @@ is_equivalent(List<T> const& a, List<T> const& b)
 
 // Returns true when type t1 differs from type t2.
 inline bool
-is_different(Type const& t1, Type const& t2)
+is_different(Type t1, Type t2)
 {
   return !is_equivalent(t1, t2);
 }

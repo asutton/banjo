@@ -2,65 +2,10 @@
 // All rights reserved
 
 #include "builder.hpp"
-#include "context.hpp"
-#include "token.hpp"
-#include "ast.hpp"
-
-#include <unordered_set>
 
 
 namespace banjo
 {
-
-// FIXME: Move this into lingo.
-//
-// A unique factory will only allocate new objects if they have not been
-// previously created.
-template<typename T, typename Hash, typename Eq>
-struct Hashed_unique_factory : std::unordered_set<T, Hash, Eq>
-{
-  template<typename... Args>
-  T& make(Args&&... args)
-  {
-    auto ins = this->emplace(std::forward<Args>(args)...);
-    return *const_cast<T*>(&*ins.first); // Yuck.
-  }
-};
-
-
-template<typename T>
-struct Hash
-{
-  std::size_t operator()(T const& t) const
-  {
-    return hash_value(t);
-  }
-
-  std::size_t operator()(List<T> const& t) const
-  {
-    return hash_value(t);
-  }
-};
-
-
-template<typename T>
-struct Eq
-{
-  bool operator()(T const& a, T const& b) const
-  {
-    return is_equivalent(a, b);
-  }
-
-  bool operator()(List<T> const& a, List<T> const& b) const
-  {
-    return is_equivalent(a, b);
-  }
-};
-
-
-template<typename T>
-using Factory = Hashed_unique_factory<T, Hash<T>, Eq<T>>;
-
 
 // -------------------------------------------------------------------------- //
 // Builder definition
@@ -174,175 +119,170 @@ Builder::get_global_id()
 }
 
 
+
+// The type builder is responsible for the allocation of types.
+struct Type_builder : Builder_base
+{
+  using Builder_base::Builder_base;
+
+  // Fundamental types
+  Type get_void_type(Qualifier_set = {});
+  Type get_bool_type(Qualifier_set = {}, Reference_kind = {});
+  Type get_byte_type(Qualifier_set = {}, Reference_kind = {});
+  Type get_integer_type(bool, int, Qualifier_set = {}, Reference_kind = {});
+  Type get_int_type(Qualifier_set = {}, Reference_kind = {});
+  Type get_uint_type(Qualifier_set = {}, Reference_kind = {});
+  Type get_float_type(int, Qualifier_set = {}, Reference_kind = {});
+
+  // Composite types
+  Type get_function_type(Decl_list const&, Type, Reference_kind = {});
+  Type get_function_type(Type_list const&, Type, Reference_kind = {});
+  Type get_array_type(Type, Expr&, Reference_kind = {});
+  Type get_tuple_type(Type_list&&, Reference_kind = {});
+  Type get_tuple_type(Type_list const&, Reference_kind = {});
+  Type get_pointer_type(Type, Qualifier_set = {}, Reference_kind = {});
+
+  // User-defined types
+  Type get_class_type(Type_decl&, Qualifier_set = {}, Reference_kind = {});
+  Type get_typename_type(Type_decl&, Qualifier_set = {}, Reference_kind = {});
+  
+  // Placeholder types
+  Type get_auto_type(Type_decl&, Qualifier_set = {}, Reference_kind = {});
+  Type get_decltype_type(Expr&, Qualifier_set = {}, Reference_kind = {});
+
+  // Meta-types
+  Type get_type_type();
+
+  // Qualified types
+  Type get_qualified_type(Type&, Qualifier_set);
+  Type get_unqualified_type(Type&);
+  Type get_const_type(Type&);
+  Type get_volatile_type(Type&);
+  Type get_cv_type(Type&);
+
+  // Fresh types
+  Type make_auto_type();
+  Type make_synthetic_type(Decl&);
+
+  Single_factory<Void_type> void_type;
+  Single_factory<Boolean_type> bool_type;
+  Single_factory<Byte_type> byte_type;
+  Unique_factory<Integer_type> integer_type;
+  Unique_factory<Float_type> float_type;
+  Unique_factory<Function_type> function_type;
+  Unique_factory<Array_type> array_type;
+  Unique_factory<Tuple_type> tuple_type;
+  Unique_factory<Pointer_type> pointer_type;
+  Unique_factory<Class_type> class_type;
+  Unique_factory<Typename_type> typename_type;
+  Unique_factory<Auto_type> auto_type;
+  Unique_factory<Decltype_type> decltype_type;
+  Single_factory<Type_type> type_type;
+};
+
+
+
 // -------------------------------------------------------------------------- //
 // Fundamental types
 
 
-Void_type&
-Builder::get_void_type()
-{
-  return make<Void_type>();
-}
-
-
-Void_type&
+Type
 Builder::get_void_type(Qualifier_set q)
 {
-  return make<Void_type>(q);
+  return {void_type(), q};
 }
 
 
-Boolean_type&
-Builder::get_bool_type()
+Type
+Builder::get_bool_type(Qualifier_set q, Reference_kind r)
 {
-  return make<Boolean_type>();
+  return {bool_type(), q, r};
 }
 
 
-Boolean_type&
-Builder::get_bool_type(Qualifier_set q)
+Type
+Builder::get_byte_type(Qualifier_set q, Reference_kind r)
 {
-  return make<Boolean_type>(q);
+  return {byte_type(), q, r}
 }
 
 
-Byte_type&
-Builder::get_byte_type()
+Type
+Builder::get_integer_type(bool s, int p, Qualifier_set q, Reference_kind r)
 {
-  return make<Byte_type>();
+  return {integer_type(s, p), q, r};
 }
-
-
-Byte_type&
-Builder::get_byte_type(Qualifier_set q)
-{
-  return make<Byte_type>(q);
-}
-
-
-Integer_type&
-Builder::get_integer_type(bool s, int p)
-{
-  return make<Integer_type>(s, p);
-}
-
-
-Integer_type&
-Builder::get_integer_type(Qualifier_set q, bool s, int p)
-{
-  return make<Integer_type>(q, s, p);
-}
-
 
 
 // TODO: Default precision should depend on the target platform. That
 // information needs to be supplied by an external argument.
-Integer_type&
-Builder::get_int_type()
+Type
+Builder::get_int_type(Qualifier_set q, Reference_kind r)
 {
-  return get_integer_type(true, 32);
-}
-
-
-Integer_type&
-Builder::get_int_type(Qualifier_set q)
-{
-  return get_integer_type(q, true, 32);
+  return get_integer_type(true, 32, q, r);
 }
 
 
 // TODO: See comments above.
-Integer_type&
-Builder::get_uint_type()
+Type
+Builder::get_uint_type(Qualifier_set q, Reference_kind r)
 {
-  return get_integer_type(false, 32);
+  return get_integer_type(false, 32, q, r);
 }
 
 
-Integer_type&
-Builder::get_uint_type(Qualifier_set q)
+Type
+Builder::get_float_type(int p, Qualifier_set q, Reference_kind r)
 {
-  return get_integer_type(q, false, 32);
+  return {float_type(p), q, r};
 }
-
-
-Float_type&
-Builder::get_float_type()
-{
-  return make<Float_type>();
-}
-
-
-Float_type&
-Builder::get_float_type(Qualifier_set q)
-{
-  return make<Float_type>();
-}
-
-
 
 
 // -------------------------------------------------------------------------- //
 // Compound types
 
-Function_type&
-Builder::get_function_type(Decl_list const& ps, Type& r)
+Type
+Builder::get_function_type(Decl_list const& ps, Type t, Reference_kind r)
 {
   Type_list ts;
-  for (Decl& d : *modify(&ps)) {
-    Object_parm& p = cast<Object_parm>(d);
+  for (Decl& d : modify(ps))
     ts.push_back(p.type());
-  }
-  return get_function_type(ts, r);
+  return get_function_type(ts, t, r);
 }
 
 
-Function_type&
-Builder::get_function_type(Type_list const& ts, Type& r)
+Type
+Builder::get_function_type(Type_list const& ts, Type t, Reference_kind r)
 {
-  return make<Function_type>(ts, r);
+  return {function_type(ts, t), empty_qual, r};
 }
 
 
-Coroutine_type&
-Builder::get_coroutine_type(Type_decl& d)
+Type
+Builder::get_array_type(Type t, Expr& e, Reference_kind r)
 {
-  return make<Coroutine_type>(d);
+  return {array_type(t, e), empty_qual, r};
 }
 
 
-Array_type&
-Builder::get_array_type(Type& t, Expr& e)
+Type
+Builder::get_tuple_type(Type_list&& t, Reference_kind r)
 {
-  return make<Array_type>(t,e);
+  return {tuple_type(std::move(t)), r};
 }
 
 
-Tuple_type&
-Builder::get_tuple_type(Type_list&& t)
+Type
+Builder::get_tuple_type(Type_list const& t, Reference_kind r)
 {
-  return make<Tuple_type>(std::move(t));
+  return {tuple_type(t), r};
 }
 
 
-Tuple_type&
-Builder::get_tuple_type(Type_list const& t)
+Type
+Builder::get_pointer_type(Type t, Qualifier_set q, Reference_kind r)
 {
-  return make<Tuple_type>(t);
-}
-
-
-Pointer_type&
-Builder::get_pointer_type(Type& t)
-{
-  return make<Pointer_type>(t);
-}
-
-
-Pointer_type&
-Builder::get_pointer_type(Qualifier_set q, Type& t)
-{
-  return make<Pointer_type>(t);
+  return {pointer_type(t), q, r};
 }
 
 
@@ -350,32 +290,18 @@ Builder::get_pointer_type(Qualifier_set q, Type& t)
 // User-defined types
 
 // Returns class type for the given type declaration.
-Class_type&
-Builder::get_class_type(Type_decl& d)
+Type
+Builder::get_class_type(Type_decl& d, Qualifier_set q, Reference_kind r)
 {
-  return make<Class_type>(d);
-}
-
-
-Class_type&
-Builder::get_class_type(Qualifier_set q, Type_decl& d)
-{
-  return make<Class_type>(q, d);
+  return {class_type(d), q, r};
 }
 
 
 // Returns the type corresponding to the declaration of a type parameter.
-Typename_type&
-Builder::get_typename_type(Type_decl& d)
+Type
+Builder::get_typename_type(Type_decl& d, Qualifier_set q, Reference_kind r)
 {
-  return make<Typename_type>(d);
-}
-
-
-Typename_type&
-Builder::get_typename_type(Qualifier_set q, Type_decl& d)
-{
-  return make<Typename_type>(q, d);
+  return {typename_type(d), q, r};
 }
 
 
@@ -383,17 +309,24 @@ Builder::get_typename_type(Qualifier_set q, Type_decl& d)
 // Deduced types
 
 // Returns the auto type corresponding to the given declaration.
-Auto_type&
-Builder::get_auto_type(Type_decl& d)
+Type
+Builder::get_auto_type(Type_decl& d, Qualifier_set q, Reference_kind r)
 {
-  return make<Auto_type>(d);
+  return {auto_type(d), q, r};
 }
 
 
-Decltype_type&
-Builder::get_decltype_type(Expr&)
+Type
+Builder::get_decltype_type(Expr& e, Qualifier_set q, Reference_kind r)
 {
-  lingo_unimplemented("decltype-type");
+  return {declared_type(e), q, r};
+}
+
+
+Type
+Builder::get_type_type()
+{
+  return {type_type(), q, r};
 }
 
 
@@ -401,89 +334,67 @@ Builder::get_decltype_type(Expr&)
 // Qualified types
 
 
-// Qualifiers on array type apply to the element type.
-static inline Type&
-get_qualified_array_type(Builder& b, Array_type& arr, Qualifier_set q)
+static Type
+qualified_array_type(Type_builder& b, Array_type& t, Qualifier_set q, Reference_kind r)
 {
-  Type& t = b.get_qualified_type(arr.element_type(), q);
-  Expr& e = arr.extent();
-  return b.get_array_type(t, e);
+  Type et(t.element_type(), q);
+  return b.get_array_type(et, empty_qual, r);
 }
 
 
-// Given a type and a qualifier set, returns a variant of that type
-// with the given qualifiers. Note that when q is empty_qual, the
-// resulting type is the unqualified type.
-//
-// TODO: Make sure that this function is fully implemented.
-Type&
-Builder::get_qualified_type(Type& t, Qualifier_set q)
+static Type
+qualified_tuple_type(Type_builder& b, Tuple_type& t, Qualifier_set q, Reference_kind r)
+{
+  Type_list ts;
+  for (Type& et : t.element_types())
+    ts.push_back({et, q});
+  return b.get_tuple_type(std::move(ts), empty_qual, r);
+}
+
+
+// Return a type qualified by q. This preserves the reference kind of the 
+// original type. Qualifiers applied to an array or tuple type apply to their 
+// element type(s).
+Type
+Type_builder::get_qualified_type(Type t, Qualifier_set q)
 {
   struct fn
   {
-    Builder&      self;
-    Qualifier_set q;
-    
-    Type& operator()(Type& t) { lingo_unhandled(t); }
-    
-    // Fundamental types
-    Type& operator()(Void_type& t)    { return self.get_void_type(q); }
-    Type& operator()(Boolean_type& t) { return self.get_bool_type(q); }
-    Type& operator()(Byte_type& t)    { return self.get_byte_type(q); }
-    Type& operator()(Integer_type& t) { return self.get_integer_type(q, t.sign(), t.precision()); }
-    Type& operator()(Float_type& t)   { return self.get_void_type(q); }
-
-    // Compound types
-    Type& operator()(Function_type& t) { return t; }
-    Type& operator()(Array_type& t)    { return get_qualified_array_type(self, t, q); }
-    Type& operator()(Class_type& t)    { return self.get_class_type(q, t.declaration()); }
-    Type& operator()(Pointer_type& t)  { return self.get_pointer_type(q, t.type()); }
+    Type_builder&  self;
+    Reference_kind r;
+    Type operator()(Basic_type& t) { return {t, q, r}; }
+    Type operator()(Array_type& t) { return qualified_array_type(self, t, q, r); }
+    Type operator()(Tuple_type& t) { return qualified_tuple_type{self, t, q, r}; }
   };
-
-  if (t.qualifiers() != q)
-    return apply(t, fn{*this, q});
-  else
-    return t;
+  return apply(t, fn{r});
 }
 
 
-Type&
-Builder::get_unqualified_type(Type& t)
+Type
+Type_builder::get_unqualified_type(Type t)
 {
   return get_qualified_type(t, empty_qual);
 }
 
 
-Type&
-Builder::get_const_type(Type& t)
+Type
+Type_builder::get_const_type(Type t)
 {
   return get_qualified_type(t, const_qual);
 }
 
 
-Type&
-Builder::get_volatile_type(Type& t)
+Type
+Type_builder::get_volatile_type(Type t)
 {
   return get_qualified_type(t, volatile_qual);
 }
 
 
-Type&
-Builder::get_cv_type(Type& t)
+Type
+Type_builder::get_cv_type(Type t)
 {
   return get_qualified_type(t, cv_qual);
-}
-
-
-
-// -------------------------------------------------------------------------- //
-// Deduced types
-
-Type_type&
-Builder::get_type_type()
-{
-  static Type_type t;
-  return t;
 }
 
 

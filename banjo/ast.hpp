@@ -17,10 +17,4 @@
 #include "ast-req.hpp"
 #include "ast-cons.hpp"
 
-#include "context.hpp"
-
-#include "equivalence.hpp"
-#include "hash.hpp"
-
-
 #endif

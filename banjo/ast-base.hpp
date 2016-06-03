@@ -20,11 +20,24 @@
 namespace banjo
 {
 
+// Bring some names into scope so they aren't hidden by banjo declarations
+// in the type hierarchy.
+using lingo::is;
+using lingo::as;
+using lingo::cast;
+
+
+// Bring useful structures into scope.
+using lingo::Integer;
+
+
+// Primary structures
 struct Term;
 
 struct Name;
 struct Type;
 struct Declared_type;
+
 struct Expr;
 struct Id_expr;
 struct Decl_expr;
@@ -33,12 +46,14 @@ struct Binary_expr;
 struct Dot_expr;
 struct Conv;
 struct Init;
+
 struct Req;
 struct Stmt;
 struct Decl;
 struct Object_decl;
 struct Value_decl;
 struct Type_decl;
+
 struct Def;
 struct Cons;
 
@@ -56,10 +71,9 @@ struct Cons;
 
 
 // Secondary structures.
+struct Context;
 struct Scope;
 struct Overload_set;
-
-using lingo::Integer;
 
 
 // -------------------------------------------------------------------------- //
@@ -70,6 +84,8 @@ using lingo::Integer;
 // Each term has an associated source code location. However, this
 // is not meaningful for all terms. In particular, canonicalized
 // terms must not include a valid source code location.
+//
+// TODO: Do I really want a base class for all of these things?
 struct Term
 {
   virtual ~Term() { }
@@ -212,13 +228,13 @@ List<T>::append(I first, I last)
 
 
 // Lists
-using Term_list = List<Term>;
-using Type_list = List<Type>;
+using Type_list = std::vector<Type>;
 using Expr_list = List<Expr>;
 using Req_list  = List<Req>;
 using Stmt_list = List<Stmt>;
 using Decl_list = List<Decl>;
 using Cons_list = List<Cons>;
+using Term_list = List<Term>;
 
 
 // Iterators
@@ -241,13 +257,13 @@ template<typename T>
 struct Unparsed_term : T
 {
   Unparsed_term(Token_seq&& toks)
-    : toks(std::move(toks))
+    : toks_(std::move(toks))
   { }
 
-  Token_seq const& tokens() const { return toks; }
-  Token_seq&       tokens()       { return toks; }
+  Token_seq const& tokens() const { return toks_; }
+  Token_seq&       tokens()       { return toks_; }
 
-  Token_seq toks;
+  Token_seq toks_;
 };
 
 
@@ -275,8 +291,11 @@ using Binary_fn  = Expr& (*)(Context&, Expr&, Expr&);
 using Ternary_fn = Expr& (*)(Context&, Expr&, Expr&, Expr&);
 
 
-enum Category : int;
-
+// Forward declarations of enumerations.
+enum Operator_kind : int;
+enum Qualifier_set : int;
+enum Reference_kind : int;
+enum Specifier_set : int;
 
 } // namespace banjo
 

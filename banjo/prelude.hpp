@@ -11,18 +11,14 @@
 #include <lingo/location.hpp>
 #include <lingo/symbol.hpp>
 
+
 namespace banjo
 {
 
 using namespace lingo;
 
 
-struct Context;
-
-
 } // namespace banjo
 
-
-#include "error.hpp"
 
 #endif

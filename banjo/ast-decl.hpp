@@ -4,12 +4,47 @@
 #ifndef BANJO_AST_DECL_HPP
 #define BANJO_AST_DECL_HPP
 
-#include "ast-base.hpp"
-#include "specifier.hpp"
+#include "ast-type.hpp"
 
 
 namespace banjo
 {
+
+// A specifier set records a set of declaration specifiers.
+enum Specifier_set : int
+{
+  empty_spec     = 0,
+  static_spec    = 1 << 0,
+  dynamic_spec   = 1 << 1,  // TODO: Find a use.
+  implicit_spec  = 1 << 2,  // TODO: Find a use.
+  explicit_spec  = 1 << 3,
+  virtual_spec   = 1 << 4,
+  abstract_spec  = 1 << 5,
+  inline_spec    = 1 << 6,
+  public_spec    = 1 << 7,
+  private_spec   = 1 << 8,
+  protected_spec = 1 << 9,
+  ref_spec       = 1 << 10,
+  consume_spec   = 1 << 11,
+  in_spec        = 1 << 12,
+  out_spec       = 1 << 13,
+  mutable_spec   = 1 << 14,
+  forward_spec   = 1 << 15,
+
+  const_spec     = 1 << 16, // FIXME: Replaced by meta
+  meta_spec      = 1 << 16,
+  
+  internal_spec  = 1 << 30, // Internal to the language
+};
+
+
+inline Specifier_set&
+operator|=(Specifier_set& a, Specifier_set b)
+{
+  return a = Specifier_set(a | b);
+}
+
+
 
 // The base class of all declarations. Every declaration has an associated
 // name, type, and set of specifiers.
@@ -46,20 +81,20 @@ struct Decl : Term
   { }
 
   // Constructors for typed declarations.
-  Decl(Name& n, Type& t)
-    : cxt_(), name_(&n), type_(&t), spec_()
+  Decl(Name& n, Type t)
+    : cxt_(), name_(&n), type_(t), spec_()
   { }
 
-  Decl(Name& n, Type& t, Specifier_set s)
-    : cxt_(), name_(&n), type_(&t), spec_(s)
+  Decl(Name& n, Type t, Specifier_set s)
+    : cxt_(), name_(&n), type_(t), spec_(s)
   { }
 
-  Decl(Decl& d, Name& n, Type& t)
-    : cxt_(&d), name_(&n), type_(&t), spec_()
+  Decl(Decl& d, Name& n, Type t)
+    : cxt_(&d), name_(&n), type_(t), spec_()
   { }
 
-  Decl(Decl& d, Decl& cxt, Name& n, Type& t, Specifier_set s)
-    : cxt_(&d), name_(&n), type_(&t), spec_(s)
+  Decl(Decl& d, Decl& cxt, Name& n, Type t, Specifier_set s)
+    : cxt_(&d), name_(&n), type_(t), spec_(s)
   { }
 
   virtual void accept(Visitor& v) const = 0;
@@ -78,11 +113,7 @@ struct Decl : Term
   bool is_named() const { return name_; }
 
   // Returns the type associated with the name.
-  Type const& type() const { return *type_; }
-  Type&       type()       { return *type_; }
-
-  // Returns true if the declaration has a type.
-  bool is_typed() const { return type_; }
+  Type const type() const { return type_; }
 
   // Returns the set of declaration specifiers for the declaration.
   Specifier_set specifiers() const { return spec_; }
@@ -103,7 +134,7 @@ struct Decl : Term
 
   Decl*         cxt_;
   Name*         name_;
-  Type*         type_;
+  Type          type_;
   Specifier_set spec_;
 };
 
@@ -183,7 +214,7 @@ struct Value_decl : Decl
 // Declares a variable.
 struct Variable_decl : Object_decl
 {
-  Variable_decl(Name& n, Type& t, Def& d)
+  Variable_decl(Name& n, Type t, Def& d)
     : Object_decl(n, t), def_(&d)
   { }
 
@@ -201,7 +232,7 @@ struct Variable_decl : Object_decl
 // Declares a constant.
 struct Constant_decl : Value_decl
 {
-  Constant_decl(Name& n, Type& t, Def& d)
+  Constant_decl(Name& n, Type t, Def& d)
     : Value_decl(n, t), def_(&d)
   { }
 
@@ -222,11 +253,11 @@ struct Constant_decl : Value_decl
 // TODO: Implement preconditions and postconditions.
 struct Mapping_decl : Decl
 {
-  Mapping_decl(Name& n, Type& t, Decl_list const& p, Def& d)
+  Mapping_decl(Name& n, Type t, Decl_list const& p, Def& d)
     : Decl(n, t), parms_(p), def_(&d)
   { }
 
-  Mapping_decl(Name& n, Type& t, Decl_list&& p, Def& d)
+  Mapping_decl(Name& n, Type t, Decl_list&& p, Def& d)
     : Decl(n, t), parms_(std::move(p)), def_(&d)
   { }
 
@@ -239,8 +270,7 @@ struct Mapping_decl : Decl
   Function_type&       type();
 
   // Returns the return type of the function.
-  Type const& return_type() const;
-  Type&       return_type();
+  Type return_type() const;
 
   // Returns the function's constraint expression. This is valid only 
   // when is_constrained() is true.
@@ -299,15 +329,14 @@ struct Type_decl : Decl
   using Decl::Decl;
 
   // Returns the kind of the type. This is the same as the type's type.
-  Type const& kind() const { return type(); }
-  Type&       kind()       { return type(); }
+  Type kind() const { return type(); }
 };
 
 
 // Represents the declaration of a class type.
 struct Class_decl : Type_decl
 {
-  Class_decl(Name& n, Type& t, Def& d)
+  Class_decl(Name& n, Type t, Def& d)
     : Type_decl(n, t), def_(&d)
   { }
   
@@ -334,8 +363,8 @@ struct Class_decl : Type_decl
 // its associated class declaration.
 struct Coroutine_decl : Type_decl
 {
-  Coroutine_decl(Name& n, Type& t, Decl_list const& p, Def& d)
-    : Type_decl(n, t), ret_(&t), def_(&d), parms_(p)
+  Coroutine_decl(Name& n, Type t, Decl_list const& p, Def& d)
+    : Type_decl(n, t), ret_(t), def_(&d), parms_(p)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -345,15 +374,13 @@ struct Coroutine_decl : Type_decl
   Def&       definition()       { return *def_; }
 
   // Returns the return type of the coroutine.
-  Type const& return_type() const { return *ret_; };
-  Type&       return_type()       { return *ret_; }
+  Type return_type() const { return ret_; };
 
   // Returns the list of parameter declarations for the coroutine.
   Decl_list const& parameters() const { return parms_; }
   Decl_list&       parameters()       { return parms_; }
 
-  Type* kind_;
-  Type* ret_;
+  Type ret_;
   Def* def_;
   Decl_list parms_;
 
@@ -380,21 +407,21 @@ struct Field_decl : Variable_decl
 // Declares a base class subobject.
 struct Super_decl : Object_decl
 {
-  Super_decl(Name& n, Type& t, Def& d)
-    : Object_decl(n), type_(&t), def_(&d)
+  Super_decl(Name& n, Type t, Def& d)
+    : Object_decl(n), type_(t), def_(&d)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the declared type of the super
-  Type const& type() const { return *type_; }
-  Type&       type()       { return *type_; }
+  Type const& type() const { return type_; }
+  Type&       type()       { return type_; }
 
   Def const& initializer() const { return *def_; }
   Def&       initializer()       { return *def_; }
 
-  Type * type_;
+  Type type_;
   Def* def_;
 };
 
@@ -538,11 +565,11 @@ struct Parameter_decl : T
 // FIXME: Rename as Variable_parm?
 struct Object_parm : Parameter_decl<Object_decl>
 {
-  Object_parm(Name& n, Type& t)
+  Object_parm(Name& n, Type t)
     : Parameter_decl<Object_decl>(n, t), init_()
   { }
 
-  Object_parm(Name& n, Type& t, Expr& i)
+  Object_parm(Name& n, Type t, Expr& i)
     : Parameter_decl<Object_decl>(n, t), init_(&i)
   { }
 
@@ -566,11 +593,11 @@ struct Object_parm : Parameter_decl<Object_decl>
 // constant declarations?
 struct Value_parm : Parameter_decl<Object_decl>
 {
-  Value_parm(Index x, Name& n, Type& t)
+  Value_parm(Index x, Name& n, Type t)
     : Parameter_decl<Object_decl>(x, n, t), init_()
   { }
 
-  Value_parm(Index x, Name& n, Type& t, Expr& i)
+  Value_parm(Index x, Name& n, Type t, Expr& i)
     : Parameter_decl<Object_decl>(x, n, t), init_(&i)
   { }
 
@@ -597,8 +624,8 @@ struct Type_parm : Parameter_decl<Type_decl>
     : Parameter_decl<Type_decl>(x, n), def()
   { }
 
-  Type_parm(Index x, Name& n, Type& t)
-    : Parameter_decl<Type_decl>(x, n), def(&t)
+  Type_parm(Index x, Name& n, Type t)
+    : Parameter_decl<Type_decl>(x, n), def(t)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -606,12 +633,11 @@ struct Type_parm : Parameter_decl<Type_decl>
 
   // Returns the default argument for the parameter.
   // This is valid iff has_default_arguement() is true.
-  Type const& default_argument() const { return *def; }
-  Type&       default_argument()       { return *def; }
+  Type const& default_argument() const { return def; }
 
-  bool has_default_arguement() const { return def; }
+  bool has_default_arguement() const { return (bool)def; }
 
-  Type* def;
+  Type def;
 };
 
 
@@ -674,10 +700,6 @@ is_function_template(Decl const& d)
     return is_function(t->parameterized_declaration());
   return false;
 }
-
-
-Type const& declared_type(Decl const&);
-Type&       declared_type(Decl&);
 
 
 // -------------------------------------------------------------------------- //

@@ -124,20 +124,13 @@ is_type_dependent(Expr_list const& es)
 // Returns the declared type of an expression. In general, this is type of 
 // the expression. However, for id-expressions, we actually use the declared 
 // type of the referenced declaration.
-Type&
-declared_type(Expr& e)
-{
-  if (Decl_expr* d = as<Decl_expr>(&e))
-    return declared_type(d->declaration());
-  else
-    return e.type();
-}
-
-
-Type const&
+Type
 declared_type(Expr const& e)
 {
-  return declared_type(modify(e));
+  if (Decl_expr const* d = as<Decl_expr>(&e))
+    return d->declaration().type();
+  else
+    return e.type();
 }
 
 

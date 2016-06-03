@@ -4,6 +4,12 @@
 #ifndef BANJO_OVERLOAD_HPP
 #define BANJO_OVERLOAD_HPP
 
+// Defines facilities related to overload sets.
+//
+// TODO: This should probably be merged into the lookup/scope rules
+// rather than being an independent thing. Also, function candidate
+// needs to move into the resolution module.
+
 #include "language.hpp"
 
 #include <unordered_set>
@@ -35,7 +41,6 @@ struct Overload_set : Decl_list
   // shall be overloadable with all previous elements of the set.
   void insert(Decl& d) { push_back(d); }
 };
-
 
 
 // In overload resolution, this represents a candidate for the function
