@@ -22,12 +22,12 @@ add_library(banjo
   hashing.cpp
 
   # Node construction
-  build-core.cpp
+  build-name.cpp
   build-type.cpp
   build-expr.cpp
-  build-stmt.cpp
-  build-decl.cpp
-  # builder.cpp
+  # build-stmt.cpp
+  # build-decl.cpp
+  builder.cpp
 
   # context.cpp
   # printer.cpp

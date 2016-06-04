@@ -4,7 +4,7 @@
 #ifndef BANJO_AST_EXPR_HPP
 #define BANJO_AST_EXPR_HPP
 
-#include "ast-base.hpp"
+#include "ast-type.hpp"
 
 
 namespace banjo
@@ -24,12 +24,12 @@ struct Expr : Term
   struct Visitor;
   struct Mutator;
 
-  Expr(Type& t)
-    : type_(&t)
+  Expr(Type t)
+    : type_(t)
   { }
 
   Expr(untyped_t)
-    : type_(nullptr)
+    : type_()
   { }
 
   virtual void accept(Visitor&) const = 0;
@@ -37,14 +37,13 @@ struct Expr : Term
 
   // Returns the type of the expression. This is valid only when 
   // is_typed() returns true.
-  Type const& type() const { return *type_; }
-  Type&       type()       { return *type_; }
+  Type type() const { return type_; }
 
   // Returns true when the expression has a type. This is generally
   // the case.
-  bool is_typed() const { return type_; }
+  bool is_typed() const { return !type_.is_empty(); }
 
-  Type*    type_;
+  Type type_;
 };
 
 
@@ -72,7 +71,7 @@ struct Expr::Mutator
 template<typename T>
 struct Literal_expr : Expr
 {
-  Literal_expr(Type& t, T const& x)
+  Literal_expr(Type t, T const& x)
     : Expr(t), val(x)
   { }
 
@@ -87,7 +86,7 @@ struct Literal_expr : Expr
 // The base class of all unary expressions.
 struct Unary_expr : Expr
 {
-  Unary_expr(Type& t, Expr& e)
+  Unary_expr(Type t, Expr& e)
     : Expr(t), first(&e)
   { }
 
@@ -102,7 +101,7 @@ struct Unary_expr : Expr
 // The base class of all binary expressions.
 struct Binary_expr : Expr
 {
-  Binary_expr(Type& t, Expr& e1, Expr& e2)
+  Binary_expr(Type t, Expr& e1, Expr& e2)
     : Expr(t), first(&e1), second(&e2)
   { }
 
@@ -123,7 +122,7 @@ struct Binary_expr : Expr
 // a void expression. 
 struct Void_expr : Expr
 {
-  Void_expr(Type& t)
+  Void_expr(Type t)
     : Expr(t)
   { }
 
@@ -135,7 +134,7 @@ struct Void_expr : Expr
 // A boolean literal.
 struct Boolean_expr : Literal_expr<bool>
 {
-  Boolean_expr(Type& t, bool b)
+  Boolean_expr(Type t, bool b)
     : Literal_expr<bool>(t, b)
   { }
 
@@ -147,11 +146,11 @@ struct Boolean_expr : Literal_expr<bool>
 // An integer-valued literal.
 struct Integer_expr : Literal_expr<Integer>
 {
-  Integer_expr(Type& t, Integer const& n)
+  Integer_expr(Type t, Integer const& n)
     : Literal_expr<Integer>(t, n)
   { }
 
-  Integer_expr(Type& t, Integer&& n)
+  Integer_expr(Type t, Integer&& n)
     : Literal_expr<Integer>(t, std::move(n))
   { }
 
@@ -166,11 +165,11 @@ struct Integer_expr : Literal_expr<Integer>
 // We may have support for fixed point types in the future.
 struct Real_expr : Literal_expr<lingo::Real>
 {
-  Real_expr(Type& t, Real const& n)
+  Real_expr(Type t, Real const& n)
     : Literal_expr<Real>(t, n)
   { }
 
-  Real_expr(Type& t, Real&& n)
+  Real_expr(Type t, Real&& n)
     : Literal_expr<Real>(t, std::move(n))
   { }
 
@@ -183,7 +182,7 @@ struct Real_expr : Literal_expr<lingo::Real>
 // is inherently a value expression.
 struct Tuple_expr : Expr
 {
-  Tuple_expr(Type& t, Expr_list const& l)
+  Tuple_expr(Type t, Expr_list const& l)
     : Expr(t), elems(l)
   { }
 
@@ -204,7 +203,7 @@ struct Id_expr : Expr
     : Expr(untyped_expr), name_(&n)
   { }
 
-  Id_expr(Type& t, Name& n)
+  Id_expr(Type t, Name& n)
     : Expr(t), name_(&n)
   { }
 
@@ -219,7 +218,7 @@ struct Id_expr : Expr
 // The base class of all id-expressions that resolved to a single declaration.
 struct Id_decl_expr : Id_expr
 {
-  Id_decl_expr(Type& t, Name& n, Decl& d)
+  Id_decl_expr(Type t, Name& n, Decl& d)
     : Id_expr(t, n), decl_(&d)
   { }
   
@@ -306,7 +305,7 @@ struct Dot_expr : Expr
     : Expr(untyped_expr), obj_(&e), mem_(&n)
   { }
 
-  Dot_expr(Type& t, Expr& e, Name& n)
+  Dot_expr(Type t, Expr& e, Name& n)
     : Expr(t), obj_(&e), mem_(&n)
   { }
 
@@ -328,7 +327,7 @@ struct Dot_expr : Expr
 // declaration of the member name.
 struct Dot_decl_expr : Dot_expr
 {
-  Dot_decl_expr(Type& t, Expr& e, Name& n, Decl& d)
+  Dot_decl_expr(Type t, Expr& e, Name& n, Decl& d)
     : Dot_expr(t, e, n), decl_(&d)
   { }
 
@@ -630,7 +629,7 @@ struct Not_expr : Unary_expr
 // unresolved calls. It would simplify code generation.
 struct Call_expr : Expr
 {
-  Call_expr(Type& t, Expr& e, Expr_list const& a)
+  Call_expr(Type t, Expr& e, Expr_list const& a)
     : Expr(t), fn(&e), args(a)
   { }
 
@@ -663,7 +662,7 @@ struct Assign_expr : Binary_expr
 // expression is a value expression.
 struct Requires_expr : Expr
 {
-  Requires_expr(Type& t, Decl_list const& tps, Decl_list const& nps, Req_list const& rs)
+  Requires_expr(Type t, Decl_list const& tps, Decl_list const& nps, Req_list const& rs)
     : Expr(t), tparms(tps), nparms(nps), reqs(rs)
   { }
 
@@ -697,7 +696,7 @@ struct Requires_expr : Expr
 // values from thin air?
 struct Synthetic_expr : Expr
 {
-  Synthetic_expr(Type& t, Decl& d)
+  Synthetic_expr(Type t, Decl& d)
     : Expr(t), decl(&d)
   { }
 
@@ -747,14 +746,13 @@ struct Unparsed_expr : Expr
 // reference bindings as conversions.
 struct Conv : Expr
 {
-  Conv(Type& t, Expr& e)
+  Conv(Type t, Expr& e)
     : Expr(t), expr(&e)
   { }
 
   // Returns the destination type of the conversion. This is the
   // same as the expression's type.
-  Type const& destination() const { return type(); }
-  Type&       destination()       { return type(); }
+  Type destination() const { return type(); }
 
   // Returns the converted expression (the operand).
   Expr const& source() const { return *expr; }
@@ -867,7 +865,7 @@ struct Ellipsis_conv : Conv
 // value expressions.
 struct Init : Expr
 {
-  Init(Type& t)
+  Init(Type t)
     : Expr(t)
   { }
 };
@@ -891,7 +889,7 @@ struct Trivial_init : Init
 // target object.
 struct Copy_init : Init
 {
-  Copy_init(Type& t, Expr& e)
+  Copy_init(Type t, Expr& e)
     : Init(t), expr(&e)
   { }
 
@@ -910,7 +908,7 @@ struct Copy_init : Init
 // The declared reference is bound to the result of the expression.
 struct Bind_init : Init
 {
-  Bind_init(Type& t, Expr& e)
+  Bind_init(Type t, Expr& e)
     : Init(t), expr(&e)
   { }
 
@@ -929,7 +927,7 @@ struct Bind_init : Init
 // constructor.
 struct Direct_init : Init
 {
-  Direct_init(Type& t, Decl& d, Expr_list const& a)
+  Direct_init(Type t, Decl& d, Expr_list const& a)
     : Init(t), ctor(&d), args(a)
   { }
 
@@ -953,7 +951,7 @@ struct Direct_init : Init
 // or array object.
 struct Aggregate_init : Init
 {
-  Aggregate_init(Type& t, Expr_list const& es)
+  Aggregate_init(Type t, Expr_list const& es)
     : Init(t), inits(es)
   { }
 
