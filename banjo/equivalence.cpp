@@ -27,7 +27,8 @@ is_equivalent(Term const& x1, Term const& x2)
   if (ti1 != ti2)
     return false;
 
-  // FIXME: Terms are dumb because a Type is not a Term.
+  if (Type const* t1 = as<Type>(&x1))
+    return is_equivalent(*t1, cast<Type>(x2));
   if (Expr const* t1 = as<Expr>(&x1))
     return is_equivalent(*t1, cast<Expr>(x2));
   if (Decl const* t1 = as<Decl>(&x1))
@@ -128,7 +129,7 @@ is_equivalent(Name const& n1, Name const& n2)
   if (&n1 == &n2)
     return true;
 
-  // Types of different kinds are not the same.
+  // Names of different kinds are not the same.
   std::type_index ti1 = typeid(n1);
   std::type_index ti2 = typeid(n2);
   if (ti1 != ti2)
@@ -142,11 +143,82 @@ is_equivalent(Name const& n1, Name const& n2)
 // -------------------------------------------------------------------------- //
 // Types
 
+inline bool
+eq_integer_type(Integer_type const& t1, Integer_type const& t2)
+{
+  return t1.precision() == t2.precision() && t1.sign() == t2.sign();
+}
+
+
+inline bool
+eq_float_type(Float_type const& t1, Float_type const& t2)
+{
+  return t1.precision() == t2.precision();
+}
+
+
+inline bool
+eq_function_type(Function_type const& t1, Function_type const& t2)
+{
+  return is_equivalent(t1.parameter_types(), t2.parameter_types())
+      && is_equivalent(t1.return_type(), t2.return_type());
+}
+
+
+inline bool
+eq_array_type(Array_type const& t1, Array_type const& t2)
+{
+  return is_equivalent(t1.element_type(), t2.element_type())
+      && is_equivalent(t1.extent(), t2.extent());
+}
+
+
+inline bool
+eq_tuple_type(Tuple_type const& t1, Tuple_type const& t2)
+{
+  return is_equivalent(t1.element_types(), t2.element_types());
+}
+
+
+inline bool
+eq_pointer_type(Pointer_type const& t1, Pointer_type const& t2)
+{
+  return is_equivalent(t1.type(), t2.type());
+}
+
+
+inline bool
+eq_declared_type(Declared_type const& t1, Declared_type const& t2)
+{
+  return is_equivalent(t1.declaration(), t2.declaration());
+}
+
 
 // Returns true if the types a and b are equivalent.
 bool
-is_equivalent(Type t1, Type t2)
+is_equivalent(Type const& t1, Type const& t2)
 {
+  struct fn
+  {
+    Type const& t2;
+    bool operator()(Type const& t)           { lingo_unhandled(t); }
+    bool operator()(Void_type const& t1)     { return true; }
+    bool operator()(Boolean_type const& t1)  { return true; }
+    bool operator()(Byte_type const& t1)     { return true; }
+    bool operator()(Integer_type const& t1)  { return eq_integer_type(t1, cast_as(t1, t2)); }
+    bool operator()(Float_type const& t1)    { return eq_float_type(t1, cast_as(t1, t2)); }
+    bool operator()(Function_type const& t1) { return eq_function_type(t1, cast_as(t1, t2)); }
+    bool operator()(Array_type const& t1)    { return eq_array_type(t1, cast_as(t1, t2)); }
+    bool operator()(Tuple_type const& t1)    { return eq_tuple_type(t1, cast_as(t1, t2)); }
+    bool operator()(Pointer_type const& t1)  { return eq_pointer_type(t1, cast_as(t1, t2)); }
+    bool operator()(Declared_type const& t1) { return eq_declared_type(t1, cast_as(t1, t2)); }
+    bool operator()(Type_type const& t1)     { return true; }
+  };
+
+  // Identical types are equivalent.  
+  if (&t1 == &t2)
+    return true;
+
   // Types describing different entities are not the same.
   if (t1.category() != t2.category())
     return false;
@@ -155,28 +227,13 @@ is_equivalent(Type t1, Type t2)
   if (t1.qualifiers() != t2.qualifiers())
     return false;
 
-  // Compare the bases.
-  return is_equivalent(t1.basis(), t2.basis());
-}
+  // Types of different kinds are not the same.
+  std::type_index ti1 = typeid(t1);
+  std::type_index ti2 = typeid(t2);
+  if (ti1 != ti2)
+    return false;
 
-
-// Compare two basic types. Two basic types are equal only when they
-// are identical.
-bool
-is_equivalent(Basic_type const& t1, Basic_type const& t2)
-{
-  return &t1 == &t2;;
-}
-
-
-// Compare two type lists.
-inline bool
-is_equivalent(Type_list const& a, Type_list const& b)
-{
-  auto cmp = [](Type x, Type y) {
-    return is_equivalent(x, y);
-  };
-  return std::equal(a.begin(), a.end(), b.begin(), b.end(), cmp);
+  return apply(t1, fn{t2});
 }
 
 

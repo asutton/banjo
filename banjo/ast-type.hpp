@@ -154,51 +154,24 @@ is_more_qualified(Qualifier_set a, Qualifier_set b)
 // -------------------------------------------------------------------------- //
 // Types
 
-struct Basic_type;
-
-
-// A type describes objects, references, and functions. There are three
-// components of a type: its category, its object qualifiers, and its
-// basis.
+// A type describes objects, references, and functions.
 //
-// The basis of a type describes its set of values (e.g., int, int*, int[3])
-// in terms of its representation. The basis of a type is represented by an 
-// abstract syntax tree, in which all terms are derived from Basic_type.
+// NOTE: The type system is not inherently canonicalized.
 //
-// The object type and qualifiers are local enumerations and affect the
-// interface and object access semantics.
-//
-// The underlying shape component for a type is canonicalized. This means 
-// that, for every type in a program, there is exactly one shape object
-// describing that type. When copied, the shape is shared, not cloned.
+// TODO: Re-document this class.
 //
 // TODO: Ensure that qualifier queries apply to the right category.
-struct Type
+struct Type : Term
 {
   struct Visitor;
   struct Mutator;
 
-  // Construct an empty type.
-  Type()
-    : base_(nullptr), cat_(), qual_()
+  Type(Type_category c = {}, Qualifier_set q = {})
+    : cat_(c), qual_(q)
   { }
 
-  // Type qualifiers shall only apply to object types.
-  Type(Basic_type& t, Type_category c = {}, Qualifier_set q = {})
-    : base_(&t), cat_(c), qual_(q)
-  { }
-
-  void accept(Visitor&) const;
-  void accept(Mutator&);
-
-  // Returns the basis of the type.
-  Basic_type const& basis() const { return *base_; }
-  Basic_type&       basis()       { return *base_; }
-
-  // Returns true if the type has no shape.
-  bool is_empty() const { return base_ == nullptr; }
-
-  explicit operator bool() const { return base_; }
+  virtual void accept(Visitor&) const = 0;
+  virtual void accept(Mutator&)       = 0;
 
   // Returns the category of this type.
   Type_category category() const { return cat_; }
@@ -226,24 +199,8 @@ struct Type
   // Function qualifiers
   bool is_noexcept() const { return qual_ & noexcept_qaul; }
 
-  Basic_type*    base_;
   Type_category  cat_;
   Qualifier_set  qual_;
-};
-
-
-// The base class of all types. Note that basic types are canonicalized;
-// there is exactly one instance of each value of that type. This means
-// that equality is the same as identity.
-struct Basic_type
-{
-  virtual ~Basic_type() { }
-
-  using Visitor = Type::Visitor;
-  using Mutator = Type::Mutator;
-
-  virtual void accept(Visitor&) const = 0;
-  virtual void accept(Mutator&)       = 0;
 };
 
 
@@ -263,104 +220,39 @@ struct Type::Mutator
 };
 
 
-inline void
-Type::accept(Visitor& v) const
-{
-  return base_->accept(v);
-}
-
-
-inline void
-Type::accept(Mutator& v)
-{
-  return base_->accept(v);
-}
-
-
-
-// A helper function that true if the type t has the shape indicated by T.
-//
-// Example:
-//
-//  void f(Type t) {
-//    cout << is<Boolean_type>(t);
-//  }
-//
-template<typename T>
-inline bool
-is(Type t)
-{
-  return is<T>(t.basis());
-}
-
-
-// A helper function that attempts to convert the type's shape to the type
-// indicated by T. Returns null if the conversion fails. Note that converting 
-// to a shape's type will discard object and reference qualifiers on the outer 
-// type.
-//
-// Example:
-//
-//  void f(Type t) {
-//    Void_type* v = as<Void_type>(t);
-//  }
-//
-template<typename T>
-inline T*
-as(Type t)
-{
-  return as<T>(&t.basis());
-}
-
-
-template<typename T>
-inline T const*
-as(Type const& t)
-{
-  return as<T>(&t.basis());
-}
-
-
-// A helper function that convert the type's shape to the type indicated by 
-// T. Behavior is undefined if the conversion fails. Note that converting to 
-// a shape's type will discard object and reference qualifiers.
-//
-// Example:
-//
-//  void f(Type t) {
-//    Void_type& v = cast<Void_type>(t);
-//  }
-//
-template<typename T>
-inline T&
-cast(Type& t)
-{
-  return cast<T>(t.basis());
-}
-
-
-template<typename T>
-inline T const&
-cast(Type const& t)
-{
-  return cast<T>(t.basis());
-}
 
 
 // -------------------------------------------------------------------------- //
 // Fundamental types
 
 // The void type. Expressions of void type do not compute objects.
-struct Void_type : Basic_type
+struct Void_type : Type
 {
+  using Type::Type;
+
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
 // The boolean type.
-struct Boolean_type : Basic_type
+struct Boolean_type : Type
 {
+  using Type::Type;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// Represents the type of a byte. A byte is the fundamental unit of 
+// storage and is comprised of an implementation defined sequence of bits.
+//
+// TODO: Should this be an integer type, or should it really be distinct?
+struct Byte_type : Type
+{
+  using Type::Type;
+
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 };
@@ -372,10 +264,10 @@ struct Boolean_type : Basic_type
 // of types and their precise representation? For example, "int"
 // is lexically different than "int32", and those differences
 // might be meaningful in the output. Do the same for float.
-struct Integer_type : Basic_type
+struct Integer_type : Type
 {
-  Integer_type(bool s = true, int p = 32)
-    : sign_(s), prec_(p)
+  Integer_type(Type_category c, bool s = true, int p = 32, Qualifier_set q = {})
+    : Type(c, q), sign_(s), prec_(p)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -391,22 +283,11 @@ struct Integer_type : Basic_type
 };
 
 
-// Represents the type of a byte. A byte is the fundamental unit of 
-// storage and is comprised of an implementation defined sequence of bits.
-//
-// TODO: Should this be an integer type, or should it really be distinct?
-struct Byte_type : Basic_type
-{
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-};
-
-
 // The IEEE 754 floating point types.
-struct Float_type : Basic_type
+struct Float_type : Type
 {
-  Float_type(int p = 64)
-    : prec(p)
+  Float_type(Type_category c, int p = 64, Qualifier_set q = {})
+    : Type(c, q), prec(p)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -424,14 +305,14 @@ struct Float_type : Basic_type
 // A function type.
 //
 // Note that function types are never qualified.
-struct Function_type : Basic_type
+struct Function_type : Type
 {
-  Function_type(Type_list const& p, Type r)
-    : parms_(p), ret_(r)
+  Function_type(Type_category c, Type_list const& p, Type& r)
+    : Type(c), parms_(p), ret_(&r)
   { }
 
-  Function_type(Type_list&& p, Type r)
-    : parms_(std::move(p)), ret_(r)
+  Function_type(Type_category c, Type_list&& p, Type& r)
+    : Type(c), parms_(std::move(p)), ret_(&r)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -441,10 +322,11 @@ struct Function_type : Basic_type
   Type_list const& parameter_types() const { return parms_; }
 
   // Returns the return type of the function.
-  Type  return_type() const { return ret_; }
+  Type const& return_type() const { return *ret_; }
+  Type&       return_type()       { return *ret_; }
 
   Type_list parms_;
-  Type      ret_;
+  Type*     ret_;
 };
 
 
@@ -454,23 +336,24 @@ struct Function_type : Basic_type
 //
 // TODO: Save the computed extent. In fact, should we be storing
 // the integer extend instead of the expression?
-struct Array_type : Basic_type
+struct Array_type : Type
 {
-  Array_type(Type t, Expr& e) 
-    : type_(t), expr_(&e) 
+  Array_type(Type_category c, Type& t, Expr& e) 
+    : Type(c), type_(&t), expr_(&e) 
   { } 
   
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the element type of the array.
-  Type element_type() const { return type_; }
+  Type const& element_type() const { return *type_; }
+  Type&       element_type()       { return *type_; }
 
   // Returns the expression defining the extent of the array.
   Expr const& extent() const { return *expr_; }
   Expr&       extent()       { return *expr_; }
 
-  Type type_;
+  Type* type_;
   Expr* expr_;
 };
 
@@ -478,10 +361,10 @@ struct Array_type : Basic_type
 // A tuple type.
 //
 // A tuple type is not cv-qualified, but its elements can be.
-struct Tuple_type : Basic_type
+struct Tuple_type : Type
 {
-  Tuple_type(Type_list const& t) 
-    : types_(t) 
+  Tuple_type(Type_category c, Type_list const& t) 
+    : Type(c), types_(t) 
   { } 
 
   Tuple_type(Type_list&& t) 
@@ -493,25 +376,27 @@ struct Tuple_type : Basic_type
   
   // Returns the element types of the tuple.
   Type_list const& element_types() const { return types_; }
+  Type_list&       element_types()       { return types_; }
   
   Type_list types_;
 };
 
 
 // A pointer type.
-struct Pointer_type : Basic_type
+struct Pointer_type : Type
 {
-  Pointer_type(Type t)
-    : type_(t)
+  Pointer_type(Type_category c, Type& t, Qualifier_set q = {})
+    : Type(c, q), type_(&t)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the pointed-at type.
-  Type type() const { return type_; }
+  Type const& type() const { return *type_; }
+  Type&       type()       { return *type_; }
 
-  Type type_;
+  Type* type_;
 };
 
 
@@ -520,10 +405,10 @@ struct Pointer_type : Basic_type
 
 // Represents any type that has a declaration (i.e., not a built-in) type. 
 // Note that placeholders and type variables are also declared types.
-struct Declared_type : Basic_type
+struct Declared_type : Type
 {
-  Declared_type(Decl& d)
-    : decl_(&d)
+  Declared_type(Type_category c, Decl& d, Qualifier_set q = {})
+    : Type(c, q), decl_(&d)
   { }
 
   // Returns the name of the user-defined type.
@@ -559,31 +444,6 @@ struct Typename_type : Declared_type
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-};
-
-
-// Represents the type of a coroutine.
-//
-// TODO: Do I really want a coroutine to be a class type. These can't
-// have or act as base classes, etc.
-struct Coroutine_type : Class_type
-{
-  using Class_type::Class_type;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the list of parameters used to initialize the
-  // coroutine closure.
-  Type_list const& parameter_types() const { return params; }
-  Type_list&       parameter_types()       { return params; }
-
-  // Returns the type yielded by the coroutine in every evaluation.
-  Type const& return_type() const     { return *ret; }
-  Type&       return_type()           { return *ret; }
-
-  Type_list params;
-  Type*     ret;
 };
 
 
@@ -640,8 +500,10 @@ struct Synthetic_type : Declared_type
 // The type decltype(e). The actual type is deduced from the expression.
 //
 // FIXME: Put this into a category somewhere...
-struct Decltype_type : Basic_type
+struct Decltype_type : Type
 {
+  using Type::Type;
+
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 };
@@ -655,7 +517,7 @@ struct Decltype_type : Basic_type
 // design?
 //
 // TODO: Rename to Type_kind? Something else?
-struct Type_type : Basic_type
+struct Type_type : Type
 {
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
@@ -663,10 +525,10 @@ struct Type_type : Basic_type
 
 
 // Represents an unparsed type.
-struct Unparsed_type : Basic_type
+struct Unparsed_type : Type
 {
   Unparsed_type(Token_seq&& toks)
-    : toks(std::move(toks))
+    : Type(), toks(std::move(toks))
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -689,7 +551,7 @@ struct Unparsed_type : Basic_type
 
 // Returns true if `t` is the boolean type.
 inline bool
-is_boolean_type(Type t)
+is_boolean_type(Type const& t)
 {
   return is<Boolean_type>(t);
 }
@@ -697,7 +559,7 @@ is_boolean_type(Type t)
 
 // Returns true if `t` is an integer type.
 inline bool
-is_integer_type(Type t)
+is_integer_type(Type const& t)
 {
   return is<Integer_type>(t);
 }
@@ -705,7 +567,7 @@ is_integer_type(Type t)
 
 // Returns true if `t` is a floating point type.
 inline bool
-is_floating_point_type(Type t)
+is_floating_point_type(Type const& t)
 {
   return is<Float_type>(t);
 }
@@ -713,7 +575,7 @@ is_floating_point_type(Type t)
 
 // Returns true if `t` is a function type.
 inline bool
-is_function_type(Type t)
+is_function_type(Type const& t)
 {
   return is<Function_type>(t);
 }
@@ -721,7 +583,7 @@ is_function_type(Type t)
 
 // Returns true if `t` is a pointer type.
 inline bool
-is_pointer_type(Type t)
+is_pointer_type(Type const& t)
 {
   return is<Pointer_type>(t);
 }
@@ -729,7 +591,7 @@ is_pointer_type(Type t)
 
 // Returns true if `t` is an array type.
 inline bool
-is_array_type(Type t)
+is_array_type(Type const& t)
 {
   return is<Array_type>(t);
 }
@@ -737,7 +599,7 @@ is_array_type(Type t)
 
 // Returns true if `t` is a tuple type.
 inline bool
-is_tuple_type(Type t)
+is_tuple_type(Type const& t)
 {
   return is<Tuple_type>(t);
 }
@@ -745,7 +607,7 @@ is_tuple_type(Type t)
 
 // Returns true if `t` is a class type.
 inline bool
-is_class_type(Type t)
+is_class_type(Type const& t)
 {
   return is<Class_type>(t);
 }
@@ -811,7 +673,7 @@ struct Generic_type_mutator : Type::Mutator, Generic_mutator<F, T>
 // Apply a function to the basic type.
 template<typename F, typename T = typename std::result_of<F(Void_type const&)>::type>
 inline decltype(auto)
-apply(Basic_type const& t, F fn)
+apply(Type const& t, F fn)
 {
   Generic_type_visitor<F, T> vis(fn);
   return accept(t, vis);
@@ -821,33 +683,14 @@ apply(Basic_type const& t, F fn)
 // Apply a function to the basic type.
 template<typename F, typename T = typename std::result_of<F(Void_type&)>::type>
 inline decltype(auto)
-apply(Basic_type& t, F fn)
+apply(Type& t, F fn)
 {
   Generic_type_mutator<F, T> vis(fn);
   return accept(t, vis);
 }
 
 
-// Apply a function to the given type.
-template<typename F, typename T = typename std::result_of<F(Void_type const&)>::type>
-inline decltype(auto)
-apply(Type const& t, F fn)
-{
-  return apply(t.basis(), fn);
-}
-
-
-// Apply a function to the given type.
-template<typename F, typename T = typename std::result_of<F(Void_type&)>::type>
-inline decltype(auto)
-apply(Type& t, F fn)
-{
-  return apply(t.basis(), fn);
-}
-
-
-
-
 } // namesapce banjo
+
 
 #endif

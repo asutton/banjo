@@ -81,20 +81,20 @@ struct Decl : Term
   { }
 
   // Constructors for typed declarations.
-  Decl(Name& n, Type t)
-    : cxt_(), name_(&n), type_(t), spec_()
+  Decl(Name& n, Type& t)
+    : cxt_(), name_(&n), type_(&t), spec_()
   { }
 
-  Decl(Name& n, Type t, Specifier_set s)
-    : cxt_(), name_(&n), type_(t), spec_(s)
+  Decl(Name& n, Type& t, Specifier_set s)
+    : cxt_(), name_(&n), type_(&t), spec_(s)
   { }
 
-  Decl(Decl& d, Name& n, Type t)
-    : cxt_(&d), name_(&n), type_(t), spec_()
+  Decl(Decl& d, Name& n, Type& t)
+    : cxt_(&d), name_(&n), type_(&t), spec_()
   { }
 
-  Decl(Decl& d, Decl& cxt, Name& n, Type t, Specifier_set s)
-    : cxt_(&d), name_(&n), type_(t), spec_(s)
+  Decl(Decl& d, Decl& cxt, Name& n, Type& t, Specifier_set s)
+    : cxt_(&d), name_(&n), type_(&t), spec_(s)
   { }
 
   virtual void accept(Visitor& v) const = 0;
@@ -113,7 +113,8 @@ struct Decl : Term
   bool is_named() const { return name_; }
 
   // Returns the type associated with the name.
-  Type const type() const { return type_; }
+  Type const& type() const { return *type_; }
+  Type&       type()       { return *type_; }
 
   // Returns the set of declaration specifiers for the declaration.
   Specifier_set specifiers() const { return spec_; }
@@ -134,7 +135,7 @@ struct Decl : Term
 
   Decl*         cxt_;
   Name*         name_;
-  Type          type_;
+  Type*         type_;
   Specifier_set spec_;
 };
 
@@ -162,7 +163,6 @@ struct Decl::Mutator
 #include "ast-decl.def"
 #undef define_node
 };
-
 
 
 // Represents a unit of translation: a sequence of statements comprising
@@ -536,11 +536,11 @@ struct Reference_parm : Parameter_decl<Variable_decl>
 struct Type_parm : Parameter_decl<Type_decl>
 {
   Type_parm(Index x, Name& n)
-    : Parameter_decl<Type_decl>(x, n), def()
+    : Parameter_decl<Type_decl>(x, n), def_()
   { }
 
-  Type_parm(Index x, Name& n, Type t)
-    : Parameter_decl<Type_decl>(x, n), def(t)
+  Type_parm(Index x, Name& n, Type& t)
+    : Parameter_decl<Type_decl>(x, n), def_(&t)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -548,11 +548,12 @@ struct Type_parm : Parameter_decl<Type_decl>
 
   // Returns the default argument for the parameter.
   // This is valid iff has_default_arguement() is true.
-  Type const& default_argument() const { return def; }
+  Type const& default_argument() const { return *def_; }
+  Type&       default_argument()       { return *def_; }
 
-  bool has_default_arguement() const { return (bool)def; }
+  bool has_default_arguement() const { return def_; }
 
-  Type def;
+  Type* def_;
 };
 
 

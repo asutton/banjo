@@ -24,8 +24,8 @@ struct Expr : Term
   struct Visitor;
   struct Mutator;
 
-  Expr(Type t)
-    : type_(t)
+  Expr(Type& t)
+    : type_(&t)
   { }
 
   Expr(untyped_t)
@@ -37,13 +37,13 @@ struct Expr : Term
 
   // Returns the type of the expression. This is valid only when 
   // is_typed() returns true.
-  Type type() const { return type_; }
+  Type const& type() const { return *type_; }
+  Type&       type()       { return *type_; }
 
-  // Returns true when the expression has a type. This is generally
-  // the case.
-  bool is_typed() const { return !type_.is_empty(); }
+  // Returns true when the expression has a type. 
+  bool is_typed() const { return type_; }
 
-  Type type_;
+  Type* type_;
 };
 
 
@@ -984,7 +984,8 @@ bool has_class_type(Expr const&);
 bool is_type_dependent(Expr const&);
 bool is_type_dependent(Expr_list const&);
 
-Type declared_type(Expr const&);
+Type const& declared_type(Expr const&);
+Type&       declared_type(Expr&);
 
 
 // -------------------------------------------------------------------------- //

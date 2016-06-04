@@ -78,7 +78,7 @@ is_dependent_type(Type const& t)
 {
   struct fn
   {
-    bool operator()(Basic_type const& t)    { return false; }
+    bool operator()(Type const& t)          { return false; }
     bool operator()(Function_type const& t) { return is_dependent_function_type(t); }
     bool operator()(Array_type const& t)    { return is_dependent_type(t.element_type()); }
     bool operator()(Tuple_type const& t)    { return any_dependent_types(t.element_types()); }

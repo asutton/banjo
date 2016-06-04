@@ -229,13 +229,13 @@ List<T>::append(I first, I last)
 
 
 // Lists
-using Type_list = std::vector<Type>;
+using Term_list = List<Term>;
+using Type_list = List<Type>;
 using Expr_list = List<Expr>;
 using Req_list  = List<Req>;
 using Stmt_list = List<Stmt>;
 using Decl_list = List<Decl>;
 using Cons_list = List<Cons>;
-using Term_list = List<Term>;
 
 
 // Iterators

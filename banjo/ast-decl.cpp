@@ -14,14 +14,14 @@ namespace banjo
 Function_type const&
 Mapping_decl::type() const
 {
-  return cast<Function_type>(type_);
+  return cast<Function_type>(*type_);
 }
 
 
 Function_type&
 Mapping_decl::type()
 {
-  return cast<Function_type>(type_);
+  return cast<Function_type>(*type_);
 }
 
 
