@@ -104,7 +104,15 @@ struct Declaration_stmt : Stmt
 // A return statement.
 struct Return_stmt : Stmt
 {
-  Return_stmt(Expr& e)
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// A return-value statement.
+struct Return_value_stmt : Stmt
+{
+  Return_value_stmt(Expr& e)
     : expr_(&e)
   { }
 
@@ -118,10 +126,19 @@ struct Return_stmt : Stmt
   Expr* expr_;
 };
 
+
 // A yield statement.
 struct Yield_stmt : Stmt
 {
-  Yield_stmt(Expr& e)
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// A yield-value statement.
+struct Yield_value_stmt : Stmt
+{
+  Yield_value_stmt(Expr& e)
     : expr_(&e)
   { }
 
@@ -133,6 +150,7 @@ struct Yield_stmt : Stmt
 
   Expr* expr_;
 };
+
 
 // An if-then statement.
 struct If_then_stmt : Stmt

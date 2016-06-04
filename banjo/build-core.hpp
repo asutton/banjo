@@ -61,6 +61,7 @@ struct Basic_factory : std::forward_list<T>
   T& operator()(Args&&... args) 
   {
     this->emplace_front(std::forward<Args>(args)...);
+    return this->front();
   }
 };
 

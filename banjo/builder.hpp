@@ -48,25 +48,7 @@ struct Builder : Type_builder, Expr_builder
   Global_id&      get_global_id();
 
 
-
-
-  // Misc.
-  Requires_expr&  make_requires(Decl_list const&, Decl_list const&, Req_list const&);
-  Synthetic_expr& synthesize_expression(Decl&);
-
   // Statements
-  Empty_stmt&       make_empty_statement();
-  Compound_stmt&    make_compound_statement();
-  Compound_stmt&    make_compound_statement(Stmt_list&&);
-  Return_stmt&      make_return_statement(Expr&);
-  Yield_stmt&       make_yield_statement(Expr&);
-  If_then_stmt&     make_if_statement(Expr&, Stmt&);
-  If_else_stmt&     make_if_statement(Expr&, Stmt&, Stmt&);
-  While_stmt&       make_while_statement(Expr&, Stmt&);
-  Break_stmt&       make_break_statement();
-  Continue_stmt&    make_continue_statement();
-  Expression_stmt&  make_expression_statement(Expr&);
-  Declaration_stmt& make_declaration_statement(Decl&);
 
   // Variables and constants
   Variable_decl&  make_variable_declaration(Name&, Type&);
