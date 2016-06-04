@@ -16,18 +16,6 @@ namespace banjo
 // A type describes an object, reference, or function; the category of a
 // type is the entity it describes. 
 //
-// A reference (to an object) can be implicitly converted to an object
-// for the purpose of initializing constants, variables, and parameters.
-// A reference variable or parameter can also bind to an object.
-//
-// There are (currently) two kinds of references:
-//
-//    - A *consume reference* refers to an object whose value may be
-//      consumed by a subsequent operation.
-//
-//    - A *normal reference* has no semantic meaning beyond referring
-//      to an object in storage.
-//
 // A function is a kind of reference, except that its storage is not
 // defined by abstract machine.
 //
@@ -40,40 +28,82 @@ namespace banjo
 // explicit. C++ prvalues are objects in this system.
 //
 // TODO: Support bitfields.
+//
+// TODO: Is "dependent" a category or a qualifier?
 enum Type_category : int
 {
-  unknown_cat,  // The described entity is unknown
-  object_cat,   // Describes an object
-  normal_cat,   // Describes a normal reference
-  consume_cat,  // Describes a consume reference 
-  function_cat, // Describes a function
+  unknown_type,   // The described entity is unknown
+  object_type,    // Describes an object
+  reference_type, // Describes a normal reference
+  function_type,  // Describes a function
 };
 
 
 // -------------------------------------------------------------------------- //
-// Object qualifiers
+// Type qualifiers
 
-// Every object type (the set of types that can define objects in storage)
-// has three additional variants related to the access properties of its
-// objects. These are defined by two properties:
+// Every category of types has additional variants, determined by a subset
+// of qualifiers. These are
 //
-//    - A *const-qualified* object type defines a non-modifiable object.
+//    - const:
+//      A const object or reference type is a or refers to a non-modifiable 
+//      object. 
+//             
+//    - volatile:
+//      A volatile object or reference type is a or refers to an object whose
+//      values can be modified by processes outside of the current thread
+//      of execution.
 //
-//    - A *volatile-qualified* object type defines a type whose value can
-//      be modified by processes outside of current thread of execution
-//      (e.g., a shared global variable or a memory-mapped register file).
+//    - meta:
+//      A meta object is a compile-time entity and requires constant
+//      initialization. Meta objects are implicitly non-modifiable and
+//      cannot be volatile. A meta function is one that is always evaluated
+//      at its point of use.
 //
-// Objects can be both const- and volatile-qualified.
+//    - consume:
+//      A consume reference refers to an object whose value may be consumed 
+//      by a subsequent operation (the object's original value is reset).
 //
-// Object qualifiers do not apply to reference or function types.
+//    - noexcept:
+//      A noexcept function does not propagate exceptions.
+//
+// Note objects references can be both const and volatile. Functions shall
+// be neither object-qualified nor reference-qualified. Likewise, objects
+// and references shall not be function-qualified.
+//
+// NOTE: Sets of qualifiers corresponding to different categories are
+// aligned within the bytes of the underlying type. 
+//
+// TODO: Extend the partial ordering on object qualifiers to include
+// the meta qualifier. Also, is a meta object implicitly const?
 //
 // TODO: Are there any other qualifiers that we want?
 enum Qualifier_set : int
 {
   empty_qual    = 0,
+
+  // Object qualifiers
   const_qual    = 1 << 0,
   volatile_qual = 1 << 1,
-  cv_qual       = const_qual | volatile_qual
+  meta_qual     = 1 << 2, // Meta also qualifies functions
+
+  // Reference qualifiers
+  consume_qual  = 1 << 8,
+
+  // Function qualifiers
+  noexcept_qaul = 1 << 12,
+
+  // Combinations
+  cv_qual        = const_qual | volatile_qual,
+
+  // Names the set of object qualifiers
+  object_qual    = const_qual | volatile_qual,
+
+  // Names the set of object qualifiers.
+  reference_qual = consume_qual,
+
+  // Names the set off function qualifiers.
+  function_qual  = noexcept_qaul | meta_qual
 };
 
 
@@ -81,6 +111,27 @@ inline Qualifier_set&
 operator|=(Qualifier_set& a, Qualifier_set b)
 {
   return a = Qualifier_set(a | b);
+}
+
+
+inline Qualifier_set
+get_object_qualifiers(Qualifier_set q)
+{
+  return Qualifier_set(q & object_qual);
+}
+
+
+inline Qualifier_set
+get_reference_qualifiers(Qualifier_set q)
+{
+  return Qualifier_set(q & reference_qual);
+}
+
+
+inline Qualifier_set
+get_function_qualifiers(Qualifier_set q)
+{
+  return Qualifier_set(q & function_qual);
 }
 
 
@@ -121,8 +172,7 @@ struct Basic_type;
 // that, for every type in a program, there is exactly one shape object
 // describing that type. When copied, the shape is shared, not cloned.
 //
-// TODO: Save space by merging the qualifier and object flags into a
-// single field.
+// TODO: Ensure that qualifier queries apply to the right category.
 struct Type
 {
   struct Visitor;
@@ -136,9 +186,7 @@ struct Type
   // Type qualifiers shall only apply to object types.
   Type(Basic_type& t, Type_category c = {}, Qualifier_set q = {})
     : base_(&t), cat_(c), qual_(q)
-  {
-    lingo_assert(c != object_cat ? q == empty_qual : true);
-  }
+  { }
 
   void accept(Visitor&) const;
   void accept(Mutator&);
@@ -152,20 +200,31 @@ struct Type
 
   explicit operator bool() const { return base_; }
 
-  // Returns reference information for this type.
+  // Returns the category of this type.
   Type_category category() const { return cat_; }
-  bool is_object() const            { return cat_ == object_cat; }
-  bool is_function() const          { return cat_ == function_cat; }
-  bool is_normal_reference() const  { return cat_ == normal_cat; }
-  bool is_consume_reference() const { return cat_ == consume_cat; }
-  bool is_reference() const         { return is_normal_reference() || is_consume_reference(); }
+  bool is_object() const    { return cat_ == object_type; }
+  bool is_reference() const { return cat_ == reference_type; }
+  bool is_function() const  { return cat_ == function_type; }
 
-  // Returns the object qualifiers for this type. 
+  // Returns the qualifiers (for various categories) for this type. 
   Qualifier_set qualifiers() const { return qual_; }
-  bool is_qualified() const        { return qual_ == empty_qual; }
-  bool is_const() const            { return qual_ & const_qual; }
-  bool is_volatile() const         { return qual_ & volatile_qual; }
-  bool is_cv() const               { return is_const() && is_volatile(); }
+  Qualifier_set object_qualifiers() const { return get_object_qualifiers(qual_); }
+  Qualifier_set reference_qualifiers() const { return get_reference_qualifiers(qual_); }
+  Qualifier_set function_qualifiers() const { return get_function_qualifiers(qual_); }
+  
+  // Returns true if the type is qualified.
+  bool is_qualified() const        { return qual_ != empty_qual; }
+
+  // Object qualifiers
+  bool is_const() const    { return qual_ & const_qual; }
+  bool is_volatile() const { return qual_ & volatile_qual; }
+  bool is_cv() const       { return is_const() && is_volatile(); }
+
+  // Reference qualifiers
+  bool is_consume() const  { return qual_ & consume_qual; }
+
+  // Function qualifiers
+  bool is_noexcept() const { return qual_ & noexcept_qaul; }
 
   Basic_type*    base_;
   Type_category  cat_;
@@ -581,7 +640,7 @@ struct Synthetic_type : Declared_type
 // The type decltype(e). The actual type is deduced from the expression.
 //
 // FIXME: Put this into a category somewhere...
-struct Decltype_type : Type
+struct Decltype_type : Basic_type
 {
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }

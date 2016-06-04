@@ -144,8 +144,6 @@ is_equivalent(Name const& n1, Name const& n2)
 
 
 // Returns true if the types a and b are equivalent.
-//
-// TODO: Finish implementing this function.
 bool
 is_equivalent(Type t1, Type t2)
 {
@@ -157,9 +155,17 @@ is_equivalent(Type t1, Type t2)
   if (t1.qualifiers() != t2.qualifiers())
     return false;
 
-  // Because bases are canonicalized, we can reduce a more complex
-  // comparison to object identity.
-  return &t1.basis() == &t2.basis();
+  // Compare the bases.
+  return is_equivalent(t1.basis(), t2.basis());
+}
+
+
+// Compare two basic types. Two basic types are equal only when they
+// are identical.
+bool
+is_equivalent(Basic_type const& t1, Basic_type const& t2)
+{
+  return &t1 == &t2;;
 }
 
 
@@ -179,28 +185,28 @@ is_equivalent(Type_list const& a, Type_list const& b)
 
 template<typename T>
 bool
-is_equivalent(Literal_expr<T> const& e1, Literal_expr<T> const& e2)
+eq_literal_expr(Literal_expr<T> const& e1, Literal_expr<T> const& e2)
 {
   return e1.value() == e2.value();
 }
 
 
 bool
-is_equivalent(Decl_expr const& e1, Decl_expr const& e2)
+eq_decl_expr(Id_decl_expr const& e1, Id_decl_expr const& e2)
 {
   return is_equivalent(e1.declaration(), e2.declaration());
 }
 
 
 bool
-is_equivalent(Unary_expr const& e1, Unary_expr const& e2)
+eq_unary_expr(Unary_expr const& e1, Unary_expr const& e2)
 {
   return is_equivalent(e1.operand(), e2.operand());
 }
 
 
 bool
-is_equivalent(Binary_expr const& e1, Binary_expr const& e2)
+eq_binary_expr(Binary_expr const& e1, Binary_expr const& e2)
 {
   return is_equivalent(e1.left(), e2.left())
       && is_equivalent(e1.right(), e2.right());
@@ -208,7 +214,7 @@ is_equivalent(Binary_expr const& e1, Binary_expr const& e2)
 
 
 bool
-is_equivalent(Call_expr const& e1, Call_expr const& e2)
+eq_call_expr(Call_expr const& e1, Call_expr const& e2)
 {
   return is_equivalent(e1.function(), e2.function())
       && is_equivalent(e1.arguments(), e2.arguments());
@@ -216,7 +222,7 @@ is_equivalent(Call_expr const& e1, Call_expr const& e2)
 
 
 bool
-is_equivalent(Conv const& e1, Conv const& e2)
+eq_conv(Conv const& e1, Conv const& e2)
 {
   return is_equivalent(e1.destination(), e2.destination())
       && is_equivalent(e1.source(), e2.source());
@@ -230,14 +236,13 @@ is_equivalent(Expr const& e1, Expr const& e2)
   {
     Expr const& e2;
     bool operator()(Expr const& e) const          { lingo_unhandled(e); }
-    bool operator()(Boolean_expr const& e1) const { return is_equivalent(e1, cast<Boolean_expr>(e2)); }
-    bool operator()(Integer_expr const& e1) const { return is_equivalent(e1, cast<Integer_expr>(e2)); }
-    bool operator()(Decl_expr const& e1) const    { return is_equivalent(e1, cast<Decl_expr>(e2)); }
-    bool operator()(Unary_expr const& e1) const   { return is_equivalent(e1, cast<Unary_expr>(e2)); }
-    bool operator()(Binary_expr const& e1) const  { return is_equivalent(e1, cast<Binary_expr>(e2)); }
-    bool operator()(Call_expr const& e1) const    { return is_equivalent(e1, cast<Call_expr>(e2)); }
-
-    bool operator()(Conv const& e1) const         { return is_equivalent(e1, cast<Conv>(e2)); }
+    bool operator()(Boolean_expr const& e1) const { return eq_literal_expr(e1, cast<Boolean_expr>(e2)); }
+    bool operator()(Integer_expr const& e1) const { return eq_literal_expr(e1, cast<Integer_expr>(e2)); }
+    bool operator()(Id_decl_expr const& e1) const { return eq_decl_expr(e1, cast<Id_decl_expr>(e2)); }
+    bool operator()(Unary_expr const& e1) const   { return eq_unary_expr(e1, cast<Unary_expr>(e2)); }
+    bool operator()(Binary_expr const& e1) const  { return eq_binary_expr(e1, cast<Binary_expr>(e2)); }
+    bool operator()(Call_expr const& e1) const    { return eq_call_expr(e1, cast<Call_expr>(e2)); }
+    bool operator()(Conv const& e1) const         { return eq_conv(e1, cast<Conv>(e2)); }
   };
 
   // The same objects represent the same types.

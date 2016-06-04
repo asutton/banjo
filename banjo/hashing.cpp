@@ -1,7 +1,7 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#include "hash.hpp"
+#include "hashing.hpp"
 #include "ast.hpp"
 
 #include <typeinfo>
@@ -10,6 +10,7 @@
 namespace banjo
 {
 
+#if 0
 // Returns an initial hash value based on the dynamic type of T.
 template<typename T>
 std::size_t hash_type(T const& t)
@@ -398,5 +399,6 @@ hash_value(Cons const& c)
   return apply(c, fn{});
 }
 
+#endif
 
 } // namespace banjo

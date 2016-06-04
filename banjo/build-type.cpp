@@ -9,60 +9,59 @@
 namespace banjo
 {
 
-
 // -------------------------------------------------------------------------- //
 // Fundamental types
 
-
 Type
-Type_builder::get_void_type(Qualifier_set q)
+Type_builder::get_void_type(Type_category c, Qualifier_set q)
 {
-  return {void_type(), q};
+  return {void_type(), c, q};
 }
 
 
 Type
-Type_builder::get_bool_type(Qualifier_set q, Reference_kind r)
+Type_builder::get_bool_type(Type_category c, Qualifier_set q)
 {
-  return {bool_type(), q, r};
+  return {bool_type(), c, q};
 }
 
 
 Type
-Type_builder::get_byte_type(Qualifier_set q, Reference_kind r)
+Type_builder::get_byte_type(Type_category c, Qualifier_set q)
 {
-  return {byte_type(), q, r}
+  return {byte_type(), c, q};
 }
 
 
 Type
-Type_builder::get_integer_type(bool s, int p, Qualifier_set q, Reference_kind r)
+Type_builder::get_integer_type(Type_category c, bool s, int p, Qualifier_set q)
 {
-  return {integer_type(s, p), q, r};
+  return {integer_type(s, p), c, q};
 }
 
 
 // TODO: Default precision should depend on the target platform. That
-// information needs to be supplied by an external argument.
+// information needs to be supplied by an external argument or take
+// information from the context.
 Type
-Type_builder::get_int_type(Qualifier_set q, Reference_kind r)
+Type_builder::get_int_type(Type_category c, Qualifier_set q)
 {
-  return get_integer_type(true, 32, q, r);
+  return get_integer_type(c, true, 32, q);
 }
 
 
 // TODO: See comments above.
 Type
-Type_builder::get_uint_type(Qualifier_set q, Reference_kind r)
+Type_builder::get_uint_type(Type_category c, Qualifier_set q)
 {
-  return get_integer_type(false, 32, q, r);
+  return get_integer_type(c, false, 32, q);
 }
 
 
 Type
-Type_builder::get_float_type(int p, Qualifier_set q, Reference_kind r)
+Type_builder::get_float_type(Type_category c, int p, Qualifier_set q)
 {
-  return {float_type(p), q, r};
+  return {float_type(p), c, q};
 }
 
 
@@ -70,47 +69,47 @@ Type_builder::get_float_type(int p, Qualifier_set q, Reference_kind r)
 // Compound types
 
 Type
-Type_builder::get_function_type(Decl_list const& ps, Type t, Reference_kind r)
+Type_builder::get_function_type(Type_category c, Decl_list const& ps, Type t)
 {
   Type_list ts;
   for (Decl& d : modify(ps))
-    ts.push_back(p.type());
-  return get_function_type(ts, t, r);
+    ts.push_back(d.type());
+  return get_function_type(c, ts, t);
 }
 
 
 Type
-Type_builder::get_function_type(Type_list const& ts, Type t, Reference_kind r)
+Type_builder::get_function_type(Type_category c, Type_list const& ts, Type t)
 {
-  return {function_type(ts, t), empty_qual, r};
+  return {function_type(ts, t), c};
 }
 
 
 Type
-Type_builder::get_array_type(Type t, Expr& e, Reference_kind r)
+Type_builder::get_array_type(Type_category c, Type t, Expr& e)
 {
-  return {array_type(t, e), empty_qual, r};
+  return {array_type(t, e), c, empty_qual};
 }
 
 
 Type
-Type_builder::get_tuple_type(Type_list&& t, Reference_kind r)
+Type_builder::get_tuple_type(Type_category c, Type_list&& t)
 {
-  return {tuple_type(std::move(t)), r};
+  return {tuple_type(std::move(t)), c};
 }
 
 
 Type
-Type_builder::get_tuple_type(Type_list const& t, Reference_kind r)
+Type_builder::get_tuple_type(Type_category c, Type_list const& t)
 {
-  return {tuple_type(t), r};
+  return {tuple_type(t), c};
 }
 
 
 Type
-Type_builder::get_pointer_type(Type t, Qualifier_set q, Reference_kind r)
+Type_builder::get_pointer_type(Type_category c, Type t, Qualifier_set q)
 {
-  return {pointer_type(t), q, r};
+  return {pointer_type(t), c, q};
 }
 
 
@@ -119,17 +118,17 @@ Type_builder::get_pointer_type(Type t, Qualifier_set q, Reference_kind r)
 
 // Returns class type for the given type declaration.
 Type
-Type_builder::get_class_type(Type_decl& d, Qualifier_set q, Reference_kind r)
+Type_builder::get_class_type(Type_category c, Type_decl& d, Qualifier_set q)
 {
-  return {class_type(d), q, r};
+  return {class_type(d), c, q};
 }
 
 
 // Returns the type corresponding to the declaration of a type parameter.
 Type
-Type_builder::get_typename_type(Type_decl& d, Qualifier_set q, Reference_kind r)
+Type_builder::get_typename_type(Type_category c, Type_decl& d, Qualifier_set q)
 {
-  return {typename_type(d), q, r};
+  return {typename_type(d), c, q};
 }
 
 
@@ -138,23 +137,25 @@ Type_builder::get_typename_type(Type_decl& d, Qualifier_set q, Reference_kind r)
 
 // Returns the auto type corresponding to the given declaration.
 Type
-Type_builder::get_auto_type(Type_decl& d, Qualifier_set q, Reference_kind r)
+Type_builder::get_auto_type(Type_category c, Type_decl& d, Qualifier_set q)
 {
-  return {auto_type(d), q, r};
+  return {auto_type(d), c, q};
 }
 
 
 Type
-Type_builder::get_decltype_type(Expr& e, Qualifier_set q, Reference_kind r)
+Type_builder::get_decltype_type(Type_category c, Expr& e, Qualifier_set q)
 {
-  return {declared_type(e), q, r};
+  lingo_unreachable();
+  // return {declared_type(e), c, q};
 }
 
 
+// TODO: I hate this type. It should go away...
 Type
 Type_builder::get_type_type()
 {
-  return {type_type(), q, r};
+  return {type_type()};
 }
 
 
@@ -163,38 +164,45 @@ Type_builder::get_type_type()
 
 
 static Type
-qualified_array_type(Type_builder& b, Array_type& t, Qualifier_set q, Reference_kind r)
+qualified_array_type(Type_builder& b, Array_type& t, Type_category c, Qualifier_set q)
 {
-  Type et(t.element_type(), q);
-  return b.get_array_type(et, empty_qual, r);
+  Type et = t.element_type();
+  et.qual_ |= q;
+  return b.get_array_type(c, et, t.extent());
 }
 
 
 static Type
-qualified_tuple_type(Type_builder& b, Tuple_type& t, Qualifier_set q, Reference_kind r)
+qualified_tuple_type(Type_builder& b, Tuple_type& t, Type_category c, Qualifier_set q)
 {
   Type_list ts;
-  for (Type& et : t.element_types())
-    ts.push_back({et, q});
-  return b.get_tuple_type(std::move(ts), empty_qual, r);
+  for (Type et : t.element_types()) {
+    et.qual_ |= q;
+    ts.push_back(et);
+  }
+  return b.get_tuple_type(c, std::move(ts));
 }
 
 
-// Return a type qualified by q. This preserves the reference kind of the 
-// original type. Qualifiers applied to an array or tuple type apply to their 
-// element type(s).
+// Return a type qualified by q. 
+//
+// TODO: Handle reference types correctly.
+//
+// TODO: This seems more algorithmic that constructive. I should move it
+// into the type module.
 Type
 Type_builder::get_qualified_type(Type t, Qualifier_set q)
 {
   struct fn
   {
-    Type_builder&  self;
-    Reference_kind r;
-    Type operator()(Basic_type& t) { return {t, q, r}; }
-    Type operator()(Array_type& t) { return qualified_array_type(self, t, q, r); }
-    Type operator()(Tuple_type& t) { return qualified_tuple_type{self, t, q, r}; }
+    Type_builder& self;
+    Type_category c;
+    Qualifier_set q;
+    Type operator()(Basic_type& t) { return {t, c, q}; }
+    Type operator()(Array_type& t) { return qualified_array_type(self, t, c, q); }
+    Type operator()(Tuple_type& t) { return qualified_tuple_type(self, t, c, q); }
   };
-  return apply(t, fn{r});
+  return apply(t, fn{*this, t.category(), q});
 }
 
 

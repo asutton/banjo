@@ -5,7 +5,6 @@
 #include "ast-name.hpp"
 #include "ast-type.hpp"
 #include "ast-def.hpp"
-#include "scope.hpp"
 
 
 namespace banjo

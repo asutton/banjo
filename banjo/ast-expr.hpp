@@ -216,10 +216,10 @@ struct Id_expr : Expr
 };
 
 
-// The base class of all identifiers that resolved to a single declaration.
-struct Decl_expr : Id_expr
+// The base class of all id-expressions that resolved to a single declaration.
+struct Id_decl_expr : Id_expr
 {
-  Decl_expr(Type& t, Name& n, Decl& d)
+  Id_decl_expr(Type& t, Name& n, Decl& d)
     : Id_expr(t, n), decl_(&d)
   { }
   
@@ -231,10 +231,10 @@ struct Decl_expr : Id_expr
 };
 
 
-// A name that refers to a variable or parameter.
-struct Object_expr : Decl_expr
+// A name that refers to a declared object.
+struct Id_object_expr : Id_decl_expr
 {
-  using Decl_expr::Decl_expr;
+  using Id_decl_expr::Id_decl_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
@@ -245,24 +245,23 @@ struct Object_expr : Decl_expr
 };
 
 
-// A name that refers to a constant value.
-struct Value_expr : Decl_expr
+// A name that refers to a declared reference.
+//
+// TODO: Overload the declaration() accessor to return a reference
+// declaration.
+struct Id_reference_expr : Id_decl_expr
 {
-  using Decl_expr::Decl_expr;
+  using Id_decl_expr::Id_decl_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the referenced variable or parameter.
-  Value_decl const& declaration() const;
-  Value_decl&       declaration();
 };
 
 
-// A name that refers to a function.
-struct Function_expr : Decl_expr
+// A name that refers to a declared function.
+struct Id_function_expr : Id_decl_expr
 {
-  using Decl_expr::Decl_expr;
+  using Id_decl_expr::Id_decl_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
@@ -279,13 +278,13 @@ struct Function_expr : Decl_expr
 // TODO: I may want an Unresolved_expr for the case where we defer lookup 
 // until later (i.e., transforming f(x) into x.f()). Or perhaps, we
 // simply leave the overload set empty?
-struct Overload_expr : Id_expr
+struct Id_overload_expr : Id_expr
 {
-  Overload_expr(Name& n, Decl_list& ds)
+  Id_overload_expr(Name& n, Decl_list& ds)
     : Id_expr(n), decls_(ds)
   { }
 
-  Overload_expr(Name& n, Decl_list&& ds)
+  Id_overload_expr(Name& n, Decl_list&& ds)
     : Id_expr(n), decls_(std::move(ds))
   { }
   
@@ -327,9 +326,9 @@ struct Dot_expr : Expr
 
 // The base class of resolved dot-expressions. This stores the resolved
 // declaration of the member name.
-struct Member_decl_expr : Dot_expr
+struct Dot_decl_expr : Dot_expr
 {
-  Member_decl_expr(Type& t, Expr& e, Name& n, Decl& d)
+  Dot_decl_expr(Type& t, Expr& e, Name& n, Decl& d)
     : Dot_expr(t, e, n), decl_(&d)
   { }
 
@@ -340,30 +339,44 @@ struct Member_decl_expr : Dot_expr
 };
 
 
-// A dot-expression that has been resolved to a member variable 
-// (or field) of a record type.
-struct Field_expr : Member_decl_expr
+// An access expression referring to a declared object.
+//
+// TODO: Provide overloads of the declaration() function.
+struct Dot_object_expr : Dot_decl_expr
 {
-  using Member_decl_expr::Member_decl_expr;
+  using Dot_decl_expr::Dot_decl_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
-// A dot-expression that has been resolved to a member function
-// (or method) of a record type.
-struct Method_expr : Member_decl_expr
+// An access expression referring to a declared reference.
+//
+// TODO: Provide overloads of the declaration() function.
+struct Dot_reference_expr : Dot_decl_expr
 {
-  using Member_decl_expr::Member_decl_expr;
+  using Dot_decl_expr::Dot_decl_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
-// An dot-expression that refers to a overload set.
-struct Member_expr : Dot_expr
+// An access expression referring to a declared function.
+//
+// TODO: Provide overloads of the declaration() function.
+struct Dot_function_expr : Dot_decl_expr
+{
+  using Dot_decl_expr::Dot_decl_expr;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// An dot-expression that refers to a overload set of member overloads.
+struct Dot_overload_expr : Dot_expr
 {
   using Dot_expr::Dot_expr;
 

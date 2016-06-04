@@ -40,10 +40,11 @@ struct Declared_type;
 
 struct Expr;
 struct Id_expr;
-struct Decl_expr;
+struct Id_decl_expr;
+struct Dot_expr;
+struct Dot_decl_expr;
 struct Unary_expr;
 struct Binary_expr;
-struct Dot_expr;
 struct Conv;
 struct Init;
 

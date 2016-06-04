@@ -24,6 +24,7 @@ bool is_equivalent(Decl const&, Decl const&);
 bool is_equivalent(Cons const&, Cons const&);
 
 bool is_equivalent(Type, Type);
+bool is_equivalent(Basic_type const&, Basic_type const&);
 bool is_equivalent(Type_list, Type_list);
 
 

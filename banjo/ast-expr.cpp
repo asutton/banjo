@@ -10,42 +10,28 @@ namespace banjo
 {
 
 Object_decl const&
-Object_expr::declaration() const
+Id_object_expr::declaration() const
 {
   return cast<Object_decl>(*decl_);
 }
 
 
 Object_decl&
-Object_expr::declaration()
+Id_object_expr::declaration()
 {
   return cast<Object_decl>(*decl_);
 }
 
 
-Value_decl const&
-Value_expr::declaration() const
-{
-  return cast<Value_decl>(*decl_);
-}
-
-
-Value_decl&
-Value_expr::declaration()
-{
-  return cast<Value_decl>(*decl_);
-}
-
-
 Function_decl const&
-Function_expr::declaration() const
+Id_function_expr::declaration() const
 {
   return cast<Function_decl>(*decl_);
 }
 
 
 Function_decl&
-Function_expr::declaration()
+Id_function_expr::declaration()
 {
   return cast<Function_decl>(*decl_);
 }
@@ -127,7 +113,7 @@ is_type_dependent(Expr_list const& es)
 Type
 declared_type(Expr const& e)
 {
-  if (Decl_expr const* d = as<Decl_expr>(&e))
+  if (Id_decl_expr const* d = as<Id_decl_expr>(&e))
     return d->declaration().type();
   else
     return e.type();

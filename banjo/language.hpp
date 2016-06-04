@@ -11,10 +11,5 @@
 // Include ast.hpp to pull all definitions.
 
 #include "ast-base.hpp"
-#include "overload.hpp"
-
-#include "equivalence.hpp"
-#include "hash.hpp"
-
 
 #endif

@@ -16,39 +16,39 @@ struct Type_builder : Builder_base
   using Builder_base::Builder_base;
 
   // Fundamental types
-  Type get_void_type(Qualifier_set = {});
-  Type get_bool_type(Qualifier_set = {}, Reference_kind = {});
-  Type get_byte_type(Qualifier_set = {}, Reference_kind = {});
-  Type get_integer_type(bool, int, Qualifier_set = {}, Reference_kind = {});
-  Type get_int_type(Qualifier_set = {}, Reference_kind = {});
-  Type get_uint_type(Qualifier_set = {}, Reference_kind = {});
-  Type get_float_type(int, Qualifier_set = {}, Reference_kind = {});
+  Type get_void_type(Type_category, Qualifier_set = {});
+  Type get_bool_type(Type_category, Qualifier_set = {});
+  Type get_byte_type(Type_category, Qualifier_set = {});
+  Type get_integer_type(Type_category, bool, int, Qualifier_set = {});
+  Type get_int_type(Type_category, Qualifier_set = {});
+  Type get_uint_type(Type_category, Qualifier_set = {});
+  Type get_float_type(Type_category, int, Qualifier_set = {});
 
   // Composite types
-  Type get_function_type(Decl_list const&, Type, Reference_kind = {});
-  Type get_function_type(Type_list const&, Type, Reference_kind = {});
-  Type get_array_type(Type, Expr&, Reference_kind = {});
-  Type get_tuple_type(Type_list&&, Reference_kind = {});
-  Type get_tuple_type(Type_list const&, Reference_kind = {});
-  Type get_pointer_type(Type, Qualifier_set = {}, Reference_kind = {});
+  Type get_function_type(Type_category, Decl_list const&, Type);
+  Type get_function_type(Type_category, Type_list const&, Type);
+  Type get_array_type(Type_category, Type, Expr&);
+  Type get_tuple_type(Type_category, Type_list&&);
+  Type get_tuple_type(Type_category, Type_list const&);
+  Type get_pointer_type(Type_category, Type, Qualifier_set = {});
 
   // User-defined types
-  Type get_class_type(Type_decl&, Qualifier_set = {}, Reference_kind = {});
-  Type get_typename_type(Type_decl&, Qualifier_set = {}, Reference_kind = {});
+  Type get_class_type(Type_category, Type_decl&, Qualifier_set = {});
+  Type get_typename_type(Type_category, Type_decl&, Qualifier_set = {});
   
   // Placeholder types
-  Type get_auto_type(Type_decl&, Qualifier_set = {}, Reference_kind = {});
-  Type get_decltype_type(Expr&, Qualifier_set = {}, Reference_kind = {});
+  Type get_auto_type(Type_category, Type_decl&, Qualifier_set = {});
+  Type get_decltype_type(Type_category, Expr&, Qualifier_set = {});
 
   // Meta-types
   Type get_type_type();
 
   // Qualified types
-  Type get_qualified_type(Type&, Qualifier_set);
-  Type get_unqualified_type(Type&);
-  Type get_const_type(Type&);
-  Type get_volatile_type(Type&);
-  Type get_cv_type(Type&);
+  Type get_qualified_type(Type, Qualifier_set);
+  Type get_unqualified_type(Type);
+  Type get_const_type(Type);
+  Type get_volatile_type(Type);
+  Type get_cv_type(Type);
 
   // Fresh types
   Type make_auto_type();

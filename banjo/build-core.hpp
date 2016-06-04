@@ -4,11 +4,17 @@
 #ifndef BANJO_BUILD_CORE_HPP
 #define BANJO_BUILD_CORE_HPP
 
-// Provides types and functions for the builder components.
+// Provides types and functions for the builder components. Note that
+// this header pulls the entire type system.
+//
+// TODO: Build a simple bump allocator that all factories backend into.
+// The underlying region of memory should be controlled by a global function,
+// allowing short-lived caches of objects.
 
 #include "token.hpp"
-#include "language.hpp"
+#include "hashing.hpp"
 
+#include <forward_list>
 #include <unordered_set>
 
 
@@ -43,6 +49,22 @@ struct Singleton_factory
 };
 
 
+// A basic object factory allocates new objects by pushing them to a
+// list.
+//
+// TODO: Use a bump allocator instead of a list since we don't really
+// need the underlying memory.
+template<typename T>
+struct Basic_factory : std::forward_list<T>
+{
+  template<typename... Args>
+  T& operator()(Args&&... args) 
+  {
+    this->emplace_front(std::forward<Args>(args)...);
+  }
+};
+
+
 // The hashed unique factory maintains an unordered set of objects
 // that are unique based on their equality. 
 template<typename T, typename Hash, typename Eq>
@@ -65,14 +87,7 @@ struct Hashed_unique_factory : std::unordered_set<T, Hash, Eq>
 struct Builder_base
 {
   // Hash function for terms.
-  template<typename T>
-  struct Hash
-  {
-    std::size_t operator()(T const& t) const
-    {
-      return hash_value(t);
-    }
-  };
+  using Hash = hash<fnv1a_hash>;
 
   // Equivalence relation on terms.
   template<typename T>
@@ -89,7 +104,10 @@ struct Builder_base
   using Single_factory = banjo::Singleton_factory<T>;
 
   template<typename T>
-  using Unique_factory = Hashed_unique_factory<T, Hash<T>, Eq<T>>;
+  using Basic_factory = banjo::Basic_factory<T>;
+
+  template<typename T>
+  using Unique_factory = Hashed_unique_factory<T, Hash, Eq<T>>;
 
 
   Builder_base(Context& cxt)

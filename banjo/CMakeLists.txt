@@ -17,13 +17,14 @@ add_library(banjo
   ast-req.cpp
   ast.cpp
 
-  # # Non-modifying algorithms
+  # # AST utility algorithms
   equivalence.cpp
-  # hash.cpp
+  hashing.cpp
 
-  # # Node construction
-  # build-core.cpp
-  # build-type.cpp
+  # Node construction
+  build-core.cpp
+  build-type.cpp
+  build-expr.cpp
   # builder.cpp
 
   # context.cpp

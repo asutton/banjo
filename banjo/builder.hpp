@@ -8,9 +8,8 @@
 // terms. The builder manages the memory for every object (except symbols)
 // constructed through its methods.
 
-#error fuck
-
 #include "build-type.hpp"
+#include "build-expr.hpp"
 
 #include <lingo/token.hpp>
 
@@ -18,18 +17,18 @@
 namespace banjo
 {
 
-struct Type_builder;
-
 
 // An interface to an AST builder.
 //
 // This class uses the PIMPL idiom to define "sub-builders" for each kind
 // of term. The purpose is to keep the AST header out of the include path
 // for the Context. I wish there were a better way to do this.
-struct Builder : Type_builder
+struct Builder : Type_builder, Expr_builder
 {
   Builder(Context& c)
-    : Type_builder(c), cxt(c)
+    : Type_builder(c)
+    , Expr_builder(c)
+    , cxt(c)
   { }
 
   // Names
@@ -50,60 +49,6 @@ struct Builder : Type_builder
 
 
 
-  // Literals
-  Void_expr&     get_void();
-  Boolean_expr&  get_bool(bool);
-  Boolean_expr&  get_true();
-  Boolean_expr&  get_false();
-  Integer_expr&  get_integer(Type&, Integer const&);
-  Integer_expr&  get_zero(Type&);
-  Integer_expr&  get_int(Integer const&);
-  Integer_expr&  get_uint(Integer const&);
-  
-  // Aggregates
-  Tuple_expr&    make_tuple(Type&, Expr_list&&);
-
-  // References
-  Object_expr&   make_reference(Type&, Object_decl&);
-  Value_expr&    make_reference(Type&, Value_decl&);
-  Function_expr& make_reference(Type&, Function_decl&);
-  Overload_expr& make_reference(Name&, Decl_list&&);
-  Field_expr&    make_reference(Type&, Expr&, Field_decl&);
-  Method_expr&   make_reference(Type&, Expr&, Method_decl&);
-  Member_expr&   make_reference(Expr&, Name&, Decl_list&&);
-
-  // Logical expressions
-  And_expr&       make_and(Type&, Expr&, Expr&);
-  Or_expr&        make_or(Type&, Expr&, Expr&);
-  Not_expr&       make_not(Type&, Expr&);
-
-  // Relational expressions
-  Eq_expr&        make_eq(Type&, Expr&, Expr&);
-  Ne_expr&        make_ne(Type&, Expr&, Expr&);
-  Lt_expr&        make_lt(Type&, Expr&, Expr&);
-  Gt_expr&        make_gt(Type&, Expr&, Expr&);
-  Le_expr&        make_le(Type&, Expr&, Expr&);
-  Ge_expr&        make_ge(Type&, Expr&, Expr&);
-
-  // Arithmetic expressions
-  Add_expr&       make_add(Type&, Expr&, Expr&);
-  Sub_expr&       make_sub(Type&, Expr&, Expr&);
-  Mul_expr&       make_mul(Type&, Expr&, Expr&);
-  Div_expr&       make_div(Type&, Expr&, Expr&);
-  Rem_expr&       make_rem(Type&, Expr&, Expr&);
-  Neg_expr&       make_neg(Type&, Expr&);
-  Pos_expr&       make_pos(Type&, Expr&);
-
-  // Bitwise expressions
-  Bit_and_expr&   make_bit_and(Type&, Expr&, Expr&);
-  Bit_or_expr&    make_bit_or(Type&, Expr&, Expr&);
-  Bit_xor_expr&   make_bit_xor(Type&, Expr&, Expr&);
-  Bit_lsh_expr&   make_bit_lsh(Type&, Expr&, Expr&);
-  Bit_rsh_expr&   make_bit_rsh(Type&, Expr&, Expr&);
-  Bit_not_expr&   make_bit_not(Type&, Expr&);
-
-  // Function call
-  Call_expr& make_call(Type&, Expr&, Expr_list const&);
 
   // Misc.
   Requires_expr&  make_requires(Decl_list const&, Decl_list const&, Req_list const&);
