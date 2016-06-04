@@ -25,8 +25,8 @@ add_library(banjo
   build-name.cpp
   build-type.cpp
   build-expr.cpp
-  # build-stmt.cpp
-  # build-decl.cpp
+  build-stmt.cpp
+  build-decl.cpp
   builder.cpp
 
   # context.cpp

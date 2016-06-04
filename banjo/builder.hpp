@@ -122,7 +122,6 @@ struct Builder
   // Qualified_id&   get_qualified_id(Decl&, Name&);
   // Global_id&      get_global_id();
 
-
   // Types
 
   // Fundamental types
@@ -228,9 +227,63 @@ struct Builder
   Aggregate_init& make_aggregate_init(Type&, Expr_list const&);
   Aggregate_init& make_aggregate_init(Type&, Expr_list&&);
 
+  // Statements
+  Empty_stmt&        make_empty_statement();
+  Compound_stmt&     make_compound_statement();
+  Compound_stmt&     make_compound_statement(Stmt_list&&);
+  Return_stmt&       make_return_statement();
+  Return_value_stmt& make_return_value_statement(Expr&);
+  Yield_stmt&        make_yield_statement();
+  Yield_value_stmt&  make_yield_value_statement(Expr&);
+  If_then_stmt&      make_if_statement(Expr&, Stmt&);
+  If_else_stmt&      make_if_statement(Expr&, Stmt&, Stmt&);
+  While_stmt&        make_while_statement(Expr&, Stmt&);
+  Break_stmt&        make_break_statement();
+  Continue_stmt&     make_continue_statement();
+  Expression_stmt&   make_expression_statement(Expr&);
+  Declaration_stmt&  make_declaration_statement(Decl&);
+
   // Declarations
 
-  // Toplevel structures
+  // Objects and references
+  Object_decl&    make_variable_declaration(Name&, Type);
+  Object_decl&    make_variable_declaration(Name&, Type, Expr&);
+  Reference_decl& make_reference_declaration(Name&, Type);
+  Reference_decl& make_reference_declaration(Name&, Type, Expr&);
+  Field_decl&     make_field_declaration(Name&, Type);
+  Field_decl&     make_field_declaration(Name&, Type, Expr&);
+  Super_decl&     make_super_declaration(Type);
+
+  // Functions and methods
+  Function_decl&  make_function_declaration(Name&, Type, Decl_list const&);
+  Function_decl&  make_function_declaration(Name&, Type, Decl_list&&);
+  Function_decl&  make_function_declaration(Name&, Type, Decl_list&&, Def&);
+  Function_def&   make_function_definition(Stmt&);
+  Method_decl&    make_method_declaration(Name&, Type, Decl_list const&);
+  Expression_def& make_function_definition(Expr&);
+  Intrinsic_def&  make_function_definition(Nullary_fn);
+  Intrinsic_def&  make_function_definition(Unary_fn);
+
+  // Classes
+  Class_decl&  make_class_declaration(Name&, Type);
+  Class_decl&  make_class_declaration(Name&, Type, Def&);
+  Class_def&   make_class_definition(Stmt_list&&);
+
+  // Parameters
+  Object_parm&    make_object_parameter(Name&, Type);
+  Object_parm&    make_object_parameter(char const*, Type);
+  Reference_parm& make_reference_parameter(Name&, Type);
+  Reference_parm& make_reference_parameter(char const*, Type);
+  Type_parm&      make_type_parameter(Name&);
+  Type_parm&      make_type_parameter(char const*);
+  
+  // General purpose definitions
+  Empty_def&      make_empty_definition();
+  Deleted_def&    make_deleted_definition();
+  Defaulted_def&  make_defaulted_definition();
+  Expression_def& make_expression_definition(Expr&);
+
+  // Modular structure
   Translation_unit& make_translation_unit();
   Translation_unit& make_translation_unit(Stmt_list&&);
 
@@ -306,8 +359,45 @@ struct Builder
   Basic_factory<Direct_init> direct_init;
   Basic_factory<Aggregate_init> aggregate_init;
 
+  // Statements
+  Basic_factory<Empty_stmt> empty_stmt;
+  Basic_factory<Compound_stmt> compound_stmt;
+  Basic_factory<Return_stmt> return_stmt;
+  Basic_factory<Return_value_stmt> return_value_stmt;
+  Basic_factory<Yield_stmt> yield_stmt;
+  Basic_factory<Yield_value_stmt> yield_value_stmt;
+  Basic_factory<If_then_stmt> if_then_stmt;
+  Basic_factory<If_else_stmt> if_else_stmt;
+  Basic_factory<While_stmt> while_stmt;
+  Basic_factory<Break_stmt> break_stmt;
+  Basic_factory<Continue_stmt> continue_stmt;
+  Basic_factory<Expression_stmt> expression_stmt;
+  Basic_factory<Declaration_stmt> declaration_stmt;
+
   // Declarations
+  Basic_factory<Object_decl> object_decl;
+  Basic_factory<Reference_decl> reference_decl;
+  Basic_factory<Field_decl> field_decl;
+  Basic_factory<Super_decl> super_decl;
+  Basic_factory<Function_decl> function_decl;
+  Basic_factory<Method_decl> method_decl;
+  Basic_factory<Class_decl> class_decl;
+
+  // Parameters
+  Basic_factory<Object_parm> object_parm;
+  Basic_factory<Reference_parm> reference_parm;
+  Basic_factory<Type_parm> type_parm;
+
+  // Modules
   Single_factory<Translation_unit> translation_unit;
+  
+  // Definitions
+  Basic_factory<Empty_def> empty_def;
+  Basic_factory<Deleted_def> deleted_def;
+  Basic_factory<Defaulted_def> defaulted_def;
+  Basic_factory<Expression_def> expression_def;
+  Basic_factory<Class_def> class_def;
+  Basic_factory<Intrinsic_def> intrinsic_def;
 };
 
 
