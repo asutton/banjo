@@ -69,6 +69,14 @@ struct Expr_builder : Builder_base
   // Function call
   Call_expr& make_call(Type, Expr&, Expr_list&&);
 
+  // Initializers
+  Trivial_init&   make_trivial_init();
+  Copy_init&      make_copy_init(Expr&);
+  Bind_init&      make_bind_init(Expr&);
+  Direct_init&    make_direct_init(Decl&, Expr_list const&);
+  Aggregate_init& make_aggregate_init(Type&, Expr_list const&);
+  Aggregate_init& make_aggregate_init(Type&, Expr_list&&);
+
   Single_factory<Void_expr> void_expr;
   Basic_factory<Boolean_expr> bool_expr;
   Basic_factory<Integer_expr> int_expr;

@@ -10,6 +10,9 @@
 namespace banjo
 {
 
+// -------------------------------------------------------------------------- //
+// Declaration specifiers
+
 // A specifier set records a set of declaration specifiers.
 enum Specifier_set : int
 {
@@ -30,11 +33,9 @@ enum Specifier_set : int
   out_spec       = 1 << 13,
   mutable_spec   = 1 << 14,
   forward_spec   = 1 << 15,
-
-  const_spec     = 1 << 16, // FIXME: Replaced by meta
   meta_spec      = 1 << 16,
   
-  internal_spec  = 1 << 30, // Internal to the language
+  internal_spec  = 1 << 31, // Internal to the language
 };
 
 
@@ -43,7 +44,6 @@ operator|=(Specifier_set& a, Specifier_set b)
 {
   return a = Specifier_set(a | b);
 }
-
 
 
 // The base class of all declarations. Every declaration has an associated
@@ -191,66 +191,14 @@ struct Translation_unit : Decl
 };
 
 
-// The base class of declarations that denote objects.
-//
-// Note that objects can be declared as references, meaning that they
-// don't have their own storage, but refer to existing object.
-struct Object_decl : Decl
+// The base class of object and reference declarations.
+struct Variable_decl : Decl
 {
   using Decl::Decl;
 };
 
 
-// The base class of all declarations that denote values.
-//
-// TODO: Consider merging this with object decl and using specifiers
-// to differentiate the meaning.
-struct Value_decl : Decl
-{
-  using Decl::Decl;
-};
-
-
-// Declares a variable.
-struct Variable_decl : Object_decl
-{
-  Variable_decl(Name& n, Type t, Def& d)
-    : Object_decl(n, t), def_(&d)
-  { }
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the initializer for the variable.
-  Def const& initializer() const { return *def_; }
-  Def&       initializer()       { return *def_; }
-
-  Def*  def_;
-};
-
-
-// Declares a constant.
-struct Constant_decl : Value_decl
-{
-  Constant_decl(Name& n, Type t, Def& d)
-    : Value_decl(n, t), def_(&d)
-  { }
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the initializer for the variable.
-  Def const& initializer() const { return *def_; }
-  Def&       initializer()       { return *def_; }
-
-  Def*  def_;
-};
-
-
-// Declares a mapping from inputs to outputs. This is the base class for
-// functions and macros. All mappings have function type.
-//
-// TODO: Implement preconditions and postconditions.
+// Declares a mapping from inputs to outputs. 
 struct Mapping_decl : Decl
 {
   Mapping_decl(Name& n, Type t, Decl_list const& p, Def& d)
@@ -290,6 +238,53 @@ struct Mapping_decl : Decl
 };
 
 
+// Represents the declaration of a user-defined type. This is the base
+// class of class declarations and type parameters.
+struct Type_decl : Decl
+{
+  using Decl::Decl;
+
+  // Returns the kind of the type. This is the same as the type's type.
+  Type kind() const { return type(); }
+};
+
+
+// A variable declaration (declares an object, not a reference).
+struct Object_decl : Variable_decl
+{
+  Object_decl(Name& n, Type t, Def& d)
+    : Variable_decl(n, t), def_(&d)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the initializer for the variable.
+  Def const& initializer() const { return *def_; }
+  Def&       initializer()       { return *def_; }
+
+  Def*  def_;
+};
+
+
+// A reference declaration.
+struct Reference_decl : Variable_decl
+{
+  Reference_decl(Name& n, Type t, Def& d)
+    : Variable_decl(n, t), def_(&d)
+  { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the initializer for the variable.
+  Def const& initializer() const { return *def_; }
+  Def&       initializer()       { return *def_; }
+
+  Def*  def_;
+};
+
+
 // Declares a function. A function maps input arguments to output values.
 // Functions can be evaluated at compile time, if used within a constant
 // expression context.
@@ -299,37 +294,6 @@ struct Function_decl : Mapping_decl
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-};
-
-
-// Declares a macro. A macro is a function that is always evaluated
-// at compile time.
-//
-// TODO: An alternative design would be to use a declaration specifier
-// to indicate the meta-ness of a function. That could also be applied
-// to constant declarations (meta-variables).
-//
-// TODO: A macro can (probably) also be a member function if the
-// this parameter is a constant. Perhaps I should re-think my approach
-// to handling class members. I wonder how much this depends on lookup
-// semantics.
-struct Macro_decl : Function_decl
-{
-  using Function_decl::Function_decl;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-};
-
-
-// Represents the declaration of a user-defined type. This is the base
-// class of class declarations and type parameters.
-struct Type_decl : Decl
-{
-  using Decl::Decl;
-
-  // Returns the kind of the type. This is the same as the type's type.
-  Type kind() const { return type(); }
 };
 
 
@@ -356,43 +320,15 @@ struct Class_decl : Type_decl
 };
 
 
-// A coroutine is a resumable function. This is internally represented
-// as a class type that has properties related to its declaration.
-//
-// TODO: This should be a mapping declaration that keeps a reference to
-// its associated class declaration.
-struct Coroutine_decl : Type_decl
-{
-  Coroutine_decl(Name& n, Type t, Decl_list const& p, Def& d)
-    : Type_decl(n, t), ret_(t), def_(&d), parms_(p)
-  { }
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  Def const& definition() const { return *def_; }
-  Def&       definition()       { return *def_; }
-
-  // Returns the return type of the coroutine.
-  Type return_type() const { return ret_; };
-
-  // Returns the list of parameter declarations for the coroutine.
-  Decl_list const& parameters() const { return parms_; }
-  Decl_list&       parameters()       { return parms_; }
-
-  Type ret_;
-  Def* def_;
-  Decl_list parms_;
-
-};
-
 // Declares a field (member variable) of a class. This stores the index 
 // of the field within  the class, which is used to support code generation 
 // and compile-time evaluation.
-
-struct Field_decl : Variable_decl
+//
+// TODO: What is a member reference called? Can we (should we?) have 
+// member references.
+struct Field_decl : Object_decl
 {
-  using Variable_decl::Variable_decl;
+  using Object_decl::Object_decl;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
@@ -405,24 +341,14 @@ struct Field_decl : Variable_decl
 
 
 // Declares a base class subobject.
-struct Super_decl : Object_decl
+struct Super_decl : Field_decl
 {
   Super_decl(Name& n, Type t, Def& d)
-    : Object_decl(n), type_(t), def_(&d)
+    : Field_decl(n, t, d)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the declared type of the super
-  Type const& type() const { return type_; }
-  Type&       type()       { return type_; }
-
-  Def const& initializer() const { return *def_; }
-  Def&       initializer()       { return *def_; }
-
-  Type type_;
-  Def* def_;
 };
 
 
@@ -447,9 +373,9 @@ struct Method_decl : Function_decl
 // a logical proposition for the purpose of constraint checking
 // and comparison.
 //
-// TODO: Consider making a template parameter list a special
-// term. We can link template parameter lists and their
-// constraints. Of course, this may not be necessary.
+// TODO: Consider making a template parameter list a special term. We can 
+// link template parameter lists and their constraints. Of course, this 
+// may not be necessary.
 //
 // FIXME: Revisit this.
 struct Template_decl : Decl
@@ -528,8 +454,8 @@ struct Concept_decl : Decl
 };
 
 
-// The base class of all parameters. This provides deriviation from
-// T. Note that the constructor of this clas
+// The parameterized base class of all parameters. This provides a
+// parameter index.
 template<typename T>
 struct Parameter_decl : T
 {
@@ -557,20 +483,14 @@ struct Parameter_decl : T
 //
 // TODO: Name this variable_parm to be consistent with variable
 // declarations?
-//
-// TODO: Object parameters have single-value indexes because
-// we don't allow nested parameters. How important is it that we
-// actually store the index of a parameter.
-//
-// FIXME: Rename as Variable_parm?
-struct Object_parm : Parameter_decl<Object_decl>
+struct Object_parm : Parameter_decl<Variable_decl>
 {
   Object_parm(Name& n, Type t)
-    : Parameter_decl<Object_decl>(n, t), init_()
+    : Parameter_decl<Variable_decl>(n, t), init_()
   { }
 
   Object_parm(Name& n, Type t, Expr& i)
-    : Parameter_decl<Object_decl>(n, t), init_(&i)
+    : Parameter_decl<Variable_decl>(n, t), init_(&i)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -587,18 +507,15 @@ struct Object_parm : Parameter_decl<Object_decl>
 };
 
 
-// A constant value parameter of a template.
-//
-// TODO: Name this Constant_parm to be consistent with
-// constant declarations?
-struct Value_parm : Parameter_decl<Object_decl>
+// A reference parameter of a function.
+struct Reference_parm : Parameter_decl<Variable_decl>
 {
-  Value_parm(Index x, Name& n, Type t)
-    : Parameter_decl<Object_decl>(x, n, t), init_()
+  Reference_parm(Index x, Name& n, Type t)
+    : Parameter_decl<Variable_decl>(x, n, t), init_()
   { }
 
-  Value_parm(Index x, Name& n, Type t, Expr& i)
-    : Parameter_decl<Object_decl>(x, n, t), init_(&i)
+  Reference_parm(Index x, Name& n, Type t, Expr& i)
+    : Parameter_decl<Variable_decl>(x, n, t), init_(&i)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -616,8 +533,6 @@ struct Value_parm : Parameter_decl<Object_decl>
 
 
 // A type parameter of a template.
-//
-// TODO: It would be nice to derive from type-decl.
 struct Type_parm : Parameter_decl<Type_decl>
 {
   Type_parm(Index x, Name& n)
@@ -659,7 +574,7 @@ struct Template_parm : Parameter_decl<Decl>
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
-  // Returns the tempalte declaration that defines the
+  // Returns the template declaration that defines the
   // signature of accepted arguments.
   Template_decl const& declaration() const { return *cast<Template_decl>(temp); }
   Template_decl&       declaration()       { return *cast<Template_decl>(temp); }
