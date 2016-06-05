@@ -34,10 +34,9 @@ add_library(banjo
 
   # Application context and facilities.
   context.cpp
-
+  builtin.cpp
 
   # Built-in entities and intrinsics
-  # builtin.cpp
   # intrinsic.cpp
   
 

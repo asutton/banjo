@@ -7,16 +7,10 @@
 #include "intrinsic.hpp"
 #include "declaration.hpp"
 
-// #include "printer.hpp"
-
-#include <iostream>
-
 
 namespace banjo
 {
 
-
-#if 0
 
 // -------------------------------------------------------------------------- //
 // class Compiler { ... }
@@ -28,7 +22,7 @@ namespace banjo
 
 // Generate the constant
 //
-//    static const version = ...;
+//    static meta var version : int = ...;
 //
 // TODO: The compiler version is hard-coded as 1. This should be pulled
 // from the build environment.
@@ -37,32 +31,31 @@ make_compiler_version(Context& cxt)
 {
   Name& name = cxt.get_id("version");
   Type& type = cxt.get_int_type();
-  Expr& init = cxt.get_integer(type, 1);
-  Decl& decl = cxt.make_constant_declaration(name, type, init);
-  decl.spec_ |= internal_spec;
-  decl.spec_ |= static_spec;
-
+  Expr& init = cxt.get_integer(type, 1); // FIXME: This is variable
+  Decl& decl = cxt.make_variable_declaration(name, type, init);
+  decl.spec_ |= internal_spec | static_spec | meta_spec;
+  
   declare(cxt, decl);
 
   return cxt.make_declaration_statement(decl);
 }
 
 
-// Generate the following (static) macro.
+// Generate the "show" macro.
 //
-//    static macro show(const n : int) -> void
+//    static meta def show(const n : int) -> void
 static Declaration_stmt&
 make_compiler_show_int(Context& cxt)
 {
   Name& name = cxt.get_id("show");
   Decl_list parms {
-    &cxt.make_value_parm(cxt.get_id("n"), cxt.get_int_type())
+    &cxt.make_object_parameter(cxt.get_id("n"), cxt.get_int_type())
   };
   Type& ret = cxt.get_void_type();
+  Type& type = cxt.get_function_type(parms, ret);
   Def& def = cxt.make_function_definition(&intrinsic::show_value);
-  Decl& decl = cxt.make_macro_declaration(name, std::move(parms), ret, def);
-  decl.spec_ |= internal_spec;
-  decl.spec_ |= static_spec;
+  Decl& decl = cxt.make_function_declaration(name, type, std::move(parms), def);
+  decl.spec_ |= internal_spec | static_spec | meta_spec;
 
   declare(cxt, decl);
 
@@ -72,7 +65,7 @@ make_compiler_show_int(Context& cxt)
 
 
 static Class_decl& 
-make_compiler_class(Context& cxt)
+make_compiler_class(Context& cxt, Builtins& bi)
 {
   Name& name = cxt.get_id("Compiler");
   Type& type = cxt.get_type_type();
@@ -92,7 +85,7 @@ make_compiler_class(Context& cxt)
   
   declare(cxt, cls);
   
-  cxt.comp_class_ = &cls;
+  bi.comp_class_ = &cls;
   return cls;
 }
 
@@ -102,21 +95,19 @@ make_compiler_class(Context& cxt)
 //
 // The compiler object provides access to the compiler class.
 
-static Constant_decl&
-make_compiler(Context& cxt)
+static Object_decl&
+make_compiler(Context& cxt, Builtins& bi)
 {
   Name& name = cxt.get_id("compiler");
-  Type& type = cxt.get_class_type(cxt.builtin_compiler_class());
-  Constant_decl& decl = cxt.make_constant_declaration(name, type);
+  Type& type = cxt.get_class_type(object_type, bi.builtin_compiler_class());
+  Object_decl& decl = cxt.make_variable_declaration(name, type);
   decl.spec_ |= internal_spec;
 
   declare(cxt, decl);
 
-  cxt.comp_ = &decl;
+  bi.comp_ = &decl;
   return decl;
 }
-
-#endif
 
 
 // -------------------------------------------------------------------------- //
@@ -125,16 +116,15 @@ make_compiler(Context& cxt)
 // Allocate all of the built-in entity definitions and make them available
 // for lookup.
 void
-init_builtins(Context& cxt, Builtins& b)
+init_builtins(Context& cxt, Builtins& bi)
 {
   // Create the translation unit.
-  b.tu_ = &cxt.make_translation_unit();
+  bi.tu_ = &cxt.make_translation_unit();
   
   // Create builtin declarations.
-  Enter_scope scope(cxt, *b.tu_);
-  
-  // make_compiler_class(cxt);
-  // make_compiler(cxt);
+  Enter_scope scope(cxt, *bi.tu_);  
+  make_compiler_class(cxt, bi);
+  make_compiler(cxt, bi);
 }
 
 

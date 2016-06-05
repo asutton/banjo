@@ -38,6 +38,13 @@ Builder::get_integer_type(Type_category c, bool s, int p, Qualifier_set q)
 }
 
 
+Integer_type&
+Builder::get_integer_type(bool s, int p, Qualifier_set q)
+{
+  return integer_type(object_type, s, p, q);
+}
+
+
 // TODO: Default precision should depend on the target platform. That
 // information needs to be supplied by an external argument or take
 // information from the context.
@@ -48,11 +55,25 @@ Builder::get_int_type(Type_category c, Qualifier_set q)
 }
 
 
+Integer_type&
+Builder::get_int_type(Qualifier_set q)
+{
+  return get_integer_type(object_type, true, 32, q);
+}
+
+
 // TODO: See comments above.
 Integer_type&
 Builder::get_uint_type(Type_category c, Qualifier_set q)
 {
   return get_integer_type(c, false, 32, q);
+}
+
+
+Integer_type&
+Builder::get_uint_type(Qualifier_set q)
+{
+  return get_integer_type(object_type, false, 32, q);
 }
 
 
@@ -77,9 +98,23 @@ Builder::get_function_type(Type_category c, Decl_list const& ps, Type& t)
 
 
 Function_type&
+Builder::get_function_type(Decl_list const& ps, Type& t)
+{
+  return get_function_type(banjo::function_type, ps, t);
+}
+
+
+Function_type&
 Builder::get_function_type(Type_category c, Type_list const& ts, Type& t)
 {
   return function_type(c, ts, t);
+}
+
+
+Function_type&
+Builder::get_function_type(Type_list const& ts, Type& t)
+{
+  return function_type(banjo::function_type, ts, t);
 }
 
 

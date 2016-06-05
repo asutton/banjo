@@ -84,20 +84,26 @@ Context::leave_context()
 void
 Context::emit_error(Message const& m)
 {
-  std::stringstream ss;
-  ss << "error: " << input << ": ";
-  dump(ss, m);
-  std::cerr << ss.str() << '\n';
+  std::cerr << "error: " << input << ": ";
+  dump(std::cerr, m);
+  std::cerr << '\n';
 }
 
 
 void
 Context::emit_warning(Message const& m)
 {
-  std::stringstream ss;
-  ss << "error: " << input << ": ";
-  dump(ss, m);
-  std::cerr << ss.str() << '\n';
+  std::cerr << "warning: " << input << ": ";
+  dump(std::cerr, m);
+  std::cerr << '\n';
+}
+
+
+// Just write the rendered string to cerr.
+void
+Context::emit_info(Message const& m)
+{
+  dump(std::cerr, m);
 }
 
 

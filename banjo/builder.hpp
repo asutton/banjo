@@ -129,13 +129,18 @@ struct Builder
   Boolean_type& get_bool_type(Type_category, Qualifier_set = {});
   Byte_type& get_byte_type(Type_category, Qualifier_set = {});
   Integer_type& get_integer_type(Type_category, bool, int, Qualifier_set = {});
+  Integer_type& get_integer_type(bool, int, Qualifier_set = {});
   Integer_type&  get_int_type(Type_category, Qualifier_set = {});
+  Integer_type&  get_int_type(Qualifier_set = {});
   Integer_type&  get_uint_type(Type_category, Qualifier_set = {});
+  Integer_type&  get_uint_type(Qualifier_set = {});
   Float_type& get_float_type(Type_category, int, Qualifier_set = {});
 
   // Composite types
   Function_type& get_function_type(Type_category, Decl_list const&, Type&);
+  Function_type& get_function_type(Decl_list const&, Type&);
   Function_type& get_function_type(Type_category, Type_list const&, Type&);
+  Function_type& get_function_type(Type_list const&, Type&);
   Array_type& get_array_type(Type_category, Type&, Expr&);
   Tuple_type& get_tuple_type(Type_category, Type_list const&);
   Tuple_type& get_tuple_type(Type_category, Type_list&&);

@@ -46,6 +46,13 @@ operator|=(Specifier_set& a, Specifier_set b)
 }
 
 
+inline Specifier_set
+operator|(Specifier_set a, Specifier_set b)
+{
+  return Specifier_set((int)a | (int)b);
+}
+
+
 // The base class of all declarations. Every declaration has an associated
 // name, type, and set of specifiers.
 //

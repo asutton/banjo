@@ -92,6 +92,7 @@ struct Context : Builder
   bool diagnose_errors() const { return diags; }
   virtual void emit_error(Message const& m);
   virtual void emit_warning(Message const& m);
+  virtual void emit_info(Message const& m);
 
   Location     input;  // The input location
  
@@ -324,6 +325,18 @@ warning(Context& cxt, char const* msg, Args const&... args)
   Message m(msg, args...);
   cxt.emit_warning(m);
 }
+
+
+// Emit information. This is useful when debugging the compiler
+// to print terms, etc.
+template<typename... Args>
+inline void
+inform(Context& cxt, char const* msg, Args const&... args)
+{
+  Message m(msg, args...);
+  cxt.emit_info(m);
+}
+
 
 
 } // namespace banjo
