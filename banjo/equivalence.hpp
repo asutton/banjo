@@ -45,24 +45,6 @@ is_different(Type const& t1, Type const& t2)
 }
 
 
-// Equality comparison for pointers.
-template<typename T>
-struct Term_eq
-{
-  bool operator()(T const* a, T const* b) const
-  {
-    return is_equivalent(*a, *b);
-  }
-};
-
-
-using Name_eq = Term_eq<Name>;
-using Type_eq = Term_eq<Type>;
-using Expr_eq = Term_eq<Expr>;
-using Decl_eq = Term_eq<Decl>;
-using Cons_eq = Term_eq<Cons>;
-
-
 } // namespace banjo
 
 #endif

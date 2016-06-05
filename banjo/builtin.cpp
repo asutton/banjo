@@ -15,17 +15,8 @@
 namespace banjo
 {
 
-// -------------------------------------------------------------------------- //
-// Translation unit
-//
-static Translation_unit&
-make_translation_unit(Context& cxt)
-{
-  Translation_unit& tu = cxt.make_translation_unit();
-  cxt.tu_ = &tu;
-  return tu;
-}
 
+#if 0
 
 // -------------------------------------------------------------------------- //
 // class Compiler { ... }
@@ -125,20 +116,25 @@ make_compiler(Context& cxt)
   return decl;
 }
 
+#endif
+
 
 // -------------------------------------------------------------------------- //
 // Builtin initialization
 
-void 
-init_builtins(Context& cxt)
+// Allocate all of the built-in entity definitions and make them available
+// for lookup.
+void
+init_builtins(Context& cxt, Builtins& b)
 {
   // Create the translation unit.
-  Translation_unit& tu = make_translation_unit(cxt);
+  b.tu_ = &cxt.make_translation_unit();
   
   // Create builtin declarations.
-  Enter_scope scope(cxt, tu);
-  make_compiler_class(cxt);
-  make_compiler(cxt);
+  Enter_scope scope(cxt, *b.tu_);
+  
+  // make_compiler_class(cxt);
+  // make_compiler(cxt);
 }
 
 

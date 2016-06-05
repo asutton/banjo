@@ -166,7 +166,15 @@ struct Type : Term
   struct Visitor;
   struct Mutator;
 
-  Type(Type_category c = {}, Qualifier_set q = {})
+  Type()
+    : cat_(), qual_()
+  { }
+
+  Type(Type_category c)
+    : cat_(c), qual_()
+  { }
+
+  Type(Type_category c, Qualifier_set q)
     : cat_(c), qual_(q)
   { }
 

@@ -21,21 +21,27 @@ add_library(banjo
   equivalence.cpp
   hashing.cpp
 
-  # # Node construction
-  # build-name.cpp
-  # build-type.cpp
-  # build-expr.cpp
-  # build-stmt.cpp
-  # build-decl.cpp
-  # builder.cpp
+  # Node construction
+  builder.cpp
 
-  # context.cpp
-  # printer.cpp
+  # Diagnostics
+  error.cpp
+
+  # Scope, lookup, and resolution
+  overload.cpp
+  scope.cpp
+  lookup.cpp
+
+  # Application context and facilities.
+  context.cpp
+
+
+  # Built-in entities and intrinsics
   # builtin.cpp
   # intrinsic.cpp
   
-  # Diagnostics
-  # error.cpp
+
+  # printer.cpp
 
   # # Tree construction
   # type.cpp
@@ -67,11 +73,6 @@ add_library(banjo
   # Compile-time evaluation
   # value.cpp
   # evaluation.cpp
-
-  # Scope, lookup, and resolution
-  # scope.cpp
-  # lookup.cpp
-  # overload.cpp
 )
 
 target_compile_definitions(banjo PUBLIC ${LLVM_DEFINITIONS})

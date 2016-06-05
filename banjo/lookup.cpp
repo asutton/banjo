@@ -2,17 +2,13 @@
 // All rights reserved
 
 #include "lookup.hpp"
-#include "ast.hpp"
 #include "context.hpp"
-#include "scope.hpp"
-#include "printer.hpp"
 
 #include <iostream>
 
 
 namespace banjo
 {
-
 
 // FIXME: The names accepted by qualified lookup must be "atomic". That is,
 // they can be neither qualified nor template-ids.
@@ -95,7 +91,6 @@ qualified_lookup(Context& cxt, Type& type, Name const& name)
 {
   // TODO: This probably needs to strip of all reference qualifiers,
   // not just &.
-  Type& t1 = type.non_reference_type();
 
 #if 0
   // Parse the type if it has not been parsed yet.
@@ -158,11 +153,11 @@ qualified_lookup(Context& cxt, Type& type, Name const& name)
   }
 #endif
 
-  if (!is<Declared_type>(t1)) {
-    error("'{}' is not a user-defined type", t1);
-    throw Lookup_error("wrong type");
+  if (!is<Declared_type>(type)) {
+    error(cxt, "'{}' is not a class type", type);
+    throw Lookup_error();
   }
-  Decl& decl = cast<Declared_type>(t1).declaration();
+  Decl& decl = cast<Declared_type>(type).declaration();
   
   // Start by searching this scope.
   Decl_list decls = qualified_lookup(cxt, cxt.saved_scope(decl), name);

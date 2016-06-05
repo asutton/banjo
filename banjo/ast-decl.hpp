@@ -192,6 +192,9 @@ struct Translation_unit : Decl
 
 
 // The base class of object and reference declarations.
+//
+// NOTE: The naming follows the C++ convention where a variable declares
+// either an object (with storage) or a reference.
 struct Variable_decl : Decl
 {
   using Decl::Decl;
@@ -201,11 +204,11 @@ struct Variable_decl : Decl
 // Declares a mapping from inputs to outputs. 
 struct Mapping_decl : Decl
 {
-  Mapping_decl(Name& n, Type t, Decl_list const& p, Def& d)
+  Mapping_decl(Name& n, Type& t, Decl_list const& p, Def& d)
     : Decl(n, t), parms_(p), def_(&d)
   { }
 
-  Mapping_decl(Name& n, Type t, Decl_list&& p, Def& d)
+  Mapping_decl(Name& n, Type& t, Decl_list&& p, Def& d)
     : Decl(n, t), parms_(std::move(p)), def_(&d)
   { }
 
@@ -218,7 +221,8 @@ struct Mapping_decl : Decl
   Function_type&       type();
 
   // Returns the return type of the function.
-  Type return_type() const;
+  Type const& return_type() const;
+  Type&       return_type();
 
   // Returns the function's constraint expression. This is valid only 
   // when is_constrained() is true.
@@ -252,7 +256,7 @@ struct Type_decl : Decl
 // A variable declaration (declares an object, not a reference).
 struct Object_decl : Variable_decl
 {
-  Object_decl(Name& n, Type t, Def& d)
+  Object_decl(Name& n, Type& t, Def& d)
     : Variable_decl(n, t), def_(&d)
   { }
 
@@ -270,7 +274,7 @@ struct Object_decl : Variable_decl
 // A reference declaration.
 struct Reference_decl : Variable_decl
 {
-  Reference_decl(Name& n, Type t, Def& d)
+  Reference_decl(Name& n, Type& t, Def& d)
     : Variable_decl(n, t), def_(&d)
   { }
 
@@ -300,7 +304,7 @@ struct Function_decl : Mapping_decl
 // Represents the declaration of a class type.
 struct Class_decl : Type_decl
 {
-  Class_decl(Name& n, Type t, Def& d)
+  Class_decl(Name& n, Type& t, Def& d)
     : Type_decl(n, t), def_(&d)
   { }
   
@@ -340,10 +344,14 @@ struct Field_decl : Object_decl
 };
 
 
-// Declares a base class subobject.
+// Declares a base class subobject. Note that super declarations always
+// have an empty definition.
+//
+// TODO: We could actually provide a default member initializer for
+// base classes.
 struct Super_decl : Field_decl
 {
-  Super_decl(Name& n, Type t, Def& d)
+  Super_decl(Name& n, Type& t, Def& d)
     : Field_decl(n, t, d)
   { }
 
@@ -510,12 +518,12 @@ struct Object_parm : Parameter_decl<Variable_decl>
 // A reference parameter of a function.
 struct Reference_parm : Parameter_decl<Variable_decl>
 {
-  Reference_parm(Index x, Name& n, Type t)
-    : Parameter_decl<Variable_decl>(x, n, t), init_()
+  Reference_parm(Name& n, Type t)
+    : Parameter_decl<Variable_decl>(n, t), init_()
   { }
 
-  Reference_parm(Index x, Name& n, Type t, Expr& i)
-    : Parameter_decl<Variable_decl>(x, n, t), init_(&i)
+  Reference_parm(Name& n, Type t, Expr& i)
+    : Parameter_decl<Variable_decl>(n, t), init_(&i)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -535,12 +543,12 @@ struct Reference_parm : Parameter_decl<Variable_decl>
 // A type parameter of a template.
 struct Type_parm : Parameter_decl<Type_decl>
 {
-  Type_parm(Index x, Name& n)
-    : Parameter_decl<Type_decl>(x, n), def_()
+  Type_parm(Name& n)
+    : Parameter_decl<Type_decl>(n), def_()
   { }
 
-  Type_parm(Index x, Name& n, Type& t)
-    : Parameter_decl<Type_decl>(x, n), def_(&t)
+  Type_parm(Name& n, Type& t)
+    : Parameter_decl<Type_decl>(n), def_(&t)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -650,7 +658,7 @@ struct Generic_decl_mutator : Decl::Mutator, Generic_mutator<F, T>
 
 
 // Apply a function to the given declaration.
-template<typename F, typename T = typename std::result_of<F(Variable_decl const&)>::type>
+template<typename F, typename T = typename std::result_of<F(Object_decl const&)>::type>
 inline decltype(auto)
 apply(Decl const& d, F fn)
 {
@@ -660,7 +668,7 @@ apply(Decl const& d, F fn)
 
 
 // Apply a function to the given declaration.
-template<typename F, typename T = typename std::result_of<F(Variable_decl&)>::type>
+template<typename F, typename T = typename std::result_of<F(Object_decl&)>::type>
 inline decltype(auto)
 apply(Decl& d, F fn)
 {

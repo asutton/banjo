@@ -13,7 +13,7 @@ namespace banjo
 Simple_id&
 Builder::get_id(char const* s)
 {
-  Symbol const* sym = symbols().put_identifier(Token_kind::identifier_tok, s);
+  Symbol const* sym = syms_.put_identifier(Token_kind::identifier_tok, s);
   return simple_id(*sym);
 }
 
@@ -22,7 +22,7 @@ Builder::get_id(char const* s)
 Simple_id&
 Builder::get_id(std::string const& s)
 {
-  Symbol const* sym = symbols().put_identifier(Token_kind::identifier_tok, s);
+  Symbol const* sym = syms_.put_identifier(Token_kind::identifier_tok, s);
   return simple_id(*sym);
 }
 
@@ -31,7 +31,6 @@ Builder::get_id(std::string const& s)
 Simple_id&
 Builder::get_id(Symbol const& sym)
 {
-  lingo_assert(is<Identifier_sym>(&sym));
   return simple_id(sym);
 }
 

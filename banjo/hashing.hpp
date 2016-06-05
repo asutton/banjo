@@ -83,11 +83,38 @@ hash_append(A& h, T const* p)
 
 
 // Hash type_info objects.
-template<typename A, typename T>
+template<typename A>
 inline void
 hash_append(A& h, std::type_info const& ti)
 {
   hash_append(h, ti.hash_code());
+}
+
+
+// Hash an LLVM hash code by extracting its underlying value.
+template<typename A>
+inline void
+hash_append(A& h, llvm::hash_code const& hc)
+{
+  hash_append(h, (std::size_t)hc);
+}
+
+
+// Hash a lingo integer value.
+template<typename A>
+void
+hash_append(A& h, Integer const& n)
+{
+  hash_append(h, llvm::hash_value(n.impl()));
+}
+
+
+// Hash a lingo real value.
+template<typename A>
+void
+hash_append(A& h, Real const& n)
+{
+  hash_append(h, llvm::hash_value(n.impl()));
 }
 
 
@@ -98,7 +125,7 @@ hash_append(A& h, List<T> const& list)
 {
   for (T const& t : list)
     hash_append(h, t);
-  hash_append(list.size());
+  hash_append(h, list.size());
 }
 
 
@@ -228,7 +255,7 @@ hash_append(A& h, Type const& t)
     void operator()(Array_type const& t)     { hash_array_type(h, t); }
     void operator()(Tuple_type const& t)     { hash_tuple_type(h, t); }
     void operator()(Pointer_type const& t)   { hash_pointer_type(h, t); }
-    void operator()(Declared_type const& t) { has_declared_type(h, t); }
+    void operator()(Declared_type const& t)  { hash_declared_type(h, t); }
   };
   hash_append(h, typeid(t));
   hash_append(h, t.category());
@@ -240,6 +267,34 @@ hash_append(A& h, Type const& t)
 // ---------------------------------------------------------------------------//
 // Hashing expression
 
+template<typename A>
+void
+hash_binary_expr(A& h, Binary_expr const& e)
+{
+  hash_append(h, e.left());
+  hash_append(h, e.right());
+}
+
+
+template<typename A>
+void
+hash_append(A& h, Expr const& e)
+{
+  struct fn
+  {
+    A& h;
+    void operator()(Expr const& e)         { lingo_unhandled(e); }
+    void operator()(Void_expr const& e)    { }
+    void operator()(Boolean_expr const& e) { hash_append(h, e.value()); }
+    void operator()(Integer_expr const& e) { hash_append(h, e.value()); }
+    void operator()(Tuple_expr const& e)   { hash_append(h, e.elements()); }
+    void operator()(Id_expr const& e)      { hash_append(h, e.id()); }
+    void operator()(Unary_expr const& e)   { hash_append(h, e.operand()); }
+    void operator()(Binary_expr const& e)  { hash_binary_expr(h, e); }
+  };
+  hash_append(h, typeid(e));
+  apply(e, fn{h});
+}
 
 
 // ---------------------------------------------------------------------------//

@@ -12,8 +12,6 @@
 
 #include "language.hpp"
 
-#include <unordered_set>
-
 
 namespace banjo
 {

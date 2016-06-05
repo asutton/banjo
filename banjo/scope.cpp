@@ -3,7 +3,6 @@
 
 #include "scope.hpp"
 #include "ast.hpp"
-#include "printer.hpp"
 
 #include <iostream>
 
@@ -21,6 +20,7 @@ Scope::bind(Decl& d)
 
 // Streaming
 
+#if 0
 std::ostream& 
 operator<<(std::ostream& os, Scope const& scope)
 {
@@ -36,6 +36,7 @@ operator<<(std::ostream& os, Scope const& scope)
 
   return os;
 }
+#endif
 
 
 } // namespace banjo

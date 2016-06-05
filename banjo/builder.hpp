@@ -76,6 +76,10 @@ struct Hashed_unique_factory : std::unordered_set<T, Hash, Eq>
 
 
 // An interface to an AST builder.
+//
+// Note that the builder owns a symbol table. This can be used by the
+// application context to support typical lexing and parsing tasks or 
+// to temporarily store unique representations of symbols.
 struct Builder
 {
   // Hash function for terms.
@@ -101,10 +105,6 @@ struct Builder
   template<typename T>
   using Unique_factory = Hashed_unique_factory<T, Hash, Eq<T>>;
 
-  Builder(Symbol_table& s)
-    : sym_(s)
-  { }
-
   // Names
   
   Simple_id&      get_id(char const*);
@@ -125,34 +125,35 @@ struct Builder
   // Types
 
   // Fundamental types
-  Type get_void_type(Qualifier_set = {});
-  Type get_bool_type(Type_category, Qualifier_set = {});
-  Type get_byte_type(Type_category, Qualifier_set = {});
-  Type get_integer_type(Type_category, bool, int, Qualifier_set = {});
-  Type get_int_type(Type_category, Qualifier_set = {});
-  Type get_uint_type(Type_category, Qualifier_set = {});
-  Type get_float_type(Type_category, int, Qualifier_set = {});
+  Void_type& get_void_type(Qualifier_set = {});
+  Boolean_type& get_bool_type(Type_category, Qualifier_set = {});
+  Byte_type& get_byte_type(Type_category, Qualifier_set = {});
+  Integer_type& get_integer_type(Type_category, bool, int, Qualifier_set = {});
+  Integer_type&  get_int_type(Type_category, Qualifier_set = {});
+  Integer_type&  get_uint_type(Type_category, Qualifier_set = {});
+  Float_type& get_float_type(Type_category, int, Qualifier_set = {});
 
   // Composite types
-  Type get_function_type(Type_category, Decl_list const&, Type);
-  Type get_function_type(Type_category, Type_list const&, Type);
-  Type get_array_type(Type_category, Type, Expr&);
-  Type get_tuple_type(Type_category, Type_list&&);
-  Type get_tuple_type(Type_category, Type_list const&);
-  Type get_pointer_type(Type_category, Type, Qualifier_set = {});
+  Function_type& get_function_type(Type_category, Decl_list const&, Type&);
+  Function_type& get_function_type(Type_category, Type_list const&, Type&);
+  Array_type& get_array_type(Type_category, Type&, Expr&);
+  Tuple_type& get_tuple_type(Type_category, Type_list const&);
+  Tuple_type& get_tuple_type(Type_category, Type_list&&);
+  Pointer_type& get_pointer_type(Type_category, Type&, Qualifier_set = {});
 
   // User-defined types
-  Type get_class_type(Type_category, Type_decl&, Qualifier_set = {});
-  Type get_typename_type(Type_category, Type_decl&, Qualifier_set = {});
+  Class_type& get_class_type(Type_category, Type_decl&, Qualifier_set = {});
+  Typename_type& get_typename_type(Type_category, Type_decl&, Qualifier_set = {});
   
   // Placeholder types
-  Type get_auto_type(Type_category, Type_decl&, Qualifier_set = {});
-  Type get_decltype_type(Type_category, Expr&, Qualifier_set = {});
+  Auto_type& get_auto_type(Type_category, Type_decl&, Qualifier_set = {});
+  Decltype_type& get_decltype_type(Type_category, Expr&, Qualifier_set = {});
 
   // Meta-types
-  Type get_type_type();
+  Type_type& get_type_type();
 
   // Qualified types
+#if 0
   Type get_qualified_type(Type, Qualifier_set);
   Type get_unqualified_type(Type);
   Type get_const_type(Type);
@@ -162,62 +163,63 @@ struct Builder
   // Fresh types
   Type make_auto_type();
   Type make_synthetic_type(Decl&);
-
+#endif
+  
   // Expressions
 
   // Literals
-  Void_expr&     get_void(Type);
-  Boolean_expr&  get_boolean(Type, bool);
-  Boolean_expr&  get_true(Type);
-  Boolean_expr&  get_false(Type);
-  Integer_expr&  get_integer(Type, Integer const&);
-  Integer_expr&  get_zero(Type);
-  Integer_expr&  get_int(Type, Integer const&);
-  Integer_expr&  get_uint(Type, Integer const&);
+  Void_expr&     get_void(Type&);
+  Boolean_expr&  get_boolean(Type&, bool);
+  Boolean_expr&  get_true(Type&);
+  Boolean_expr&  get_false(Type&);
+  Integer_expr&  get_integer(Type&, Integer const&);
+  Integer_expr&  get_zero(Type&);
+  Integer_expr&  get_int(Type&, Integer const&);
+  Integer_expr&  get_uint(Type&, Integer const&);
   
   // Aggregates
-  Tuple_expr&    make_tuple(Type, Expr_list&&);
+  Tuple_expr&    make_tuple(Type&, Expr_list&&);
 
   // Resolved references
-  Id_object_expr&     make_reference(Type, Object_decl&);
-  Id_function_expr&   make_reference(Type, Function_decl&);
+  Id_object_expr&     make_reference(Type&, Object_decl&);
+  Id_function_expr&   make_reference(Type&, Function_decl&);
   Id_overload_expr&   make_reference(Name&, Decl_list&&);
-  Dot_object_expr&    make_reference(Type, Expr&, Field_decl&);
-  Dot_function_expr&  make_reference(Type, Expr&, Method_decl&);
+  Dot_object_expr&    make_reference(Type&, Expr&, Field_decl&);
+  Dot_function_expr&  make_reference(Type&, Expr&, Method_decl&);
   Dot_overload_expr&  make_reference(Expr&, Name&, Decl_list&&);
 
   // Logical expressions
-  And_expr& make_and(Type, Expr&, Expr&);
-  Or_expr&  make_or(Type, Expr&, Expr&);
-  Not_expr& make_not(Type, Expr&);
+  And_expr& make_and(Type&, Expr&, Expr&);
+  Or_expr&  make_or(Type&, Expr&, Expr&);
+  Not_expr& make_not(Type&, Expr&);
 
   // Relational expressions
-  Eq_expr& make_eq(Type, Expr&, Expr&);
-  Ne_expr& make_ne(Type, Expr&, Expr&);
-  Lt_expr& make_lt(Type, Expr&, Expr&);
-  Gt_expr& make_gt(Type, Expr&, Expr&);
-  Le_expr& make_le(Type, Expr&, Expr&);
-  Ge_expr& make_ge(Type, Expr&, Expr&);
+  Eq_expr& make_eq(Type&, Expr&, Expr&);
+  Ne_expr& make_ne(Type&, Expr&, Expr&);
+  Lt_expr& make_lt(Type&, Expr&, Expr&);
+  Gt_expr& make_gt(Type&, Expr&, Expr&);
+  Le_expr& make_le(Type&, Expr&, Expr&);
+  Ge_expr& make_ge(Type&, Expr&, Expr&);
 
   // Arithmetic expressions
-  Add_expr& make_add(Type, Expr&, Expr&);
-  Sub_expr& make_sub(Type, Expr&, Expr&);
-  Mul_expr& make_mul(Type, Expr&, Expr&);
-  Div_expr& make_div(Type, Expr&, Expr&);
-  Rem_expr& make_rem(Type, Expr&, Expr&);
-  Neg_expr& make_neg(Type, Expr&);
-  Pos_expr& make_pos(Type, Expr&);
+  Add_expr& make_add(Type&, Expr&, Expr&);
+  Sub_expr& make_sub(Type&, Expr&, Expr&);
+  Mul_expr& make_mul(Type&, Expr&, Expr&);
+  Div_expr& make_div(Type&, Expr&, Expr&);
+  Rem_expr& make_rem(Type&, Expr&, Expr&);
+  Neg_expr& make_neg(Type&, Expr&);
+  Pos_expr& make_pos(Type&, Expr&);
 
   // Bitwise expressions
-  Bit_and_expr& make_bit_and(Type, Expr&, Expr&);
-  Bit_or_expr&  make_bit_or(Type, Expr&, Expr&);
-  Bit_xor_expr& make_bit_xor(Type, Expr&, Expr&);
-  Bit_lsh_expr& make_bit_lsh(Type, Expr&, Expr&);
-  Bit_rsh_expr& make_bit_rsh(Type, Expr&, Expr&);
-  Bit_not_expr& make_bit_not(Type, Expr&);
+  Bit_and_expr& make_bit_and(Type&, Expr&, Expr&);
+  Bit_or_expr&  make_bit_or(Type&, Expr&, Expr&);
+  Bit_xor_expr& make_bit_xor(Type&, Expr&, Expr&);
+  Bit_lsh_expr& make_bit_lsh(Type&, Expr&, Expr&);
+  Bit_rsh_expr& make_bit_rsh(Type&, Expr&, Expr&);
+  Bit_not_expr& make_bit_not(Type&, Expr&);
 
   // Function call
-  Call_expr& make_call(Type, Expr&, Expr_list&&);
+  Call_expr& make_call(Type&, Expr&, Expr_list&&);
 
   // Initializers
   Trivial_init&   make_trivial_init();
@@ -246,34 +248,38 @@ struct Builder
   // Declarations
 
   // Objects and references
-  Object_decl&    make_variable_declaration(Name&, Type);
-  Object_decl&    make_variable_declaration(Name&, Type, Expr&);
-  Reference_decl& make_reference_declaration(Name&, Type);
-  Reference_decl& make_reference_declaration(Name&, Type, Expr&);
-  Field_decl&     make_field_declaration(Name&, Type);
-  Field_decl&     make_field_declaration(Name&, Type, Expr&);
-  Super_decl&     make_super_declaration(Type);
+  Object_decl&    make_variable_declaration(Name&, Type&);
+  Object_decl&    make_variable_declaration(Name&, Type&, Expr&);
+  Reference_decl& make_reference_declaration(Name&, Type&);
+  Reference_decl& make_reference_declaration(Name&, Type&, Expr&);
+  Field_decl&     make_field_declaration(Name&, Type&);
+  Field_decl&     make_field_declaration(Name&, Type&, Expr&);
+  Super_decl&     make_super_declaration(Type&);
 
   // Functions and methods
-  Function_decl&  make_function_declaration(Name&, Type, Decl_list const&);
-  Function_decl&  make_function_declaration(Name&, Type, Decl_list&&);
-  Function_decl&  make_function_declaration(Name&, Type, Decl_list&&, Def&);
+  Function_decl&  make_function_declaration(Name&, Type&, Decl_list const&);
+  Function_decl&  make_function_declaration(Name&, Type&, Decl_list&&);
+  Function_decl&  make_function_declaration(Name&, Type&, Decl_list&&, Def&);
   Function_def&   make_function_definition(Stmt&);
-  Method_decl&    make_method_declaration(Name&, Type, Decl_list const&);
+  Method_decl&    make_method_declaration(Name&, Type&, Decl_list const&);
+  Method_decl&    make_method_declaration(Name&, Type&, Decl_list&&);
+  Method_decl&    make_method_declaration(Name&, Type&, Decl_list&&, Def&);
   Expression_def& make_function_definition(Expr&);
   Intrinsic_def&  make_function_definition(Nullary_fn);
   Intrinsic_def&  make_function_definition(Unary_fn);
+  Intrinsic_def&  make_function_definition(Binary_fn);
+  Intrinsic_def&  make_function_definition(Ternary_fn);
 
   // Classes
-  Class_decl&  make_class_declaration(Name&, Type);
-  Class_decl&  make_class_declaration(Name&, Type, Def&);
+  Class_decl&  make_class_declaration(Name&, Type&);
+  Class_decl&  make_class_declaration(Name&, Type&, Def&);
   Class_def&   make_class_definition(Stmt_list&&);
 
   // Parameters
-  Object_parm&    make_object_parameter(Name&, Type);
-  Object_parm&    make_object_parameter(char const*, Type);
-  Reference_parm& make_reference_parameter(Name&, Type);
-  Reference_parm& make_reference_parameter(char const*, Type);
+  Object_parm&    make_object_parameter(Name&, Type&);
+  Object_parm&    make_object_parameter(char const*, Type&);
+  Reference_parm& make_reference_parameter(Name&, Type&);
+  Reference_parm& make_reference_parameter(char const*, Type&);
   Type_parm&      make_type_parameter(Name&);
   Type_parm&      make_type_parameter(char const*);
   
@@ -289,10 +295,10 @@ struct Builder
 
 
   // Resources
-  Symbol_table& symbols() { return sym_; }
+  Symbol_table& symbols() { return syms_; }
 
   // Facilities
-  Symbol_table& sym_;
+  Symbol_table syms_;
 
   // Names
   Basic_factory<Simple_id> simple_id;
@@ -396,6 +402,7 @@ struct Builder
   Basic_factory<Deleted_def> deleted_def;
   Basic_factory<Defaulted_def> defaulted_def;
   Basic_factory<Expression_def> expression_def;
+  Basic_factory<Function_def> function_def;
   Basic_factory<Class_def> class_def;
   Basic_factory<Intrinsic_def> intrinsic_def;
 };

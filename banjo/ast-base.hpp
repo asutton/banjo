@@ -20,15 +20,11 @@
 namespace banjo
 {
 
-// Bring some names into scope so they aren't hidden by banjo declarations
-// in the type hierarchy.
-using lingo::is;
-using lingo::as;
-using lingo::cast;
-
-
-// Bring useful structures into scope.
+// Bring more lingo types into scope.
 using lingo::Integer;
+using lingo::Real;
+using lingo::Token;
+using lingo::Token_seq;
 
 
 // Primary structures

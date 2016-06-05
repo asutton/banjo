@@ -9,24 +9,30 @@
 
 #include <lingo/io.hpp>
 
+#include <iostream>
+
 
 namespace banjo
 {
 
 Context::Context()
-  : Builder(*this)
-  , syms()
-  , scope(nullptr)
+  : scope(nullptr)
   , id(0)
   , diags(false)
+  , builtins_(new Builtins())
 {
   // Initialize the color system. This is a process-level configuration. 
   // Perhaps we we should only initialize colors if the default output 
   // terminal is actually the output terminal.
-  init_colors();
+  lingo::init_colors();
 
-  // Initialize builtin declarations.
-  init_builtins(*this);
+  // Initialize built-in entity definitions.
+  init_builtins(*this, *builtins_);
+}
+
+
+Context::~Context()
+{
 }
 
 
@@ -35,7 +41,7 @@ Context::global_scope() const
 { 
   // Look away...
   auto& self = const_cast<Context&>(*this);
-  auto& tu = const_cast<Translation_unit&>(translation_unit());
+  auto& tu = const_cast<Translation_unit&>(builtins().translation_unit());
   return self.saved_scope(tu); 
 }
 
@@ -70,6 +76,28 @@ Context::leave_context()
 {
   if (is<Decl>(&scope->context()))
     cxt.pop_back();
+}
+
+
+// FIXME: We should probably do better for a default implementation.
+
+void
+Context::emit_error(Message const& m)
+{
+  std::stringstream ss;
+  ss << "error: " << input << ": ";
+  dump(ss, m);
+  std::cerr << ss.str() << '\n';
+}
+
+
+void
+Context::emit_warning(Message const& m)
+{
+  std::stringstream ss;
+  ss << "error: " << input << ": ";
+  dump(ss, m);
+  std::cerr << ss.str() << '\n';
 }
 
 

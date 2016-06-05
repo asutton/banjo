@@ -5,7 +5,7 @@
 #define BANJO_INTRINSIC_HPP
 
 // This module defines all of the intrinsic function exposed by the 
-// compiler. These represent the definitions of builtin functions.
+// compiler. These represent the definitions of built-in functions.
 
 #include "language.hpp"
 

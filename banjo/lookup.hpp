@@ -12,11 +12,12 @@
 #include "prelude.hpp"
 #include "language.hpp"
 
+
 namespace banjo
 {
 
 
-Decl& simple_lookup(Context&, Name const&);
+Decl&     simple_lookup(Context&, Name const&);
 Decl_list unqualified_lookup(Context&, Name const&);
 Decl_list qualified_lookup(Context&, Type&, Name const&);
 

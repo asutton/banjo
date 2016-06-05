@@ -25,8 +25,15 @@ Mapping_decl::type()
 }
 
 
-Type
+Type const&
 Mapping_decl::return_type() const
+{
+  return type().return_type();
+}
+
+
+Type&
+Mapping_decl::return_type()
 {
   return type().return_type();
 }

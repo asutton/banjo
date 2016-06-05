@@ -6,7 +6,7 @@
 
 #include "prelude.hpp"
 #include "builder.hpp"
-#include "builtin.hpp"
+#include "error.hpp"
 #include "scope.hpp"
 #include "value.hpp"
 
@@ -16,7 +16,7 @@
 namespace banjo
 {
 
-struct Scope;
+struct Builtins;
 
 
 // Used to associate scopes with terms: the translation unit, classes,
@@ -30,8 +30,7 @@ using Context_stack = std::vector<Decl*>;
 
 
 // Dynamic binding of declarations to their values.
-using Store = Environment<Decl const*, Value>;
-
+using Store = lingo::Environment<Decl const*, Value>;
 
 
 // A repository of information to support translation.
@@ -39,17 +38,14 @@ using Store = Environment<Decl const*, Value>;
 // TODO: Add an allocator/object pool and management support.
 //
 // TODO: Integrate diagnostics.
-struct Context : Builder, Builtins
+struct Context : Builder
 {
   Context();
+  ~Context();
 
   // Non-copyable
   Context(Context const&) = delete;
   Context& operator=(Context const&) = delete;
-
-  // Returns the symbol table.
-  Symbol_table const& symbols() const { return syms; }
-  Symbol_table&       symbols()       { return syms; }
 
   // Unique ids
   int get_unique_id();
@@ -73,6 +69,10 @@ struct Context : Builder, Builtins
   Scope const& global_scope() const;
   Scope&       global_scope();
 
+  // Built-in entity definitions
+  Builtins const& builtins() const { return *builtins_; }
+  Builtins&       builtins()       { return *builtins_; }
+
   // Declaration contexts.
   void enter_context();
   void leave_context();
@@ -88,10 +88,11 @@ struct Context : Builder, Builtins
   void store(Decl&, Value const&);
   Value const& load(Decl&);
 
-  // Diagnostic state
+  // Diagnostics
   bool diagnose_errors() const { return diags; }
+  virtual void emit_error(Message const& m);
+  virtual void emit_warning(Message const& m);
 
-  Symbol_table syms;   // The symbol table
   Location     input;  // The input location
  
   // Scope and context.
@@ -107,6 +108,9 @@ struct Context : Builder, Builtins
 
   // Diagnostic state
   bool diags; // True if diagnostics should be emitted.
+
+  // Built-in entity definitions.
+  std::unique_ptr<Builtins> builtins_;
 };
 
 
@@ -307,7 +311,8 @@ template<typename... Args>
 inline void
 error(Context& cxt, char const* msg, Args const&... args)
 {
-  error(cxt.input_location(), msg, args...);
+  Message m(msg, args...);
+  cxt.emit_error(m);
 }
 
 
@@ -316,16 +321,8 @@ template<typename... Args>
 inline void
 warning(Context& cxt, char const* msg, Args const&... args)
 {
-  warning(cxt.input_location(), msg, args...);
-}
-
-
-// Emit a formatted message at the current input position.
-template<typename... Args>
-inline void
-note(Context& cxt, char const* msg, Args const&... args)
-{
-  note(cxt.input_location(), msg, args...);
+  Message m(msg, args...);
+  cxt.emit_warning(m);
 }
 
 

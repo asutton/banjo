@@ -10,38 +10,38 @@ namespace banjo
 // -------------------------------------------------------------------------- //
 // Fundamental types
 
-Type
+Void_type&
 Builder::get_void_type(Qualifier_set q)
 {
-  return {void_type(), object_type, q};
+  return void_type(object_type, q);
 }
 
 
-Type
+Boolean_type&
 Builder::get_bool_type(Type_category c, Qualifier_set q)
 {
-  return {bool_type(), c, q};
+  return bool_type(c, q);
 }
 
 
-Type
+Byte_type&
 Builder::get_byte_type(Type_category c, Qualifier_set q)
 {
-  return {byte_type(), c, q};
+  return byte_type(c, q);
 }
 
 
-Type
+Integer_type&
 Builder::get_integer_type(Type_category c, bool s, int p, Qualifier_set q)
 {
-  return {integer_type(s, p), c, q};
+  return integer_type(c, s, p, q);
 }
 
 
 // TODO: Default precision should depend on the target platform. That
 // information needs to be supplied by an external argument or take
 // information from the context.
-Type
+Integer_type&
 Builder::get_int_type(Type_category c, Qualifier_set q)
 {
   return get_integer_type(c, true, 32, q);
@@ -49,25 +49,25 @@ Builder::get_int_type(Type_category c, Qualifier_set q)
 
 
 // TODO: See comments above.
-Type
+Integer_type&
 Builder::get_uint_type(Type_category c, Qualifier_set q)
 {
   return get_integer_type(c, false, 32, q);
 }
 
 
-Type
+Float_type&
 Builder::get_float_type(Type_category c, int p, Qualifier_set q)
 {
-  return {float_type(p), c, q};
+  return float_type(c, p, q);
 }
 
 
 // -------------------------------------------------------------------------- //
 // Compound types
 
-Type
-Builder::get_function_type(Type_category c, Decl_list const& ps, Type t)
+Function_type&
+Builder::get_function_type(Type_category c, Decl_list const& ps, Type& t)
 {
   Type_list ts;
   for (Decl& d : modify(ps))
@@ -76,38 +76,38 @@ Builder::get_function_type(Type_category c, Decl_list const& ps, Type t)
 }
 
 
-Type
-Builder::get_function_type(Type_category c, Type_list const& ts, Type t)
+Function_type&
+Builder::get_function_type(Type_category c, Type_list const& ts, Type& t)
 {
-  return {function_type(ts, t), c};
+  return function_type(c, ts, t);
 }
 
 
-Type
-Builder::get_array_type(Type_category c, Type t, Expr& e)
+Array_type&
+Builder::get_array_type(Type_category c, Type& t, Expr& e)
 {
-  return {array_type(t, e), c, empty_qual};
+  return array_type(c, t, e);
 }
 
 
-Type
-Builder::get_tuple_type(Type_category c, Type_list&& t)
+Tuple_type&
+Builder::get_tuple_type(Type_category c, Type_list const& ts)
 {
-  return {tuple_type(std::move(t)), c};
+  return tuple_type(c, ts);
 }
 
 
-Type
-Builder::get_tuple_type(Type_category c, Type_list const& t)
+Tuple_type&
+Builder::get_tuple_type(Type_category c, Type_list&& ts)
 {
-  return {tuple_type(t), c};
+  return tuple_type(c, std::move(ts));
 }
 
 
-Type
-Builder::get_pointer_type(Type_category c, Type t, Qualifier_set q)
+Pointer_type&
+Builder::get_pointer_type(Type_category c, Type& t, Qualifier_set q)
 {
-  return {pointer_type(t), c, q};
+  return pointer_type(c, t, q);
 }
 
 
@@ -115,18 +115,18 @@ Builder::get_pointer_type(Type_category c, Type t, Qualifier_set q)
 // User-defined types
 
 // Returns class type for the given type declaration.
-Type
+Class_type&
 Builder::get_class_type(Type_category c, Type_decl& d, Qualifier_set q)
 {
-  return {class_type(d), c, q};
+  return class_type(c, d, q);
 }
 
 
 // Returns the type corresponding to the declaration of a type parameter.
-Type
+Typename_type&
 Builder::get_typename_type(Type_category c, Type_decl& d, Qualifier_set q)
 {
-  return {typename_type(d), c, q};
+  return typename_type(c, d, q);
 }
 
 
@@ -134,14 +134,14 @@ Builder::get_typename_type(Type_category c, Type_decl& d, Qualifier_set q)
 // Deduced types
 
 // Returns the auto type corresponding to the given declaration.
-Type
+Auto_type&
 Builder::get_auto_type(Type_category c, Type_decl& d, Qualifier_set q)
 {
-  return {auto_type(d), c, q};
+  return auto_type(c, d, q);
 }
 
 
-Type
+Decltype_type&
 Builder::get_decltype_type(Type_category c, Expr& e, Qualifier_set q)
 {
   lingo_unreachable();
@@ -150,16 +150,16 @@ Builder::get_decltype_type(Type_category c, Expr& e, Qualifier_set q)
 
 
 // TODO: I hate this type. It should go away...
-Type
+Type_type&
 Builder::get_type_type()
 {
   return {type_type()};
 }
 
 
+#if 0
 // -------------------------------------------------------------------------- //
 // Qualified types
-
 
 static Type
 qualified_array_type(Builder& b, Array_type& t, Type_category c, Qualifier_set q)
@@ -260,6 +260,6 @@ Builder::make_synthetic_type(Decl& d)
 
   // return make<Synthetic_type>(d);
 }
-
+#endif
 
 } // namespace banjo

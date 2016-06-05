@@ -4,11 +4,21 @@
 #ifndef BANJO_BUILTIN_HPP
 #define BANJO_BUILTIN_HPP
 
+// The builtin module defines a class that contains a number of
+// compiler-defined objects, functions, and types.
+//
+// TODO: The set of builtins available to any language is defined by
+// that language. It's really not appropriate to define all of these
+// here. However, it is convenient.
+
 #include "language.hpp"
 
 
 namespace banjo
 {
+
+struct Context;
+
 
 // The builtins class is simply a container for builtin objects.
 // This is inherited by the Context, which provides access to these
@@ -24,16 +34,17 @@ struct Builtins
   Class_decl&       builtin_compiler_class()       { return *comp_class_; }
 
   // Returns the builtin compiler object.
-  Constant_decl const& builtin_compiler() const { return *comp_; }
-  Constant_decl&       builtin_compiler()       { return *comp_; }
+  Object_decl const& builtin_compiler() const { return *comp_; }
+  Object_decl&       builtin_compiler()       { return *comp_; }
 
   Translation_unit* tu_;
   Class_decl*       comp_class_;
-  Constant_decl*    comp_;
+  Object_decl*      comp_;
 };
 
 
-void init_builtins(Context&);
+void init_builtins(Context& cxt, Builtins&);
+
 
 } // namespace banjo
 

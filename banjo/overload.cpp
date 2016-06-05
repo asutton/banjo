@@ -2,10 +2,8 @@
 // All rights reserved
 
 #include "overload.hpp"
-#include "ast-name.hpp"
-#include "ast-type.hpp"
-#include "ast-decl.hpp"
-#include "printer.hpp"
+#include "context.hpp"
+#include "equivalence.hpp"
 
 #include <iostream>
 
@@ -27,6 +25,7 @@ Overload_set::name()
 }
 
 
+#if 0
 std::ostream&
 operator<<(std::ostream& os, Overload_set const& ovl)
 {
@@ -34,23 +33,27 @@ operator<<(std::ostream& os, Overload_set const& ovl)
     os << d << '\n';
   return os;
 }
+#endif
 
 
 // -------------------------------------------------------------------------- //
 // Overloadable declarations
 
+// TODO: Diagnose errors at the location of the declaration, and not
+// the input location... it's not in the right position anyway.
+
 static inline bool
-conflicting_declaration(Decl& prev, Decl& given)
+conflicting_declaration(Context& cxt, Decl& prev, Decl& given)
 {
-  error("declaration of '{}' conflicts with a previous declaration", given.name());
+  error(cxt, "declaration of '{}' conflicts with a previous declaration", given.name());
   return false;
 }
 
 
 static inline bool
-non_overloadable_declaration(Decl& prev, Decl& given)
+non_overloadable_declaration(Context& cxt, Decl& prev, Decl& given)
 {
-  error("cannot overload '{}' with a previous declaration", given.name());
+  error(cxt, "cannot overload '{}' with a previous declaration", given.name());
   return false;
 }
 
@@ -58,13 +61,13 @@ non_overloadable_declaration(Decl& prev, Decl& given)
 // Function declarations that differ only in the return type
 // cannot be overloaded.
 bool
-can_overload(Function_decl& prev, Function_decl& given)
+can_overload(Context& cxt, Function_decl& prev, Function_decl& given)
 {
   Function_type& t1 = prev.type();
   Function_type& t2 = given.type();
   if (is_equivalent(t1.parameter_types(), t2.parameter_types())) {
     if (!is_equivalent(t1.return_type(), t2.return_type())) {
-      return non_overloadable_declaration(prev, given);
+      return non_overloadable_declaration(cxt, prev, given);
     }
   }
   return true;
@@ -77,24 +80,23 @@ can_overload(Function_decl& prev, Function_decl& given)
 //
 // TODO: This will need to be adjusted when we add member functions.
 bool
-can_overload(Decl& prev, Decl& given)
+can_overload(Context& cxt, Decl& prev, Decl& given)
 {
   // Only functions and function templates can be overloaded. There
   // are some restrictions on the overloading of functions.
   if (Function_decl* f1 = as<Function_decl>(&prev)) {
     if (Function_decl* f2 = as<Function_decl>(&given))
-      return can_overload(*f1, *f2);
+      return can_overload(cxt, *f1, *f2);
   }
 
   // Only functions and funtion templates can be overloaded.
   Decl& d1 = prev.parameterized_declaration();
   Decl& d2 = given.parameterized_declaration();
   if (!is_function(d1) || !is_function(d2))
-    return conflicting_declaration(prev, given);
+    return conflicting_declaration(cxt, prev, given);
 
   return true;
 }
-
 
 
 } // namespace banjo

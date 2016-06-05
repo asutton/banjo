@@ -5,75 +5,294 @@
 #define BANJO_ERROR_HPP
 
 #include "prelude.hpp"
+#include "language.hpp"
+
+#include <cstdlib>
+#include <cstring>
 
 
 namespace banjo
 {
 
+struct Context;
+
+
+namespace detail
+{
+
+// -------------------------------------------------------------------------- //
+// Format-able messages
+
+// A message argument stores the (mostly) concrete information that
+// will be rendered into a final diagnostic. This is a discriminated
+// union containing the kinds of arguments that can be rendered into
+// strings.
+//
+// TODO: This facility should most definitely move into lingo.
+//
+// TODO: Build a visitor for this.
+//
+// TODO: Support formatting flags, allowing formatting to be communicated
+// through to a rendering device.
+struct Message_arg
+{
+  enum Kind
+  {
+    term_arg,
+    cstr_arg,
+    int_arg,
+    float_arg
+  } k;
+
+  union Rep 
+  {
+    Term const* t;
+    char const* s;
+    long        z;
+    double      f;
+  } u;
+
+  Message_arg(Message_arg const&);
+  Message_arg& operator=(Message_arg const&);
+
+  Message_arg(Message_arg&&);
+  Message_arg& operator=(Message_arg&&);
+
+  Message_arg(Term const& t) : k(term_arg) { u.t = &t; }
+  Message_arg(char const* s) : k(cstr_arg) { u.s = strdup(s); }
+  Message_arg(int n) : k(int_arg) { u.z = n; }
+  Message_arg(std::size_t n) : k(int_arg) { u.z = n; }
+  Message_arg(Integer const& n) : k(int_arg) { u.z = n.gets(); }
+  Message_arg(double d) : k(float_arg) { u.f = d; }
+
+  ~Message_arg();
+
+  Kind kind() const { return k; }
+
+  Term const& term() const { return *u.t; }
+  char const* str() const  { return u.s; }
+  long integer() const     { return u.z; }
+  double real() const      { return u.f; }
+
+  void partial_copy(Rep const& r);
+  void partial_move(Rep&& r);
+  void partial_destroy(Rep& r);
+};
+
+
+inline void
+Message_arg::partial_copy(Rep const& r)
+{
+  switch (k) {
+    case term_arg:
+      u.t = r.t; 
+      break;
+    case cstr_arg:
+      u.s = strdup(r.s);
+      break;
+    case int_arg:
+      u.z = r.z;
+      break;
+    case float_arg:
+      u.f = r.f;
+  }
+}
+
+
+// This is the same as partial copy, except for the handling of the
+// string representation.
+inline void
+Message_arg::partial_move(Rep&& r)
+{
+  switch (k) {
+    case term_arg:
+      u.t = r.t; 
+      break;
+    case cstr_arg:
+      u.s = r.s;
+      r.s = nullptr;
+      break;
+    case int_arg:
+      u.z = r.z;
+      break;
+    case float_arg:
+      u.f = r.f;
+  }
+}
+
+
+inline void
+Message_arg::partial_destroy(Rep& r)
+{
+  if (k == cstr_arg)
+    free(const_cast<char*>(u.s));
+}
+
+
+inline
+Message_arg::Message_arg(Message_arg const& x)
+  : k(x.k)
+{
+  partial_copy(x.u);
+}
+
+
+inline Message_arg& 
+Message_arg::operator=(Message_arg const& x)
+{
+  partial_destroy(u);
+  k = x.k; 
+  partial_copy(x.u);
+  return *this;
+}
+
+
+inline
+Message_arg::Message_arg(Message_arg&& x)
+  : k(x.k)
+{
+  partial_move(std::move(x.u));
+}
+
+
+inline Message_arg& 
+Message_arg::operator=(Message_arg&& x)
+{
+  partial_destroy(u);
+  k = x.k; 
+  partial_move(std::move(x.u));
+  return *this;
+}
+
+
+inline
+Message_arg::~Message_arg()
+{
+  partial_destroy(u);
+}
+
+
+using Arg_vec = std::vector<Message_arg>;
+
+
+// Construct a vector of message arguments from a pack of function
+// arguments.
+//
+// TODO: Support a range of wrappers on function arguments in order to
+// push formatting information into the render. Examples might be bold,
+// highlight, color, selecting debug output vs. pretty printing, etc.
+
+inline void
+record_args(Arg_vec& vec)
+{ }
+
+
+template<typename T, typename... Args>
+inline void
+record_args(Arg_vec& vec, T const& t, Args const&... args)
+{ 
+  vec.emplace_back(t);
+  record_args(vec, args...);
+}
+
+
+} // namespace detail
+
+
+// A message contains the structure of a string that will be rendered into
+// a diagnostic.
+//
+// TODO: Add methods to make this more consumable by users.
+//
+// TODO: This render function current dumps messages to an ostream. This
+// isn't ideal; we really want to dump to a render device, which could
+// very well be an ostream.
+//
+// TODO: Allow messages to be nested. There are probably a couple different
+// forms of nesting: notes, explanations, and causes are probably good
+// examples. A note provides additional information, an explanation provides
+// context, and a cause describes the source of the error.
+//
+// TODO: Allow messages to be loaded from files? This would allow/make it 
+// easy for compilers to provide a set of templates that explain errors, and 
+// could be parameterized by types in the user's program.
+struct Message
+{
+  using Arg = detail::Message_arg;
+  using Arg_list = detail::Arg_vec;
+  using Msg_list = std::vector<Message>;
+
+  using Render_fn = void (*)(std::ostream&, Arg const&);
+
+  template<typename... Args>
+  Message(Location loc, char const* fmt, Args const&... args)
+    : loc_(loc), fmt_(fmt), args_()
+  {
+    detail::record_args(args_, args...);
+  }
+
+  template<typename... Args>
+  Message(char const* fmt, Args const&... args)
+    : loc_(), fmt_(fmt), args_()
+  {
+    detail::record_args(args_, args...);
+  }
+
+  void render(std::ostream&, Render_fn) const;
+
+  void add_note(Message const& m) { notes_.push_back(m); }
+  void add_note(Message&& m) { notes_.push_back(std::move(m)); }
+
+  Location loc_;   // The location of the error.
+  String   fmt_;   // The format string
+  Arg_list args_;  // The argument list
+  Msg_list notes_; // Additional information for the message
+};
+
+
+// Used to indicate formatting failures. These are hard errors.
+struct Formatting_error : std::runtime_error
+{
+  Formatting_error(char const* s)
+    : std::runtime_error(s)
+  { }
+};
+
+
+void dump(Message const&);
+void dump(std::ostream&, Message const&);
+
+
+// -------------------------------------------------------------------------- //
+// Exceptions
+
 // The compiler-error class represents a runtime error that contains
 // a compiler diagnostic. This overrides the what() function to provide
-// a textual represntation of that diagnostic.
+// a textual representation of that diagnostic.
 //
-// NOTE: Do not let compiler errors escape main(). The rendering of
-// of a diagnostic message requires that input buffers be in scope,
-// which may not be guaranteed at the point of termination.
+// This class is designed to operate as a fall-back for cases where a
+// compiler does not handle certain errors at recovery/progress points.
 //
-// FIXME: For constructors taking strings, do I need (or want) to
-// give some more specific kind of error (like fatal?).
+// Note that compiler errors must never escape main(). 
 struct Compiler_error : std::runtime_error
 {
   Compiler_error()
-    : Compiler_error(error_diag, String("compiler error"))
+    : std::runtime_error(""), msg("compiler error")
   { }
 
-  Compiler_error(Diagnostic d)
-    : std::runtime_error(""), diag(d)
+  Compiler_error(Message const& m)
+    : std::runtime_error(""), msg(m)
   { }
 
-  Compiler_error(Diagnostic_kind k, String const& s)
-    : Compiler_error(Diagnostic(k, Location(), s))
-  { }
-
-  Compiler_error(Diagnostic_kind k, Location loc, String const& s)
-    : Compiler_error(Diagnostic(k, loc, s))
-  { }
-
-  Compiler_error(String const& s)
-    : Compiler_error(Diagnostic(error_diag, Location(), s))
-  { }
-
-  Compiler_error(char const* s)
-    : Compiler_error(Diagnostic(error_diag, Location(), s))
-  { }
-
-  template<typename... Args>
-  Compiler_error(char const* s, Args const&... args)
-    : Compiler_error(error_diag, format(s, args...))
-  { }
-
-  template<typename... Args>
-  Compiler_error(Location loc, char const* s, Args const&... args)
-    : Compiler_error(error_diag, loc, format(s, args...))
-  { }
-
-  template<typename... Args>
-  Compiler_error(Context& cxt, String const& s)
-    : Compiler_error(error_diag, location(cxt), s)
-  { }
-
-  template<typename... Args>
-  Compiler_error(Context& cxt, char const* s, Args const&... args)
-    : Compiler_error(error_diag, location(cxt), format(s, args...))
+  Compiler_error(Message&& m)
+    : std::runtime_error(""), msg(std::move(m))
   { }
 
   virtual const char* what() const noexcept;
 
-  // Helper functions.
-  Location location(Context const&);
-
-
-  Diagnostic diag;    // The diagnostic
-  mutable String buf; // Guarantees ownership of 'what' text
+  Context* cxt;       // A pointer to a context for rendering.
+  Message  msg;       // The error message
+  mutable String buf; // Contains the rendered 'what' text
 };
 
 

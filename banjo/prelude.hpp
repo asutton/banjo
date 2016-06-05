@@ -15,8 +15,23 @@
 namespace banjo
 {
 
-using namespace lingo;
+// Bring useful structures into scope.
+using lingo::String;
+using lingo::Location;
+using lingo::Region;
+using lingo::Symbol;
+using lingo::Symbol_table;
+using lingo::Generic_visitor;
+using lingo::Generic_mutator;
+using lingo::Diagnostic;
+using lingo::Diagnostic_kind;
 
+// And some useful functions...
+using lingo::is;
+using lingo::as;
+using lingo::cast;
+using lingo::cast_as;
+using lingo::modify;
 
 } // namespace banjo
 

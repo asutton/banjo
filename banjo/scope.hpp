@@ -4,8 +4,7 @@
 #ifndef BANJO_SCOPE_HPP
 #define BANJO_SCOPE_HPP
 
-#include "prelude.hpp"
-#include "language.hpp"
+#include "hashing.hpp"
 #include "overload.hpp"
 
 
@@ -14,6 +13,26 @@ namespace banjo
 
 // -------------------------------------------------------------------------- //
 // Scope definitions
+
+// Hash pointers to names.
+struct Name_hash
+{
+  std::size_t operator()(Name const* n) const
+  {
+    hash<fnv1a_hash> h;
+    return h(*n);
+  }
+};
+
+
+// Compare pointers to names.
+struct Name_eq
+{
+  bool operator()(Name const* a, Name const* b) const
+  {
+    return is_equivalent(*a, *b);
+  }
+};
 
 
 // Maps names to overload sets.
