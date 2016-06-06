@@ -112,7 +112,7 @@ Debug_printer::rep(Term const& t)
   std::string s = type_str(t);
   auto n = s.find_last_of(':');
   if (color)
-    os << lingo::bright_white(s.substr(n + 1));
+    os << lingo::bright_green(s.substr(n + 1));
   else
     os << s.substr(n + 1);
 }
@@ -339,6 +339,7 @@ debug(Type const& t)
   Debug_printer p(std::cerr);
   p.tree = true;
   p(t);
+  p.newline();
 }
 
 } // namespace banjo

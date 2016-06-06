@@ -44,31 +44,36 @@ struct Name::Mutator
 
 
 // A simple identifier.
-struct Simple_id : Name
+struct Simple_id : Name, Allocatable<Simple_id>
 {
   Simple_id(Symbol const& sym)
-    : first(&sym)
+    : sym_(&sym)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); };
   void accept(Mutator& v)       { v.visit(*this); };
 
-  Symbol const& symbol() const { return *first; }
+  Simple_id& clone(Allocator& a) const { return make(a, *this); }
 
-  Symbol const* first;
+  // Returns the symbol for the id.
+  Symbol const& symbol() const { return *sym_; }
+
+  Symbol const* sym_;
 };
 
 
 // The name of the global namespace. This is essentially an empty
 // name, but nonetheless used to represent that the name of that
 // single entity.
-struct Global_id : Name
+struct Global_id : Name, Allocatable<Global_id>
 {
   Global_id()
   { }
 
   void accept(Visitor& v) const { v.visit(*this); };
   void accept(Mutator& v)       { v.visit(*this); };
+
+  Global_id& clone(Allocator& a) const { return make(a, *this); }
 };
 
 
@@ -76,7 +81,7 @@ struct Global_id : Name
 // identifier (number), making it distinct from all others.
 //
 // FIXME: This is not a good name for this class.
-struct Placeholder_id : Name
+struct Placeholder_id : Name, Allocatable<Placeholder_id>
 {
   Placeholder_id(int n)
     : num(n)
@@ -85,6 +90,9 @@ struct Placeholder_id : Name
   void accept(Visitor& v) const { v.visit(*this); };
   void accept(Mutator& v)       { v.visit(*this); };
 
+  Placeholder_id& clone(Allocator& a) const { return make(a, *this); }
+
+  // Return the unique integer value assigned to the name.
   int number() const { return num; }
 
   int num;
@@ -120,7 +128,7 @@ enum Operator_kind : int
 // An identifier of an overloaded operator.
 //
 // TODO: Implement me.
-struct Operator_id : Name
+struct Operator_id : Name, Allocatable<Operator_id>
 {
   Operator_id(Operator_kind k)
     : op(k)
@@ -128,6 +136,8 @@ struct Operator_id : Name
 
   void accept(Visitor& v) const { v.visit(*this); };
   void accept(Mutator& v)       { v.visit(*this); };
+
+  Operator_id& clone(Allocator& a) const { return make(a, *this); }
 
   // Returns the operator kind.
   Operator_kind kind() const { return op; }

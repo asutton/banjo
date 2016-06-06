@@ -15,7 +15,6 @@
 
 #include <vector>
 #include <utility>
-#include <iostream>
 
 
 namespace banjo
@@ -84,13 +83,11 @@ struct Allocator
 {
   virtual void* allocate(std::size_t n, std::type_info const& ti)
   {
-    std::cout << "NEW " << ti.name() << '\n';
     return ::operator new(n);
   }
   
   virtual void deallocate(void* p, std::type_info const& ti)
   {
-    std::cout << "DEL " << ti.name() << '\n';
     ::operator delete(p);
   }
 };
@@ -152,7 +149,7 @@ struct Term
   virtual ~Term() { }
 
   // Clone this object, using the given arena.
-  virtual Term& clone(Allocator&) const { lingo_unreachable(); }
+  virtual Term& clone(Allocator&) const = 0;
  
   // Returns the source code location of the term. this
   // may be an invalid position.
@@ -240,8 +237,11 @@ struct List_iterator<T const>
 };
 
 
+// Represents a sequence of terms. Note that a list is not, itself, a term.
+// It has no semantics beyond containing other terms. Lists are often
+// short-lived, copied, and moved.
 template<typename T>
-struct List : Term, std::vector<T*>
+struct List : std::vector<T*>
 {
   using base_type = std::vector<T*>;
   using iterator = List_iterator<T>;
