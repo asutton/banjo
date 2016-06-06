@@ -24,8 +24,8 @@ struct Sexpr
     printer.rep(t);
   }
 
-  // When debugging expressions, include their type as
-  // part of the representation.
+  // When debugging expressions, include their type as part of the 
+  // representation.
   Sexpr(Debug_printer& p, Expr const& e)
     : printer(p)
   {
@@ -71,6 +71,33 @@ Debug_printer::space()
 {
   os << ' ';
 }
+
+
+// Print a new line and indent to the current depth. Clear the previous token.
+void
+Debug_printer::newline()
+{
+  os << '\n' << std::string(2 * indent, ' ');
+}
+
+
+// Print a newline and indent one level.
+void
+Debug_printer::newline_and_indent()
+{
+  ++indent;
+  newline();
+}
+
+
+// Print a newline and undent (back up) one level.
+void
+Debug_printer::newline_and_undent()
+{
+  --indent;
+  newline();
+}
+
 
 void
 Debug_printer::prop(char const* s)
@@ -133,15 +160,53 @@ Debug_printer::simple_id(Simple_id const& n)
 
 
 void
+Debug_printer::void_type(Void_type const& t)
+{
+  Sexpr guard(*this, t);
+}
+
+
+void
+Debug_printer::boolean_type(Boolean_type const& t)
+{
+  Sexpr guard(*this, t);
+}
+
+
+// TODO: Dump precision and sign.
+void
+Debug_printer::integer_type(Integer_type const& t)
+{
+  Sexpr guard(*this, t);
+}
+
+
+// TODO: Actually label fields... Also, get the tabbing right.
+void
+Debug_printer::function_type(Function_type const& t)
+{
+  Sexpr guard(*this, t);
+  for (Type const& p : t.parameter_types()) {
+    space();
+    type(p);
+  }
+  type(t.return_type());
+}
+
+
+void
 Debug_printer::type(Type const& t)
 {
   struct fn
   {
     Debug_printer& self;
-    void operator()(Expr const& e)               { lingo_unhandled(e); }
-    void operator()(Boolean_type const& e)       { self.boolean_type(e); }
-    void operator()(Integer_type const& e)       { self.integer_type(e); }
+    void operator()(Type const& t)          { lingo_unhandled(t); }
+    void operator()(Void_type const& t)  { self.void_type(t); }
+    void operator()(Boolean_type const& t)  { self.boolean_type(t); }
+    void operator()(Integer_type const& t)  { self.integer_type(t); }
+    void operator()(Function_type const& t) { self.function_type(t); }
   };
+  apply(t, fn{*this});
 }
 
 
@@ -263,5 +328,17 @@ Debug_printer::constraint(Cons const& c)
   lingo_unreachable();
 }
 
+
+// -------------------------------------------------------------------------- //
+// Interface
+
+// Indicate that we should print the debug version of this term.
+void
+debug(Type const& t)
+{
+  Debug_printer p(std::cerr);
+  p.tree = true;
+  p(t);
+}
 
 } // namespace banjo

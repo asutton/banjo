@@ -163,6 +163,12 @@ is_more_qualified(Qualifier_set a, Qualifier_set b)
 // TODO: Ensure that qualifier queries apply to the right category.
 struct Type : Term
 {
+protected:
+  Type(Type const& t)
+    : cat_(t.cat_), qual_(t.qual_)
+  { }
+public:
+
   struct Visitor;
   struct Mutator;
 
@@ -178,15 +184,12 @@ struct Type : Term
     : cat_(c), qual_(q)
   { }
 
-  Type(Type const& t)
-    : cat_(t.cat_), qual_(t.qual_)
-  { }
 
   virtual void accept(Visitor&) const = 0;
   virtual void accept(Mutator&)       = 0;
 
   // A clone wrapper used to guarantee that we return type objects.
-  Type& clone_type(Arena& a) const { return cast<Type>(clone(a)); }
+  Type& clone_type(Allocator& a) const { return cast<Type>(clone(a)); }
 
   // Returns the category of this type.
   Type_category category() const { return cat_; }
@@ -246,8 +249,7 @@ struct Void_type : Type, Allocatable<Void_type>
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
-  Void_type& clone(Arena& a) const { return make(a, *this); }
-  void       destroy(Arena& a)     { unmake(a); }
+  Void_type& clone(Allocator& a) const { return make(a, *this); }
 };
 
 
@@ -259,8 +261,7 @@ struct Boolean_type : Type, Allocatable<Boolean_type>
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
-  Boolean_type& clone(Arena& a) const { return make(a, *this); }
-  void          destroy(Arena& a)     { unmake(a); }
+  Boolean_type& clone(Allocator& a) const { return make(a, *this); }
 };
 
 
@@ -275,8 +276,7 @@ struct Byte_type : Type, Allocatable<Byte_type>
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
-  Byte_type& clone(Arena& a) const { return make(a, *this); }
-  void       destroy(Arena& a)     { unmake(a); }
+  Byte_type& clone(Allocator& a) const { return make(a, *this); }
 };
 
 
@@ -299,8 +299,7 @@ struct Integer_type : Type, Allocatable<Integer_type>
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
-  Integer_type& clone(Arena& a) const { return make(a, *this); }
-  void          destroy(Arena& a)     { unmake(a); }
+  Integer_type& clone(Allocator& a) const { return make(a, *this); }
 
   bool sign() const        { return sign_; }
   bool is_signed() const   { return sign_; }
@@ -326,8 +325,7 @@ struct Float_type : Type, Allocatable<Float_type>
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
-  Float_type& clone(Arena& a) const { return make(a, *this); }
-  void        destroy(Arena& a)     { unmake(a); }
+  Float_type& clone(Allocator& a) const { return make(a, *this); }
 
   int precision() const { return prec_; }
 
@@ -362,8 +360,7 @@ struct Function_type : Type, Allocatable<Function_type>
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
-  Function_type& clone(Arena&) const;
-  void           destroy(Arena&);
+  Function_type& clone(Allocator&) const;
 
   // Returns the parameter types of the function.
   Type_list const& parameter_types() const { return parms_; }
@@ -393,6 +390,8 @@ struct Array_type : Type, Allocatable<Array_type>
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
+  Array_type& clone(Allocator&) const;
+
   // Returns the element type of the array.
   Type const& element_type() const { return *type_; }
   Type&       element_type()       { return *type_; }
@@ -409,7 +408,7 @@ struct Array_type : Type, Allocatable<Array_type>
 // A tuple type.
 //
 // A tuple type is not cv-qualified, but its elements can be.
-struct Tuple_type : Type
+struct Tuple_type : Type, Allocatable<Tuple_type>
 {
   Tuple_type(Type_category c, Type_list const& t) 
     : Type(c), types_(t) 
@@ -421,6 +420,8 @@ struct Tuple_type : Type
   
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
+
+  Tuple_type& clone(Allocator&) const;
   
   // Returns the element types of the tuple.
   Type_list const& element_types() const { return types_; }
@@ -431,7 +432,7 @@ struct Tuple_type : Type
 
 
 // A pointer type.
-struct Pointer_type : Type
+struct Pointer_type : Type, Allocatable<Tuple_type>
 {
   Pointer_type(Type_category c, Type& t, Qualifier_set q = {})
     : Type(c, q), type_(&t)
@@ -439,6 +440,8 @@ struct Pointer_type : Type
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
+
+  Pointer_type& clone(Allocator&) const;
 
   // Returns the pointed-at type.
   Type const& type() const { return *type_; }
@@ -472,9 +475,11 @@ struct Declared_type : Type
 
 
 // A class type is declared by a class.
-struct Class_type : Declared_type
+struct Class_type : Declared_type, Allocatable<Class_type>
 {
   using Declared_type::Declared_type;
+
+  Pointer_type& clone(Allocator&) const;
 
   // Returns the declaration of the class type.
   Class_decl const& declaration() const;
@@ -565,27 +570,35 @@ struct Decltype_type : Type
 // design?
 //
 // TODO: Rename to Type_kind? Something else?
-struct Type_type : Type
+struct Type_type : Type, Allocatable<Type_type>
 {
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
+
+  Type_type& clone(Allocator& a) const { return make(a, *this); }
 };
 
 
 // Represents an unparsed type.
-struct Unparsed_type : Type
+struct Unparsed_type : Type, Allocatable<Unparsed_type>
 {
+  Unparsed_type(Unparsed_type const& t)
+    : Type(t), toks_(t.toks_)
+  { }
+
   Unparsed_type(Token_seq&& toks)
-    : Type(), toks(std::move(toks))
+    : Type(), toks_(std::move(toks))
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
-  Token_seq const& tokens() const { return toks; }
-  Token_seq&       tokens()       { return toks; }
+  Unparsed_type& clone(Allocator& a) const { return make(a, *this); }
 
-  Token_seq toks;
+  Token_seq const& tokens() const { return toks_; }
+  Token_seq&       tokens()       { return toks_; }
+
+  Token_seq toks_;
 };
 
 

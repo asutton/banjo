@@ -20,7 +20,7 @@ add_library(banjo
   # # AST utility algorithms
   # equivalence.cpp
   # hashing.cpp
-  # debugging.cpp
+  debugging.cpp
 
   # # Node construction
   # builder.cpp

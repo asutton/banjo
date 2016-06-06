@@ -7,8 +7,6 @@
 #include "token.hpp"
 #include "language.hpp"
 
-#include <iostream>
-
 
 namespace banjo
 {
@@ -31,6 +29,9 @@ struct Debug_printer
   void open();
   void close();
   void space();
+  void newline();
+  void newline_and_indent();
+  void newline_and_undent();
   void rep(Term const&);
   void prop(char const*);
   void value(bool);
@@ -42,8 +43,10 @@ struct Debug_printer
 
   // Types
   void type(Type const&);
+  void void_type(Void_type const&);
   void boolean_type(Boolean_type const&);
   void integer_type(Integer_type const&);
+  void function_type(Function_type const&);
 
   // Expressions
   void expression(Expr const&);
@@ -78,26 +81,7 @@ struct Debug_term
 };
 
 
-// Indicate that we should print the debug version of this term.
-//
-// FIXME: Find a better
-template<typename T>
-inline Debug_term<T>
-debug(T const& t)
-{
-  return Debug_term<T>{t};
-}
-
-
-template<typename T>
-inline std::ostream&
-operator<<(std::ostream& os, Debug_term<T> const& d)
-{
-  Debug_printer p(os);
-  p.tree = true;
-  p(d.t);
-  return os;
-}
+void debug(Type const&);
 
 
 } // namespace banjo

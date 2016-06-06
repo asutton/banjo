@@ -74,27 +74,27 @@ struct Scope;
 struct Overload_set;
 
 
-struct Arena
+// Defines the interface (and default method) for allocating memory.
+// This structure returns storage for object initialization. Note that not
+// all allocators are required to deallocate storage. 
+//
+// Allocation and deallocation routines accept typeinfo objects. This
+// allows the allocator to group objects of like type or support debugging.
+struct Allocator
 {
-  virtual void* allocate(std::type_info const&, std::size_t) = 0;
-  virtual void deallocate(std::type_info const&, void*) = 0;
-};
-
-
-struct Std_arena : Arena
-{
-  void* allocate(std::type_info const& ti, std::size_t n)
+  virtual void* allocate(std::size_t n, std::type_info const& ti)
   {
     std::cout << "NEW " << ti.name() << '\n';
     return ::operator new(n);
   }
-
-  void deallocate(std::type_info const& ti, void* p)
+  
+  virtual void deallocate(void* p, std::type_info const& ti)
   {
     std::cout << "DEL " << ti.name() << '\n';
     ::operator delete(p);
   }
 };
+
 
 
 // A CRTP class that provides overloads of the allocation operators.
@@ -106,25 +106,25 @@ template<typename T>
 struct Allocatable
 {
   template<typename... Args>
-  static T& make(Arena& a, Args&&... args)
+  static T& make(Allocator& a, Args&&... args)
   {
-    void* p = a.allocate(typeid(T), sizeof(T));
+    void* p = a.allocate(sizeof(T), typeid(T));
     T* obj = new (p) T(std::forward<Args>(args)...);
-    obj->arena_ = &a;
+    obj->alloc_ = &a;
     return *obj;
   }
 
   // Return memory to the arena. Behavior is undefined if the object
   // is not allocated from this arena.
-  void unmake(Arena& a)
+  void unmake(Allocator& a)
   {
-    lingo_assert(arena_ == & a);
+    lingo_assert(alloc_ == & a);
     T* obj = static_cast<T*>(this);
     obj->~T();
-    a.deallocate(typeid(T), obj);
+    a.deallocate(obj, typeid(T));
   }
 
-  Arena* arena_;
+  Allocator* alloc_;
 };
 
 
@@ -137,9 +137,12 @@ struct Allocatable
 // is not meaningful for all terms. In particular, canonicalized
 // terms must not include a valid source code location.
 //
-// Each term is also pinned to the region of memory from which it is
-// allocated (assuming that the object is so-allocated). A term must
-// be deallocated from the same arena in which it was allocated.
+// Each term is also pinned to the region of memory from which it is allocated 
+// (assuming that the object is so-allocated). Note, however, that deallocation 
+// is not supported. This is because some terms may be shared (e.g., as a 
+// result of canonicalization), meaning that the ownership model is runtime
+// dependent. In general, one should instantiate new allocators for specific
+// subtasks, and the clone only the results into the "main" memory arena.
 struct Term
 {
   Term()
@@ -149,16 +152,8 @@ struct Term
   virtual ~Term() { }
 
   // Clone this object, using the given arena.
-  virtual Term& clone(Arena&) const { lingo_unreachable(); }
+  virtual Term& clone(Allocator&) const { lingo_unreachable(); }
  
-  // Clean up memory used by this object. Don't use this directly;
-  // use destroy instead.
-  virtual void destroy(Arena& a) 
-  { 
-    std::cout << "HUH?" << type_str(*this) << '\n';
-    lingo_unreachable(); 
-  }
-
   // Returns the source code location of the term. this
   // may be an invalid position.
   Location location() const { return loc_; }

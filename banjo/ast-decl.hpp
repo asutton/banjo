@@ -254,9 +254,6 @@ struct Mapping_decl : Decl
 struct Type_decl : Decl
 {
   using Decl::Decl;
-
-  // Returns the kind of the type. This is the same as the type's type.
-  Type kind() const { return type(); }
 };
 
 

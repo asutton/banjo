@@ -10,7 +10,7 @@ namespace banjo
 
 
 Function_type&
-Function_type::clone(Arena& a) const
+Function_type::clone(Allocator& a) const
 {
   Type_list ts;
   for (Type const& t : parms_)
@@ -19,15 +19,6 @@ Function_type::clone(Arena& a) const
   return make(a, function_type, std::move(ts), ret);
 }
 
-
-void
-Function_type::destroy(Arena& a)
-{
-  for (Type& t : parms_)
-    t.destroy(a);
-  ret_->destroy(a);
-  unmake(a);
-}
 
 
 Name const&
