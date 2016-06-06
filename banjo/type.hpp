@@ -13,8 +13,10 @@
 namespace banjo
 {
 
-Type& make_type(Context&, Name&);
+Type& resolve_id_type(Context&, Name&);
+
 Type& make_qualified_type(Context&, Type&, Qualifier_set);
+
 Type& make_pointer_type(Context&, Type&);
 Type& make_array_type(Context&, Type&, Expr&);
 Type& make_tuple_type(Context&, Type_list&);

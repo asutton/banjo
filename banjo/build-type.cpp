@@ -8,6 +8,118 @@ namespace banjo
 {
 
 // -------------------------------------------------------------------------- //
+// Cloning
+
+static inline Void_type&
+clone_void_type(Builder& b, Void_type& t)
+{
+  return b.get_void_type(t.qualifiers());
+}
+
+
+static inline Boolean_type&
+clone_bool_type(Builder& b, Boolean_type& t)
+{
+  return b.get_bool_type(t.category(), t.qualifiers());
+}
+
+
+static inline Byte_type&
+clone_byte_type(Builder& b, Byte_type& t)
+{
+  return b.get_byte_type(t.category(), t.qualifiers());
+}
+
+
+static inline Integer_type&
+clone_int_type(Builder& b, Integer_type& t)
+{
+  return b.get_integer_type(t.category(), t.precision(), t.sign(), t.qualifiers());
+}
+
+
+static inline Float_type&
+clone_float_type(Builder& b, Float_type& t)
+{
+  return b.get_float_type(t.category(), t.precision(), t.qualifiers());
+}
+
+
+static inline Function_type&
+clone_function_type(Builder& b, Function_type& t)
+{
+  Type_list parms = b.clone(t.parameter_types());
+  Type& ret = b.clone(t.return_type());
+  return b.get_function_type(t.category(), std::move(parms), ret);
+}
+
+
+static inline Array_type&
+clone_array_type(Builder& b, Array_type& t)
+{
+  Type& elem = b.clone(t.element_type());
+  Expr& ext = b.clone(t.extent());
+  return b.get_array_type(t.category(), elem, ext);
+}
+
+
+static inline Tuple_type&
+clone_tuple_type(Builder& b, Tuple_type& t)
+{
+  Type_list elems = b.clone(t.element_types());
+  return b.get_tuple_type(t.category(), elems);
+}
+
+
+static inline Pointer_type&
+clone_pointer_type(Builder& b, Pointer_type& t)
+{
+  Type& elem = b.clone(t.type());
+  return b.get_pointer_type(t.category(), elem, t.qualifiers());
+}
+
+
+static inline Class_type&
+clone_class_type(Builder& b, Class_type& t)
+{
+  Class_decl& decl = t.declaration();
+  return b.get_class_type(t.category(), decl, t.qualifiers());
+}
+
+
+Type&
+Builder::clone(Type& t)
+{
+  struct fn
+  {
+    Builder& b;
+    Type operator()(Type& t)          { lingo_unhandled(t); }
+    Type operator()(Void_type& t)     { return b.clone_void_type(t);
+    Type operator()(Boolean_type& t)  { return b.clone_bool_type(t); }
+    Type operator()(Byte_type& t)     { return b.clone_byte_type(t); }
+    Type operator()(Integer_type& t)  { return b.clone_int_type(t); }
+    Type operator()(Float_type& t)    { return b.clone_float_type(t); }
+    Type operator()(Function_type& t) { return b.clone_function_type(t); }
+    Type operator()(Array_type& t)    { return b.clone_array_type(t); }
+    Type operator()(Tuple_type& t)    { return b.clone_tuple_type(t); }
+    Type operator()(Pointer_type& t)  { return b.clone_pointer_type(t); }
+    Type operator()(Class_type& t)    { return b.clone_class_type(t); }
+  };
+  return apply(t, fn{*this});
+}
+
+
+Type_list
+Builder::clone(Type_list& ts)
+{
+  Type_list ret;
+  for (Type& t : ts)
+    ret.push_back(clone(t));
+  return ret;
+}
+
+
+// -------------------------------------------------------------------------- //
 // Fundamental types
 
 Void_type&
@@ -192,7 +304,6 @@ Builder::get_type_type()
 }
 
 
-#if 0
 // -------------------------------------------------------------------------- //
 // Qualified types
 
@@ -217,55 +328,18 @@ qualified_tuple_type(Builder& b, Tuple_type& t, Type_category c, Qualifier_set q
 }
 
 
-// Return a type qualified by q. 
-//
-// TODO: Handle reference types correctly.
-//
-// TODO: This seems more algorithmic that constructive. I should move it
-// into the type module.
-Type
-Builder::get_qualified_type(Type t, Qualifier_set q)
+// Return a copy of t that qualified by q. Note that this will not
+// validate that the qualifiers can actually be applied to t.
+Type&
+Builder::get_qualified_type(Type& t, Qualifier_set q)
 {
-  struct fn
-  {
-    Builder& self;
-    Type_category c;
-    Qualifier_set q;
-    Type operator()(Basic_type& t) { return {t, c, q}; }
-    Type operator()(Array_type& t) { return qualified_array_type(self, t, c, q); }
-    Type operator()(Tuple_type& t) { return qualified_tuple_type(self, t, c, q); }
-  };
+
   return apply(t, fn{*this, t.category(), q});
 }
 
 
-Type
-Builder::get_unqualified_type(Type t)
-{
-  return get_qualified_type(t, empty_qual);
-}
 
-
-Type
-Builder::get_const_type(Type t)
-{
-  return get_qualified_type(t, const_qual);
-}
-
-
-Type
-Builder::get_volatile_type(Type t)
-{
-  return get_qualified_type(t, volatile_qual);
-}
-
-
-Type
-Builder::get_cv_type(Type t)
-{
-  return get_qualified_type(t, cv_qual);
-}
-
+#if 0
 
 // -------------------------------------------------------------------------- //
 // Fresh types

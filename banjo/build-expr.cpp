@@ -11,6 +11,13 @@ namespace banjo
 // Literal expressions
 
 Void_expr&
+Builder::get_void()
+{
+  return void_expr(get_void_type());
+}
+
+
+Void_expr&
 Builder::get_void(Type& t)
 {
   return void_expr(t);

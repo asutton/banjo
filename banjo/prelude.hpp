@@ -32,6 +32,8 @@ using lingo::as;
 using lingo::cast;
 using lingo::cast_as;
 using lingo::modify;
+using lingo::type_str;
+
 
 } // namespace banjo
 

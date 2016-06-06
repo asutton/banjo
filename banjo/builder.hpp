@@ -105,6 +105,12 @@ struct Builder
   template<typename T>
   using Unique_factory = Hashed_unique_factory<T, Hash, Eq<T>>;
 
+  // Cloning
+  Type&     clone(Type&);
+  Type_list clone(Type_list&);
+  Expr&     clone(Expr&);
+  Expr_list clone(Expr_list&);
+
   // Names
   
   Simple_id&      get_id(char const*);
@@ -125,16 +131,16 @@ struct Builder
   // Types
 
   // Fundamental types
-  Void_type& get_void_type(Qualifier_set = {});
-  Boolean_type& get_bool_type(Type_category, Qualifier_set = {});
-  Byte_type& get_byte_type(Type_category, Qualifier_set = {});
-  Integer_type& get_integer_type(Type_category, bool, int, Qualifier_set = {});
-  Integer_type& get_integer_type(bool, int, Qualifier_set = {});
+  Void_type&     get_void_type(Qualifier_set = {});
+  Boolean_type&  get_bool_type(Type_category, Qualifier_set = {});
+  Byte_type&     get_byte_type(Type_category, Qualifier_set = {});
+  Integer_type&  get_integer_type(Type_category, bool, int, Qualifier_set = {});
+  Integer_type&  get_integer_type(bool, int, Qualifier_set = {});
   Integer_type&  get_int_type(Type_category, Qualifier_set = {});
   Integer_type&  get_int_type(Qualifier_set = {});
   Integer_type&  get_uint_type(Type_category, Qualifier_set = {});
   Integer_type&  get_uint_type(Qualifier_set = {});
-  Float_type& get_float_type(Type_category, int, Qualifier_set = {});
+  Float_type&    get_float_type(Type_category, int, Qualifier_set = {});
 
   // Composite types
   Function_type& get_function_type(Type_category, Decl_list const&, Type&);
@@ -158,13 +164,10 @@ struct Builder
   Type_type& get_type_type();
 
   // Qualified types
-#if 0
-  Type get_qualified_type(Type, Qualifier_set);
-  Type get_unqualified_type(Type);
-  Type get_const_type(Type);
-  Type get_volatile_type(Type);
-  Type get_cv_type(Type);
+  Type& get_reference_type(Type& t, Type_category);
+  Type& get_qualified_type(Type&, Qualifier_set);
 
+#if 0
   // Fresh types
   Type make_auto_type();
   Type make_synthetic_type(Decl&);
@@ -173,6 +176,7 @@ struct Builder
   // Expressions
 
   // Literals
+  Void_expr&     get_void();
   Void_expr&     get_void(Type&);
   Boolean_expr&  get_boolean(Type&, bool);
   Boolean_expr&  get_true(Type&);
@@ -311,20 +315,20 @@ struct Builder
   Basic_factory<Operator_id> operator_id;
 
   // Types
-  Single_factory<Void_type> void_type;
-  Single_factory<Boolean_type> bool_type;
-  Single_factory<Byte_type> byte_type;
-  Unique_factory<Integer_type> integer_type;
-  Unique_factory<Float_type> float_type;
-  Unique_factory<Function_type> function_type;
-  Unique_factory<Array_type> array_type;
-  Unique_factory<Tuple_type> tuple_type;
-  Unique_factory<Pointer_type> pointer_type;
-  Unique_factory<Class_type> class_type;
-  Unique_factory<Typename_type> typename_type;
-  Unique_factory<Auto_type> auto_type;
-  Unique_factory<Decltype_type> decltype_type;
-  Single_factory<Type_type> type_type;
+  Basic_factory<Void_type> void_type;
+  Basic_factory<Boolean_type> bool_type;
+  Basic_factory<Byte_type> byte_type;
+  Basic_factory<Integer_type> integer_type;
+  Basic_factory<Float_type> float_type;
+  Basic_factory<Function_type> function_type;
+  Basic_factory<Array_type> array_type;
+  Basic_factory<Tuple_type> tuple_type;
+  Basic_factory<Pointer_type> pointer_type;
+  Basic_factory<Class_type> class_type;
+  Basic_factory<Typename_type> typename_type;
+  Basic_factory<Auto_type> auto_type;
+  Basic_factory<Decltype_type> decltype_type;
+  Basic_factory<Type_type> type_type;
 
   // Expressions
   Single_factory<Void_expr> void_expr;

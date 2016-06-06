@@ -178,8 +178,15 @@ struct Type : Term
     : cat_(c), qual_(q)
   { }
 
+  Type(Type const& t)
+    : cat_(t.cat_), qual_(t.qual_)
+  { }
+
   virtual void accept(Visitor&) const = 0;
   virtual void accept(Mutator&)       = 0;
+
+  // A clone wrapper used to guarantee that we return type objects.
+  Type& clone_type(Arena& a) const { return cast<Type>(clone(a)); }
 
   // Returns the category of this type.
   Type_category category() const { return cat_; }
@@ -228,28 +235,32 @@ struct Type::Mutator
 };
 
 
-
-
 // -------------------------------------------------------------------------- //
 // Fundamental types
 
 // The void type. Expressions of void type do not compute objects.
-struct Void_type : Type
+struct Void_type : Type, Allocatable<Void_type>
 {
   using Type::Type;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
+
+  Void_type& clone(Arena& a) const { return make(a, *this); }
+  void       destroy(Arena& a)     { unmake(a); }
 };
 
 
 // The boolean type.
-struct Boolean_type : Type
+struct Boolean_type : Type, Allocatable<Boolean_type>
 {
   using Type::Type;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
+
+  Boolean_type& clone(Arena& a) const { return make(a, *this); }
+  void          destroy(Arena& a)     { unmake(a); }
 };
 
 
@@ -257,12 +268,15 @@ struct Boolean_type : Type
 // storage and is comprised of an implementation defined sequence of bits.
 //
 // TODO: Should this be an integer type, or should it really be distinct?
-struct Byte_type : Type
+struct Byte_type : Type, Allocatable<Byte_type>
 {
   using Type::Type;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
+
+  Byte_type& clone(Arena& a) const { return make(a, *this); }
+  void       destroy(Arena& a)     { unmake(a); }
 };
 
 
@@ -272,14 +286,21 @@ struct Byte_type : Type
 // of types and their precise representation? For example, "int"
 // is lexically different than "int32", and those differences
 // might be meaningful in the output. Do the same for float.
-struct Integer_type : Type
+struct Integer_type : Type, Allocatable<Integer_type>
 {
+  Integer_type(Integer_type const& t)
+    : Type(t), sign_(t.sign_), prec_(t.prec_)
+  { }
+
   Integer_type(Type_category c, bool s = true, int p = 32, Qualifier_set q = {})
     : Type(c, q), sign_(s), prec_(p)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
+
+  Integer_type& clone(Arena& a) const { return make(a, *this); }
+  void          destroy(Arena& a)     { unmake(a); }
 
   bool sign() const        { return sign_; }
   bool is_signed() const   { return sign_; }
@@ -292,18 +313,25 @@ struct Integer_type : Type
 
 
 // The IEEE 754 floating point types.
-struct Float_type : Type
+struct Float_type : Type, Allocatable<Float_type>
 {
+  Float_type(Float_type const& t)
+    : Type(t), prec_(t.prec_)
+  { }
+  
   Float_type(Type_category c, int p = 64, Qualifier_set q = {})
-    : Type(c, q), prec(p)
+    : Type(c, q), prec_(p)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
-  int precision() const { return prec; }
+  Float_type& clone(Arena& a) const { return make(a, *this); }
+  void        destroy(Arena& a)     { unmake(a); }
 
-  int prec;
+  int precision() const { return prec_; }
+
+  int prec_;
 };
 
 
@@ -313,8 +341,16 @@ struct Float_type : Type
 // A function type.
 //
 // Note that function types are never qualified.
-struct Function_type : Type
+struct Function_type : Type, Allocatable<Function_type>
 {
+  Function_type(Type_list const& p, Type& r)
+    : Type(function_type), parms_(p), ret_(&r)
+  { }
+
+  Function_type(Type_list&& p, Type& r)
+    : Type(function_type), parms_(std::move(p)), ret_(&r)
+  { }
+
   Function_type(Type_category c, Type_list const& p, Type& r)
     : Type(c), parms_(p), ret_(&r)
   { }
@@ -326,8 +362,12 @@ struct Function_type : Type
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
+  Function_type& clone(Arena&) const;
+  void           destroy(Arena&);
+
   // Returns the parameter types of the function.
   Type_list const& parameter_types() const { return parms_; }
+  Type_list&       parameter_types()       { return parms_; }
 
   // Returns the return type of the function.
   Type const& return_type() const { return *ret_; }
@@ -344,7 +384,7 @@ struct Function_type : Type
 //
 // TODO: Save the computed extent. In fact, should we be storing
 // the integer extend instead of the expression?
-struct Array_type : Type
+struct Array_type : Type, Allocatable<Array_type>
 {
   Array_type(Type_category c, Type& t, Expr& e) 
     : Type(c), type_(&t), expr_(&e) 

@@ -8,6 +8,28 @@
 namespace banjo
 {
 
+
+Function_type&
+Function_type::clone(Arena& a) const
+{
+  Type_list ts;
+  for (Type const& t : parms_)
+    ts.push_back(t.clone_type(a));
+  Type& ret = ret_->clone_type(a);
+  return make(a, function_type, std::move(ts), ret);
+}
+
+
+void
+Function_type::destroy(Arena& a)
+{
+  for (Type& t : parms_)
+    t.destroy(a);
+  ret_->destroy(a);
+  unmake(a);
+}
+
+
 Name const&
 Declared_type::name() const
 {

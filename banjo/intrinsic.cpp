@@ -2,11 +2,8 @@
 // All rights reserved
 
 #include "intrinsic.hpp"
-#include "ast.hpp"
 #include "context.hpp"
-#include "printer.hpp"
-
-#include <iostream>
+#include "debugging.hpp"
 
 
 namespace banjo
@@ -23,7 +20,7 @@ namespace intrinsic
 Expr& 
 show_value(Context& cxt, Expr& e)
 {
-  std::cout << e << '\n';
+  std::cout << debug(e) << '\n';
   return cxt.get_void();
 }
 

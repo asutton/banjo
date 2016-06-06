@@ -2,59 +2,129 @@
 // All rights reserved
 
 #include "expression.hpp"
-#include "ast.hpp"
 #include "context.hpp"
 #include "lookup.hpp"
-#include "printer.hpp"
-
-#include <iostream>
 
 
 namespace banjo
 {
 
+// -------------------------------------------------------------------------- //
+// Type name resolution
+
 namespace
 {
 
-// FIXME: This could also match a type parameter.
+// Resolve a simple id as a type. This performs simple lookup (type names
+// are not overloaded) and determines if the found declaration is actually
+// a class.
 Type&
-make_type(Context& cxt, Simple_id& id)
+resolve_simple_id_type(Context& cxt, Simple_id& id)
 {
   Decl& d = simple_lookup(cxt, id);
-  if (is<Coroutine_decl>(d)) {
-    Coroutine_decl& decl = cast<Coroutine_decl>(d);
-    return cxt.get_coroutine_type(decl);
-  }
   if (!is<Class_decl>(d)) {
     error(cxt, "'{}' does not name a type", d);
-    throw Type_error("not a type");
+    throw Type_error();
   }
   Class_decl& decl = cast<Class_decl>(d);
-  return cxt.get_class_type(decl);
+  return cxt.get_class_type(object_type, decl);
 }
 
 
 } // namespace
 
 
-
 // Resolve a name that refers to a type.
 Type&
-make_type(Context& cxt, Name& n)
+resolve_type(Context& cxt, Name& n)
 {
   if (Simple_id* id = as<Simple_id>(&n))
-    return make_type(cxt, *id);
+    return resolve_simple_id_type(cxt, *id);
   lingo_unhandled(n);
 }
 
 
-// Return t as a cv-qualified type. This will merge subsequent qualifiers 
-// so that attempts to construct 'const const T' will  simply result in 
-// 'const T'.
+// -------------------------------------------------------------------------- //
+// Qualified types
+//
+// TODO: Be more clever about qualifications.
+
+namespace
+{
+
+// Any qualifiers on an array type apply to the element type.
+Type&
+make_qualified_array_type(Context& cxt, Array_type& t, Qualifier_set q)
+{
+  Type& qual = make_qualified_type(cxt, t.element_type(), q);
+  Expr& ext = t.extent();
+  return cxt.get_array_type(qual, ext);
+}
+
+
+// Any qualifiers on a tuple type apply to the element types.
+Type&
+make_qualified_tuple_type(Context& cxt, Tuple_type& t, Qualifier_set q)
+{
+  Type_list ts;
+  for (Type& elem : t.element_types()) {
+    Type& qual = make_qualified_type(cxt, elem, q);
+    ts.push_back(qual);
+  }
+  return cxt.get_tuple_type(std::move(ts));
+}
+
+
+// Set the object-qualifiers of the object t to q. If q is empty, then
+// this will return an unqualified object type.
+//
+// Note that qualifiers for arrays and tuples are transitive. See the
+// functions above for their rules.
+//
+// The qualifiers shall not include function or reference qualifiers.
+Type&
+make_qualified_object_type(Context& cxt, Type& t, Qualifier_set q)
+{
+  lingo_assert(get_obejct_qualifiers() == q);
+  if (Array_type* arr = as<Array_type>(&t))
+    return make_qualified_array_type(cxt, *arr, q);
+  if (Tuple_type* tup = as<Tuple_type>(&t))
+    return make_qualified_tuple_type(cxt, *tup, q);
+  return cxt.get_qualified_type(t, q);
+}
+
+
+Type&
+make_qualified_object_type(Context& cxt, Type& t, Qualifier_set q)
+{
+
+}
+
+
+Type&
+make_qualified_object_type(Context& cxt, Type& t, Qualifier_set q)
+{
+
+}
+
+
+} // namespace
+
+
+// Return a qualified variant of t, if possible.
 Type&
 make_qualified_type(Context& cxt, Type& t, Qualifier_set q)
 {
-  return cxt.get_qualified_type(t, q);
+  switch (t.category()) {
+    case object_type:
+      return make_qualified_object_type(cxt, t, q);
+    case reference_type:
+      return make_qualified_reference_type(cxt, t, q);
+    case function_type:
+      return make_qualified_function_type(cxt, t, q);
+    default:
+      lingo_unreachable();
+  }
 }
 
 

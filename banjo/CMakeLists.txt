@@ -10,39 +10,35 @@ add_library(banjo
   ast-base.cpp
   ast-name.cpp
   ast-type.cpp
-  ast-expr.cpp
-  ast-stmt.cpp
-  ast-decl.cpp
-  ast-def.cpp
-  ast-req.cpp
+  # ast-expr.cpp
+  # ast-stmt.cpp
+  # ast-decl.cpp
+  # ast-def.cpp
+  # ast-req.cpp
   ast.cpp
 
-  # AST utility algorithms
-  equivalence.cpp
-  hashing.cpp
+  # # AST utility algorithms
+  # equivalence.cpp
+  # hashing.cpp
+  # debugging.cpp
 
-  # Node construction
-  builder.cpp
+  # # Node construction
+  # builder.cpp
 
-  # Diagnostics
-  error.cpp
+  # # Diagnostics
+  # error.cpp
 
-  # Scope, lookup, and resolution
-  overload.cpp
-  scope.cpp
-  lookup.cpp
+  # # Scope, lookup, and resolution
+  # overload.cpp
+  # scope.cpp
+  # lookup.cpp
 
-  # Application context and facilities.
-  context.cpp
-  builtin.cpp
-
-  # Built-in entities and intrinsics
+  # # Application context and facilities.
+  # context.cpp
+  # builtin.cpp
   # intrinsic.cpp
-  
 
-  # printer.cpp
-
-  # # Tree construction
+  # # # Tree construction
   # type.cpp
   # declaration.cpp
   # overload.cpp
@@ -88,6 +84,9 @@ PUBLIC
   ${Boost_LIBRARIES}
   ${LLVM_LIBRARIES}
 )
+
+add_executable(test-banjo test.cpp)
+target_link_libraries(test-banjo banjo)
 
 
 # add_subdirectory(fe/banjo)

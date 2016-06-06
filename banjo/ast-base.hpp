@@ -15,6 +15,7 @@
 
 #include <vector>
 #include <utility>
+#include <iostream>
 
 
 namespace banjo
@@ -73,6 +74,60 @@ struct Scope;
 struct Overload_set;
 
 
+struct Arena
+{
+  virtual void* allocate(std::type_info const&, std::size_t) = 0;
+  virtual void deallocate(std::type_info const&, void*) = 0;
+};
+
+
+struct Std_arena : Arena
+{
+  void* allocate(std::type_info const& ti, std::size_t n)
+  {
+    std::cout << "NEW " << ti.name() << '\n';
+    return ::operator new(n);
+  }
+
+  void deallocate(std::type_info const& ti, void* p)
+  {
+    std::cout << "DEL " << ti.name() << '\n';
+    ::operator delete(p);
+  }
+};
+
+
+// A CRTP class that provides overloads of the allocation operators.
+// In particular, this provides overloads of placement allocators which
+// use the Allocator interface. This allows for "striped" forms of
+// allocation, where objects of different dynamic type are pooled into
+// different resources.
+template<typename T>
+struct Allocatable
+{
+  template<typename... Args>
+  static T& make(Arena& a, Args&&... args)
+  {
+    void* p = a.allocate(typeid(T), sizeof(T));
+    T* obj = new (p) T(std::forward<Args>(args)...);
+    obj->arena_ = &a;
+    return *obj;
+  }
+
+  // Return memory to the arena. Behavior is undefined if the object
+  // is not allocated from this arena.
+  void unmake(Arena& a)
+  {
+    lingo_assert(arena_ == & a);
+    T* obj = static_cast<T*>(this);
+    obj->~T();
+    a.deallocate(typeid(T), obj);
+  }
+
+  Arena* arena_;
+};
+
+
 // -------------------------------------------------------------------------- //
 // Terms
 
@@ -82,23 +137,46 @@ struct Overload_set;
 // is not meaningful for all terms. In particular, canonicalized
 // terms must not include a valid source code location.
 //
-// TODO: Do I really want a base class for all of these things?
+// Each term is also pinned to the region of memory from which it is
+// allocated (assuming that the object is so-allocated). A term must
+// be deallocated from the same arena in which it was allocated.
 struct Term
 {
+  Term()
+    : loc_()
+  { }
+
   virtual ~Term() { }
+
+  // Clone this object, using the given arena.
+  virtual Term& clone(Arena&) const { lingo_unreachable(); }
+ 
+  // Clean up memory used by this object. Don't use this directly;
+  // use destroy instead.
+  virtual void destroy(Arena& a) 
+  { 
+    std::cout << "HUH?" << type_str(*this) << '\n';
+    lingo_unreachable(); 
+  }
 
   // Returns the source code location of the term. this
   // may be an invalid position.
-  Location location() const { return loc; }
+  Location location() const { return loc_; }
 
   // Returns the region of text over which the term is written.
   // By default, this is is the empty region, which starts
   // and ends at the term's location.
-  virtual Region region() const { return {loc, loc}; }
+  virtual Region region() const { return {loc_, loc_}; }
 
-  Location loc;
+  Location loc_;
 };
 
+
+} // namespace banjo
+
+
+namespace banjo
+{
 
 // -------------------------------------------------------------------------- //
 // Lists
