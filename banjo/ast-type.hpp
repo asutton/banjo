@@ -479,24 +479,26 @@ struct Class_type : Declared_type, Allocatable<Class_type>
 {
   using Declared_type::Declared_type;
 
-  Pointer_type& clone(Allocator&) const;
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+
+  Class_type& clone(Allocator&) const;
 
   // Returns the declaration of the class type.
   Class_decl const& declaration() const;
   Class_decl&       declaration();
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
 // A typename type is declared by a type parameter.
-struct Typename_type : Declared_type
+struct Typename_type : Declared_type, Allocatable<Typename_type>
 {
   using Declared_type::Declared_type;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
+
+  Typename_type& clone(Allocator& a) const { return make(a, *this); }
 };
 
 
@@ -524,12 +526,14 @@ struct Typename_type : Declared_type
 // FIXME: Do we need decltype(auto) or something similar? That could act
 // as a specifier that affects deduction of a type. The rules are close to
 // forwarding, but can give different results... I think.
-struct Auto_type : Declared_type
+struct Auto_type : Declared_type, Allocatable<Auto_type>
 {
   using Declared_type::Declared_type;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
+
+  Auto_type& clone(Allocator& a) const { return make(a, *this); }
 };
 
 
@@ -538,12 +542,14 @@ struct Auto_type : Declared_type
 //
 // TODO: Do we always need a declaration, or can we just synthesize
 // types from thin air?
-struct Synthetic_type : Declared_type
+struct Synthetic_type : Declared_type, Allocatable<Synthetic_type>
 {
   using Declared_type::Declared_type;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
+
+  Synthetic_type& clone(Allocator& a) const { return make(a, *this); }
 };
 
 
@@ -553,12 +559,14 @@ struct Synthetic_type : Declared_type
 // The type decltype(e). The actual type is deduced from the expression.
 //
 // FIXME: Put this into a category somewhere...
-struct Decltype_type : Type
+struct Decltype_type : Type, Allocatable<Decltype_type>
 {
   using Type::Type;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
+
+  Decltype_type& clone(Allocator& a) const { return make(a, *this); }
 };
 
 
@@ -595,6 +603,7 @@ struct Unparsed_type : Type, Allocatable<Unparsed_type>
 
   Unparsed_type& clone(Allocator& a) const { return make(a, *this); }
 
+  // Returns the sequence of tokens comprising the unparsed type.
   Token_seq const& tokens() const { return toks_; }
   Token_seq&       tokens()       { return toks_; }
 
