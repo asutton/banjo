@@ -244,7 +244,13 @@ struct Type::Mutator
 // The void type. Expressions of void type do not compute objects.
 struct Void_type : Type, Allocatable<Void_type>
 {
-  using Type::Type;
+  Void_type(Qualifier_set q = {})
+    : Type(object_type, q)
+  { }
+
+  Void_type(Type_category c, Qualifier_set q = {})
+    : Type(c, q)
+  { }
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
@@ -256,7 +262,13 @@ struct Void_type : Type, Allocatable<Void_type>
 // The boolean type.
 struct Boolean_type : Type, Allocatable<Boolean_type>
 {
-  using Type::Type;
+  Boolean_type(Qualifier_set q = {})
+    : Type(object_type, q)
+  { }
+
+  Boolean_type(Type_category c, Qualifier_set q = {})
+    : Type(c, q)
+  { }
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
@@ -271,7 +283,13 @@ struct Boolean_type : Type, Allocatable<Boolean_type>
 // TODO: Should this be an integer type, or should it really be distinct?
 struct Byte_type : Type, Allocatable<Byte_type>
 {
-  using Type::Type;
+  Byte_type(Qualifier_set q = {})
+    : Type(object_type, q)
+  { }
+
+  Byte_type(Type_category c, Qualifier_set q = {})
+    : Type(c, q)
+  { }
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
@@ -290,6 +308,10 @@ struct Integer_type : Type, Allocatable<Integer_type>
 {
   Integer_type(Integer_type const& t)
     : Type(t), sign_(t.sign_), prec_(t.prec_)
+  { }
+
+  Integer_type(bool s = true, int p = 32, Qualifier_set q = {})
+    : Type(object_type, q), sign_(s), prec_(p)
   { }
 
   Integer_type(Type_category c, bool s = true, int p = 32, Qualifier_set q = {})

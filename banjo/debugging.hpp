@@ -47,6 +47,8 @@ struct Debug_printer
   void boolean_type(Boolean_type const&);
   void integer_type(Integer_type const&);
   void function_type(Function_type const&);
+  void type_category(Type const&);
+  void type_qualifiers(Type const&);
 
   // Expressions
   void expression(Expr const&);
@@ -81,6 +83,7 @@ struct Debug_term
 };
 
 
+void debug(Name const&);
 void debug(Type const&);
 
 

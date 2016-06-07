@@ -17,10 +17,10 @@ using namespace banjo;
 Allocator alloc;
 
 
-template<typename T>
-T& f(T& t)
+Symbol const&
+sym(Symbol_table& syms, char const* n)
 {
-  return t.clone(alloc);
+  return *syms.put_identifier(Token_kind::identifier_tok, n);
 }
 
 
@@ -28,8 +28,15 @@ int main()
 {
   lingo::init_colors();
 
-  Type_list parms { &Boolean_type::make(alloc) };
-  auto& f = Function_type::make(alloc, parms, Void_type::make(alloc));
+  Symbol_table syms;
 
+  Type_list parms { 
+    &Boolean_type::make(alloc),
+    &Integer_type::make(alloc) 
+  };
+  auto& f = Function_type::make(alloc, parms, Void_type::make(alloc));
   debug(f);
+
+  auto& n = Simple_id::make(alloc, sym(syms, "x"));
+  debug(n);
 }

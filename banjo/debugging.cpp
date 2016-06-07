@@ -24,6 +24,16 @@ struct Sexpr
     printer.rep(t);
   }
 
+  Sexpr(Debug_printer& p, Type const& t)
+    : printer(p)
+  {
+    printer.open();
+    printer.rep(t);
+    printer.space();
+    printer.type_category(t);
+    printer.type_qualifiers(t);
+  }
+
   // When debugging expressions, include their type as part of the 
   // representation.
   Sexpr(Debug_printer& p, Expr const& e)
@@ -32,7 +42,7 @@ struct Sexpr
     printer.open();
     printer.rep(e);
     printer.space();
-    printer.prop("type");
+    // printer.prop("type");
     // printer.os << e.type();
   }
 
@@ -151,12 +161,30 @@ Debug_printer::id(Name const& n)
 void
 Debug_printer::simple_id(Simple_id const& n)
 {
-  os << n.symbol().spelling();
+  Sexpr guard(*this, n);
+  space();
+  os << '"' << n.symbol().spelling() << '"';
 }
 
 
 // -------------------------------------------------------------------------- //
 // Types
+
+
+void
+Debug_printer::type(Type const& t)
+{
+  struct fn
+  {
+    Debug_printer& self;
+    void operator()(Type const& t)          { lingo_unhandled(t); }
+    void operator()(Void_type const& t)  { self.void_type(t); }
+    void operator()(Boolean_type const& t)  { self.boolean_type(t); }
+    void operator()(Integer_type const& t)  { self.integer_type(t); }
+    void operator()(Function_type const& t) { self.function_type(t); }
+  };
+  apply(t, fn{*this});
+}
 
 
 void
@@ -195,18 +223,33 @@ Debug_printer::function_type(Function_type const& t)
 
 
 void
-Debug_printer::type(Type const& t)
+Debug_printer::type_category(Type const& t)
 {
-  struct fn
-  {
-    Debug_printer& self;
-    void operator()(Type const& t)          { lingo_unhandled(t); }
-    void operator()(Void_type const& t)  { self.void_type(t); }
-    void operator()(Boolean_type const& t)  { self.boolean_type(t); }
-    void operator()(Integer_type const& t)  { self.integer_type(t); }
-    void operator()(Function_type const& t) { self.function_type(t); }
-  };
-  apply(t, fn{*this});
+  os << "category=";
+  switch (t.category()) {
+    case banjo::object_type: 
+      os << "object";
+      break;
+    
+    case banjo::reference_type: 
+      os << "reference";
+      break;
+    
+    case banjo::function_type: 
+      os << "function"; 
+      break;
+    
+    default: 
+      os << "unknown"; 
+      break;
+  }
+}
+
+
+void
+Debug_printer::type_qualifiers(Type const& t)
+{
+
 }
 
 
@@ -332,7 +375,16 @@ Debug_printer::constraint(Cons const& c)
 // -------------------------------------------------------------------------- //
 // Interface
 
-// Indicate that we should print the debug version of this term.
+void
+debug(Name const& n)
+{
+  Debug_printer p(std::cerr);
+  p.tree = true;
+  p(n);
+  p.newline();
+}
+
+
 void
 debug(Type const& t)
 {
@@ -341,5 +393,6 @@ debug(Type const& t)
   p(t);
   p.newline();
 }
+
 
 } // namespace banjo
