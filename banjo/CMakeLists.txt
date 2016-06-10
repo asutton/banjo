@@ -18,8 +18,8 @@ add_library(banjo
   ast.cpp
 
   # # AST utility algorithms
-  # equivalence.cpp
-  # hashing.cpp
+  equivalence.cpp
+  hashing.cpp
   debugging.cpp
 
   # # Node construction

@@ -278,19 +278,36 @@ hash_binary_expr(A& h, Binary_expr const& e)
 
 template<typename A>
 void
+hash_id_expr(A& h, Resolved_id_expr const& e)
+{
+  hash_append(h, e.declaration());
+}
+
+
+template<typename A>
+void
+hash_mem_expr(A& h, Resolved_mem_expr const& e)
+{
+  hash_append(h, e.declaration());
+}
+
+
+template<typename A>
+void
 hash_append(A& h, Expr const& e)
 {
   struct fn
   {
     A& h;
-    void operator()(Expr const& e)         { lingo_unhandled(e); }
-    void operator()(Void_expr const& e)    { }
-    void operator()(Boolean_expr const& e) { hash_append(h, e.value()); }
-    void operator()(Integer_expr const& e) { hash_append(h, e.value()); }
-    void operator()(Tuple_expr const& e)   { hash_append(h, e.elements()); }
-    void operator()(Id_expr const& e)      { hash_append(h, e.id()); }
-    void operator()(Unary_expr const& e)   { hash_append(h, e.operand()); }
-    void operator()(Binary_expr const& e)  { hash_binary_expr(h, e); }
+    void operator()(Expr const& e)              { lingo_unhandled(e); }
+    void operator()(Void_expr const& e)         { /* Do nothing. */ }
+    void operator()(Boolean_expr const& e)      { hash_append(h, e.value()); }
+    void operator()(Integer_expr const& e)      { hash_append(h, e.value()); }
+    void operator()(Tuple_expr const& e)        { hash_append(h, e.elements()); }
+    void operator()(Resolved_id_expr const& e)  { hash_id_expr(h, e); }
+    void operator()(Resolved_mem_expr const& e) { hash_mem_expr(h, e); }
+    void operator()(Unary_expr const& e)        { hash_append(h, e.operand()); }
+    void operator()(Binary_expr const& e)       { hash_binary_expr(h, e); }
   };
   hash_append(h, typeid(e));
   apply(e, fn{h});
