@@ -3,20 +3,23 @@
 
 define_node(Translation_unit)
 
+// Core
 define_node(Object_decl);
 define_node(Reference_decl);
 define_node(Function_decl);
+
+// Classes
 define_node(Class_decl);
+define_node(Mem_object_decl);
+define_node(Mem_reference_decl);
+define_node(Mem_function_decl);
+define_node(Mem_base_decl);
 
-// TODO: Fields and methods are really just objects and functions.
-// Do they really need to be specialized?
-define_node(Field_decl);
-define_node(Super_decl);
-define_node(Method_decl);
-
+// Templates
 define_node(Concept_decl);
 define_node(Template_decl);
 
+// Parameters
 define_node(Object_parm);
 define_node(Reference_parm);
 define_node(Type_parm);

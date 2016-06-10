@@ -10,10 +10,10 @@ add_library(banjo
   ast-base.cpp
   ast-name.cpp
   ast-type.cpp
-  # ast-expr.cpp
-  # ast-stmt.cpp
-  # ast-decl.cpp
-  # ast-def.cpp
+  ast-expr.cpp
+  ast-stmt.cpp
+  ast-decl.cpp
+  ast-def.cpp
   # ast-req.cpp
   ast.cpp
 

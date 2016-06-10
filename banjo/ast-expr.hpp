@@ -72,47 +72,14 @@ template<typename T>
 struct Literal_expr : Expr
 {
   Literal_expr(Type& t, T const& x)
-    : Expr(t), val(x)
+    : Expr(t), val_(x)
   { }
 
   // Returns the interpreted value of the literal.
-  T const& value() const { return val; }
-  T&       value()       { return val; }
+  T const& value() const { return val_; }
+  T&       value()       { return val_; }
 
-  T val;
-};
-
-
-// The base class of all unary expressions.
-struct Unary_expr : Expr
-{
-  Unary_expr(Type& t, Expr& e)
-    : Expr(t), first(&e)
-  { }
-
-  // Returns the operand of the unary expression.
-  Expr const& operand() const { return *first; }
-  Expr&       operand()       { return *first; }
-
-  Expr* first;
-};
-
-
-// The base class of all binary expressions.
-struct Binary_expr : Expr
-{
-  Binary_expr(Type& t, Expr& e1, Expr& e2)
-    : Expr(t), first(&e1), second(&e2)
-  { }
-
-  Expr const& left() const { return *first; }
-  Expr&       left()       { return *first; }
-
-  Expr const& right() const { return *second; }
-  Expr&       right()       { return *second; }
-
-  Expr* first;
-  Expr* second;
+  T val_;
 };
 
 
@@ -120,7 +87,7 @@ struct Binary_expr : Expr
 //
 // Note that (currently) it is impossible to grammatically construct
 // a void expression. 
-struct Void_expr : Expr
+struct Void_expr : Expr, Allocatable<Void_expr>
 {
   Void_expr(Type& t)
     : Expr(t)
@@ -132,7 +99,7 @@ struct Void_expr : Expr
 
 
 // A boolean literal.
-struct Boolean_expr : Literal_expr<bool>
+struct Boolean_expr : Literal_expr<bool>, Allocatable<Boolean_expr>
 {
   Boolean_expr(Type& t, bool b)
     : Literal_expr<bool>(t, b)
@@ -144,7 +111,7 @@ struct Boolean_expr : Literal_expr<bool>
 
 
 // An integer-valued literal.
-struct Integer_expr : Literal_expr<Integer>
+struct Integer_expr : Literal_expr<Integer>, Allocatable<Integer_expr>
 {
   Integer_expr(Type& t, Integer const& n)
     : Literal_expr<Integer>(t, n)
@@ -163,7 +130,7 @@ struct Integer_expr : Literal_expr<Integer>
 //
 // TODO: The shape of real-valued literals actually depends on the type.
 // We may have support for fixed point types in the future.
-struct Real_expr : Literal_expr<lingo::Real>
+struct Real_expr : Literal_expr<lingo::Real>, Allocatable<Real_expr>
 {
   Real_expr(Type& t, Real const& n)
     : Literal_expr<Real>(t, n)
@@ -180,23 +147,28 @@ struct Real_expr : Literal_expr<lingo::Real>
 
 // Represents an immediate aggregate of other values. A tuple expression
 // is inherently a value expression.
-struct Tuple_expr : Expr
+struct Tuple_expr : Expr, Allocatable<Tuple_expr>
 {
   Tuple_expr(Type& t, Expr_list const& l)
-    : Expr(t), elems(l)
+    : Expr(t), elems_(l)
+  { }
+
+  Tuple_expr(Type& t, Expr_list&& l)
+    : Expr(t), elems_(std::move(l))
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
-  Expr_list const& elements() const { return elems; }
-  Expr_list&       elements()       { return elems; }
+  Expr_list const& elements() const { return elems_; }
+  Expr_list&       elements()       { return elems_; }
 
-  Expr_list elems;
+  Expr_list elems_;
 };
 
 
-// The base class of all ids that refer to declarations. 
+// This is the base class of all expressions formed as a result of name
+// lookup. Note that the name may or may not be resolved.
 struct Id_expr : Expr
 {
   Id_expr(Name& n)
@@ -215,13 +187,13 @@ struct Id_expr : Expr
 };
 
 
-// The base class of all id-expressions that resolved to a single declaration.
-struct Id_decl_expr : Id_expr
+// A resolved id expression refers to a single declaration.
+struct Resolved_id_expr : Id_expr
 {
-  Id_decl_expr(Type& t, Name& n, Decl& d)
+  Resolved_id_expr(Type& t, Name& n, Decl& d)
     : Id_expr(t, n), decl_(&d)
   { }
-  
+
   // Returns the referenced declaration.
   Decl const& declaration() const { return *decl_; }
   Decl&       declaration()       { return *decl_; }
@@ -230,42 +202,43 @@ struct Id_decl_expr : Id_expr
 };
 
 
-// A name that refers to a declared object.
-struct Id_object_expr : Id_decl_expr
+// A resolved reference to an object.
+struct Object_expr : Resolved_id_expr, Allocatable<Object_expr>
 {
-  using Id_decl_expr::Id_decl_expr;
+  using Resolved_id_expr::Resolved_id_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
-  // Returns the referenced variable or parameter.
+  // Returns the referenced object.
   Object_decl const& declaration() const;
   Object_decl&       declaration();
 };
 
 
-// A name that refers to a declared reference.
-//
-// TODO: Overload the declaration() accessor to return a reference
-// declaration.
-struct Id_reference_expr : Id_decl_expr
+// A resolved reference to a reference.
+struct Reference_expr : Resolved_id_expr, Allocatable<Reference_expr>
 {
-  using Id_decl_expr::Id_decl_expr;
+  using Resolved_id_expr::Resolved_id_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the referenced object.
+  Reference_decl const& declaration() const;
+  Reference_decl&       declaration();
 };
 
 
-// A name that refers to a declared function.
-struct Id_function_expr : Id_decl_expr
+// A resolved reference to a function.
+struct Function_expr : Resolved_id_expr, Allocatable<Function_expr>
 {
-  using Id_decl_expr::Id_decl_expr;
+  using Resolved_id_expr::Resolved_id_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
-  // Returns the referenced function.
+  // Returns the referenced object.
   Function_decl const& declaration() const;
   Function_decl&       declaration();
 };
@@ -273,17 +246,13 @@ struct Id_function_expr : Id_decl_expr
 
 // A name that refers to a set of declarations. Overload expressions
 // are inherently untyped.
-//
-// TODO: I may want an Unresolved_expr for the case where we defer lookup 
-// until later (i.e., transforming f(x) into x.f()). Or perhaps, we
-// simply leave the overload set empty?
-struct Id_overload_expr : Id_expr
+struct Overload_expr : Id_expr, Allocatable<Overload_expr>
 {
-  Id_overload_expr(Name& n, Decl_list& ds)
+  Overload_expr(Name& n, Decl_list& ds)
     : Id_expr(n), decls_(ds)
   { }
 
-  Id_overload_expr(Name& n, Decl_list&& ds)
+  Overload_expr(Name& n, Decl_list&& ds)
     : Id_expr(n), decls_(std::move(ds))
   { }
   
@@ -298,21 +267,20 @@ struct Id_overload_expr : Id_expr
 };
 
 
-// The base class of all dot expressions.
-struct Dot_expr : Expr
+// The base class of all member access expressions.
+struct Mem_expr : Expr
 {
-  Dot_expr(Expr& e, Name& n)
+  Mem_expr(Expr& e, Name& n)
     : Expr(untyped_expr), obj_(&e), mem_(&n)
   { }
 
-  Dot_expr(Type& t, Expr& e, Name& n)
+  Mem_expr(Type& t, Expr& e, Name& n)
     : Expr(t), obj_(&e), mem_(&n)
   { }
 
   // Returns the object enclosing the member name.
   Expr const& object() const { return *obj_; }
   Expr&       object()       { return *obj_; }
-
 
   // Returns the requested member name.
   Name const& member() const { return *mem_; }
@@ -325,10 +293,10 @@ struct Dot_expr : Expr
 
 // The base class of resolved dot-expressions. This stores the resolved
 // declaration of the member name.
-struct Dot_decl_expr : Dot_expr
+struct Resolved_mem_expr : Mem_expr
 {
-  Dot_decl_expr(Type& t, Expr& e, Name& n, Decl& d)
-    : Dot_expr(t, e, n), decl_(&d)
+  Resolved_mem_expr(Type& t, Expr& e, Name& n, Decl& d)
+    : Mem_expr(t, e, n), decl_(&d)
   { }
 
   Decl const& declaration() const { return *decl_; }
@@ -338,54 +306,100 @@ struct Dot_decl_expr : Dot_expr
 };
 
 
-// An access expression referring to a declared object.
-//
-// TODO: Provide overloads of the declaration() function.
-struct Dot_object_expr : Dot_decl_expr
+// A resolved reference to an object.
+struct Mem_object_expr : Resolved_mem_expr, Allocatable<Mem_object_expr>
 {
-  using Dot_decl_expr::Dot_decl_expr;
+  using Resolved_mem_expr::Resolved_mem_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the referenced object.
+  Mem_object_decl const& declaration() const;
+  Mem_object_decl&       declaration();
 };
 
 
-// An access expression referring to a declared reference.
-//
-// TODO: Provide overloads of the declaration() function.
-struct Dot_reference_expr : Dot_decl_expr
+// A resolved reference to a reference.
+struct Mem_reference_expr : Resolved_mem_expr, Allocatable<Mem_reference_expr>
 {
-  using Dot_decl_expr::Dot_decl_expr;
+  using Resolved_mem_expr::Resolved_mem_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the referenced object.
+  Mem_reference_decl const& declaration() const;
+  Mem_reference_decl&       declaration();
 };
 
 
-// An access expression referring to a declared function.
-//
-// TODO: Provide overloads of the declaration() function.
-struct Dot_function_expr : Dot_decl_expr
+// A resolved reference to a function.
+struct Mem_function_expr : Resolved_mem_expr, Allocatable<Mem_function_expr>
 {
-  using Dot_decl_expr::Dot_decl_expr;
+  using Resolved_mem_expr::Resolved_mem_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the referenced object.
+  Mem_function_decl const& declaration() const;
+  Mem_function_decl&       declaration();
 };
 
 
-// An dot-expression that refers to a overload set of member overloads.
-struct Dot_overload_expr : Dot_expr
+// An unresolved access expression, referring to a set of declarations.
+struct Mem_overload_expr : Mem_expr, Allocatable<Mem_overload_expr>
 {
-  using Dot_expr::Dot_expr;
+  using Mem_expr::Mem_expr;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the referenced declaration.
+  Decl_list const& declarations() const { return decls_; }
+  Decl_list&       declarations()       { return decls_; }
+
+  Decl_list decls_;
+};
+
+
+// The base class of all unary expressions. This is parameterized
+// by the derived class, providing default some default operations.
+struct Unary_expr : Expr
+{
+  Unary_expr(Type& t, Expr& e)
+    : Expr(t), op_(&e)
+  { }
+
+  // Returns the operand of the unary expression.
+  Expr const& operand() const { return *op_; }
+  Expr&       operand()       { return *op_; }
+
+  Expr* op_;
+};
+
+
+// The base class of all binary expressions.
+struct Binary_expr : Expr
+{
+  Binary_expr(Type& t, Expr& e1, Expr& e2)
+    : Expr(t), left_(&e1), right_(&e2)
+  { }
+
+  Expr const& left() const { return *left_; }
+  Expr&       left()       { return *left_; }
+
+  Expr const& right() const { return *right_; }
+  Expr&       right()       { return *right_; }
+
+  Expr* left_;
+  Expr* right_;
 };
 
 
 // An addition express.
-struct Add_expr : Binary_expr
+struct Add_expr : Binary_expr, Allocatable<Add_expr>
 {
   using Binary_expr::Binary_expr;
 
@@ -395,7 +409,7 @@ struct Add_expr : Binary_expr
 
 
 // A subtraction expression.
-struct Sub_expr : Binary_expr
+struct Sub_expr : Binary_expr, Allocatable<Sub_expr>
 {
   using Binary_expr::Binary_expr;
 
@@ -405,7 +419,7 @@ struct Sub_expr : Binary_expr
 
 
 // A multiplication expression.
-struct Mul_expr : Binary_expr
+struct Mul_expr : Binary_expr, Allocatable<Mul_expr>
 {
   using Binary_expr::Binary_expr;
 
@@ -415,7 +429,7 @@ struct Mul_expr : Binary_expr
 
 
 // A division expression.
-struct Div_expr : Binary_expr
+struct Div_expr : Binary_expr, Allocatable<Div_expr>
 {
   using Binary_expr::Binary_expr;
 
@@ -425,7 +439,7 @@ struct Div_expr : Binary_expr
 
 
 // A remainder expression.
-struct Rem_expr : Binary_expr
+struct Rem_expr : Binary_expr, Allocatable<Rem_expr>
 {
   using Binary_expr::Binary_expr;
 
@@ -435,7 +449,7 @@ struct Rem_expr : Binary_expr
 
 
 // A negation expression.
-struct Neg_expr : Unary_expr
+struct Neg_expr : Unary_expr, Allocatable<Neg_expr>
 {
   using Unary_expr::Unary_expr;
 
@@ -445,7 +459,7 @@ struct Neg_expr : Unary_expr
 
 
 // A identity expression.
-struct Pos_expr : Unary_expr
+struct Pos_expr : Unary_expr, Allocatable<Pos_expr>
 {
   using Unary_expr::Unary_expr;
 
@@ -455,7 +469,7 @@ struct Pos_expr : Unary_expr
 
 
 // Represents a bitwise ad expression.
-struct Bit_and_expr : Binary_expr
+struct Bit_and_expr : Binary_expr, Allocatable<Bit_and_expr>
 {
   using Binary_expr::Binary_expr;
 
@@ -465,7 +479,7 @@ struct Bit_and_expr : Binary_expr
 
 
 // Represents a bitwise inclusive-or expression.
-struct Bit_or_expr : Binary_expr
+struct Bit_or_expr : Binary_expr, Allocatable<Bit_or_expr>
 {
   using Binary_expr::Binary_expr;
 
@@ -475,7 +489,7 @@ struct Bit_or_expr : Binary_expr
 
 
 // Represents a bitwsise exclusive-or expression.
-struct Bit_xor_expr : Binary_expr
+struct Bit_xor_expr : Binary_expr, Allocatable<Bit_xor_expr>
 {
   using Binary_expr::Binary_expr;
 
@@ -485,7 +499,7 @@ struct Bit_xor_expr : Binary_expr
 
 
 // Represents a bitwise left-shift expression.
-struct Bit_lsh_expr : Binary_expr
+struct Bit_lsh_expr : Binary_expr, Allocatable<Bit_lsh_expr>
 {
   using Binary_expr::Binary_expr;
 
@@ -495,7 +509,7 @@ struct Bit_lsh_expr : Binary_expr
 
 
 // Represents a bitwise-right shift expression.
-struct Bit_rsh_expr : Binary_expr
+struct Bit_rsh_expr : Binary_expr, Allocatable<Bit_rsh_expr>
 {
   using Binary_expr::Binary_expr;
 
@@ -505,7 +519,7 @@ struct Bit_rsh_expr : Binary_expr
 
 
 // Represents bit-not (one's complement) expression.
-struct Bit_not_expr : Unary_expr
+struct Bit_not_expr : Unary_expr, Allocatable<Bit_not_expr>
 {
   using Unary_expr::Unary_expr;
 
@@ -515,7 +529,7 @@ struct Bit_not_expr : Unary_expr
 
 
 // An equality expression.
-struct Eq_expr : Binary_expr
+struct Eq_expr : Binary_expr, Allocatable<Eq_expr>
 {
   using Binary_expr::Binary_expr;
 
@@ -525,7 +539,7 @@ struct Eq_expr : Binary_expr
 
 
 // An inequality expression.
-struct Ne_expr : Binary_expr
+struct Ne_expr : Binary_expr, Allocatable<Ne_expr>
 {
   using Binary_expr::Binary_expr;
 
@@ -535,7 +549,7 @@ struct Ne_expr : Binary_expr
 
 
 // A less-than expression.
-struct Lt_expr : Binary_expr
+struct Lt_expr : Binary_expr, Allocatable<Lt_expr>
 {
   using Binary_expr::Binary_expr;
 
@@ -545,7 +559,7 @@ struct Lt_expr : Binary_expr
 
 
 // A greater-than expression.
-struct Gt_expr : Binary_expr
+struct Gt_expr : Binary_expr, Allocatable<Gt_expr>
 {
   using Binary_expr::Binary_expr;
 
@@ -555,7 +569,7 @@ struct Gt_expr : Binary_expr
 
 
 // A less-equal expression.
-struct Le_expr : Binary_expr
+struct Le_expr : Binary_expr, Allocatable<Le_expr>
 {
   using Binary_expr::Binary_expr;
 
@@ -565,7 +579,7 @@ struct Le_expr : Binary_expr
 
 
 // A greater-equal expression.
-struct Ge_expr : Binary_expr
+struct Ge_expr : Binary_expr, Allocatable<Ge_expr>
 {
   using Binary_expr::Binary_expr;
 
@@ -575,7 +589,7 @@ struct Ge_expr : Binary_expr
 
 
 // A 3-way comparison expression.
-struct Cmp_expr : Binary_expr
+struct Cmp_expr : Binary_expr, Allocatable<Cmp_expr>
 {
   using Binary_expr::Binary_expr;
 
@@ -585,7 +599,7 @@ struct Cmp_expr : Binary_expr
 
 
 // A logical and expression.
-struct And_expr : Binary_expr
+struct And_expr : Binary_expr, Allocatable<And_expr>
 {
   using Binary_expr::Binary_expr;
 
@@ -595,7 +609,7 @@ struct And_expr : Binary_expr
 
 
 // A logical or expression.
-struct Or_expr : Binary_expr
+struct Or_expr : Binary_expr, Allocatable<Or_expr>
 {
   using Binary_expr::Binary_expr;
 
@@ -605,7 +619,7 @@ struct Or_expr : Binary_expr
 
 
 // Logical negation.
-struct Not_expr : Unary_expr
+struct Not_expr : Unary_expr, Allocatable<Not_expr>
 {
   using Unary_expr::Unary_expr;
 
@@ -627,7 +641,7 @@ struct Not_expr : Unary_expr
 //
 // TODO: Consider subtyping for [virtual|open| method calls and
 // unresolved calls. It would simplify code generation.
-struct Call_expr : Expr
+struct Call_expr : Expr, Allocatable<Call_expr>
 {
   Call_expr(Type& t, Expr& e, Expr_list const& a)
     : Expr(t), fn(&e), args(a)
@@ -648,7 +662,7 @@ struct Call_expr : Expr
 
 
 // An assignment expression.
-struct Assign_expr : Binary_expr
+struct Assign_expr : Binary_expr, Allocatable<Assign_expr>
 {
   using Binary_expr::Binary_expr;
 
@@ -660,7 +674,7 @@ struct Assign_expr : Binary_expr
 // An expression denoting a requirement for a valid syntax. Note that 
 // the body can (and generally is) a compound statement. A requires
 // expression is a value expression.
-struct Requires_expr : Expr
+struct Requires_expr : Expr, Allocatable<Requires_expr>
 {
   Requires_expr(Type& t, Decl_list const& tps, Decl_list const& nps, Req_list const& rs)
     : Expr(t), tparms(tps), nparms(nps), reqs(rs)
@@ -694,7 +708,7 @@ struct Requires_expr : Expr
 //
 // TODO: Do we always need a declaration, or can we just synthesize
 // values from thin air?
-struct Synthetic_expr : Expr
+struct Synthetic_expr : Expr, Allocatable<Synthetic_expr>
 {
   Synthetic_expr(Type& t, Decl& d)
     : Expr(t), decl(&d)
@@ -713,7 +727,7 @@ struct Synthetic_expr : Expr
 
 
 // Represents an unparsed expression.
-struct Unparsed_expr : Expr
+struct Unparsed_expr : Expr, Allocatable<Unparsed_expr>
 {
   Unparsed_expr(Token_seq&& toks)
     : Expr(untyped_expr), toks(std::move(toks))
@@ -773,7 +787,7 @@ struct Standard_conv : Conv
 
 
 // A conversion from an reference to a value.
-struct Value_conv : Standard_conv
+struct Value_conv : Standard_conv, Allocatable<Value_conv>
 {
   using Standard_conv::Standard_conv;
 
@@ -784,7 +798,7 @@ struct Value_conv : Standard_conv
 
 // A conversion from a less cv-qualified type to a more
 // cv-qualified type.
-struct Qualification_conv : Standard_conv
+struct Qualification_conv : Standard_conv, Allocatable<Qualification_conv>
 {
   using Standard_conv::Standard_conv;
 
@@ -794,7 +808,7 @@ struct Qualification_conv : Standard_conv
 
 
 // A conversion from one integer type to another.
-struct Boolean_conv : Standard_conv
+struct Boolean_conv : Standard_conv, Allocatable<Boolean_conv>
 {
   using Standard_conv::Standard_conv;
 
@@ -804,7 +818,7 @@ struct Boolean_conv : Standard_conv
 
 
 // A conversion from one integer type to another.
-struct Integer_conv : Standard_conv
+struct Integer_conv : Standard_conv, Allocatable<Integer_conv>
 {
   using Standard_conv::Standard_conv;
 
@@ -814,7 +828,7 @@ struct Integer_conv : Standard_conv
 
 
 // A conversion from one floating point type to another.
-struct Float_conv : Standard_conv
+struct Float_conv : Standard_conv, Allocatable<Float_conv>
 {
   using Standard_conv::Standard_conv;
 
@@ -826,7 +840,7 @@ struct Float_conv : Standard_conv
 // A conversion from integer to floating point type.
 //
 // TODO: Integrate this with the float conversion?
-struct Numeric_conv : Standard_conv
+struct Numeric_conv : Standard_conv, Allocatable<Numeric_conv>
 {
   using Standard_conv::Standard_conv;
 
@@ -838,7 +852,7 @@ struct Numeric_conv : Standard_conv
 // A conversion from a type-dependent expression to some
 // other type. When instantiated, an implicit conversion must
 // be applied.
-struct Dependent_conv : Conv
+struct Dependent_conv : Conv, Allocatable<Dependent_conv>
 {
   using Conv::Conv;
 
@@ -849,7 +863,7 @@ struct Dependent_conv : Conv
 
 // Represents the conversion of an argument type the ellipsis
 // parameter.
-struct Ellipsis_conv : Conv
+struct Ellipsis_conv : Conv, Allocatable<Ellipsis_conv>
 {
   using Conv::Conv;
 
@@ -876,7 +890,7 @@ struct Init : Expr
 // is selected by zero initialization of references and by the
 // default construction of trivially constructible class and union
 // types.
-struct Trivial_init : Init
+struct Trivial_init : Init, Allocatable<Trivial_init>
 {
   using Init::Init;
 
@@ -888,7 +902,7 @@ struct Trivial_init : Init
 // Represents the initialization of an object by an expression.
 // The result of the expression is copied (or moved?) into a
 // target object.
-struct Copy_init : Init
+struct Copy_init : Init, Allocatable<Copy_init>
 {
   Copy_init(Type& t, Expr& e)
     : Init(t), expr(&e)
@@ -907,7 +921,7 @@ struct Copy_init : Init
 
 // Represents the initialization of a reference by an expression.
 // The declared reference is bound to the result of the expression.
-struct Bind_init : Init
+struct Bind_init : Init, Allocatable<Bind_init>
 {
   Bind_init(Type& t, Expr& e)
     : Init(t), expr(&e)
@@ -926,7 +940,7 @@ struct Bind_init : Init
 
 // Represents the initialization of an class or union object by a
 // constructor.
-struct Direct_init : Init
+struct Direct_init : Init, Allocatable<Direct_init>
 {
   Direct_init(Type& t, Decl& d, Expr_list const& a)
     : Init(t), ctor(&d), args(a)
@@ -950,7 +964,7 @@ struct Direct_init : Init
 
 // Represents the recursive initialization of a class, union,
 // or array object.
-struct Aggregate_init : Init
+struct Aggregate_init : Init, Allocatable<Aggregate_init>
 {
   Aggregate_init(Type& t, Expr_list const& es)
     : Init(t), inits(es)

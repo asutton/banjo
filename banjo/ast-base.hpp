@@ -36,9 +36,9 @@ struct Declared_type;
 
 struct Expr;
 struct Id_expr;
-struct Id_decl_expr;
-struct Dot_expr;
-struct Dot_decl_expr;
+struct Resolved_id_expr;
+struct Mem_expr;
+struct Resolved_mem_expr;
 struct Unary_expr;
 struct Binary_expr;
 struct Conv;
@@ -148,9 +148,6 @@ struct Term
 
   virtual ~Term() { }
 
-  // Clone this object, using the given arena.
-  virtual Term& clone(Allocator&) const = 0;
- 
   // Returns the source code location of the term. this
   // may be an invalid position.
   Location location() const { return loc_; }
@@ -342,16 +339,6 @@ struct Unparsed_term : T
 
 // Pairs and tuples
 using Expr_pair = std::pair<Expr&, Expr&>;
-
-
-// An index records the depth and offset of a parameter.
-struct Index : std::pair<int, int>
-{
-  using std::pair<int, int>::pair;
-
-  int depth() const  { return first; }
-  int offset() const { return second; }
-};
 
 
 // Intrinsic function types.

@@ -9,32 +9,101 @@
 namespace banjo
 {
 
+// Object_expr
+
 Object_decl const&
-Id_object_expr::declaration() const
+Object_expr::declaration() const
 {
   return cast<Object_decl>(*decl_);
 }
 
 
-Object_decl&
-Id_object_expr::declaration()
+Object_decl&      
+Object_expr::declaration()
 {
   return cast<Object_decl>(*decl_);
 }
 
+
+// Reference_expr
+
+Reference_decl const&
+Reference_expr::declaration() const
+{
+  return cast<Reference_decl>(*decl_);
+}
+
+
+Reference_decl&      
+Reference_expr::declaration()
+{
+  return cast<Reference_decl>(*decl_);
+}
+
+
+// Function_expr
 
 Function_decl const&
-Id_function_expr::declaration() const
+Function_expr::declaration() const
 {
   return cast<Function_decl>(*decl_);
 }
 
 
-Function_decl&
-Id_function_expr::declaration()
+Function_decl&      
+Function_expr::declaration()
 {
   return cast<Function_decl>(*decl_);
 }
+
+
+// Mem_object_expr
+
+Mem_object_decl const&
+Mem_object_expr::declaration() const
+{
+  return cast<Mem_object_decl>(*decl_);
+}
+
+
+Mem_object_decl&      
+Mem_object_expr::declaration()
+{
+  return cast<Mem_object_decl>(*decl_);
+}
+
+
+// Mem_reference_expr
+
+Mem_reference_decl const&
+Mem_reference_expr::declaration() const
+{
+  return cast<Mem_reference_decl>(*decl_);
+}
+
+
+Mem_reference_decl&      
+Mem_reference_expr::declaration()
+{
+  return cast<Mem_reference_decl>(*decl_);
+}
+
+
+// Mem_function_expr
+
+Mem_function_decl const&
+Mem_function_expr::declaration() const
+{
+  return cast<Mem_function_decl>(*decl_);
+}
+
+
+Mem_function_decl&      
+Mem_function_expr::declaration()
+{
+  return cast<Mem_function_decl>(*decl_);
+}
+
 
 
 // -------------------------------------------------------------------------- //
@@ -120,9 +189,11 @@ declared_type(Expr const& e)
 Type&
 declared_type(Expr& e)
 {
-  if (Id_decl_expr* d = as<Id_decl_expr>(&e))
+  if (Resolved_id_expr* d = as<Resolved_id_expr>(&e))
     return d->declaration().type();
-  else
+  if (Resolved_mem_expr* d = as<Resolved_mem_expr>(&e))
+    return d->declaration().type();
+
     return e.type();
 }
 

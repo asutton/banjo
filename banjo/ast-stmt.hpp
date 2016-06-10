@@ -38,7 +38,7 @@ struct Stmt::Mutator
 
 
 // An empty statement.
-struct Empty_stmt : Stmt
+struct Empty_stmt : Stmt, Allocatable<Empty_stmt>
 {
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
@@ -46,7 +46,7 @@ struct Empty_stmt : Stmt
 
 
 // A helper node that represents all kinds of statement sequences.
-struct Compound_stmt : Stmt
+struct Compound_stmt : Stmt, Allocatable<Compound_stmt>
 {
   Compound_stmt() = default;
 
@@ -66,7 +66,7 @@ struct Compound_stmt : Stmt
 
 // A statement that evaluates an expression and discards
 // the result.
-struct Expression_stmt : Stmt
+struct Expression_stmt : Stmt, Allocatable<Expression_stmt>
 {
   Expression_stmt(Expr& e)
     : expr_(&e)
@@ -84,7 +84,7 @@ struct Expression_stmt : Stmt
 
 
 // A statement that declares a variable.
-struct Declaration_stmt : Stmt
+struct Declaration_stmt : Stmt, Allocatable<Declaration_stmt>
 {
   Declaration_stmt(Decl& d)
     : decl_(&d)
@@ -102,7 +102,7 @@ struct Declaration_stmt : Stmt
 
 
 // A return statement.
-struct Return_stmt : Stmt
+struct Return_stmt : Stmt, Allocatable<Return_stmt>
 {
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
@@ -110,7 +110,7 @@ struct Return_stmt : Stmt
 
 
 // A return-value statement.
-struct Return_value_stmt : Stmt
+struct Return_value_stmt : Stmt, Allocatable<Return_value_stmt>
 {
   Return_value_stmt(Expr& e)
     : expr_(&e)
@@ -128,7 +128,7 @@ struct Return_value_stmt : Stmt
 
 
 // A yield statement.
-struct Yield_stmt : Stmt
+struct Yield_stmt : Stmt, Allocatable<Yield_stmt>
 {
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
@@ -136,7 +136,7 @@ struct Yield_stmt : Stmt
 
 
 // A yield-value statement.
-struct Yield_value_stmt : Stmt
+struct Yield_value_stmt : Stmt, Allocatable<Yield_value_stmt>
 {
   Yield_value_stmt(Expr& e)
     : expr_(&e)
@@ -153,7 +153,7 @@ struct Yield_value_stmt : Stmt
 
 
 // An if-then statement.
-struct If_then_stmt : Stmt
+struct If_then_stmt : Stmt, Allocatable<If_then_stmt>
 {
   If_then_stmt(Expr& e, Stmt& s)
     : cond_(&e), then_(&s)
@@ -174,7 +174,7 @@ struct If_then_stmt : Stmt
 
 
 // An if-then-else statement.
-struct If_else_stmt : Stmt
+struct If_else_stmt : Stmt, Allocatable<If_else_stmt>
 {
   If_else_stmt(Expr& e, Stmt& s1, Stmt& s2)
     : cond_(&e), true_(&s1), false_(&s2)
@@ -199,7 +199,7 @@ struct If_else_stmt : Stmt
 
 
 // A while statement.
-struct While_stmt : Stmt
+struct While_stmt : Stmt, Allocatable<While_stmt>
 {
   While_stmt(Expr& e, Stmt& s)
     : cond_(&e), body_(&s)
@@ -220,7 +220,7 @@ struct While_stmt : Stmt
 
 
 // A break statement.
-struct Break_stmt : Stmt
+struct Break_stmt : Stmt, Allocatable<Break_stmt>
 {
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
@@ -228,7 +228,7 @@ struct Break_stmt : Stmt
 
 
 // A continue statement.
-struct Continue_stmt : Stmt
+struct Continue_stmt : Stmt, Allocatable<Continue_stmt>
 {
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
@@ -236,7 +236,7 @@ struct Continue_stmt : Stmt
 
 
 // Represents an unparsed statement.
-struct Unparsed_stmt : Unparsed_term<Stmt>
+struct Unparsed_stmt : Unparsed_term<Stmt>, Allocatable<Unparsed_stmt>
 {
   using Unparsed_term::Unparsed_term;
 

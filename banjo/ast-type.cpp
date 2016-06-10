@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "ast-type.hpp"
+#include "ast-expr.hpp"
 #include "ast-decl.hpp"
 
 
@@ -9,17 +10,7 @@ namespace banjo
 {
 
 
-Function_type&
-Function_type::clone(Allocator& a) const
-{
-  Type_list ts;
-  for (Type const& t : parms_)
-    ts.push_back(t.clone_type(a));
-  Type& ret = ret_->clone_type(a);
-  return make(a, function_type, std::move(ts), ret);
-}
-
-
+//Declared_type
 
 Name const&
 Declared_type::name() const
@@ -49,6 +40,8 @@ Declared_type::declaration()
 }
 
 
+// Class_type
+
 Class_decl const&
 Class_type::declaration() const
 {
@@ -61,7 +54,6 @@ Class_type::declaration()
 {
   return cast<Class_decl>(*decl_);
 }
-
 
 
 // -------------------------------------------------------------------------- //

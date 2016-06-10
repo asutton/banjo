@@ -163,12 +163,6 @@ is_more_qualified(Qualifier_set a, Qualifier_set b)
 // TODO: Ensure that qualifier queries apply to the right category.
 struct Type : Term
 {
-protected:
-  Type(Type const& t)
-    : cat_(t.cat_), qual_(t.qual_)
-  { }
-public:
-
   struct Visitor;
   struct Mutator;
 
@@ -187,9 +181,6 @@ public:
 
   virtual void accept(Visitor&) const = 0;
   virtual void accept(Mutator&)       = 0;
-
-  // A clone wrapper used to guarantee that we return type objects.
-  Type& clone_type(Allocator& a) const { return cast<Type>(clone(a)); }
 
   // Returns the category of this type.
   Type_category category() const { return cat_; }
@@ -254,8 +245,6 @@ struct Void_type : Type, Allocatable<Void_type>
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-
-  Void_type& clone(Allocator& a) const { return make(a, *this); }
 };
 
 
@@ -272,8 +261,6 @@ struct Boolean_type : Type, Allocatable<Boolean_type>
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-
-  Boolean_type& clone(Allocator& a) const { return make(a, *this); }
 };
 
 
@@ -293,8 +280,6 @@ struct Byte_type : Type, Allocatable<Byte_type>
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-
-  Byte_type& clone(Allocator& a) const { return make(a, *this); }
 };
 
 
@@ -321,8 +306,6 @@ struct Integer_type : Type, Allocatable<Integer_type>
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
-  Integer_type& clone(Allocator& a) const { return make(a, *this); }
-
   bool sign() const        { return sign_; }
   bool is_signed() const   { return sign_; }
   bool is_unsigned() const { return !sign_; }
@@ -346,8 +329,6 @@ struct Float_type : Type, Allocatable<Float_type>
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-
-  Float_type& clone(Allocator& a) const { return make(a, *this); }
 
   int precision() const { return prec_; }
 
@@ -382,8 +363,6 @@ struct Function_type : Type, Allocatable<Function_type>
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
-  Function_type& clone(Allocator&) const;
-
   // Returns the parameter types of the function.
   Type_list const& parameter_types() const { return parms_; }
   Type_list&       parameter_types()       { return parms_; }
@@ -412,8 +391,6 @@ struct Array_type : Type, Allocatable<Array_type>
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
-  Array_type& clone(Allocator&) const;
-
   // Returns the element type of the array.
   Type const& element_type() const { return *type_; }
   Type&       element_type()       { return *type_; }
@@ -429,32 +406,30 @@ struct Array_type : Type, Allocatable<Array_type>
 
 // A tuple type.
 //
-// A tuple type is not cv-qualified, but its elements can be.
+// A tuple type is not qualified, but its elements can be.
 struct Tuple_type : Type, Allocatable<Tuple_type>
 {
   Tuple_type(Type_category c, Type_list const& t) 
-    : Type(c), types_(t) 
+    : Type(c), elems_(t) 
   { } 
 
   Tuple_type(Type_list&& t) 
-    : types_(std::move(t))
+    : elems_(std::move(t))
   { }
   
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
-  Tuple_type& clone(Allocator&) const;
-  
   // Returns the element types of the tuple.
-  Type_list const& element_types() const { return types_; }
-  Type_list&       element_types()       { return types_; }
+  Type_list const& element_types() const { return elems_; }
+  Type_list&       element_types()       { return elems_; }
   
-  Type_list types_;
+  Type_list elems_;
 };
 
 
 // A pointer type.
-struct Pointer_type : Type, Allocatable<Tuple_type>
+struct Pointer_type : Type, Allocatable<Pointer_type>
 {
   Pointer_type(Type_category c, Type& t, Qualifier_set q = {})
     : Type(c, q), type_(&t)
@@ -462,8 +437,6 @@ struct Pointer_type : Type, Allocatable<Tuple_type>
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-
-  Pointer_type& clone(Allocator&) const;
 
   // Returns the pointed-at type.
   Type const& type() const { return *type_; }
@@ -477,9 +450,16 @@ struct Pointer_type : Type, Allocatable<Tuple_type>
 // User-defined types
 
 // Represents any type that has a declaration (i.e., not a built-in) type. 
+//
+// A declared type refers to its declaration, which defines its properties.
+//
 // Note that placeholders and type variables are also declared types.
 struct Declared_type : Type
 {
+  Declared_type(Declared_type const& t)
+    : Type(t), decl_(t.decl_)
+  { }
+
   Declared_type(Type_category c, Decl& d, Qualifier_set q = {})
     : Type(c, q), decl_(&d)
   { }
@@ -504,8 +484,6 @@ struct Class_type : Declared_type, Allocatable<Class_type>
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
-  Class_type& clone(Allocator&) const;
-
   // Returns the declaration of the class type.
   Class_decl const& declaration() const;
   Class_decl&       declaration();
@@ -519,8 +497,6 @@ struct Typename_type : Declared_type, Allocatable<Typename_type>
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-
-  Typename_type& clone(Allocator& a) const { return make(a, *this); }
 };
 
 
@@ -554,8 +530,6 @@ struct Auto_type : Declared_type, Allocatable<Auto_type>
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-
-  Auto_type& clone(Allocator& a) const { return make(a, *this); }
 };
 
 
@@ -570,8 +544,6 @@ struct Synthetic_type : Declared_type, Allocatable<Synthetic_type>
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-
-  Synthetic_type& clone(Allocator& a) const { return make(a, *this); }
 };
 
 
@@ -587,8 +559,6 @@ struct Decltype_type : Type, Allocatable<Decltype_type>
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-
-  Decltype_type& clone(Allocator& a) const { return make(a, *this); }
 };
 
 
@@ -604,8 +574,6 @@ struct Type_type : Type, Allocatable<Type_type>
 {
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-
-  Type_type& clone(Allocator& a) const { return make(a, *this); }
 };
 
 
@@ -622,8 +590,6 @@ struct Unparsed_type : Type, Allocatable<Unparsed_type>
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-
-  Unparsed_type& clone(Allocator& a) const { return make(a, *this); }
 
   // Returns the sequence of tokens comprising the unparsed type.
   Token_seq const& tokens() const { return toks_; }

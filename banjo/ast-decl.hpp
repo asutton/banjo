@@ -179,7 +179,7 @@ struct Decl::Mutator
 // We do this because many of the translation facilities are defined in
 // terms of associations with declarations. It would be nice if translation
 // units were not declarations, but this would be a big change.
-struct Translation_unit : Decl
+struct Translation_unit : Decl, Allocatable<Translation_unit>
 {
   Translation_unit() { }
 
@@ -202,21 +202,31 @@ struct Translation_unit : Decl
 //
 // NOTE: The naming follows the C++ convention where a variable declares
 // either an object (with storage) or a reference.
+//
+// TODO: Add constructors accepting a context?
 struct Variable_decl : Decl
 {
-  using Decl::Decl;
+  Variable_decl(Name& n, Type& t, Def& d, Specifier_set s = {})
+    : Decl(n, t, s), def_(&d)
+  { }
+
+  // Returns the initializer for the variable.
+  Def const& initializer() const { return *def_; }
+  Def&       initializer()       { return *def_; }
+
+  Def*  def_;
 };
 
 
 // Declares a mapping from inputs to outputs. 
 struct Mapping_decl : Decl
 {
-  Mapping_decl(Name& n, Type& t, Decl_list const& p, Def& d)
-    : Decl(n, t), parms_(p), def_(&d)
+  Mapping_decl(Name& n, Type& t, Decl_list const& p, Def& d, Specifier_set s = {})
+    : Decl(n, t, s), parms_(p), def_(&d)
   { }
 
-  Mapping_decl(Name& n, Type& t, Decl_list&& p, Def& d)
-    : Decl(n, t), parms_(std::move(p)), def_(&d)
+  Mapping_decl(Name& n, Type& t, Decl_list&& p, Def& d, Specifier_set s = {})
+    : Decl(n, t, s), parms_(std::move(p)), def_(&d)
   { }
 
   // Returns the list of parameter declarations for the function.
@@ -258,45 +268,29 @@ struct Type_decl : Decl
 
 
 // A variable declaration (declares an object, not a reference).
-struct Object_decl : Variable_decl
+struct Object_decl : Variable_decl, Allocatable<Object_decl>
 {
-  Object_decl(Name& n, Type& t, Def& d)
-    : Variable_decl(n, t), def_(&d)
-  { }
+  using Variable_decl::Variable_decl;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the initializer for the variable.
-  Def const& initializer() const { return *def_; }
-  Def&       initializer()       { return *def_; }
-
-  Def*  def_;
 };
 
 
 // A reference declaration.
-struct Reference_decl : Variable_decl
+struct Reference_decl : Variable_decl, Allocatable<Reference_decl>
 {
-  Reference_decl(Name& n, Type& t, Def& d)
-    : Variable_decl(n, t), def_(&d)
-  { }
+  using Variable_decl::Variable_decl;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the initializer for the variable.
-  Def const& initializer() const { return *def_; }
-  Def&       initializer()       { return *def_; }
-
-  Def*  def_;
 };
 
 
 // Declares a function. A function maps input arguments to output values.
 // Functions can be evaluated at compile time, if used within a constant
 // expression context.
-struct Function_decl : Mapping_decl
+struct Function_decl : Mapping_decl, Allocatable<Function_decl>
 {
   using Mapping_decl::Mapping_decl;
 
@@ -306,7 +300,7 @@ struct Function_decl : Mapping_decl
 
 
 // Represents the declaration of a class type.
-struct Class_decl : Type_decl
+struct Class_decl : Type_decl, Allocatable<Class_decl>
 {
   Class_decl(Name& n, Type& t, Def& d)
     : Type_decl(n, t), def_(&d)
@@ -328,18 +322,11 @@ struct Class_decl : Type_decl
 };
 
 
-// Declares a field (member variable) of a class. This stores the index 
-// of the field within  the class, which is used to support code generation 
-// and compile-time evaluation.
-//
-// TODO: What is a member reference called? Can we (should we?) have 
-// member references.
-struct Field_decl : Object_decl
+// The base class of member objects and references stores the index
+// of the member within its class. 
+struct Mem_variable_decl : Variable_decl
 {
-  using Object_decl::Object_decl;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
+  using Variable_decl::Variable_decl;
 
   // Returns the index of the field within the class.
   int index() const { return index_; }
@@ -348,28 +335,46 @@ struct Field_decl : Object_decl
 };
 
 
-// Declares a base class subobject. Note that super declarations always
-// have an empty definition.
-//
-// TODO: We could actually provide a default member initializer for
-// base classes.
-struct Super_decl : Field_decl
+// Declares a member object with a class.
+struct Mem_object_decl : Mem_variable_decl, Allocatable<Mem_object_decl>
 {
-  Super_decl(Name& n, Type& t, Def& d)
-    : Field_decl(n, t, d)
-  { }
+  using Mem_variable_decl::Mem_variable_decl;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 };
 
 
-// Declares a method (member function) of a record.
+// Declares a member reference with a class.
+struct Mem_reference_decl : Mem_variable_decl, Allocatable<Mem_reference_decl>
+{
+  using Mem_variable_decl::Mem_variable_decl;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// Declares a base class subobject. Note that super declarations always
+// have an empty definition.
+//
+// TODO: We could actually provide a default member initializer for
+// base classes.
+struct Mem_base_decl : Mem_variable_decl, Allocatable<Mem_base_decl>
+{
+  using Mem_variable_decl::Mem_variable_decl;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// Declares a member function of a class.
 //
 // TODO: I think that the type of a method is the same as that of a function,
 // except that the first parameter type must always be a (possibly qualified) 
 // reference to this. That could be enforced in the constructor, I suppose.
-struct Method_decl : Function_decl
+struct Mem_function_decl : Function_decl, Allocatable<Mem_function_decl>
 {
   using Function_decl::Function_decl;
 
@@ -390,7 +395,7 @@ struct Method_decl : Function_decl
 // may not be necessary.
 //
 // FIXME: Revisit this.
-struct Template_decl : Decl
+struct Template_decl : Decl, Allocatable<Template_decl>
 {
   Template_decl(Decl_list const& p, Decl& d)
     : Decl(d.name()), parms(p), cons(nullptr), decl(&d)
@@ -432,7 +437,7 @@ struct Template_decl : Decl
 // Represents a concept definition.
 //
 // FIXME: Revisit this.
-struct Concept_decl : Decl
+struct Concept_decl : Decl, Allocatable<Concept_decl>
 {
   Concept_decl(Name& n, Decl_list const& ps)
     : Decl(n), parms(ps), def(nullptr)
@@ -466,146 +471,73 @@ struct Concept_decl : Decl
 };
 
 
+// An index records the depth and offset of a parameter.
+struct Index : std::pair<int, int>
+{
+  using std::pair<int, int>::pair;
+
+  int depth() const  { return first; }
+  int offset() const { return second; }
+};
+
+
 // The parameterized base class of all parameters. This provides a
 // parameter index.
+//
+// TODO: Define parameters that accept an index.
+//
+// TODO: For all derived classes, add accessors and checks to determine
+// if the default argument is present.
 template<typename T>
-struct Parameter_decl : T
+struct Parameter : T
 {
-  // FIXME: Deprecate this constructor. Every parameter must be
-  // declared with an index.
-  template<typename... Args>
-  Parameter_decl(Args&&... args)
-    : T(std::forward<Args>(args)...)
-  { }
-
-  template<typename... Args>
-  Parameter_decl(Index x, Args&&... args)
-    : T(std::forward<Args>(args)...), ix(x)
-  { }
+  using T::T;
 
   // Returns the index of the template parameter.
-  Index  index() const { return ix; }
-  Index& index()       { return ix; }
+  Index  index() const { return ix_; }
+  Index& index()       { return ix_; }
 
-  Index ix;
+  Index ix_;
 };
 
 
 // An object parameter of a function.
-//
-// TODO: Name this variable_parm to be consistent with variable
-// declarations?
-struct Object_parm : Parameter_decl<Variable_decl>
+struct Object_parm : Parameter<Object_decl>, Allocatable<Object_parm>
 {
-  Object_parm(Name& n, Type t)
-    : Parameter_decl<Variable_decl>(n, t), init_()
-  { }
-
-  Object_parm(Name& n, Type t, Expr& i)
-    : Parameter_decl<Variable_decl>(n, t), init_(&i)
-  { }
+  using Parameter<Object_decl>::Parameter;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the default argument for the parameter.
-  // This is valid iff has_default_arguement() is true.
-  Expr const& default_argument() const { return *init_; }
-  Expr&       default_argument()       { return *init_; }
-
-  bool has_default_arguement() const { return init_; }
-
-  Expr* init_;
 };
 
 
 // A reference parameter of a function.
-struct Reference_parm : Parameter_decl<Variable_decl>
+struct Reference_parm : Parameter<Reference_decl>, Allocatable<Reference_parm>
 {
-  Reference_parm(Name& n, Type t)
-    : Parameter_decl<Variable_decl>(n, t), init_()
-  { }
-
-  Reference_parm(Name& n, Type t, Expr& i)
-    : Parameter_decl<Variable_decl>(n, t), init_(&i)
-  { }
+  using Parameter<Reference_decl>::Parameter;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the default argument for the parameter.
-  // This is valid iff has_default_arguement() is true.
-  Expr const& default_argument() const { return *init_; }
-  Expr&       default_argument()       { return *init_; }
-
-  bool has_default_arguement() const { return init_; }
-
-  Expr* init_;
 };
 
 
 // A type parameter of a template.
-struct Type_parm : Parameter_decl<Type_decl>
+struct Type_parm : Parameter<Class_decl>, Allocatable<Type_parm>
 {
-  Type_parm(Name& n)
-    : Parameter_decl<Type_decl>(n), def_()
-  { }
-
-  Type_parm(Name& n, Type& t)
-    : Parameter_decl<Type_decl>(n), def_(&t)
-  { }
+  using Parameter<Class_decl>::Parameter;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the default argument for the parameter.
-  // This is valid iff has_default_arguement() is true.
-  Type const& default_argument() const { return *def_; }
-  Type&       default_argument()       { return *def_; }
-
-  bool has_default_arguement() const { return def_; }
-
-  Type* def_;
 };
 
 
 // A template parameter of a template.
-//
-// The nested effectively denotes the "kind" of the template. It
-// must be a template declaration. The name of the parameter and
-// that of the underlying declaration must be the same.
-struct Template_parm : Parameter_decl<Decl>
+struct Template_parm : Parameter<Template_decl>, Allocatable<Template_parm>
 {
-  Template_parm(Name& n, Decl& t)
-    : Parameter_decl<Decl>(n), temp(&t), def()
-  { }
-
-  Template_parm(Name& n, Decl& t, Init& i)
-    : Parameter_decl<Decl>(n), temp(&t), def(&i)
-  { }
+  using Parameter<Template_decl>::Parameter;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the template declaration that defines the
-  // signature of accepted arguments.
-  Template_decl const& declaration() const { return *cast<Template_decl>(temp); }
-  Template_decl&       declaration()       { return *cast<Template_decl>(temp); }
-
-  // Returns the default argument for the parameter.
-  // This is valid iff has_default_arguement() is true.
-  Init const& default_argument() const { return *def; }
-  Init&       default_argument()       { return *def; }
-
-  bool has_default_arguement() const { return def; }
-
-  // Returns the index of the template parameter.
-  Index  index() const { return ix; }
-  Index& index()       { return ix; }
-
-  Decl*     temp;
-  Init*     def;
-  Index     ix;
 };
 
 

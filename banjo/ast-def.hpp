@@ -50,7 +50,7 @@ struct Def::Mutator
 //
 // ANSWER: User defined types as base_subobjects(Supers) (before code gen)
 
-struct Empty_def : Def
+struct Empty_def : Def, Allocatable<Empty_def>
 {
   void accept(Visitor& v) const { return v.visit(*this); }
   void accept(Mutator& v)       { return v.visit(*this); }
@@ -67,7 +67,7 @@ struct Empty_def : Def
 // specific kind of behavior, depending on the function defaulted.
 // We should have derived classes for each kind of defaulted
 // behavior (I think).
-struct Defaulted_def : Def
+struct Defaulted_def : Def, Allocatable<Defaulted_def>
 {
   void accept(Visitor& v) const { return v.visit(*this); }
   void accept(Mutator& v)       { return v.visit(*this); }
@@ -78,7 +78,7 @@ struct Defaulted_def : Def
 //
 // C++ allows deleted functions, but deleted classes (and also
 // variables) make sense for partial specializations.
-struct Deleted_def : Def
+struct Deleted_def : Def, Allocatable<Deleted_def>
 {
   void accept(Visitor& v) const { return v.visit(*this); }
   void accept(Mutator& v)       { return v.visit(*this); }
@@ -87,7 +87,7 @@ struct Deleted_def : Def
 
 // Represents the definition of an entity by an expression. Both
 // variables and functions can have expression definitions.
-struct Expression_def : Def
+struct Expression_def : Def, Allocatable<Expression_def>
 {
   Expression_def(Expr& e)
     : expr_(&e)
@@ -108,7 +108,7 @@ struct Expression_def : Def
 //
 // TODO: Are there any interesting properties of the function definition
 // that are not related to its body?
-struct Function_def : Def
+struct Function_def : Def, Allocatable<Function_def>
 {
   Function_def(Stmt& s)
     : stmt_(&s)
@@ -135,7 +135,7 @@ struct Function_def : Def
 // Note that the real distinction is in the syntactic form of the
 // definitions. In subsequent passes, these would be reduced to a single
 // kind of definition for each entity.
-struct Class_def : Def
+struct Class_def : Def, Allocatable<Class_def>
 {
   Class_def(Stmt_list&& ss)
     : stmts_(std::move(ss))
@@ -167,7 +167,7 @@ struct Class_def : Def
 
 
 // A concept body is a sequence of statements.
-struct Concept_def : Def
+struct Concept_def : Def, Allocatable<Concept_def>
 {
   Concept_def(Req_list const& rs)
     : reqs(rs)
@@ -186,7 +186,7 @@ struct Concept_def : Def
 
 // An intrinsic function definition exposes some feature of the
 // compiler (diagnostics, debugging, information).
-struct Intrinsic_def : Def
+struct Intrinsic_def : Def, Allocatable<Intrinsic_def>
 {
   union Rep {
     Nullary_fn nullary;

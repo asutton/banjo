@@ -53,8 +53,6 @@ struct Simple_id : Name, Allocatable<Simple_id>
   void accept(Visitor& v) const { v.visit(*this); };
   void accept(Mutator& v)       { v.visit(*this); };
 
-  Simple_id& clone(Allocator& a) const { return make(a, *this); }
-
   // Returns the symbol for the id.
   Symbol const& symbol() const { return *sym_; }
 
@@ -72,8 +70,6 @@ struct Global_id : Name, Allocatable<Global_id>
 
   void accept(Visitor& v) const { v.visit(*this); };
   void accept(Mutator& v)       { v.visit(*this); };
-
-  Global_id& clone(Allocator& a) const { return make(a, *this); }
 };
 
 
@@ -89,8 +85,6 @@ struct Placeholder_id : Name, Allocatable<Placeholder_id>
 
   void accept(Visitor& v) const { v.visit(*this); };
   void accept(Mutator& v)       { v.visit(*this); };
-
-  Placeholder_id& clone(Allocator& a) const { return make(a, *this); }
 
   // Return the unique integer value assigned to the name.
   int number() const { return num; }
@@ -136,8 +130,6 @@ struct Operator_id : Name, Allocatable<Operator_id>
 
   void accept(Visitor& v) const { v.visit(*this); };
   void accept(Mutator& v)       { v.visit(*this); };
-
-  Operator_id& clone(Allocator& a) const { return make(a, *this); }
 
   // Returns the operator kind.
   Operator_kind kind() const { return op; }
