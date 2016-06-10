@@ -175,7 +175,7 @@ namespace banjo
 template<typename T>
 struct List_iterator
 {
-  using Iter              = typename std::vector<T*>::iterator;
+  using Iter              = T*;
   using value_type        = T;
   using reference         = T&;
   using pointer           = T*;
@@ -184,7 +184,7 @@ struct List_iterator
 
   List_iterator() = default;
 
-  List_iterator(Iter i)
+  List_iterator(T** i)
     : iter(i)
   { }
 
@@ -197,14 +197,14 @@ struct List_iterator
   bool operator==(List_iterator i) const { return iter == i.iter; }
   bool operator!=(List_iterator i) const { return iter != i.iter; }
 
-  Iter iter;
+  T** iter;
 };
 
 
 template<typename T>
 struct List_iterator<T const>
 {
-  using Iter              = typename std::vector<T*>::const_iterator;
+  using Iter              = T const*;
   using value_type        = T;
   using reference         = T const&;
   using pointer           = T const*;
@@ -213,7 +213,7 @@ struct List_iterator<T const>
 
   List_iterator() = default;
 
-  List_iterator(Iter i)
+  List_iterator(T* const* i)
     : iter(i)
   { }
 
@@ -230,7 +230,7 @@ struct List_iterator<T const>
   bool operator==(List_iterator i) const { return iter == i.iter; }
   bool operator!=(List_iterator i) const { return iter != i.iter; }
 
-  Iter iter;
+  T* const* iter;
 };
 
 
@@ -261,6 +261,10 @@ struct List : std::vector<T*>
   std::vector<T*> const& base() const { return *this; }
   std::vector<T*>&       base()       { return *this; }
 
+  bool is_empty() const { return base().empty(); }
+  
+  std::size_t size() const { return base().size(); }
+
   T const& front() const { return *base().front(); }
   T&       front()       { return *base().front(); }
 
@@ -273,11 +277,11 @@ struct List : std::vector<T*>
   template<typename I>
   void append(I, I);
 
-  iterator begin() { return base().begin(); }
-  iterator end()   { return base().end(); }
+  iterator begin() { return base().data(); }
+  iterator end()   { return base().data() + size(); }
 
-  const_iterator begin() const { return base().begin(); }
-  const_iterator end() const   { return base().end(); }
+  const_iterator begin() const { return base().data(); }
+  const_iterator end() const   { return base().data() + size(); }
 };
 
 
@@ -294,14 +298,56 @@ List<T>::append(I first, I last)
 }
 
 
+// -------------------------------------------------------------------------- //
+// Ranges
+
+// An iterator range over a contiguous sequence of terms.
+//
+// TOOD: This seems useful, but I'm not currently using it anywhere. Also,
+// it needs to a corresponding const bit to make it work everywhere.
+template<typename T>
+struct Range
+{
+  using iterator = List_iterator<T>;
+  using const_iterator = List_iterator<T const>;
+
+  Range()
+    : first(), last()
+  { }
+
+  Range(T** f, T** l)
+    : first(f), last(l)
+  { }
+
+  iterator begin() { return first; }
+  iterator end()   { return last; }
+
+  const_iterator begin() const { return first; }
+  const_iterator end() const   { return last; }
+
+  T* first;
+  T* last;
+};
+
+
+// ---------------------------------------------------------------------------//
+// Utility types
+
 // Lists
 using Term_list = List<Term>;
 using Type_list = List<Type>;
 using Expr_list = List<Expr>;
-using Req_list  = List<Req>;
 using Stmt_list = List<Stmt>;
 using Decl_list = List<Decl>;
-using Cons_list = List<Cons>;
+using Req_list = List<Decl>;
+
+
+// Ranges
+using Term_range = Range<Term>;
+using Type_range = Range<Type>;
+using Expr_range = Range<Expr>;
+using Stmt_range = Range<Stmt>;
+using Decl_range = Range<Decl>;
 
 
 // Iterators
@@ -309,7 +355,6 @@ using Term_iter = Term_list::iterator;
 using Type_iter = Type_list::iterator;
 using Expr_iter = Expr_list::iterator;
 using Decl_iter = Decl_list::iterator;
-using Cons_iter = Cons_list::iterator;
 
 
 // ---------------------------------------------------------------------------//

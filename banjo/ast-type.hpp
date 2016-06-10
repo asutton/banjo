@@ -91,19 +91,19 @@ enum Qualifier_set : int
   consume_qual  = 1 << 8,
 
   // Function qualifiers
-  noexcept_qaul = 1 << 12,
+  noexcept_qual = 1 << 12,
 
   // Combinations
   cv_qual        = const_qual | volatile_qual,
 
   // Names the set of object qualifiers
-  object_qual    = const_qual | volatile_qual,
+  object_qual    = const_qual | volatile_qual | meta_qual,
 
   // Names the set of object qualifiers.
   reference_qual = consume_qual,
 
   // Names the set off function qualifiers.
-  function_qual  = noexcept_qaul | meta_qual
+  function_qual  = noexcept_qual | meta_qual
 };
 
 
@@ -111,6 +111,13 @@ inline Qualifier_set&
 operator|=(Qualifier_set& a, Qualifier_set b)
 {
   return a = Qualifier_set(a | b);
+}
+
+
+inline Qualifier_set
+operator|(Qualifier_set a, Qualifier_set b)
+{
+  return a = Qualifier_set((int)a | (int)b);
 }
 
 
@@ -206,7 +213,7 @@ struct Type : Term
   bool is_consume() const  { return qual_ & consume_qual; }
 
   // Function qualifiers
-  bool is_noexcept() const { return qual_ & noexcept_qaul; }
+  bool is_noexcept() const { return qual_ & noexcept_qual; }
 
   Type_category  cat_;
   Qualifier_set  qual_;

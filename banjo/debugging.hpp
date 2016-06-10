@@ -32,6 +32,7 @@ struct Debug_printer
   void newline();
   void newline_and_indent();
   void newline_and_undent();
+  void undent_and_newline();
   void rep(Term const&);
   void prop(char const*);
   void value(bool);
@@ -49,6 +50,7 @@ struct Debug_printer
   void function_type(Function_type const&);
   void type_category(Type const&);
   void type_qualifiers(Type const&);
+  void type_qualifier(char const*);
 
   // Expressions
   void expression(Expr const&);

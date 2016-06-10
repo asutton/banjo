@@ -18,40 +18,18 @@ namespace banjo
 struct Sexpr
 {
   Sexpr(Debug_printer& p, Term const& t)
-    : printer(p)
+    : p(p)
   {
-    printer.open();
-    printer.rep(t);
-  }
-
-  Sexpr(Debug_printer& p, Type const& t)
-    : printer(p)
-  {
-    printer.open();
-    printer.rep(t);
-    printer.space();
-    printer.type_category(t);
-    printer.type_qualifiers(t);
-  }
-
-  // When debugging expressions, include their type as part of the 
-  // representation.
-  Sexpr(Debug_printer& p, Expr const& e)
-    : printer(p)
-  {
-    printer.open();
-    printer.rep(e);
-    printer.space();
-    // printer.prop("type");
-    // printer.os << e.type();
+    p.open();
+    p.rep(t);
   }
 
   ~Sexpr()
   {
-    printer.close();
+    p.close();
   }
 
-  Debug_printer& printer;
+  Debug_printer& p;
 };
 
 
@@ -106,6 +84,15 @@ Debug_printer::newline_and_undent()
 {
   --indent;
   newline();
+}
+
+
+// Print a newline and undent (back up) one level.
+void
+Debug_printer::undent_and_newline()
+{
+  newline();
+  --indent;
 }
 
 
@@ -178,11 +165,15 @@ Debug_printer::type(Type const& t)
   {
     Debug_printer& self;
     void operator()(Type const& t)          { lingo_unhandled(t); }
-    void operator()(Void_type const& t)  { self.void_type(t); }
+    void operator()(Void_type const& t)     { self.void_type(t); }
     void operator()(Boolean_type const& t)  { self.boolean_type(t); }
     void operator()(Integer_type const& t)  { self.integer_type(t); }
     void operator()(Function_type const& t) { self.function_type(t); }
   };
+  Sexpr guard(*this, t);
+  
+  type_category(t);
+  type_qualifiers(t);
   apply(t, fn{*this});
 }
 
@@ -190,14 +181,12 @@ Debug_printer::type(Type const& t)
 void
 Debug_printer::void_type(Void_type const& t)
 {
-  Sexpr guard(*this, t);
 }
 
 
 void
 Debug_printer::boolean_type(Boolean_type const& t)
 {
-  Sexpr guard(*this, t);
 }
 
 
@@ -205,7 +194,10 @@ Debug_printer::boolean_type(Boolean_type const& t)
 void
 Debug_printer::integer_type(Integer_type const& t)
 {
-  Sexpr guard(*this, t);
+  space();
+  os << (t.is_signed() ? "signed" : " unsigned");
+  space();
+  os << t.precision() << 'b';
 }
 
 
@@ -213,43 +205,65 @@ Debug_printer::integer_type(Integer_type const& t)
 void
 Debug_printer::function_type(Function_type const& t)
 {
-  Sexpr guard(*this, t);
+  newline_and_indent();
   for (Type const& p : t.parameter_types()) {
-    space();
     type(p);
+    newline();
   }
   type(t.return_type());
+  newline_and_undent();
+}
+
+
+static inline char const*
+category_name(Type_category c)
+{
+  switch (c) {
+    case banjo::object_type: 
+      return "object";
+    case banjo::reference_type: 
+      return "reference";
+    case banjo::function_type: 
+      return "function";
+    default:  
+      return "uncategorized-type";
+  }  
 }
 
 
 void
 Debug_printer::type_category(Type const& t)
 {
-  os << "category=";
-  switch (t.category()) {
-    case banjo::object_type: 
-      os << "object";
-      break;
-    
-    case banjo::reference_type: 
-      os << "reference";
-      break;
-    
-    case banjo::function_type: 
-      os << "function"; 
-      break;
-    
-    default: 
-      os << "unknown"; 
-      break;
-  }
+  space();
+  os << category_name(t.category());
 }
 
 
 void
 Debug_printer::type_qualifiers(Type const& t)
 {
+  if (!t.is_qualified())
+    return;
 
+  Qualifier_set q = t.qualifiers();  
+  if (q & const_qual)
+    type_qualifier("const");
+  if (q & volatile_qual)
+    type_qualifier("volatile");
+  if (q & meta_qual)
+    type_qualifier("meta");
+  if (q & consume_qual)
+    type_qualifier("consume");
+  if (q & noexcept_qual)
+    type_qualifier("noexcept");
+}
+
+
+void
+Debug_printer::type_qualifier(char const* q)
+{
+  space();
+  os << q;
 }
 
 

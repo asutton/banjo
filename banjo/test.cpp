@@ -31,12 +31,13 @@ int main()
   Symbol_table syms;
 
   Type_list parms { 
-    &Boolean_type::make(alloc),
+    &Boolean_type::make(alloc, reference_type, meta_qual | volatile_qual),
     &Integer_type::make(alloc) 
   };
+
   auto& f = Function_type::make(alloc, parms, Void_type::make(alloc));
   debug(f);
 
-  auto& n = Simple_id::make(alloc, sym(syms, "x"));
-  debug(n);
+  // auto& n = Simple_id::make(alloc, sym(syms, "x"));
+  // debug(n);
 }
