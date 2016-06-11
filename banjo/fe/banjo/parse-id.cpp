@@ -134,13 +134,13 @@ Parser::id()
 Name&
 Parser::unqualified_id()
 {
-  if (next_token_is(tk::tilde_tok))
-    return destructor_id();
+  // if (next_token_is(tk::tilde_tok))
+  //   return destructor_id();
 
-  if (Token tok = match_if(tk::operator_tok)) {
-    Operator_kind op = any_operator();
-    return on_operator_id(tok, op);
-  }
+  // if (Token tok = match_if(tk::operator_tok)) {
+  //   Operator_kind op = any_operator();
+  //   return on_operator_id(tok, op);
+  // }
 
   Token tok = match(tk::identifier_tok);
 
@@ -153,6 +153,7 @@ Parser::unqualified_id()
 }
 
 
+#if 0
 // Parse a destructor-id. A destructor-id names the destructor of
 // a class or a decltype-type that refers to a class.
 //
@@ -319,7 +320,7 @@ Parser::concept_name()
   Token id = match(tk::identifier_tok);
   return on_concept_name(id);
 }
-
+#endif
 
 } // namespace fe
 

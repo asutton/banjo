@@ -4,9 +4,7 @@
 #include "parser.hpp"
 
 #include <banjo/ast.hpp>
-#include <banjo/lookup.hpp>
-#include <banjo/template.hpp>
-#include <banjo/printer.hpp>
+#include <banjo/expression.hpp>
 
 
 namespace banjo
@@ -21,10 +19,11 @@ namespace fe
 Name&
 Parser::on_simple_id(Token tok)
 {
-  return cxt.get_id(*tok.symbol());
+  return cxt.get_id(tok);
 }
 
 
+#if 0
 Name&
 Parser::on_destructor_id(Token, Type& t)
 {
@@ -78,7 +77,6 @@ Parser::on_qualified_id(Decl& d, Name& n)
   return cxt.get_qualified_id(d, n);
 }
 
-
 // -------------------------------------------------------------------------- //
 // Resolved names
 //
@@ -109,6 +107,7 @@ Parser::on_concept_name(Token tok)
     return decl;
   throw Lookup_error("'{}' does not name a concept", id);
 }
+#endif
 
 
 } // namespace fe

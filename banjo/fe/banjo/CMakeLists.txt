@@ -16,9 +16,9 @@ add_library(banjo-fe
   parse-function.cpp
   parse-class.cpp
   # parse-req.cpp
-  # sema-tu.cpp
-  # sema-id.cpp
-  # sema-type.cpp
+  sema-tu.cpp
+  sema-id.cpp
+  sema-type.cpp
   # sema-expr.cpp
   # sema-init.cpp
   # sema-stmt.cpp

@@ -15,6 +15,7 @@ namespace banjo
 
 Type& resolve_id_type(Context&, Name&);
 
+Type& make_reference_type(Context&, Type&);
 Type& make_qualified_type(Context&, Type&, Qualifier_set);
 
 Type& make_pointer_type(Context&, Type&);

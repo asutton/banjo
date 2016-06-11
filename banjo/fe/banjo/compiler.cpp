@@ -117,9 +117,9 @@ main(int argc, char* argv[])
   }
 
   // Perform syntactic analysis.
-  // Token_stream ts(toks);
-  // fe::Parser parse(cxt, ts);
-  // Decl& tu = parse();
+  Token_stream ts(toks);
+  fe::Parser parse(cxt, ts);
+  Decl& tu = parse();
 
   if (opts.emit == "tokens") {
     for (Token k : toks)

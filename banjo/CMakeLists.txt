@@ -39,7 +39,7 @@ add_library(banjo
   builtin.cpp
 
   # # # Tree construction
-  # type.cpp
+  type.cpp
   # declaration.cpp
   # overload.cpp
   # expression.cpp

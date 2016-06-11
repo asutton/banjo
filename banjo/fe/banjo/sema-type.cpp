@@ -19,48 +19,48 @@ namespace fe
 Type&
 Parser::on_class_type(Token)
 {
-  return build.get_type_type();
+  return cxt.get_type_type();
 }
 
 Type&
 Parser::on_coroutine_type(Token)
 {
-  return build.get_type_type();
+  return cxt.get_type_type();
 }
 
 
 Type&
 Parser::on_void_type(Token)
 {
-  return build.get_void_type();
+  return cxt.get_void_type();
 }
 
 
 Type&
 Parser::on_byte_type(Token)
 {
-  return build.get_byte_type();
+  return cxt.get_byte_type(object_type);
 }
 
 
 Type&
 Parser::on_bool_type(Token)
 {
-  return build.get_bool_type();
+  return cxt.get_bool_type(object_type);
 }
 
 
 Type&
 Parser::on_int_type(Token)
 {
-  return build.get_int_type();
+  return cxt.get_int_type(object_type);
 }
 
 
 Type&
 Parser::on_id_type(Name& n)
 {
-  return make_type(cxt, n);
+  return resolve_id_type(cxt, n);
 }
 
 
@@ -76,11 +76,14 @@ Parser::on_decltype_type(Token, Expr&)
 Type&
 Parser::on_function_type(Type_list& p, Type& r)
 {
-  return build.get_function_type(p, r);
+  return cxt.get_function_type(p, r);
 }
 
 
 // Returns a const-qualified type.
+//
+// FIXME: This is wrong. It should add the qualifier to t, not overwrite
+// the existing qualifier.
 Type&
 Parser::on_const_type(Type& t)
 {
@@ -89,6 +92,9 @@ Parser::on_const_type(Type& t)
 
 
 // Returns a volatile-qualified type.
+//
+// FIXME: This is wrong. It should add the qualifier to t, not overwrite
+// the existing qualifier.
 Type&
 Parser::on_volatile_type(Type& t)
 {
@@ -117,23 +123,9 @@ Parser::on_tuple_type(Type_list& t)
 
 
 Type&
-Parser::on_slice_type(Type& t)
-{
-  return make_slice_type(cxt, t);
-}
-
-
-Type&
 Parser::on_reference_type(Type& t)
 {
   return make_reference_type(cxt, t);
-}
-
-
-Type&
-Parser::on_pack_type(Type& t)
-{
-  return make_pack_type(cxt, t);
 }
 
 

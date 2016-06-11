@@ -36,11 +36,26 @@ resolve_simple_id_type(Context& cxt, Simple_id& id)
 
 // Resolve a name that refers to a type.
 Type&
-resolve_type(Context& cxt, Name& n)
+resolve_id_type(Context& cxt, Name& n)
 {
   if (Simple_id* id = as<Simple_id>(&n))
     return resolve_simple_id_type(cxt, *id);
   lingo_unhandled(n);
+}
+
+
+// -------------------------------------------------------------------------- //
+// Reference types
+
+// Returns a reference variant of `t`. Throws an error if `t` cannot be made
+// into a reference type.
+//
+// TODO: Check that t is a (valid) object or function type. Note the special
+// exception about references to void.
+Type&
+make_reference_type(Context& cxt, Type& t)
+{
+  return cxt.get_reference_type(t);
 }
 
 
@@ -52,29 +67,6 @@ resolve_type(Context& cxt, Name& n)
 namespace
 {
 
-// Any qualifiers on an array type apply to the element type.
-Type&
-make_qualified_array_type(Context& cxt, Array_type& t, Qualifier_set q)
-{
-  Type& qual = make_qualified_type(cxt, t.element_type(), q);
-  Expr& ext = t.extent();
-  return cxt.get_array_type(qual, ext);
-}
-
-
-// Any qualifiers on a tuple type apply to the element types.
-Type&
-make_qualified_tuple_type(Context& cxt, Tuple_type& t, Qualifier_set q)
-{
-  Type_list ts;
-  for (Type& elem : t.element_types()) {
-    Type& qual = make_qualified_type(cxt, elem, q);
-    ts.push_back(qual);
-  }
-  return cxt.get_tuple_type(std::move(ts));
-}
-
-
 // Set the object-qualifiers of the object t to q. If q is empty, then
 // this will return an unqualified object type.
 //
@@ -82,29 +74,26 @@ make_qualified_tuple_type(Context& cxt, Tuple_type& t, Qualifier_set q)
 // functions above for their rules.
 //
 // The qualifiers shall not include function or reference qualifiers.
+//
+// FIXME: Actually check this stuff.
 Type&
 make_qualified_object_type(Context& cxt, Type& t, Qualifier_set q)
 {
-  lingo_assert(get_obejct_qualifiers() == q);
-  if (Array_type* arr = as<Array_type>(&t))
-    return make_qualified_array_type(cxt, *arr, q);
-  if (Tuple_type* tup = as<Tuple_type>(&t))
-    return make_qualified_tuple_type(cxt, *tup, q);
   return cxt.get_qualified_type(t, q);
 }
 
 
 Type&
-make_qualified_object_type(Context& cxt, Type& t, Qualifier_set q)
+make_qualified_reference_type(Context& cxt, Type& t, Qualifier_set q)
 {
-
+  lingo_unreachable();
 }
 
 
 Type&
-make_qualified_object_type(Context& cxt, Type& t, Qualifier_set q)
+make_qualified_function_type(Context& cxt, Type& t, Qualifier_set q)
 {
-
+  lingo_unreachable();
 }
 
 
@@ -134,7 +123,7 @@ make_qualified_type(Context& cxt, Type& t, Qualifier_set q)
 Type&
 make_pointer_type(Context& cxt, Type& t)
 {
-  return cxt.get_pointer_type(t);
+  return cxt.get_pointer_type(object_type, t);
 }
 
 
@@ -146,7 +135,7 @@ make_pointer_type(Context& cxt, Type& t)
 Type&
 make_array_type(Context& cxt, Type& t, Expr& e)
 {
-  return cxt.get_array_type(t, e);
+  return cxt.get_array_type(object_type, t, e);
 }
 
 
@@ -154,7 +143,7 @@ make_array_type(Context& cxt, Type& t, Expr& e)
 Type&
 make_tuple_type(Context& cxt, Type_list& t)
 {
-  return cxt.get_tuple_type(t);
+  return cxt.get_tuple_type(object_type, t);
 }
 
 
@@ -162,7 +151,7 @@ make_tuple_type(Context& cxt, Type_list& t)
 Type&
 make_fresh_type(Context& cxt)
 {
-  return cxt.make_auto_type();
+  lingo_unreachable();
 }
 
 } // namespace banjo
