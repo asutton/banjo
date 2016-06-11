@@ -40,7 +40,6 @@ using Store = lingo::Environment<Decl const*, Value>;
 struct Context : List_allocator, Builder
 {
   Context(Symbol_table&);
-  ~Context();
 
   // Non-copyable
   Context(Context const&) = delete;

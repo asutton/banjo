@@ -20,7 +20,7 @@ namespace intrinsic
 Expr& 
 show_value(Context& cxt, Expr& e)
 {
-  std::cout << debug(e) << '\n';
+  debug(e);
   return cxt.get_void();
 }
 

@@ -18,6 +18,7 @@ struct Debug_printer
 {
   Debug_printer(std::ostream&);
 
+  void operator()(Term const& n);
   void operator()(Name const& n) { id(n); }
   void operator()(Type const& t) { type(t); }
   void operator()(Expr const& e) { expression(e); }
@@ -78,15 +79,7 @@ struct Debug_printer
 };
 
 
-template<typename T>
-struct Debug_term
-{
-  T const& t;
-};
-
-
-void debug(Name const&);
-void debug(Type const&);
+void debug(Term const&);
 
 
 } // namespace banjo

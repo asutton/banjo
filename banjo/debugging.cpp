@@ -130,6 +130,25 @@ Debug_printer::value(Integer const& n)
 
 
 // -------------------------------------------------------------------------- //
+// Terms
+
+void
+Debug_printer::operator()(Term const& x)
+{
+  if (Name const* n = as<Name>(&x))
+    id(*n);
+  if (Type const* t = as<Type>(&x))
+    type(*t);
+  if (Expr const* e = as<Expr>(&x))
+    expression(*e);
+  if (Stmt const* s = as<Stmt>(&x))
+    statement(*s);
+  if (Decl const* d = as<Decl>(&x))
+    declaration(*d);
+}
+
+
+// -------------------------------------------------------------------------- //
 // Names
 
 void
@@ -390,17 +409,7 @@ Debug_printer::constraint(Cons const& c)
 // Interface
 
 void
-debug(Name const& n)
-{
-  Debug_printer p(std::cerr);
-  p.tree = true;
-  p(n);
-  p.newline();
-}
-
-
-void
-debug(Type const& t)
+debug(Term const& t)
 {
   Debug_printer p(std::cerr);
   p.tree = true;

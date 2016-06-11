@@ -35,8 +35,8 @@ add_library(banjo
 
   # # Application context and facilities.
   context.cpp
+  intrinsic.cpp
   # builtin.cpp
-  # intrinsic.cpp
 
   # # # Tree construction
   # type.cpp

@@ -34,11 +34,6 @@ Context::Context(Symbol_table& s)
 }
 
 
-Context::~Context()
-{
-}
-
-
 Scope const& 
 Context::global_scope() const 
 { 
