@@ -18,7 +18,7 @@ namespace fe
 // frontend initialization, maintaining compiler options, etc.
 struct Context : banjo::Context
 {
-  Context();
+  Context(Symbol_table&);
 };
 
 

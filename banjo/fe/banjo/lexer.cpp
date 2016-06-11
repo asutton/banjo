@@ -18,6 +18,12 @@ namespace banjo
 namespace fe
 {
 
+using lingo::is_space;
+using lingo::is_alpha;
+using lingo::is_decimal_digit;
+using lingo::string_to_int;
+
+
 Symbol_table&
 Lexer::symbols()
 {

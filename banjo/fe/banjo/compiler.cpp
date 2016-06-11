@@ -5,8 +5,8 @@
 #include "lexer.hpp"
 #include "parser.hpp"
 
-#include <banjo/printer.hpp>
-#include <banjo/gen/llvm/generator.hpp>
+// #include <banjo/printer.hpp>
+// #include <banjo/gen/llvm/generator.hpp>
 
 #include <lingo/file.hpp>
 #include <lingo/io.hpp>
@@ -26,7 +26,7 @@ struct Options
 {
   ~Options();
 
-  String   emit    = "banjo";
+  String   emit    = "tokens";
   File_seq inputs  = {};
 };
 
@@ -88,7 +88,8 @@ parse_args(int argc, char* argv[], Options& opts)
 int
 main(int argc, char* argv[])
 {
-  fe::Context cxt;
+  Symbol_table syms;
+  fe::Context cxt(syms);
 
   Options opts;
   parse_args(argc, argv, opts);
@@ -108,7 +109,7 @@ main(int argc, char* argv[])
     Token_stream ts;
     fe::Lexer lex(cxt, cs, ts);
 
-    // Lex tokens.
+    // Lex the file and splice its tokens into the input stream.
     lex();
     if (error_count())
       return 1;
@@ -116,13 +117,19 @@ main(int argc, char* argv[])
   }
 
   // Perform syntactic analysis.
-  Token_stream ts(toks);
-  fe::Parser parse(cxt, ts);
-  Decl& tu = parse();
+  // Token_stream ts(toks);
+  // fe::Parser parse(cxt, ts);
+  // Decl& tu = parse();
 
-  if (opts.emit == "banjo") {
-    std::cout << tu << '\n';
+  if (opts.emit == "tokens") {
+    for (Token k : toks)
+      std::cout << k << ' ';
+    std::cout << '\n';
   }
+
+  // else if (opts.emit == "banjo") {
+  //   std::cout << tu << '\n';
+  // }
 
   // FIXME: Code generation not re-linked yet.
   // else if (opts.emit == "llvm") {

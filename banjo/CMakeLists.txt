@@ -66,7 +66,7 @@ add_library(banjo
   # inspection.cpp
 
   # Compile-time evaluation
-  # value.cpp
+  value.cpp
   # evaluation.cpp
 )
 

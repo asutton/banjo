@@ -82,7 +82,7 @@ union Value_rep
   Value_rep(Aggregate_value const& a) : agg_(a) { }
   Value_rep(Aggregate_value&& a) : agg_(std::move(a)) { }
   Value_rep(Reference_value r) : ref_(r) { }
-  ~Value_rep();
+  ~Value_rep() { }
 
   void initialize(Value_rep const&, Value_kind);
   void initialize(Value_rep&&, Value_kind);

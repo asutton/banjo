@@ -13,11 +13,10 @@ namespace banjo
 namespace fe
 {
 
-Context::Context()
-  : banjo::Context()
+Context::Context(Symbol_table& s)
+  : banjo::Context(s)
 {
-  // Initialize the tokens.
-  init_tokens(syms);
+  init_tokens(symbols());
 }
 
 

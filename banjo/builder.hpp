@@ -230,13 +230,6 @@ struct Builder
   Translation_unit& make_translation_unit();
   Translation_unit& make_translation_unit(Stmt_list&&);
 
-  // Cloning
-
-  Type&     clone(Type&);
-  Type_list clone(Type_list&);
-  Expr&     clone(Expr&);
-  Expr_list clone(Expr_list&);
-
   // Resources
   Allocator& allocator() { return alloc_; }
   Symbol_table& symbols() { return syms_; }

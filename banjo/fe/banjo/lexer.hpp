@@ -17,6 +17,16 @@ namespace banjo
 namespace fe
 {
 
+// Bring lingo tools into scope.
+using lingo::String_builder;
+using lingo::Character_stream;
+using lingo::Token_stream;
+using lingo::Token;
+
+
+struct Context;
+
+
 // The Lexer is a facility that translates sequences of characters into 
 // a sequence of tokens. 
 //
