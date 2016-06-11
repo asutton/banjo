@@ -9,7 +9,6 @@
 #include "context.hpp"
 #include "lookup.hpp"
 #include "conversion.hpp"
-#include "printer.hpp"
 
 #include <iostream>
 
@@ -26,7 +25,7 @@ static Expr&
 make_standard_logical_expr(Context& cxt, Expr& e, Make make)
 {
   Expr& c = contextual_conversion_to_bool(cxt, e);
-  Type& t = cxt.get_bool_type();
+  Type& t = cxt.get_bool_type(object_type);
   return make(integer_value, t, c);
 }
 
@@ -38,7 +37,7 @@ make_standard_logical_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
 {
   Expr& c1 = contextual_conversion_to_bool(cxt, e1);
   Expr& c2 = contextual_conversion_to_bool(cxt, e2);
-  Type& t = cxt.get_bool_type();
+  Type& t = cxt.get_bool_type(object_type);
   return make(t, c1, c2);
 }
 
@@ -186,7 +185,7 @@ Expr&
 make_logical_and(Context& cxt, Expr& e1, Expr& e2)
 {
   auto make = [&cxt](Type& t, Expr& e1, Expr& e2) -> Expr& {
-    return cxt.make_and(val_expr, t, e1, e2);
+    return cxt.make_and(t, e1, e2);
   };
   return make_logical_expr(cxt, e1, e2, make);
 }
@@ -196,7 +195,7 @@ Expr&
 make_logical_or(Context& cxt, Expr& e1, Expr& e2)
 {
   auto make = [&cxt](Type& t, Expr& e1, Expr& e2) -> Expr& {
-    return cxt.make_or(val_expr, t, e1, e2);
+    return cxt.make_or(t, e1, e2);
   };
   return make_logical_expr(cxt, e1, e2, make);
 }
@@ -209,7 +208,7 @@ make_logical_not(Context& cxt, Expr& e)
   Builder build(cxt);
   Expr& c = contextual_conversion_to_bool(cxt, e);
   Type& t = c.type();
-  return build.make_not(val_expr, t, c);
+  return build.make_not(t, c);
 }
 
 

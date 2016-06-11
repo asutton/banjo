@@ -47,7 +47,7 @@ Parser::class_declaration()
 
   // Match the class body.
   Def& def = class_body();
-  
+
   return finish_class_definition(decl, def);
 };
 
@@ -66,12 +66,14 @@ Parser::class_declaration()
 Def&
 Parser::class_body()
 {
-  Stmt_list ss;
-  match(tk::lbrace_tok);
-  if (lookahead() != tk::rbrace_tok)
-    ss = member_statement_seq();
-  match(tk::rbrace_tok);
-  return on_class_body(std::move(ss));
+  lingo_unreachable();
+  
+  // Stmt_list ss;
+  // match(tk::lbrace_tok);
+  // if (lookahead() != tk::rbrace_tok)
+  //   ss = member_statement_seq();
+  // match(tk::rbrace_tok);
+  // return on_class_body(std::move(ss));
 }
 
 

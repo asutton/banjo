@@ -3,11 +3,9 @@
 
 #include "expression.hpp"
 #include "ast.hpp"
-#include "template.hpp"
 #include "context.hpp"
 #include "lookup.hpp"
 #include "type.hpp"
-#include "printer.hpp"
 
 #include <iostream>
 
@@ -22,17 +20,6 @@ namespace banjo
 // id-expressions, depending on the kind of declaration named.
 
 
-// Returns the expression category for an id referring to a declared object.
-Category
-get_category(Object_decl const& d)
-{
-  if (d.is_consume_reference())
-    return cref_expr;
-  else
-    return nref_expr;
-}
-
-
 // The identifier is not an object or function.
 static Expr&
 make_error_ref(Context& cxt, Decl& d)
@@ -41,31 +28,25 @@ make_error_ref(Context& cxt, Decl& d)
   // valid expressions.
   //
   // TODO: Diagnose the error and point to the declaration.
-  if (Type_decl* t = as<Type_decl>(&d))
-    throw Type_error("'{}' is not an object or function", t->name());
+  if (Type_decl* t = as<Type_decl>(&d)) {
+    error(cxt, "'{}' is not an object, reference, or function", t->name());
+    throw Type_error();
+  }
 
   lingo_unhandled(d);
 }
 
 
-// Returns a reference to the declared object. A name denoting a variable
-// or function parameter is a reference expression whose type is that
-// of the declared variable or parameter. If the declaration is declared
-// with the consume reference specifier, then the expression is a consumable
-// reference.
+// Returns a reference to the declared variable. In the general, the
+// type will be a reference to the declared variable. However, if the
+// declaration has meta-type, the result is an object.
+//
+// TODO: Handle meta variables.
 static Expr&
-make_object_ref(Context& cxt, Object_decl& d)
+make_variable_ref(Context& cxt, Variable_decl& d)
 {
-  return cxt.make_reference(get_category(d), d.type(), d);
-}
-
-
-// Returns a reference to the declared constant. A name denoting a value
-// is a value expression with the declared type of the value.
-static Expr&
-make_value_ref(Context& cxt, Value_decl& d)
-{
-  return cxt.make_reference(val_expr, d.type(), d);
+  Type& t = cxt.get_reference_type(d.type());
+  return cxt.make_reference(t, d);
 }
 
 
@@ -88,21 +69,21 @@ make_value_ref(Context& cxt, Value_decl& d)
 static Expr&
 make_function_ref(Context& cxt, Function_decl& d)
 {
-  return cxt.make_reference(nref_expr, d.type(), d);
+  Type& t = cxt.get_reference_type(d.type());
+  return cxt.make_reference(t, d);
 }
 
 
 // Return a reference to the given declaration based on the kind
 // of the resolved declaration.
 static Expr&
-make_decl_ref(Context& cxt, Decl& decl)
+make_resolved_ref(Context& cxt, Decl& decl)
 {
   struct fn
   {
     Context& cxt;
     Expr& operator()(Decl& d)          { lingo_unhandled(d); }
-    Expr& operator()(Object_decl& d)   { return make_object_ref(cxt, d); }
-    Expr& operator()(Value_decl& d)    { return make_value_ref(cxt, d); }
+    Expr& operator()(Variable_decl& d) { return make_variable_ref(cxt, d); }
     Expr& operator()(Function_decl& d) { return make_function_ref(cxt, d); }
   };
   return apply(decl, fn{cxt});
@@ -111,7 +92,7 @@ make_decl_ref(Context& cxt, Decl& decl)
 
 // Return a reference to an overload set.
 static Expr&
-make_ovl_ref(Context& cxt, Name& n, Decl_list&& ds)
+make_overload_ref(Context& cxt, Name& n, Decl_list&& ds)
 {
   return cxt.make_reference(n, std::move(ds));
 }
@@ -122,18 +103,23 @@ make_ovl_ref(Context& cxt, Name& n, Decl_list&& ds)
 // field. If the field is declared with the consume specifier, then the 
 // expression computes a consumable value.
 static Expr&
-make_field_ref(Context& cxt, Expr& e, Field_decl& d)
+make_mem_variable_ref(Context& cxt, Expr& e, Mem_variable_decl& d)
 {
-  return cxt.make_reference(get_category(d), d.type(), e, d);
+  lingo_unreachable();
+
+  // Type& t = cxt.get_reference_type(d.type());
+  // return cxt.make_reference(t, d);
 }
 
 
 // Returns an expression referring to a class method. A method expression
 // is a reference value expression whose type is that of the function.
 static Expr&
-make_method_ref(Context& cxt, Expr& e, Method_decl& d)
+make_mem_function_ref(Context& cxt, Expr& e, Mem_function_decl& d)
 {
-  return cxt.make_reference(nref_expr, d.type(), e, d);
+  lingo_unreachable();
+
+  // return cxt.make_reference(nref_expr, d.type(), e, d);
 }
 
 
@@ -141,24 +127,22 @@ make_method_ref(Context& cxt, Expr& e, Method_decl& d)
 // actually member expressions; we can discard the computed object
 // and simply refer to the core value.
 static Expr&
-make_member_decl_ref(Context& cxt, Expr& obj, Decl& decl)
+make_resolved_mem_ref(Context& cxt, Expr& obj, Decl& decl)
 {
   struct fn
   {
     Context& cxt;
     Expr& obj;
 
-    Expr& operator()(Decl& d)          { return make_error_ref(cxt, d); }
+    Expr& operator()(Decl& d) { return make_error_ref(cxt, d); }
 
     // Non-members.
-    Expr& operator()(Object_decl& d)   { return make_object_ref(cxt, d); }
-    Expr& operator()(Value_decl& d)    { return make_value_ref(cxt, d); }
+    Expr& operator()(Variable_decl& d) { return make_variable_ref(cxt, d); }
     Expr& operator()(Function_decl& d) { return make_function_ref(cxt, d); }
-    Expr& operator()(Macro_decl& d)    { return make_function_ref(cxt, d); }
     
     // Members.
-    Expr& operator()(Field_decl& d)    { return make_field_ref(cxt, obj, d); }
-    Expr& operator()(Method_decl& d)   { return make_method_ref(cxt, obj, d); }
+    Expr& operator()(Mem_variable_decl& d) { return make_mem_variable_ref(cxt, obj, d); }
+    Expr& operator()(Mem_function_decl& d) { return make_mem_function_ref(cxt, obj, d); }
   };
   return apply(decl, fn{cxt, obj});
 }
@@ -166,9 +150,11 @@ make_member_decl_ref(Context& cxt, Expr& obj, Decl& decl)
 
 // Construct a reference to an unresolved (overloaded) member.
 static Expr&
-make_member_ovl_ref(Context& cxt, Expr& obj, Name& name, Decl_list&& ds)
+make_mem_overload_ref(Context& cxt, Expr& obj, Name& name, Decl_list&& ds)
 {
-  return cxt.make_reference(obj, name, std::move(ds));
+  lingo_unreachable();
+
+  // return cxt.make_reference(obj, name, std::move(ds));
 }
 
 
@@ -186,9 +172,9 @@ make_reference(Context& cxt, Simple_id& id)
 {
   Decl_list decls = unqualified_lookup(cxt, id);
   if (decls.size() == 1)
-    return make_decl_ref(cxt, decls.front());
+    return make_resolved_ref(cxt, decls.front());
   else
-    return make_ovl_ref(cxt, id, std::move(decls));
+    return make_overload_ref(cxt, id, std::move(decls));
 }
 
 
@@ -241,7 +227,7 @@ make_reference(Context& cxt, Name& n)
   struct fn
   {
     Context& cxt;
-    Expr& operator()(Name& n)        { banjo_unhandled_case(n); }
+    Expr& operator()(Name& n)        { lingo_unhandled(n); }
     Expr& operator()(Simple_id& n)   { return make_reference(cxt, n); }
     Expr& operator()(Template_id& n) { return make_reference(cxt, n); }
     Expr& operator()(Concept_id& n)  { return make_reference(cxt, n); }
@@ -267,9 +253,9 @@ make_member_ref(Context& cxt, Expr& obj, Simple_id& name)
     throw Lookup_error();
   }
   if (decls.size() == 1)
-    return make_member_decl_ref(cxt, obj, decls.front());
+    return make_resolved_mem_ref(cxt, obj, decls.front());
   else
-    return make_member_ovl_ref(cxt, obj, name, std::move(decls));
+    return make_mem_overload_ref(cxt, obj, name, std::move(decls));
 }
 
 

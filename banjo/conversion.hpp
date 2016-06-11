@@ -12,7 +12,7 @@ namespace banjo
 {
 
 // Standard conversions
-Expr& standard_conversion(Context&, Expr&, Category, Type&);
+Expr& standard_conversion(Context&, Expr&, Type&);
 Expr& standard_conversion_to_value(Context&, Expr&, Type&);
 
 // Contextual conversion

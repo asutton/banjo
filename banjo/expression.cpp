@@ -24,7 +24,7 @@ make_required_expression(Context& cxt, Expr& e)
   return e;
 }
 
-
+#if 0
 // A requires expression has type bool.
 //
 // TODO: Actually validate information about the requires expression. The
@@ -39,6 +39,7 @@ make_requirements(Context& cxt,
 {
   return cxt.make_requires(tparms, parms, reqs);
 }
+#endif
 
 
 // Apply an reference-to-value conversion.

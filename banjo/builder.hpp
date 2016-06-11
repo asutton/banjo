@@ -113,6 +113,7 @@ struct Builder
   Tuple_expr&    make_tuple(Type&, Expr_list&&);
 
   // Declaration references
+  Resolved_id_expr&   make_reference(Type&, Variable_decl&);
   Object_expr&        make_reference(Type&, Object_decl&);
   Reference_expr&     make_reference(Type&, Reference_decl&);
   Function_expr&      make_reference(Type&, Function_decl&);
@@ -155,6 +156,7 @@ struct Builder
   Bit_not_expr& make_bit_not(Type&, Expr&);
 
   // Function call
+  Call_expr& make_call(Type&, Expr&, Expr_list const&);
   Call_expr& make_call(Type&, Expr&, Expr_list&&);
 
   // Initializers
@@ -171,9 +173,9 @@ struct Builder
   Compound_stmt&     make_compound_statement(Stmt_list const&);
   Compound_stmt&     make_compound_statement(Stmt_list&&);
   Return_stmt&       make_return_statement();
-  Return_value_stmt& make_return_value_statement(Expr&);
+  Return_value_stmt& make_return_statement(Expr&);
   Yield_stmt&        make_yield_statement();
-  Yield_value_stmt&  make_yield_value_statement(Expr&);
+  Yield_value_stmt&  make_yield_statement(Expr&);
   If_then_stmt&      make_if_statement(Expr&, Stmt&);
   If_else_stmt&      make_if_statement(Expr&, Stmt&, Stmt&);
   While_stmt&        make_while_statement(Expr&, Stmt&);

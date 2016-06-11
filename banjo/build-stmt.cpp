@@ -45,7 +45,7 @@ Builder::make_return_statement()
 
 
 Return_value_stmt&
-Builder::make_return_value_statement(Expr& e)
+Builder::make_return_statement(Expr& e)
 {
   return Return_value_stmt::make(alloc_, e);
 }
@@ -59,7 +59,7 @@ Builder::make_yield_statement()
 
 
 Yield_value_stmt&
-Builder::make_yield_value_statement(Expr& e)
+Builder::make_yield_statement(Expr& e)
 {
   return Yield_value_stmt::make(alloc_, e);
 }

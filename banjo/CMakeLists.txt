@@ -42,13 +42,13 @@ add_library(banjo
   type.cpp
   # declaration.cpp
   # overload.cpp
-  # expression.cpp
-  # expr-id.cpp
-  # expr-logical.cpp
-  # expr-relational.cpp
-  # expr-arithmetic.cpp
-  # expr-bitwise.cpp
-  # expr-call.cpp
+  expression.cpp
+  expr-id.cpp
+  expr-logical.cpp
+  expr-relational.cpp
+  expr-arithmetic.cpp
+  expr-bitwise.cpp
+  expr-call.cpp
 
 
   # # Semantic rules and algorithms

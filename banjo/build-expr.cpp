@@ -80,6 +80,17 @@ Builder::make_tuple(Type& t, Expr_list&& es)
 }
 
 
+Resolved_id_expr&
+Builder::make_reference(Type& t, Variable_decl& d)
+{
+  if (Object_decl* obj = as<Object_decl>(&d))
+    return make_reference(t, *obj);
+  if (Reference_decl* ref = as<Reference_decl>(&d))
+    return make_reference(t, *ref);
+  lingo_unreachable();
+}
+
+
 // Returns an id-expression that refers to a declared object.
 Object_expr&
 Builder::make_reference(Type& t, Object_decl& d)
@@ -306,6 +317,13 @@ Bit_not_expr&
 Builder::make_bit_not(Type& t, Expr& e)
 {
   return Bit_not_expr::make(alloc_, t, e);
+}
+
+
+Call_expr&
+Builder::make_call(Type& t, Expr& f, Expr_list const& a)
+{
+  return Call_expr::make(alloc_, t, f, a);
 }
 
 

@@ -19,9 +19,9 @@ add_library(banjo-fe
   sema-tu.cpp
   sema-id.cpp
   sema-type.cpp
-  # sema-expr.cpp
+  sema-expr.cpp
   # sema-init.cpp
-  # sema-stmt.cpp
+  sema-stmt.cpp
   # sema-decl.cpp
   # sema-function.cpp
   # sema-class.cpp

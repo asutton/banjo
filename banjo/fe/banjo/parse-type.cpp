@@ -31,10 +31,12 @@ Parser::type()
 Type&
 Parser::suffix_type()
 {
-  Type& t = prefix_type();
-  if (match_if(tk::ellipsis_tok))
-    return on_pack_type(t);
-  return t;
+  // Type& t = prefix_type();
+  // if (match_if(tk::ellipsis_tok))
+  //   return on_pack_type(t);
+  // return t;
+
+  return prefix_type();
 }
 
 
@@ -115,9 +117,10 @@ Parser::postfix_type()
 Type&
 Parser::array_type(Type& t)
 {
- //match(lbracket_tok);
- if (match_if(tk::rbracket_tok))
-    return on_slice_type(t);
+ // // match(lbracket_tok);
+ // if (match_if(tk::rbracket_tok))
+ //    return on_slice_type(t);
+
  Expr& e = expression();
  match(tk::rbracket_tok);
  return on_array_type(t, e);

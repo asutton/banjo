@@ -212,16 +212,17 @@ Parser::on_id_expression(Name& n)
 Expr&
 Parser::on_boolean_literal(Token, bool b)
 {
-  return build.get_bool(b);
+  Type& t = cxt.get_bool_type(object_type);
+  return cxt.get_boolean(t, b);
 }
 
 
 Expr&
 Parser::on_integer_literal(Token tok)
 {
-  Type& t = build.get_int_type();
+  Type& t = cxt.get_int_type();
   Integer n = tok.spelling();
-  return build.get_integer(t, n);
+  return cxt.get_integer(t, n);
 }
 
 

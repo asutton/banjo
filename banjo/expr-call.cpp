@@ -5,10 +5,8 @@
 #include "ast.hpp"
 #include "context.hpp"
 #include "type.hpp"
-#include "template.hpp"
 #include "lookup.hpp"
 #include "initialization.hpp"
-#include "printer.hpp"
 
 #include <iostream>
 
@@ -181,13 +179,10 @@ make_regular_call(Context& cxt, Function_expr& e, Expr_list& args)
     throw Lookup_error();
   }
 
-  // FIXME: The category is determined by the return value declaration.
-  Category c = val_expr;
-
   // The type is the declared return type of the function.
   Type& t = fn.return_type();
 
-  return cxt.make_call(c, t, e, args);
+  return cxt.make_call(t, e, args);
 }
 
 

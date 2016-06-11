@@ -9,7 +9,6 @@
 #include "context.hpp"
 #include "lookup.hpp"
 #include "conversion.hpp"
-#include "printer.hpp"
 
 #include <iostream>
 
@@ -25,7 +24,7 @@ static Expr&
 make_standard_relational_expr(Context& cxt, Expr& e1, Expr& e2, Make make)
 {
   Expr_pair conv = arithmetic_conversions(cxt, e1, e2);
-  Type& t = cxt.get_bool_type();
+  Type& t = cxt.get_bool_type(object_type);
   return make(t, conv.first, conv.second);
 }
 
@@ -100,7 +99,7 @@ Expr&
 make_eq(Context& cxt, Expr& e1, Expr& e2)
 {
   auto make = [&cxt](Type& t, Expr& e1, Expr& e2) -> Expr& {
-    return cxt.make_eq(val_expr, t, e1, e2);
+    return cxt.make_eq(t, e1, e2);
   };
   return make_relational_expr(cxt, e1, e2, make);
 }
@@ -110,7 +109,7 @@ Expr&
 make_ne(Context& cxt, Expr& e1, Expr& e2)
 {
   auto make = [&cxt](Type& t, Expr& e1, Expr& e2) -> Expr& {
-    return cxt.make_ne(val_expr, t, e1, e2);
+    return cxt.make_ne(t, e1, e2);
   };
   return make_relational_expr(cxt, e1, e2, make);
 }
@@ -120,7 +119,7 @@ Expr&
 make_lt(Context& cxt, Expr& e1, Expr& e2)
 {
   auto make = [&cxt](Type& t, Expr& e1, Expr& e2) -> Expr& {
-    return cxt.make_lt(val_expr, t, e1, e2);
+    return cxt.make_lt(t, e1, e2);
   };
   return make_relational_expr(cxt, e1, e2, make);
 }
@@ -130,7 +129,7 @@ Expr&
 make_gt(Context& cxt, Expr& e1, Expr& e2)
 {
   auto make = [&cxt](Type& t, Expr& e1, Expr& e2) -> Expr& {
-    return cxt.make_gt(val_expr, t, e1, e2);
+    return cxt.make_gt(t, e1, e2);
   };
   return make_relational_expr(cxt, e1, e2, make);
 }
@@ -140,7 +139,7 @@ Expr&
 make_le(Context& cxt, Expr& e1, Expr& e2)
 {
   auto make = [&cxt](Type& t, Expr& e1, Expr& e2) -> Expr& {
-    return cxt.make_le(val_expr, t, e1, e2);
+    return cxt.make_le(t, e1, e2);
   };
   return make_relational_expr(cxt, e1, e2, make);
 }
@@ -150,7 +149,7 @@ Expr&
 make_ge(Context& cxt, Expr& e1, Expr& e2)
 {
   auto make = [&cxt](Type& t, Expr& e1, Expr& e2) -> Expr& {
-    return cxt.make_ge(val_expr, t, e1, e2);
+    return cxt.make_ge(t, e1, e2);
   };
   return make_relational_expr(cxt, e1, e2, make);
 }
