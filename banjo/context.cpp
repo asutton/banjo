@@ -4,7 +4,6 @@
 #include "context.hpp"
 #include "ast.hpp"
 #include "builder.hpp"
-#include "builtin.hpp"
 #include "scope.hpp"
 
 #include <lingo/io.hpp>
@@ -18,11 +17,10 @@ namespace banjo
 Context::Context(Symbol_table& s)
   : List_allocator()
   , Builder(*this, s)
-  , syms(s)
+  , syms_(s)
   , scope(nullptr)
   , id(0)
   , diags(false)
-  , builtins_(new Builtins())
 {
   // Initialize the color system. This is a process-level configuration. 
   // Perhaps we we should only initialize colors if the default output 
@@ -30,7 +28,7 @@ Context::Context(Symbol_table& s)
   lingo::init_colors();
 
   // Initialize built-in entity definitions.
-  init_builtins(*this, *builtins_);
+  init_builtins(*this);
 }
 
 
@@ -44,7 +42,7 @@ Context::global_scope() const
 Scope&       
 Context::global_scope() 
 { 
-  return saved_scope(builtins_->translation_unit()); 
+  return saved_scope(builtins_.translation_unit()); 
 }
 
 

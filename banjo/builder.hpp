@@ -192,7 +192,9 @@ struct Builder
 
   // Variables
   Object_decl&    make_object_declaration(Name&, Type&, Def&);
+  Object_decl&    make_object_declaration(char const*, Type&, Def&);
   Reference_decl& make_reference_declaration(Name&, Type&, Def&);
+  Reference_decl& make_reference_declaration(char const*, Type&, Def&);
   Empty_def&      make_variable_initializer();
   Expression_def& make_variable_initializer(Expr& e);
 

@@ -5,6 +5,7 @@
 #define BANJO_CONTEXT_HPP
 
 #include "builder.hpp"
+#include "builtin.hpp"
 #include "error.hpp"
 #include "scope.hpp"
 #include "value.hpp"
@@ -68,8 +69,8 @@ struct Context : List_allocator, Builder
   Scope&       global_scope();
 
   // Built-in entity definitions
-  Builtins const& builtins() const { return *builtins_; }
-  Builtins&       builtins()       { return *builtins_; }
+  Builtins const& builtins() const { return builtins_; }
+  Builtins&       builtins()       { return builtins_; }
 
   // Declaration contexts.
   void enter_context();
@@ -92,8 +93,8 @@ struct Context : List_allocator, Builder
   virtual void emit_warning(Message const& m);
   virtual void emit_info(Message const& m);
 
-  Symbol_table& syms; // An external symbol table
-
+  Symbol_table& syms_; // The external symbol table
+  
   Location     input;  // The input location
  
   // Scope and context.
@@ -111,7 +112,7 @@ struct Context : List_allocator, Builder
   bool diags; // True if diagnostics should be emitted.
 
   // Built-in entity definitions.
-  std::unique_ptr<Builtins> builtins_;
+  Builtins builtins_;
 };
 
 

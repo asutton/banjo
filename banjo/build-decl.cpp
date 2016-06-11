@@ -20,10 +20,24 @@ Builder::make_object_declaration(Name& n, Type& t, Def& d)
 }
 
 
+Object_decl&
+Builder::make_object_declaration(char const* s, Type& t, Def& d)
+{
+  return make_object_declaration(get_id(s), t, d);
+}
+
+
 Reference_decl&
 Builder::make_reference_declaration(Name& n, Type& t, Def& d)
 {
   return Reference_decl::make(alloc_, n, t, d);
+}
+
+
+Reference_decl&
+Builder::make_reference_declaration(char const* s, Type& t, Def& d)
+{
+  return make_reference_declaration(get_id(s), t, d);
 }
 
 

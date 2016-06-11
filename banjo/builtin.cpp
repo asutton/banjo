@@ -11,6 +11,15 @@
 namespace banjo
 {
 
+#if 0
+
+// Returns the integer value representing the compiler version.
+static inline Expr&
+get_compiler_version(Context& cxt)
+{
+  return cxt.get_int(cxt.get_int_type(), 0);
+}
+
 
 // -------------------------------------------------------------------------- //
 // class Compiler { ... }
@@ -29,10 +38,9 @@ namespace banjo
 static Declaration_stmt&
 make_compiler_version(Context& cxt)
 {
-  Name& name = cxt.get_id("version");
   Type& type = cxt.get_int_type();
-  Expr& init = cxt.get_integer(type, 1); // FIXME: This is variable
-  Decl& decl = cxt.make_variable_declaration(name, type, init);
+  Def& init = cxt.make_variable_initializer(get_compiler_version(cxt));
+  Decl& decl = cxt.make_object_declaration("version", type, init);
   decl.spec_ |= internal_spec | static_spec | meta_spec;
   
   declare(cxt, decl);
@@ -49,7 +57,7 @@ make_compiler_show_int(Context& cxt)
 {
   Name& name = cxt.get_id("show");
   Decl_list parms {
-    &cxt.make_object_parameter(cxt.get_id("n"), cxt.get_int_type())
+    &cxt.make_object_parameter("n", cxt.get_int_type())
   };
   Type& ret = cxt.get_void_type();
   Type& type = cxt.get_function_type(parms, ret);
@@ -109,6 +117,7 @@ make_compiler(Context& cxt, Builtins& bi)
   return decl;
 }
 
+#endif
 
 // -------------------------------------------------------------------------- //
 // Builtin initialization
@@ -116,15 +125,17 @@ make_compiler(Context& cxt, Builtins& bi)
 // Allocate all of the built-in entity definitions and make them available
 // for lookup.
 void
-init_builtins(Context& cxt, Builtins& bi)
+init_builtins(Context& cxt)
 {
+  Builtins& bi = cxt.builtins();
+  
   // Create the translation unit.
   bi.tu_ = &cxt.make_translation_unit();
   
   // Create builtin declarations.
-  Enter_scope scope(cxt, *bi.tu_);  
-  make_compiler_class(cxt, bi);
-  make_compiler(cxt, bi);
+  // Enter_scope scope(cxt, *tu_);  
+  // make_compiler_class(cxt, bi);
+  // make_compiler(cxt, bi);
 }
 
 

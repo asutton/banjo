@@ -34,16 +34,16 @@ struct Builtins
   Class_decl&       builtin_compiler_class()       { return *comp_class_; }
 
   // Returns the builtin compiler object.
-  Object_decl const& builtin_compiler() const { return *comp_; }
-  Object_decl&       builtin_compiler()       { return *comp_; }
+  Mem_object_decl const& builtin_compiler() const { return *comp_; }
+  Mem_object_decl&       builtin_compiler()       { return *comp_; }
 
-  Translation_unit* tu_;
-  Class_decl*       comp_class_;
-  Object_decl*      comp_;
+  Translation_unit* tu_         = nullptr;
+  Class_decl*       comp_class_ = nullptr;
+  Mem_object_decl*  comp_       = nullptr;
 };
 
 
-void init_builtins(Context& cxt, Builtins&);
+void init_builtins(Context&);
 
 
 } // namespace banjo
