@@ -7,14 +7,14 @@ add_library(banjo-fe
   token.cpp
   lexer.cpp
   parser.cpp
-  # parse-tu.cpp
-  # parse-id.cpp
-  # parse-type.cpp
-  # parse-expr.cpp
-  # parse-stmt.cpp
-  # parse-decl.cpp
-  # parse-function.cpp
-  # parse-class.cpp
+  parse-tu.cpp
+  parse-id.cpp
+  parse-type.cpp
+  parse-expr.cpp
+  parse-stmt.cpp
+  parse-decl.cpp
+  parse-function.cpp
+  parse-class.cpp
   # parse-req.cpp
   # sema-tu.cpp
   # sema-id.cpp

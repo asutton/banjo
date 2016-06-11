@@ -73,11 +73,11 @@ struct Builder
   Pointer_type& get_pointer_type(Type_category, Type&, Qualifier_set = {});
 
   // User-defined types
-  Class_type& get_class_type(Type_category, Type_decl&, Qualifier_set = {});
+  Class_type&    get_class_type(Type_category, Type_decl&, Qualifier_set = {});
   Typename_type& get_typename_type(Type_category, Type_decl&, Qualifier_set = {});
   
   // Placeholder types
-  Auto_type& get_auto_type(Type_category, Type_decl&, Qualifier_set = {});
+  Auto_type&     get_auto_type(Type_category, Type_decl&, Qualifier_set = {});
   Decltype_type& get_decltype_type(Type_category, Expr&, Qualifier_set = {});
 
   // Meta-types
@@ -95,12 +95,6 @@ struct Builder
   Pointer_type& get_qualified_pointer_type(Pointer_type&, Qualifier_set);
   Class_type&   get_qualified_pointer_type(Class_type&, Qualifier_set);
 
-#if 0
-  // Fresh types
-  Type make_auto_type();
-  Type make_synthetic_type(Decl&);
-#endif
-  
   // Expressions
 
   // Literals

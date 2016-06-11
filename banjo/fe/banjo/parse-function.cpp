@@ -62,11 +62,19 @@ Parser::function_declaration()
   Decl_list parms = parameter_clause();
 
   // Match the return type.
-  Type* ret;
-  if (match_if(tk::arrow_tok))
-    ret = &unparsed_type(end_type);
-  else
-    ret = &cxt.make_auto_type();
+  //
+  // FIXME: Allow the return type to be omitted.
+  expect(tk::arrow_tok);
+  Type* ret = &unparsed_type(end_type);
+
+  // FIXME: Generate a fresh type in the case where the return type is
+  // unspecified. Also, make sure that the the type category is
+  // appropriately adjusted for the declaration.
+  // Type* ret;
+  // if (match_if(tk::arrow_tok))
+  //   ret = &unparsed_type(end_type);
+  // else
+  //   ret = &cxt.make_auto_type(object_type);
 
   // Declare the function and establish the function scope.
   Decl& fn = start_function_declaration(name, parms, *ret);
@@ -167,13 +175,15 @@ Parser::parameter_declaration()
     return on_function_parameter(*name, type);
   }
 
-  Type& type = cxt.make_auto_type();
+  lingo_unreachable();
 
-  // TODO: Implement default arguments.
-  if (next_token_is(tk::eq_tok))
-    lingo_unimplemented("default arguments");
+  // Type& type = cxt.make_auto_type();
 
-  return on_function_parameter(*name, type);
+  // // TODO: Implement default arguments.
+  // if (next_token_is(tk::eq_tok))
+  //   lingo_unimplemented("default arguments");
+
+  // return on_function_parameter(*name, type);
 }
 
 

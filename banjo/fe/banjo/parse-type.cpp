@@ -44,9 +44,6 @@ Parser::suffix_type()
 //      unary-type
 //      '&' unary-type
 //
-// FIXME: Rvalue references have not been implemented. Do we actually
-// need them, or can we get by with parameter passing types.
-//
 // NOTE: The parameter passing types (in, out, etc.) do not apply to
 // cv-qualified types, but can apply to pointers (presumably). It would
 // be nice if we could make the grammar reflect this, but it means

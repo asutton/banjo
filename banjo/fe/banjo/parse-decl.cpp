@@ -109,7 +109,6 @@ Parser::specifier_seq()
 //      consume
 //      forward
 //      virtual
-//      const
 Specifier_set
 Parser::parameter_specifier_seq()
 {
@@ -141,10 +140,6 @@ Parser::parameter_specifier_seq()
 
       case tk::virtual_tok:
         accept_specifier(*this, virtual_spec);
-        break;
-
-      case tk::const_tok:
-        accept_specifier(*this, const_spec);
         break;
 
       default:
@@ -185,9 +180,6 @@ Parser::declaration()
     case tk::def_tok:
       return function_declaration();
 
-    case tk::coroutine_tok:
-      return coroutine_declaration();
-
     case tk::class_tok:
       return class_declaration();
 
@@ -225,12 +217,12 @@ Parser::variable_declaration()
   match(tk::colon_tok);
 
   // Match the ":=" form.
-  if (match_if(tk::eq_tok)) {
-    Type& type = cxt.make_auto_type();
-    Expr& init = unparsed_expression(end_init);
-    match(tk::semicolon_tok);
-    return on_variable_declaration(name, type, init);
-  }
+  // if (match_if(tk::eq_tok)) {
+  //   Type& type = cxt.get_auto_type(object_type);
+  //   Expr& init = unparsed_expression(end_init);
+  //   match(tk::semicolon_tok);
+  //   return on_variable_declaration(name, type, init);
+  // }
 
   // Match the type.
   Type& type = unparsed_type(end_type);
@@ -267,13 +259,13 @@ Parser::constant_declaration()
   Name& name = identifier();
   match(tk::colon_tok);
 
-  // Match the ":=" form.
-  if (match_if(tk::eq_tok)) {
-    Type& type = cxt.make_auto_type();
-    Expr& init = unparsed_expression(end_init);
-    match(tk::semicolon_tok);
-    return on_constant_declaration(name, type, init);
-  }
+  // // Match the ":=" form.
+  // if (match_if(tk::eq_tok)) {
+  //   Type& type = cxt.make_auto_type();
+  //   Expr& init = unparsed_expression(end_init);
+  //   match(tk::semicolon_tok);
+  //   return on_constant_declaration(name, type, init);
+  // }
 
   // Match the type.
   Type& type = unparsed_type(end_type);
@@ -547,10 +539,10 @@ Req_list
 Parser::concept_member_seq()
 {
   Req_list rs;
-  do {
-    Req& r = concept_member();
-    rs.push_back(r);
-  } while (next_token_is_not(tk::rbrace_tok));
+  // do {
+  //   Req& r = concept_member();
+  //   rs.push_back(r);
+  // } while (next_token_is_not(tk::rbrace_tok));
   return rs;
 }
 

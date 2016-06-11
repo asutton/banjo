@@ -134,6 +134,7 @@ init_tokens(Symbol_table& syms)
   init_token(syms, tk::in_tok, "in");
   init_token(syms, tk::inline_tok, "inline");
   init_token(syms, tk::int_tok, "int");
+  init_token(syms, tk::meta_tok, "meta");
   init_token(syms, tk::mutable_tok, "mutable");
   init_token(syms, tk::namespace_tok, "namespace");
   init_token(syms, tk::operator_tok, "operator");

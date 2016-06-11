@@ -4,7 +4,6 @@
 #include "parser.hpp"
 
 #include <banjo/ast.hpp>
-#include <banjo/printer.hpp>
 
 #include <iostream>
 

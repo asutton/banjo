@@ -105,6 +105,7 @@ struct Token_kind : banjo::Token_kind
     in_tok,
     inline_tok,
     int_tok,
+    meta_tok,
     mutable_tok,
     namespace_tok,
     operator_tok,
