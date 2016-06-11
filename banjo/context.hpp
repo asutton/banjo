@@ -4,7 +4,6 @@
 #ifndef BANJO_CONTEXT_HPP
 #define BANJO_CONTEXT_HPP
 
-#include "prelude.hpp"
 #include "builder.hpp"
 #include "error.hpp"
 #include "scope.hpp"
@@ -35,12 +34,12 @@ using Store = lingo::Environment<Decl const*, Value>;
 
 // A repository of information to support translation.
 //
-// TODO: Add an allocator/object pool and management support.
+// TODO: Choose a better default allocator for the context.
 //
 // TODO: Integrate diagnostics.
-struct Context : Builder
+struct Context : List_allocator, Builder
 {
-  Context();
+  Context(Symbol_table&);
   ~Context();
 
   // Non-copyable
@@ -93,6 +92,8 @@ struct Context : Builder
   virtual void emit_error(Message const& m);
   virtual void emit_warning(Message const& m);
   virtual void emit_info(Message const& m);
+
+  Symbol_table& syms; // An external symbol table
 
   Location     input;  // The input location
  

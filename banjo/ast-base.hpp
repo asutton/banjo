@@ -13,6 +13,7 @@
 #include <lingo/real.hpp>
 #include <lingo/token.hpp>
 
+#include <forward_list>
 #include <vector>
 #include <utility>
 
@@ -91,6 +92,38 @@ struct Allocator
   {
     ::operator delete(p);
   }
+};
+
+
+
+
+// A simple data-retaining allocator that releases all memory when it goes 
+// out of scope. Explicit deallocation has no behavior.
+//
+// FIXME: This is *not* a good allocator. Replace it with a better-defined
+// block allocator.
+struct List_allocator : Allocator
+{
+  struct Block
+  {
+    explicit Block(std::size_t n) : buf( ::operator new(n)) { }
+    ~Block() { ::operator delete(buf); }
+
+    void* buf;
+  };
+
+  void* allocate(std::size_t n, std::type_info const& ti)
+  {
+    list.emplace_front(n);
+    return list.front().buf;
+  }
+  
+  void deallocate(void* p, std::type_info const& ti)
+  {
+    // Never explicitly deallocate memory.
+  }
+
+  std::forward_list<Block> list;
 };
 
 

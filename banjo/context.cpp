@@ -15,8 +15,11 @@
 namespace banjo
 {
 
-Context::Context()
-  : scope(nullptr)
+Context::Context(Symbol_table& s)
+  : List_allocator()
+  , Builder(*this, s)
+  , syms(s)
+  , scope(nullptr)
   , id(0)
   , diags(false)
   , builtins_(new Builtins())
@@ -39,17 +42,14 @@ Context::~Context()
 Scope const& 
 Context::global_scope() const 
 { 
-  // Look away...
-  auto& self = const_cast<Context&>(*this);
-  auto& tu = const_cast<Translation_unit&>(builtins().translation_unit());
-  return self.saved_scope(tu); 
+  return const_cast<Context&>(*this).global_scope();
 }
 
 
 Scope&       
 Context::global_scope() 
 { 
-  return saved_scope(translation_unit()); 
+  return saved_scope(builtins_->translation_unit()); 
 }
 
 

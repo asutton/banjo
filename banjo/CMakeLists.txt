@@ -26,15 +26,15 @@ add_library(banjo
   builder.cpp
 
   # # Diagnostics
-  # error.cpp
+  error.cpp
 
   # # Scope, lookup, and resolution
-  # overload.cpp
-  # scope.cpp
-  # lookup.cpp
+  overload.cpp
+  scope.cpp
+  lookup.cpp
 
   # # Application context and facilities.
-  # context.cpp
+  context.cpp
   # builtin.cpp
   # intrinsic.cpp
 
