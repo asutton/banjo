@@ -38,6 +38,7 @@ struct Message_arg
 {
   enum Kind
   {
+    token_arg,
     term_arg,
     cstr_arg,
     int_arg,
@@ -46,6 +47,10 @@ struct Message_arg
 
   union Rep 
   {
+    Rep() { }
+    ~Rep() { }
+    
+    Token       k;
     Term const* t;
     char const* s;
     long        z;
@@ -58,6 +63,7 @@ struct Message_arg
   Message_arg(Message_arg&&);
   Message_arg& operator=(Message_arg&&);
 
+  Message_arg(Token const& k) : k(token_arg) { u.k = k; }
   Message_arg(Term const& t) : k(term_arg) { u.t = &t; }
   Message_arg(char const* s) : k(cstr_arg) { u.s = strdup(s); }
   Message_arg(int n) : k(int_arg) { u.z = n; }
@@ -69,10 +75,11 @@ struct Message_arg
 
   Kind kind() const { return k; }
 
-  Term const& term() const { return *u.t; }
-  char const* str() const  { return u.s; }
-  long integer() const     { return u.z; }
-  double real() const      { return u.f; }
+  Token const& token() const { return u.k; }
+  Term const& term() const   { return *u.t; }
+  char const* str() const    { return u.s; }
+  long integer() const       { return u.z; }
+  double real() const        { return u.f; }
 
   void partial_copy(Rep const& r);
   void partial_move(Rep&& r);
@@ -84,6 +91,9 @@ inline void
 Message_arg::partial_copy(Rep const& r)
 {
   switch (k) {
+    case token_arg:
+      new (&u.k) Token(r.k); 
+      break;
     case term_arg:
       u.t = r.t; 
       break;
@@ -105,6 +115,9 @@ inline void
 Message_arg::partial_move(Rep&& r)
 {
   switch (k) {
+    case token_arg:
+      new (&u.k) Token(std::move(r.k));
+      break;
     case term_arg:
       u.t = r.t; 
       break;
@@ -124,8 +137,17 @@ Message_arg::partial_move(Rep&& r)
 inline void
 Message_arg::partial_destroy(Rep& r)
 {
-  if (k == cstr_arg)
-    free(const_cast<char*>(u.s));
+  switch (k) {
+    case token_arg:
+      u.k.~Token();
+      break;
+    case cstr_arg:
+      free(const_cast<char*>(u.s));
+      break;
+    default:
+      // All others are trivially destructible.
+      break;
+  }
 }
 
 

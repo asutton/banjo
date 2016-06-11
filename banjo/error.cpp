@@ -60,6 +60,12 @@ static void
 dump_arg(std::ostream& os, Message::Arg const& a)
 {
   switch (a.kind()) {
+    case Message::Arg::token_arg:
+      os << a.token();
+      break;
+
+    // TODO: Render something meaningful for the term. Perhaps an inline
+    // sexpr via the debugging facility.
     case Message::Arg::term_arg:
       os << "<term>";
       break;
