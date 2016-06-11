@@ -6,7 +6,7 @@ add_library(banjo-fe
   context.cpp
   token.cpp
   lexer.cpp
-  # parser.cpp
+  parser.cpp
   # parse-tu.cpp
   # parse-id.cpp
   # parse-type.cpp

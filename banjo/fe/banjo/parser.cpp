@@ -114,10 +114,8 @@ Parser::match(Token_kind k)
 {
   if (lookahead() == k)
     return accept();
-  String msg = format("expected '{}' but got '{}'",
-                      get_spelling(k),
-                      token_spelling(tokens));
-  throw Syntax_error(cxt, msg);
+  error(cxt, "expected '{}' but got '{}'", get_spelling(k), token_spelling(tokens));
+  throw Syntax_error();
 }
 
 
@@ -161,10 +159,8 @@ void
 Parser::expect(Token_kind k)
 {
   if (next_token_is_not(k)) {
-    String msg = format("expected '{}' but got '{}'",
-                        get_spelling(k),
-                        token_spelling(tokens));
-    throw Syntax_error(cxt, msg);
+    error(cxt, "expected '{}' but got '{}'", get_spelling(k), token_spelling(tokens));
+    throw Syntax_error();
   }
 }
 
