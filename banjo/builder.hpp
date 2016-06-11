@@ -18,105 +18,25 @@
 namespace banjo
 {
 
-// The singleton factory maintains a single instance of an object.
-template<typename T>
-struct Singleton_factory
-{
-  Singleton_factory()
-    : obj_()
-  { }
 
-  ~Singleton_factory()
-  {
-    delete obj_;
-  }
-
-  template<typename... Args>
-  T& operator()(Args&&... args)
-  {
-    if (!obj_)
-      obj_ = new T(std::forward<Args>(args)...);
-    return *obj_;
-  }
-
-  T* obj_;
-};
-
-
-// A basic object factory allocates new objects by pushing them to a
-// list.
+// An interface to an AST builder. This provides simplified procedures
+// for creating AST nodes. Note that the nodes are not checked for correctness
+// at the point of creation. Use context facilities for creating semantically
+// correct terms.
 //
-// TODO: Use a bump allocator instead of a list since we don't really
-// need the underlying memory.
-template<typename T>
-struct Basic_factory : std::forward_list<T>
-{
-  template<typename... Args>
-  T& operator()(Args&&... args) 
-  {
-    this->emplace_front(std::forward<Args>(args)...);
-    return this->front();
-  }
-};
-
-
-// The hashed unique factory maintains an unordered set of objects
-// that are unique based on their equality. 
-template<typename T, typename Hash, typename Eq>
-struct Hashed_unique_factory : std::unordered_set<T, Hash, Eq>
-{
-  template<typename... Args>
-  T& operator()(Args&&... args)
-  {
-    auto ins = this->emplace(std::forward<Args>(args)...);
-    return *const_cast<T*>(&*ins.first); // Yuck.
-  }
-};
-
-
-
-// An interface to an AST builder.
-//
-// Note that the builder owns a symbol table. This can be used by the
-// application context to support typical lexing and parsing tasks or 
-// to temporarily store unique representations of symbols.
 struct Builder
 {
-  // Hash function for terms.
-  using Hash = hash<fnv1a_hash>;
-
-  // Equivalence relation on terms.
-  template<typename T>
-  struct Eq
-  {
-    bool operator()(T const& a, T const& b) const
-    {
-      return is_equivalent(a, b);
-    }
-  };
-
-  // Factory types.
-  template<typename T>
-  using Single_factory = banjo::Singleton_factory<T>;
-
-  template<typename T>
-  using Basic_factory = banjo::Basic_factory<T>;
-
-  template<typename T>
-  using Unique_factory = Hashed_unique_factory<T, Hash, Eq<T>>;
-
-  // Cloning
-  Type&     clone(Type&);
-  Type_list clone(Type_list&);
-  Expr&     clone(Expr&);
-  Expr_list clone(Expr_list&);
+  Builder(Allocator& a, Symbol_table& s)
+    : alloc_(a), syms_(s)
+  { }
 
   // Names
-  
+
+  Symbol const& get_identifier(char const* s);
+
   Simple_id&      get_id(char const*);
   Simple_id&      get_id(std::string const&);
   Simple_id&      get_id(Symbol const&);
-  Simple_id&      get_id(Symbol const*);
   Simple_id&      get_id(Token const&);
   Placeholder_id& get_id();
   Operator_id&    get_id(Operator_kind);
@@ -143,10 +63,10 @@ struct Builder
   Float_type&    get_float_type(Type_category, int, Qualifier_set = {});
 
   // Composite types
-  Function_type& get_function_type(Type_category, Decl_list const&, Type&);
-  Function_type& get_function_type(Decl_list const&, Type&);
-  Function_type& get_function_type(Type_category, Type_list const&, Type&);
-  Function_type& get_function_type(Type_list const&, Type&);
+  Function_type& get_function_type(Type_category, Type_list const&, Type&, Qualifier_set = {});
+  Function_type& get_function_type(Type_category, Type_list&&, Type&, Qualifier_set = {});
+  Function_type& get_function_type(Type_list const&, Type&, Qualifier_set = {});
+  Function_type& get_function_type(Type_list&&, Type&, Qualifier_set = {});
   Array_type& get_array_type(Type_category, Type&, Expr&);
   Tuple_type& get_tuple_type(Type_category, Type_list const&);
   Tuple_type& get_tuple_type(Type_category, Type_list&&);
@@ -163,9 +83,17 @@ struct Builder
   // Meta-types
   Type_type& get_type_type();
 
-  // Qualified types
-  Type& get_reference_type(Type& t, Type_category);
+  // Reference and object types
+  Type& get_reference_type(Type& t);
+  Type& get_non_reference_type(Type& t);
+  
   Type& get_qualified_type(Type&, Qualifier_set);
+  Integer_type& get_qualified_integer_type(Integer_type&, Qualifier_set);
+  Float_type&   get_qualified_float_type(Float_type&, Qualifier_set);
+  Array_type&   get_qualified_array_type(Array_type&, Qualifier_set);
+  Tuple_expr&   get_qualified_tuple_type(Tuple_type&, Qualifier_set);
+  Pointer_type& get_qualified_pointer_type(Pointer_type&, Qualifier_set);
+  Class_type&   get_qualified_pointer_type(Class_type&, Qualifier_set);
 
 #if 0
   // Fresh types
@@ -187,15 +115,20 @@ struct Builder
   Integer_expr&  get_uint(Type&, Integer const&);
   
   // Aggregates
+  Tuple_expr&    make_tuple(Type&, Expr_list const&);
   Tuple_expr&    make_tuple(Type&, Expr_list&&);
 
-  // Resolved references
-  Id_object_expr&     make_reference(Type&, Object_decl&);
-  Id_function_expr&   make_reference(Type&, Function_decl&);
-  Id_overload_expr&   make_reference(Name&, Decl_list&&);
-  Dot_object_expr&    make_reference(Type&, Expr&, Field_decl&);
-  Dot_function_expr&  make_reference(Type&, Expr&, Method_decl&);
-  Dot_overload_expr&  make_reference(Expr&, Name&, Decl_list&&);
+  // Declaration references
+  Object_expr&        make_reference(Type&, Object_decl&);
+  Reference_expr&     make_reference(Type&, Reference_decl&);
+  Function_expr&      make_reference(Type&, Function_decl&);
+  Overload_expr&      make_reference(Name&, Decl_list const&);
+  Overload_expr&      make_reference(Name&, Decl_list&&);
+  Mem_object_expr&    make_reference(Type&, Expr&, Mem_object_decl&);
+  Mem_reference_expr& make_reference(Type&, Expr&, Mem_reference_decl&);
+  Mem_function_expr&  make_reference(Type&, Expr&, Mem_function_decl&);
+  Mem_overload_expr&  make_reference(Expr&, Name&, Decl_list const&);
+  Mem_overload_expr&  make_reference(Expr&, Name&, Decl_list&&);
 
   // Logical expressions
   And_expr& make_and(Type&, Expr&, Expr&);
@@ -241,6 +174,7 @@ struct Builder
   // Statements
   Empty_stmt&        make_empty_statement();
   Compound_stmt&     make_compound_statement();
+  Compound_stmt&     make_compound_statement(Stmt_list const&);
   Compound_stmt&     make_compound_statement(Stmt_list&&);
   Return_stmt&       make_return_statement();
   Return_value_stmt& make_return_value_statement(Expr&);
@@ -256,32 +190,24 @@ struct Builder
 
   // Declarations
 
-  // Objects and references
-  Object_decl&    make_variable_declaration(Name&, Type&);
-  Object_decl&    make_variable_declaration(Name&, Type&, Expr&);
-  Reference_decl& make_reference_declaration(Name&, Type&);
-  Reference_decl& make_reference_declaration(Name&, Type&, Expr&);
-  Field_decl&     make_field_declaration(Name&, Type&);
-  Field_decl&     make_field_declaration(Name&, Type&, Expr&);
-  Super_decl&     make_super_declaration(Type&);
+  // Variables
+  Object_decl&    make_object_declaration(Name&, Type&, Def&);
+  Reference_decl& make_reference_declaration(Name&, Type&, Def&);
+  Empty_def&      make_variable_initializer();
+  Expression_def& make_variable_initializer(Expr& e);
 
-  // Functions and methods
-  Function_decl&  make_function_declaration(Name&, Type&, Decl_list const&);
-  Function_decl&  make_function_declaration(Name&, Type&, Decl_list&&);
+  // Functions
+  Function_decl&  make_function_declaration(Name&, Type&, Decl_list const&, Def&);
   Function_decl&  make_function_declaration(Name&, Type&, Decl_list&&, Def&);
   Function_def&   make_function_definition(Stmt&);
-  Method_decl&    make_method_declaration(Name&, Type&, Decl_list const&);
-  Method_decl&    make_method_declaration(Name&, Type&, Decl_list&&);
-  Method_decl&    make_method_declaration(Name&, Type&, Decl_list&&, Def&);
   Expression_def& make_function_definition(Expr&);
   Intrinsic_def&  make_function_definition(Nullary_fn);
   Intrinsic_def&  make_function_definition(Unary_fn);
   Intrinsic_def&  make_function_definition(Binary_fn);
   Intrinsic_def&  make_function_definition(Ternary_fn);
 
-  // Classes
-  Class_decl&  make_class_declaration(Name&, Type&);
-  Class_decl&  make_class_declaration(Name&, Type&, Def&);
+  // Classes and their members
+  Class_decl&  make_class_declaration(Name&, Def&);
   Class_def&   make_class_definition(Stmt_list&&);
 
   // Parameters
@@ -302,118 +228,20 @@ struct Builder
   Translation_unit& make_translation_unit();
   Translation_unit& make_translation_unit(Stmt_list&&);
 
+  // Cloning
+
+  Type&     clone(Type&);
+  Type_list clone(Type_list&);
+  Expr&     clone(Expr&);
+  Expr_list clone(Expr_list&);
 
   // Resources
+  Allocator& allocator() { return alloc_; }
   Symbol_table& symbols() { return syms_; }
 
   // Facilities
-  Symbol_table syms_;
-
-  // Names
-  Basic_factory<Simple_id> simple_id;
-  Basic_factory<Placeholder_id> placeholder_id;
-  Basic_factory<Operator_id> operator_id;
-
-  // Types
-  Basic_factory<Void_type> void_type;
-  Basic_factory<Boolean_type> bool_type;
-  Basic_factory<Byte_type> byte_type;
-  Basic_factory<Integer_type> integer_type;
-  Basic_factory<Float_type> float_type;
-  Basic_factory<Function_type> function_type;
-  Basic_factory<Array_type> array_type;
-  Basic_factory<Tuple_type> tuple_type;
-  Basic_factory<Pointer_type> pointer_type;
-  Basic_factory<Class_type> class_type;
-  Basic_factory<Typename_type> typename_type;
-  Basic_factory<Auto_type> auto_type;
-  Basic_factory<Decltype_type> decltype_type;
-  Basic_factory<Type_type> type_type;
-
-  // Expressions
-  Single_factory<Void_expr> void_expr;
-  Basic_factory<Boolean_expr> bool_expr;
-  Basic_factory<Integer_expr> int_expr;
-  Basic_factory<Tuple_expr> tuple_expr;
-  Basic_factory<Id_object_expr> id_object_expr;
-  Basic_factory<Id_function_expr> id_function_expr;
-  Basic_factory<Id_overload_expr> id_overload_expr;
-  Basic_factory<Dot_object_expr> dot_object_expr;
-  Basic_factory<Dot_function_expr> dot_function_expr;
-  Basic_factory<Dot_overload_expr> dot_overload_expr;
-  Basic_factory<And_expr> and_expr;
-  Basic_factory<Or_expr> or_expr;
-  Basic_factory<Not_expr> not_expr;
-  Basic_factory<Eq_expr> eq_expr;
-  Basic_factory<Ne_expr> ne_expr;
-  Basic_factory<Lt_expr> lt_expr;
-  Basic_factory<Gt_expr> gt_expr;
-  Basic_factory<Le_expr> le_expr;
-  Basic_factory<Ge_expr> ge_expr;
-  Basic_factory<Add_expr> add_expr;
-  Basic_factory<Sub_expr> sub_expr;
-  Basic_factory<Mul_expr> mul_expr;
-  Basic_factory<Div_expr> div_expr;
-  Basic_factory<Rem_expr> rem_expr;
-  Basic_factory<Neg_expr> neg_expr;
-  Basic_factory<Pos_expr> pos_expr;
-  Basic_factory<Bit_and_expr> bit_and_expr;
-  Basic_factory<Bit_or_expr> bit_or_expr;
-  Basic_factory<Bit_xor_expr> bit_xor_expr;
-  Basic_factory<Bit_lsh_expr> bit_lsh_expr;
-  Basic_factory<Bit_rsh_expr> bit_rsh_expr;
-  Basic_factory<Bit_not_expr> bit_not_expr;
-  Basic_factory<Call_expr> call_expr;
-
-  // Conversions
-
-  // Initializers
-  Basic_factory<Trivial_init> trivial_init;
-  Basic_factory<Copy_init> copy_init;
-  Basic_factory<Bind_init> bind_init;
-  Basic_factory<Direct_init> direct_init;
-  Basic_factory<Aggregate_init> aggregate_init;
-
-  // Statements
-  Basic_factory<Empty_stmt> empty_stmt;
-  Basic_factory<Compound_stmt> compound_stmt;
-  Basic_factory<Return_stmt> return_stmt;
-  Basic_factory<Return_value_stmt> return_value_stmt;
-  Basic_factory<Yield_stmt> yield_stmt;
-  Basic_factory<Yield_value_stmt> yield_value_stmt;
-  Basic_factory<If_then_stmt> if_then_stmt;
-  Basic_factory<If_else_stmt> if_else_stmt;
-  Basic_factory<While_stmt> while_stmt;
-  Basic_factory<Break_stmt> break_stmt;
-  Basic_factory<Continue_stmt> continue_stmt;
-  Basic_factory<Expression_stmt> expression_stmt;
-  Basic_factory<Declaration_stmt> declaration_stmt;
-
-  // Declarations
-  Basic_factory<Object_decl> object_decl;
-  Basic_factory<Reference_decl> reference_decl;
-  Basic_factory<Field_decl> field_decl;
-  Basic_factory<Super_decl> super_decl;
-  Basic_factory<Function_decl> function_decl;
-  Basic_factory<Method_decl> method_decl;
-  Basic_factory<Class_decl> class_decl;
-
-  // Parameters
-  Basic_factory<Object_parm> object_parm;
-  Basic_factory<Reference_parm> reference_parm;
-  Basic_factory<Type_parm> type_parm;
-
-  // Modules
-  Single_factory<Translation_unit> translation_unit;
-  
-  // Definitions
-  Basic_factory<Empty_def> empty_def;
-  Basic_factory<Deleted_def> deleted_def;
-  Basic_factory<Defaulted_def> defaulted_def;
-  Basic_factory<Expression_def> expression_def;
-  Basic_factory<Function_def> function_def;
-  Basic_factory<Class_def> class_def;
-  Basic_factory<Intrinsic_def> intrinsic_def;
+  Allocator&    alloc_;
+  Symbol_table& syms_;
 };
 
 

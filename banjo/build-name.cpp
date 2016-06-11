@@ -7,23 +7,11 @@
 namespace banjo
 {
 
-// Returns a simple identifier with the given spelling.
-//
-// TODO: Unique this?
-Simple_id&
-Builder::get_id(char const* s)
+// Returns a symbol for the given string.
+Symbol const&
+Builder::get_identifier(char const* s)
 {
-  Symbol const* sym = syms_.put_identifier(Token_kind::identifier_tok, s);
-  return simple_id(*sym);
-}
-
-
-// Returns a simple identifier with the given spelling.
-Simple_id&
-Builder::get_id(std::string const& s)
-{
-  Symbol const* sym = syms_.put_identifier(Token_kind::identifier_tok, s);
-  return simple_id(*sym);
+  return *syms_.put_identifier(Token_kind::identifier_tok, s);
 }
 
 
@@ -31,15 +19,23 @@ Builder::get_id(std::string const& s)
 Simple_id&
 Builder::get_id(Symbol const& sym)
 {
-  return simple_id(sym);
+  return Simple_id::make(alloc_, sym);
 }
 
 
-// Returns a simple identifier for the symbol.
+// Returns a simple identifier with the given spelling.
 Simple_id&
-Builder::get_id(Symbol const* sym)
+Builder::get_id(char const* s)
 {
-  return get_id(*sym);
+  return get_id(get_identifier(s));
+}
+
+
+// Returns a simple identifier with the given spelling.
+Simple_id&
+Builder::get_id(std::string const& s)
+{
+  return get_id(s.c_str());
 }
 
 
@@ -47,7 +43,7 @@ Builder::get_id(Symbol const* sym)
 Simple_id&
 Builder::get_id(Token const& tok)
 {
-  return get_id(tok.symbol());
+  return get_id(*tok.symbol());
 }
 
 
@@ -59,14 +55,14 @@ Placeholder_id&
 Builder::get_id()
 {
   static int n = 0;
-  return placeholder_id(n++);
+  return Placeholder_id::make(alloc_, n++);
 }
 
 
 Operator_id&
 Builder::get_id(Operator_kind k)
 {
-  return operator_id(k);
+  return Operator_id::make(alloc_, k);
 }
 
 

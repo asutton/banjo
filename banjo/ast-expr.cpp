@@ -9,6 +9,22 @@
 namespace banjo
 {
 
+// Resolved_id_expr
+
+Typed_decl const& 
+Resolved_id_expr::declaration() const
+{
+  return cast<Typed_decl>(*decl_);
+}
+
+
+Typed_decl&
+Resolved_id_expr::declaration()
+{
+  return cast<Typed_decl>(*decl_);
+}
+
+
 // Object_expr
 
 Object_decl const&
@@ -54,6 +70,22 @@ Function_decl&
 Function_expr::declaration()
 {
   return cast<Function_decl>(*decl_);
+}
+
+
+// Resolved_mem_expr
+
+Typed_decl const& 
+Resolved_mem_expr::declaration() const
+{
+  return cast<Typed_decl>(*decl_);
+}
+
+
+Typed_decl&
+Resolved_mem_expr::declaration()
+{
+  return cast<Typed_decl>(*decl_);
 }
 
 

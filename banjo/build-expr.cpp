@@ -13,21 +13,21 @@ namespace banjo
 Void_expr&
 Builder::get_void()
 {
-  return void_expr(get_void_type());
+  return get_void(get_void_type());
 }
 
 
 Void_expr&
 Builder::get_void(Type& t)
 {
-  return void_expr(t);
+  return Void_expr::make(alloc_, t);
 }
 
 
 Boolean_expr&
 Builder::get_boolean(Type& t, bool b)
 {
-  return bool_expr(t, b);
+  return Boolean_expr::make(alloc_, t, b);
 }
 
 
@@ -50,7 +50,7 @@ Builder::get_false(Type& t)
 Integer_expr&
 Builder::get_integer(Type& t, Integer const& n)
 {
-  return int_expr(t, n);
+  return Integer_expr::make(alloc_, t, n);
 }
 
 
@@ -66,216 +66,253 @@ Builder::get_zero(Type& t)
 
 // Returns a tuple expression.
 Tuple_expr&
+Builder::make_tuple(Type& t, Expr_list const& es)
+{
+  return Tuple_expr::make(alloc_, t, es);
+}
+
+
+// Returns a tuple expression.
+Tuple_expr&
 Builder::make_tuple(Type& t, Expr_list&& es)
 {
-  return tuple_expr(t, std::move(es));
+  return Tuple_expr::make(alloc_, t, std::move(es));
 }
 
 
-// Create a reference to a declared object (variable or parameter).
-Id_object_expr&
+// Returns an id-expression that refers to a declared object.
+Object_expr&
 Builder::make_reference(Type& t, Object_decl& d)
 {
-  return id_object_expr(t, d.name(), d);
+  return Object_expr::make(alloc_, t, d.name(), d);
 }
 
 
-// Create a reference to a function.
-Id_function_expr&
+// Returns an id-expression that refers to a declared reference.
+Reference_expr&
+Builder::make_reference(Type& t, Reference_decl& d)
+{
+  return Reference_expr::make(alloc_, t, d.name(), d);
+}
+
+
+// Returns an id-expression that refers to a declared function.
+Function_expr&
 Builder::make_reference(Type& t, Function_decl& d)
 {
-  return id_function_expr(t, d.name(), d);
+  return Function_expr::make(alloc_, t, d.name(), d);
 }
 
 
-// Create an expression referring to an overload set. Note that overload
-// sets are untyped and have no value category.
-Id_overload_expr&
+// Returns an id-expression that refers to a set of declared names.
+Overload_expr&
+Builder::make_reference(Name& n, Decl_list const& ds)
+{
+  return Overload_expr::make(alloc_, n, ds);
+}
+
+
+// Returns an id-expression that refers to a set of declared names.
+Overload_expr&
 Builder::make_reference(Name& n, Decl_list&& ds)
 {
-  return id_overload_expr(n, std::move(ds));
+  return Overload_expr::make(alloc_, n, std::move(ds));
 }
 
 
-Dot_object_expr&
-Builder::make_reference(Type& t, Expr& e, Field_decl& d)
+Mem_object_expr&
+Builder::make_reference(Type& t, Expr& e, Mem_object_decl& d)
 {
-  return dot_object_expr(t, e, d.name(), d);
+  return Mem_object_expr::make(alloc_, t, e, d.name(), d);
 }
 
 
-Dot_function_expr&
-Builder::make_reference(Type& t, Expr& e, Method_decl& d)
+Mem_reference_expr&
+Builder::make_reference(Type& t, Expr& e, Mem_reference_decl& d)
 {
-  return dot_function_expr(t, e, d.name(), d);
+  return Mem_reference_expr::make(alloc_, t, e, d.name(), d);
 }
 
 
-Dot_overload_expr&
+Mem_function_expr&
+Builder::make_reference(Type& t, Expr& e, Mem_function_decl& d)
+{
+  return Mem_function_expr::make(alloc_, t, e, d.name(), d);
+}
+
+
+Mem_overload_expr&
+Builder::make_reference(Expr& e, Name& n, Decl_list const& ds)
+{
+  return Mem_overload_expr::make(alloc_, e, n, ds);
+}
+
+
+Mem_overload_expr&
 Builder::make_reference(Expr& e, Name& n, Decl_list&& ds)
 {
-  lingo_unreachable();
+  return Mem_overload_expr::make(alloc_, e, n, std::move(ds));
 }
 
 
 And_expr&
 Builder::make_and(Type& t, Expr& e1, Expr& e2)
 {
-  return and_expr(t, e1, e2);
+  return And_expr::make(alloc_, t, e1, e2);
 }
 
 
 Or_expr&
 Builder::make_or(Type& t, Expr& e1, Expr& e2)
 {
-  return or_expr(t, e1, e2);
+  return Or_expr::make(alloc_, t, e1, e2);
 }
 
 
 Not_expr&
 Builder::make_not(Type& t, Expr& e)
 {
-  return not_expr(t, e);
+  return Not_expr::make(alloc_, t, e);
 }
 
 
 Eq_expr&
 Builder::make_eq(Type& t, Expr& e1, Expr& e2)
 {
-  return eq_expr(t, e1, e2);
+  return Eq_expr::make(alloc_, t, e1, e2);
 }
 
 
 Ne_expr&
 Builder::make_ne(Type& t, Expr& e1, Expr& e2)
 {
-  return ne_expr(t, e1, e2);
+  return Ne_expr::make(alloc_, t, e1, e2);
 }
 
 
 Lt_expr&
 Builder::make_lt(Type& t, Expr& e1, Expr& e2)
 {
-  return lt_expr(t, e1, e2);
+  return Lt_expr::make(alloc_, t, e1, e2);
 }
 
 
 Gt_expr&
 Builder::make_gt(Type& t, Expr& e1, Expr& e2)
 {
-  return gt_expr(t, e1, e2);
+  return Gt_expr::make(alloc_, t, e1, e2);
 }
 
 
 Le_expr&
 Builder::make_le(Type& t, Expr& e1, Expr& e2)
 {
-  return le_expr(t, e1, e2);
+  return Le_expr::make(alloc_, t, e1, e2);
 }
 
 
 Ge_expr&
 Builder::make_ge(Type& t, Expr& e1, Expr& e2)
 {
-  return ge_expr(t, e1, e2);
+  return Ge_expr::make(alloc_, t, e1, e2);
 }
 
 
 Add_expr&
 Builder::make_add(Type& t, Expr& e1, Expr& e2)
 {
-  return add_expr(t, e1, e2);
+  return Add_expr::make(alloc_, t, e1, e2);
 }
 
 
 Sub_expr&
 Builder::make_sub(Type& t, Expr& e1, Expr& e2)
 {
-  return sub_expr(t, e1, e2);
+  return Sub_expr::make(alloc_, t, e1, e2);
 }
 
 
 Mul_expr&
 Builder::make_mul(Type& t, Expr& e1, Expr& e2)
 {
-  return mul_expr(t, e1, e2);
+  return Mul_expr::make(alloc_, t, e1, e2);
 }
 
 
 Div_expr&
 Builder::make_div(Type& t, Expr& e1, Expr& e2)
 {
-  return div_expr(t, e1, e2);
+  return Div_expr::make(alloc_, t, e1, e2);
 }
 
 
 Rem_expr&
 Builder::make_rem(Type& t, Expr& e1, Expr& e2)
 {
-  return rem_expr(t, e1, e2);
+  return Rem_expr::make(alloc_, t, e1, e2);
 }
 
 
 Neg_expr&
 Builder::make_neg(Type& t, Expr& e)
 {
-  return neg_expr(t, e);
+  return Neg_expr::make(alloc_, t, e);
 }
 
 
 Pos_expr&
 Builder::make_pos(Type& t, Expr& e)
 {
-  return pos_expr(t, e);
+  return Pos_expr::make(alloc_, t, e);
 }
 
 
 Bit_and_expr&
 Builder::make_bit_and(Type& t, Expr& e1, Expr& e2)
 {
-  return bit_and_expr(t, e1, e2);
+  return Bit_and_expr::make(alloc_, t, e1, e2);
 }
 
 
 Bit_or_expr&
 Builder::make_bit_or(Type& t, Expr& e1, Expr& e2)
 {
-  return bit_or_expr(t, e1, e2);
+  return Bit_or_expr::make(alloc_, t, e1, e2);
 }
 
 
 Bit_xor_expr&
 Builder::make_bit_xor(Type& t, Expr& e1, Expr& e2)
 {
-  return bit_xor_expr(t, e1, e2);
+  return Bit_xor_expr::make(alloc_, t, e1, e2);
 }
 
 
 Bit_lsh_expr&
 Builder::make_bit_lsh(Type& t, Expr& e1, Expr& e2)
 {
-  return bit_lsh_expr(t, e1, e2);
+  return Bit_lsh_expr::make(alloc_, t, e1, e2);
 }
 
 
 Bit_rsh_expr&
 Builder::make_bit_rsh(Type& t, Expr& e1, Expr& e2)
 {
-  return bit_rsh_expr(t, e1, e2);
+  return Bit_rsh_expr::make(alloc_, t, e1, e2);
 }
 
 
 Bit_not_expr&
 Builder::make_bit_not(Type& t, Expr& e)
 {
-  return bit_not_expr(t, e);
+  return Bit_not_expr::make(alloc_, t, e);
 }
 
 
 Call_expr&
 Builder::make_call(Type& t, Expr& f, Expr_list&& a)
 {
-  return call_expr(t, f, std::move(a));
+  return Call_expr::make(alloc_, t, f, std::move(a));
 }
 
 
@@ -285,42 +322,42 @@ Builder::make_call(Type& t, Expr& f, Expr_list&& a)
 Trivial_init&
 Builder::make_trivial_init()
 {
-  return trivial_init(get_void_type());
+  return Trivial_init::make(alloc_, get_void_type());
 }
 
 
 Copy_init&
 Builder::make_copy_init(Expr& e)
 {
-  return copy_init(get_void_type(), e);
+  return Copy_init::make(alloc_, get_void_type(), e);
 }
 
 
 Bind_init&
 Builder::make_bind_init(Expr& e)
 {
-  return bind_init(get_void_type(), e);
+  return Bind_init::make(alloc_, get_void_type(), e);
 }
 
 
 Direct_init&
 Builder::make_direct_init(Decl& d, Expr_list const& es)
 {
-  return direct_init(get_void_type(), d, es);
+  return Direct_init::make(alloc_, get_void_type(), d, es);
 }
 
 
 Aggregate_init&
 Builder::make_aggregate_init(Type& t, Expr_list const& es)
 {
-  return aggregate_init(t, es);
+  return Aggregate_init::make(alloc_, t, es);
 }
 
 
 Aggregate_init&
 Builder::make_aggregate_init(Type& t, Expr_list&& es)
 {
-  return aggregate_init(t, std::move(es));
+  return Aggregate_init::make(alloc_, t, std::move(es));
 }
 
 

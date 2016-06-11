@@ -12,98 +12,105 @@ namespace banjo
 Empty_stmt&
 Builder::make_empty_statement()
 {
-  return empty_stmt();
+  return Empty_stmt::make(alloc_);
 }
 
 
 Compound_stmt&
 Builder::make_compound_statement()
 {
-  return compound_stmt();
+  return Compound_stmt::make(alloc_);
+}
+
+
+Compound_stmt&
+Builder::make_compound_statement(Stmt_list const& ss)
+{
+  return Compound_stmt::make(alloc_, ss);
 }
 
 
 Compound_stmt&
 Builder::make_compound_statement(Stmt_list&& ss)
 {
-  return compound_stmt(std::move(ss));
+  return Compound_stmt::make(alloc_, std::move(ss));
 }
 
 
 Return_stmt&
 Builder::make_return_statement()
 {
-  return return_stmt();
+  return Return_stmt::make(alloc_);
 }
 
 
 Return_value_stmt&
 Builder::make_return_value_statement(Expr& e)
 {
-  return return_value_stmt(e);
+  return Return_value_stmt::make(alloc_, e);
 }
 
 
 Yield_stmt&
 Builder::make_yield_statement()
 {
-  return yield_stmt();
+  return Yield_stmt::make(alloc_);
 }
 
 
 Yield_value_stmt&
 Builder::make_yield_value_statement(Expr& e)
 {
-  return yield_value_stmt(e);
+  return Yield_value_stmt::make(alloc_, e);
 }
 
 
 If_then_stmt&
 Builder::make_if_statement(Expr& e, Stmt& s)
 {
-  return if_then_stmt(e, s);
+  return If_then_stmt::make(alloc_, e, s);
 }
 
 
 If_else_stmt&
 Builder::make_if_statement(Expr& e, Stmt& s1, Stmt& s2)
 {
-  return if_else_stmt(e, s1, s2);
+  return If_else_stmt::make(alloc_, e, s1, s2);
 }
 
 
 While_stmt&
 Builder::make_while_statement(Expr& e, Stmt& s)
 {
-  return while_stmt(e, s);
+  return While_stmt::make(alloc_, e, s);
 }
 
 
 Break_stmt&
 Builder::make_break_statement()
 {
-  return break_stmt();
+  return Break_stmt::make(alloc_);
 }
 
 
 Continue_stmt&
 Builder::make_continue_statement()
 {
-  return continue_stmt();
+  return Continue_stmt::make(alloc_);
 }
 
 
 Expression_stmt&
 Builder::make_expression_statement(Expr& e)
 {
-  return expression_stmt(e);
+  return Expression_stmt::make(alloc_, e);
 }
 
 
 Declaration_stmt&
 Builder::make_declaration_statement(Decl& d)
 {
-  return declaration_stmt(d);
+  return Declaration_stmt::make(alloc_, d);
 }
 
 } // namespace banjo

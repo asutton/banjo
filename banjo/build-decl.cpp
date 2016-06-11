@@ -10,83 +10,46 @@ namespace banjo
 {
 
 // -------------------------------------------------------------------------- //
-// Objects and references
-
-Object_decl&
-Builder::make_variable_declaration(Name& n, Type& t)
-{
-  Def& d = make_empty_definition();
-  return object_decl(n, t, d);
-}
+// Variables
 
 
 Object_decl&
-Builder::make_variable_declaration(Name& n, Type& t, Expr& e)
+Builder::make_object_declaration(Name& n, Type& t, Def& d)
 {
-  Def& d = make_expression_definition(e);
-  return object_decl(n, t, d);
+  return Object_decl::make(alloc_, n, t, d);
 }
 
 
-// Create a reference declaration that binds to nothing.
 Reference_decl&
-Builder::make_reference_declaration(Name& n, Type& t)
+Builder::make_reference_declaration(Name& n, Type& t, Def& d)
 {
-  Def& d = make_empty_definition();
-  return reference_decl(n, t, d);
+  return Reference_decl::make(alloc_, n, t, d);
 }
 
 
-// Create a reference declaration that binds to an expression.
-Reference_decl&
-Builder::make_reference_declaration(Name& n, Type& t, Expr& e)
+Empty_def&
+Builder::make_variable_initializer()
 {
-  Def& d = make_expression_definition(e);
-  return reference_decl(n, t, d);
+  return make_empty_definition();
 }
 
 
-// Create a member variable declaration.
-Field_decl&
-Builder::make_field_declaration(Name& n, Type& t)
+// For e to be valid, it must be an initializer.
+Expression_def&
+Builder::make_variable_initializer(Expr& e)
 {
-  Def& d = make_empty_definition();
-  return field_decl(n, t, d);
-}
-
-
-Field_decl&
-Builder::make_field_declaration(Name& n, Type& t, Expr& e)
-{
-  Def& d = make_expression_definition(e);
-  return field_decl(n, t, d);
-}
-
-
-// Make an unnamed base class sub-object declaration.
-Super_decl&
-Builder::make_super_declaration(Type& t)
-{
-  return super_decl(get_id(), t, make_empty_definition());
+  return make_expression_definition(e);
 }
 
 
 // -------------------------------------------------------------------------- //
 // Functions
 
-// Create a new function with an empty definition.
+// Create a new function. 
 Function_decl&
-Builder::make_function_declaration(Name& n, Type& t, Decl_list const& p)
+Builder::make_function_declaration(Name& n, Type& t, Decl_list const& p, Def& d)
 {
-  return function_decl(n, t, p, make_empty_definition());
-}
-
-
-// Create a new function with an empty definition.
-Function_decl&
-Builder::make_function_declaration(Name& n, Type& t, Decl_list&& p)
-{
-  return make_function_declaration(n, t, std::move(p), make_empty_definition());
+  return Function_decl::make(alloc_, n, t, p, d);
 }
 
 
@@ -94,29 +57,7 @@ Builder::make_function_declaration(Name& n, Type& t, Decl_list&& p)
 Function_decl&
 Builder::make_function_declaration(Name& n, Type& t, Decl_list&& p, Def& d)
 {
-  return function_decl(n, t, std::move(p), d);
-}
-
-
-// Create a new method with an empty definition.
-Method_decl&
-Builder::make_method_declaration(Name& n, Type& t, Decl_list const& p)
-{
-  return method_decl(n, t, p, make_empty_definition());
-}
-
-
-Method_decl&
-Builder::make_method_declaration(Name& n, Type& t, Decl_list&& p)
-{
-  return method_decl(n, t, std::move(p), make_empty_definition());
-}
-
-
-Method_decl&
-Builder::make_method_declaration(Name& n, Type& t, Decl_list&& p, Def& d)
-{
-  return method_decl(n, t, std::move(p), d);
+  return Function_decl::make(alloc_, n, t, std::move(p), d);
 }
 
 
@@ -124,7 +65,7 @@ Builder::make_method_declaration(Name& n, Type& t, Decl_list&& p, Def& d)
 Function_def&
 Builder::make_function_definition(Stmt& s)
 {
-  return function_def(s);
+  return Function_def::make(alloc_, s);
 }
 
 
@@ -132,7 +73,7 @@ Builder::make_function_definition(Stmt& s)
 Expression_def&
 Builder::make_function_definition(Expr& e)
 {
-  return expression_def(e);
+  return Expression_def::make(alloc_, e);
 }
 
 
@@ -140,7 +81,7 @@ Builder::make_function_definition(Expr& e)
 Intrinsic_def&
 Builder::make_function_definition(Nullary_fn f)
 {
-  return intrinsic_def(f);
+  return Intrinsic_def::make(alloc_, f);
 }
 
 
@@ -148,7 +89,7 @@ Builder::make_function_definition(Nullary_fn f)
 Intrinsic_def&
 Builder::make_function_definition(Unary_fn f)
 {
-  return intrinsic_def(f);
+  return Intrinsic_def::make(alloc_, f);
 }
 
 
@@ -156,7 +97,7 @@ Builder::make_function_definition(Unary_fn f)
 Intrinsic_def&
 Builder::make_function_definition(Binary_fn f)
 {
-  return intrinsic_def(f);
+  return Intrinsic_def::make(alloc_, f);
 }
 
 
@@ -164,72 +105,70 @@ Builder::make_function_definition(Binary_fn f)
 Intrinsic_def&
 Builder::make_function_definition(Ternary_fn f)
 {
-  return intrinsic_def(f);
+  return Intrinsic_def::make(alloc_, f);
 }
 
 
-// Make a class declaration with an empty definition. 
-Class_decl&
-Builder::make_class_declaration(Name& n, Type& t)
-{
-  return class_decl(n, t, make_empty_definition());
-}
-
+// -------------------------------------------------------------------------- //
+// Classes and their members
 
 // Create a class having the given definition.
 Class_decl&
-Builder::make_class_declaration(Name& n, Type& t, Def& d)
+Builder::make_class_declaration(Name& n, Def& d)
 {
-  return class_decl(n, t, d);
+  return Class_decl::make(alloc_, n, d);
 }
 
 
 Class_def&
 Builder::make_class_definition(Stmt_list&& s)
 {
-  return class_def(std::move(s));
+  return Class_def::make(alloc_, std::move(s));
 }
 
+
+// -------------------------------------------------------------------------- //
+// Parameters
 
 Object_parm&
 Builder::make_object_parameter(Name& n, Type& t)
 {
-  return object_parm(n, t);
+  return Object_parm::make(alloc_, n, t, make_empty_definition());
 }
 
 
 Object_parm&
 Builder::make_object_parameter(char const* s, Type& t)
 {
-  return object_parm(get_id(s), t);
+  return make_object_parameter(get_id(s), t);
 }
 
 
 Reference_parm&
 Builder::make_reference_parameter(Name& n, Type& t)
 {
-  return reference_parm(n, t);
+  return Reference_parm::make(alloc_, n, t, make_empty_definition());
 }
 
 
 Reference_parm&
 Builder::make_reference_parameter(char const* s, Type& t)
 {
-  return reference_parm(get_id(s), t);
+  return make_reference_parameter(get_id(s), t);
 }
 
 
 Type_parm&
 Builder::make_type_parameter(Name& n)
 {
-  return type_parm(n);
+  return Type_parm::make(alloc_, n, make_empty_definition());
 }
 
 
 Type_parm&
-Builder::make_type_parameter(char const* n)
+Builder::make_type_parameter(char const* s)
 {
-  return type_parm(get_id(n));
+  return make_type_parameter(get_id(s));
 }
 
 
@@ -239,27 +178,27 @@ Builder::make_type_parameter(char const* n)
 Empty_def&
 Builder::make_empty_definition()
 {
-  return empty_def();
+  return Empty_def::make(alloc_);
 }
 
 Deleted_def&
 Builder::make_deleted_definition()
 {
-  return deleted_def();
+  return Deleted_def::make(alloc_);
 }
 
 
 Defaulted_def&
 Builder::make_defaulted_definition()
 {
-  return defaulted_def();
+  return Defaulted_def::make(alloc_);
 }
 
 
 Expression_def&
 Builder::make_expression_definition(Expr& e)
 {
-  return expression_def(e);
+  return Expression_def::make(alloc_, e);
 }
 
 
@@ -269,13 +208,15 @@ Builder::make_expression_definition(Expr& e)
 Translation_unit&
 Builder::make_translation_unit()
 {
-  return translation_unit();
+  return Translation_unit::make(alloc_);
 }
 
 
 Translation_unit&
 Builder::make_translation_unit(Stmt_list&& ss)
 {
-  return translation_unit(std::move(ss));
+  return Translation_unit::make(alloc_, std::move(ss));
 }
+
+
 } // namespace banjo

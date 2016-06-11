@@ -47,6 +47,7 @@ struct Init;
 struct Req;
 struct Stmt;
 struct Decl;
+struct Typed_decl;
 struct Variable_decl;
 struct Mapping_decl;
 struct Type_decl;

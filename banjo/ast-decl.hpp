@@ -10,6 +10,14 @@
 namespace banjo
 {
 
+// This type is used to explicitly initialize a declaration that does
+// not have a name.
+enum unnamed_t
+{
+  unnamed
+};
+
+
 // -------------------------------------------------------------------------- //
 // Declaration specifiers
 
@@ -53,55 +61,28 @@ operator|(Specifier_set a, Specifier_set b)
 }
 
 
-// The base class of all declarations. Every declaration has an associated
-// name, type, and set of specifiers.
-//
-// TODO: Although every declaration is a definition, that doesn't apply
-// to parameters in quite the same way. Parameters have default arguments.
-// Note that we could simply interpret a default argument as an optionally
-// specified definition.
+// The base class of all declarations. A declaration associates a name with
+// information in the context in which it appears.
 struct Decl : Term
 {
   struct Visitor;
   struct Mutator;
 
-  // This is only used by translation unit.
-  Decl()
-    : cxt_(), name_(), type_(), spec_()
+  // Used for unnamed declarations.
+  Decl(unnamed_t, Specifier_set s = {})
+    : cxt_(), name_(), spec_(s)
   { }
 
-  // Constructors for untyped declarations.
-  Decl(Name& n)
-    : cxt_(), name_(&n), type_(), spec_()
+  Decl(Decl& d, unnamed_t, Specifier_set s = {})
+    : cxt_(&d), name_(), spec_(s)
   { }
 
-  Decl(Name& n, Specifier_set s)
-    : cxt_(), name_(&n), type_(), spec_(s)
+  Decl(Name& n, Specifier_set s = {})
+    : cxt_(), name_(&n), spec_(s)
   { }
 
-  Decl(Decl& d, Name& n)
-    : cxt_(&d), name_(&n), type_(), spec_()
-  { }
-
-  Decl(Decl& d, Name& n, Specifier_set s)
-    : cxt_(&d), name_(&n), type_(), spec_(s)
-  { }
-
-  // Constructors for typed declarations.
-  Decl(Name& n, Type& t)
-    : cxt_(), name_(&n), type_(&t), spec_()
-  { }
-
-  Decl(Name& n, Type& t, Specifier_set s)
-    : cxt_(), name_(&n), type_(&t), spec_(s)
-  { }
-
-  Decl(Decl& d, Name& n, Type& t)
-    : cxt_(&d), name_(&n), type_(&t), spec_()
-  { }
-
-  Decl(Decl& d, Decl& cxt, Name& n, Type& t, Specifier_set s)
-    : cxt_(&d), name_(&n), type_(&t), spec_(s)
+  Decl(Decl& d, Name& n, Specifier_set s = {})
+    : cxt_(&d), name_(&n), spec_(s)
   { }
 
   virtual void accept(Visitor& v) const = 0;
@@ -119,21 +100,8 @@ struct Decl : Term
   // Returns true if the declaration has a name.
   bool is_named() const { return name_; }
 
-  // Returns the type associated with the name.
-  Type const& type() const { return *type_; }
-  Type&       type()       { return *type_; }
-
   // Returns the set of declaration specifiers for the declaration.
   Specifier_set specifiers() const { return spec_; }
-
-  // Reference specifiers
-  //
-  // TODO: These only apply to object declarations, but I've lifted
-  // them here for simplicity.
-  bool is_reference() const;
-  bool is_normal_reference() const  { return spec_ & ref_spec; }
-  bool is_consume_reference() const { return spec_ & consume_spec; }
-  bool is_forward_reference() const { return spec_ & forward_spec; }
 
   // If the declaration is a template, this returns the templated
   // declaration.
@@ -142,18 +110,8 @@ struct Decl : Term
 
   Decl*         cxt_;
   Name*         name_;
-  Type*         type_;
   Specifier_set spec_;
 };
-
-
-inline bool
-Decl::is_reference() const
-{
-  return is_normal_reference() 
-      || is_consume_reference() 
-      || is_forward_reference();
-}
 
 
 struct Decl::Visitor
@@ -172,6 +130,39 @@ struct Decl::Mutator
 };
 
 
+// A typed declaration associates a name with a typed entity. Examples
+// are variables and functions.
+struct Typed_decl : Decl
+{
+  Typed_decl(Name& n, Type& t, Specifier_set s = {})
+    : Decl(n, s), type_(&t)
+  { }
+
+  Typed_decl(Decl& d, Name& n, Type& t, Specifier_set s = {})
+    : Decl(d, n, s), type_(&t)
+  { }
+
+  // Returns the type associated with the name.
+  Type const& type() const { return *type_; }
+  Type&       type()       { return *type_; }
+
+  // Reference specifiers
+  bool is_reference() const;
+  bool is_normal_reference() const  { return spec_ & ref_spec; }
+  bool is_consume_reference() const { return spec_ & consume_spec; }
+  bool is_forward_reference() const { return spec_ & forward_spec; }
+
+  Type*         type_;
+};
+
+
+inline bool
+Typed_decl::is_reference() const
+{
+  return is_normal_reference() || is_consume_reference() || is_forward_reference();
+}
+
+
 // Represents a unit of translation: a sequence of statements comprising
 // a part of a program or module. 
 //
@@ -181,10 +172,12 @@ struct Decl::Mutator
 // units were not declarations, but this would be a big change.
 struct Translation_unit : Decl, Allocatable<Translation_unit>
 {
-  Translation_unit() { }
+  Translation_unit() 
+    : Decl(unnamed)
+  { }
 
   Translation_unit(Stmt_list&& ss)
-    : stmts_(std::move(ss))
+    : Decl(unnamed), stmts_(std::move(ss))
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }
@@ -204,10 +197,10 @@ struct Translation_unit : Decl, Allocatable<Translation_unit>
 // either an object (with storage) or a reference.
 //
 // TODO: Add constructors accepting a context?
-struct Variable_decl : Decl
+struct Variable_decl : Typed_decl
 {
   Variable_decl(Name& n, Type& t, Def& d, Specifier_set s = {})
-    : Decl(n, t, s), def_(&d)
+    : Typed_decl(n, t, s), def_(&d)
   { }
 
   // Returns the initializer for the variable.
@@ -219,14 +212,14 @@ struct Variable_decl : Decl
 
 
 // Declares a mapping from inputs to outputs. 
-struct Mapping_decl : Decl
+struct Mapping_decl : Typed_decl
 {
   Mapping_decl(Name& n, Type& t, Decl_list const& p, Def& d, Specifier_set s = {})
-    : Decl(n, t, s), parms_(p), def_(&d)
+    : Typed_decl(n, t, s), parms_(p), def_(&d)
   { }
 
   Mapping_decl(Name& n, Type& t, Decl_list&& p, Def& d, Specifier_set s = {})
-    : Decl(n, t, s), parms_(std::move(p)), def_(&d)
+    : Typed_decl(n, t, s), parms_(std::move(p)), def_(&d)
   { }
 
   // Returns the list of parameter declarations for the function.
@@ -300,10 +293,15 @@ struct Function_decl : Mapping_decl, Allocatable<Function_decl>
 
 
 // Represents the declaration of a class type.
+//
+// Note that class declarations are un-typed.
+// 
+// TODO: Extend the type system to define high-order types? I'm not
+// quite sure what we'd do with those.
 struct Class_decl : Type_decl, Allocatable<Class_decl>
 {
-  Class_decl(Name& n, Type& t, Def& d)
-    : Type_decl(n, t), def_(&d)
+  Class_decl(Name& n, Def& d)
+    : Type_decl(n), def_(&d)
   { }
   
   void accept(Visitor& v) const { v.visit(*this); }
@@ -374,6 +372,8 @@ struct Mem_base_decl : Mem_variable_decl, Allocatable<Mem_base_decl>
 // TODO: I think that the type of a method is the same as that of a function,
 // except that the first parameter type must always be a (possibly qualified) 
 // reference to this. That could be enforced in the constructor, I suppose.
+//
+// TODO: Add derived classes for constructors and destructors.
 struct Mem_function_decl : Function_decl, Allocatable<Mem_function_decl>
 {
   using Function_decl::Function_decl;
@@ -481,17 +481,42 @@ struct Index : std::pair<int, int>
 };
 
 
-// The parameterized base class of all parameters. This provides a
-// parameter index.
+// The parameterized base class of all parameters. This is a CRTP class
+// that a) contributes to the definition of parameters by adding a parameter
+// index, and b) defines versions of make() and unmake() that allocate
+// correctly.
+//
+// We don't parameter classes deriving from Allocatable because it will 
+// contribute another alloc_ pointer to the object. The make() and unmake() 
+// functions are (sadly) identical to those in Allocatable.
 //
 // TODO: Define parameters that accept an index.
 //
 // TODO: For all derived classes, add accessors and checks to determine
 // if the default argument is present.
-template<typename T>
-struct Parameter : T
+template<typename T, typename B>
+struct Parameter : B
 {
-  using T::T;
+  using B::B;
+
+  // Bring new versions of make and unmake into scope so that we
+  // actually create objects of the right type. 
+  template<typename... Args>
+  static T& make(Allocator& a, Args&&... args)
+  {
+    void* p = a.allocate(sizeof(T), typeid(T));
+    T* obj = new (p) T(std::forward<Args>(args)...);
+    obj->alloc_ = &a;
+    return *obj;
+  }
+
+  void unmake(Allocator& a)
+  {
+    lingo_assert(this->alloc_ == & a);
+    T* obj = static_cast<T*>(this);
+    obj->~T();
+    a.deallocate(obj, typeid(T));
+  }
 
   // Returns the index of the template parameter.
   Index  index() const { return ix_; }
@@ -502,9 +527,9 @@ struct Parameter : T
 
 
 // An object parameter of a function.
-struct Object_parm : Parameter<Object_decl>, Allocatable<Object_parm>
+struct Object_parm : Parameter<Object_parm, Object_decl>
 {
-  using Parameter<Object_decl>::Parameter;
+  using Parameter<Object_parm, Object_decl>::Parameter;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
@@ -512,9 +537,9 @@ struct Object_parm : Parameter<Object_decl>, Allocatable<Object_parm>
 
 
 // A reference parameter of a function.
-struct Reference_parm : Parameter<Reference_decl>, Allocatable<Reference_parm>
+struct Reference_parm : Parameter<Reference_parm, Reference_decl>
 {
-  using Parameter<Reference_decl>::Parameter;
+  using Parameter<Reference_parm, Reference_decl>::Parameter;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
@@ -522,9 +547,9 @@ struct Reference_parm : Parameter<Reference_decl>, Allocatable<Reference_parm>
 
 
 // A type parameter of a template.
-struct Type_parm : Parameter<Class_decl>, Allocatable<Type_parm>
+struct Type_parm : Parameter<Type_parm, Class_decl>
 {
-  using Parameter<Class_decl>::Parameter;
+  using Parameter<Type_parm, Class_decl>::Parameter;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
@@ -532,9 +557,9 @@ struct Type_parm : Parameter<Class_decl>, Allocatable<Type_parm>
 
 
 // A template parameter of a template.
-struct Template_parm : Parameter<Template_decl>, Allocatable<Template_parm>
+struct Template_parm : Parameter<Template_parm, Template_decl>
 {
-  using Parameter<Template_decl>::Parameter;
+  using Parameter<Template_parm, Template_decl>::Parameter;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }

@@ -23,7 +23,7 @@ add_library(banjo
   debugging.cpp
 
   # # Node construction
-  # builder.cpp
+  builder.cpp
 
   # # Diagnostics
   # error.cpp

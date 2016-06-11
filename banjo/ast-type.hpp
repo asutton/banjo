@@ -185,7 +185,6 @@ struct Type : Term
     : cat_(c), qual_(q)
   { }
 
-
   virtual void accept(Visitor&) const = 0;
   virtual void accept(Mutator&)       = 0;
 
@@ -351,20 +350,20 @@ struct Float_type : Type, Allocatable<Float_type>
 // Note that function types are never qualified.
 struct Function_type : Type, Allocatable<Function_type>
 {
-  Function_type(Type_list const& p, Type& r)
-    : Type(function_type), parms_(p), ret_(&r)
+  Function_type(Type_list const& p, Type& r, Qualifier_set q = {})
+    : Type(function_type, q), parms_(p), ret_(&r)
   { }
 
-  Function_type(Type_list&& p, Type& r)
-    : Type(function_type), parms_(std::move(p)), ret_(&r)
+  Function_type(Type_list&& p, Type& r, Qualifier_set q = {})
+    : Type(function_type, q), parms_(std::move(p)), ret_(&r)
   { }
 
-  Function_type(Type_category c, Type_list const& p, Type& r)
-    : Type(c), parms_(p), ret_(&r)
+  Function_type(Type_category c, Type_list const& p, Type& r, Qualifier_set q = {})
+    : Type(c, q), parms_(p), ret_(&r)
   { }
 
-  Function_type(Type_category c, Type_list&& p, Type& r)
-    : Type(c), parms_(std::move(p)), ret_(&r)
+  Function_type(Type_category c, Type_list&& p, Type& r, Qualifier_set q = {})
+    : Type(c, q), parms_(std::move(p)), ret_(&r)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }

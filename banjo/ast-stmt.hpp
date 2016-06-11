@@ -50,6 +50,10 @@ struct Compound_stmt : Stmt, Allocatable<Compound_stmt>
 {
   Compound_stmt() = default;
 
+  Compound_stmt(Stmt_list const& ss)
+    : Stmt(), stmts_(ss)
+  { }
+
   Compound_stmt(Stmt_list&& ss)
     : Stmt(), stmts_(std::move(ss))
   { }

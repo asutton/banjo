@@ -195,8 +195,8 @@ struct Resolved_id_expr : Id_expr
   { }
 
   // Returns the referenced declaration.
-  Decl const& declaration() const { return *decl_; }
-  Decl&       declaration()       { return *decl_; }
+  Typed_decl const& declaration() const;
+  Typed_decl&       declaration();
 
   Decl* decl_;
 };
@@ -248,7 +248,7 @@ struct Function_expr : Resolved_id_expr, Allocatable<Function_expr>
 // are inherently untyped.
 struct Overload_expr : Id_expr, Allocatable<Overload_expr>
 {
-  Overload_expr(Name& n, Decl_list& ds)
+  Overload_expr(Name& n, Decl_list const& ds)
     : Id_expr(n), decls_(ds)
   { }
 
@@ -299,8 +299,8 @@ struct Resolved_mem_expr : Mem_expr
     : Mem_expr(t, e, n), decl_(&d)
   { }
 
-  Decl const& declaration() const { return *decl_; }
-  Decl&       declaration()       { return *decl_; }
+  Typed_decl const& declaration() const;
+  Typed_decl&       declaration();
 
   Decl* decl_;
 };
@@ -351,7 +351,13 @@ struct Mem_function_expr : Resolved_mem_expr, Allocatable<Mem_function_expr>
 // An unresolved access expression, referring to a set of declarations.
 struct Mem_overload_expr : Mem_expr, Allocatable<Mem_overload_expr>
 {
-  using Mem_expr::Mem_expr;
+  Mem_overload_expr(Expr& e, Name& n, Decl_list const& ds)
+    : Mem_expr(e, n), decls_(ds)
+  { }
+
+  Mem_overload_expr(Expr& e, Name& n, Decl_list&& ds)
+    : Mem_expr(e, n), decls_(std::move(ds))
+  { }
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
