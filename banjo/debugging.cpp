@@ -386,12 +386,27 @@ Debug_printer::statement(Stmt const& s)
 void
 Debug_printer::declaration(Decl const& d)
 {
-  Sexpr sentinel(*this, d);
-  space();
+  Sexpr guard(*this, d);
+  newline_and_indent();
   id(d.name());
-  space();
-  prop("id");
-  os << &d;
+  
+  struct fn
+  {
+    Debug_printer& self;
+    void operator()(Decl const& d)       { lingo_unhandled(d); }
+    void operator()(Typed_decl const& d) { self.declaration(d); }
+  };
+  apply(d, fn{*this});
+  
+  newline_and_undent();
+}
+
+
+void
+Debug_printer::declaration(Typed_decl const& d)
+{
+  newline();
+  type(d.type());
 }
 
 

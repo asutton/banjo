@@ -68,6 +68,7 @@ struct Debug_printer
 
   // Declarations
   void declaration(Decl const&);
+  void declaration(Typed_decl const&);
 
   // Constraints
   void constraint(Cons const&);

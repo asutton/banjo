@@ -5,6 +5,7 @@
 #include "parser.hpp"
 
 #include <banjo/ast.hpp>
+#include <banjo/debugging.hpp>
 
 
 namespace banjo
@@ -19,6 +20,7 @@ void
 Elaborate_declarations::on_variable_declaration(Object_decl& d)
 {
   d.type_ = &parse_type(d.type());
+  debug(d);
 }
 
 
