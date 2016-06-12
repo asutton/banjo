@@ -75,7 +75,7 @@ Evaluator::evaluate(Expr const& e)
     Value operator()(Boolean_expr const& e) { return self.boolean(e); }
     Value operator()(Integer_expr const& e) { return self.integer(e); }
     Value operator()(Tuple_expr const& e)   { return self.tuple(e); }
-    Value operator()(Object_expr const& e)  { return self.object(e); }
+    Value operator()(Decl_ref const& e)     { return self.object(e); }
     Value operator()(Call_expr const& e)    { return self.call(e); }
     Value operator()(And_expr const& e)     { return self.logical_and(e); }
     Value operator()(Or_expr const& e)      { return self.logical_or(e); }
@@ -130,7 +130,7 @@ Evaluator::tuple(Tuple_expr const& e)
 
 // Returns a reference to the object referred to be e.
 Value
-Evaluator::object(Object_expr const& e)
+Evaluator::object(Decl_ref const& e)
 {
   return alias(e.declaration());
 }

@@ -34,12 +34,12 @@ struct Builtins
   Class_decl&       builtin_compiler_class()       { return *comp_class_; }
 
   // Returns the builtin compiler object.
-  Mem_object_decl const& builtin_compiler() const { return *comp_; }
-  Mem_object_decl&       builtin_compiler()       { return *comp_; }
+  Field_decl const& builtin_compiler() const { return *comp_; }
+  Field_decl&       builtin_compiler()       { return *comp_; }
 
   Translation_unit* tu_         = nullptr;
   Class_decl*       comp_class_ = nullptr;
-  Mem_object_decl*  comp_       = nullptr;
+  Field_decl*       comp_       = nullptr;
 };
 
 

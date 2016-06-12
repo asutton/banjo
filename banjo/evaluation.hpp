@@ -52,7 +52,7 @@ struct Evaluator
   Value boolean(Boolean_expr const&);
   Value integer(Integer_expr const&);
   Value tuple(Tuple_expr const&);
-  Value object(Object_expr const&);
+  Value object(Decl_ref const&);
   Value call(Call_expr const&);
   Value logical_and(And_expr const&);
   Value logical_or(Or_expr const&);

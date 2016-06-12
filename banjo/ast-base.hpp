@@ -37,9 +37,9 @@ struct Declared_type;
 
 struct Expr;
 struct Id_expr;
-struct Resolved_id_expr;
-struct Mem_expr;
-struct Resolved_mem_expr;
+struct Decl_ref;
+struct Access_expr;
+struct Scoped_ref;
 struct Unary_expr;
 struct Binary_expr;
 struct Conv;
@@ -49,7 +49,6 @@ struct Req;
 struct Stmt;
 struct Decl;
 struct Typed_decl;
-struct Variable_decl;
 struct Mapping_decl;
 struct Type_decl;
 
@@ -133,6 +132,10 @@ struct List_allocator : Allocator
 // use the Allocator interface. This allows for "striped" forms of
 // allocation, where objects of different dynamic type are pooled into
 // different resources.
+//
+// Note that T must be derived from Term.
+//
+// TODO: Make allocator tracking optional.
 template<typename T>
 struct Allocatable
 {
@@ -149,13 +152,11 @@ struct Allocatable
   // is not allocated from this arena.
   void unmake(Allocator& a)
   {
-    lingo_assert(alloc_ == & a);
     T* obj = static_cast<T*>(this);
+    lingo_assert(obj->alloc_ == & a);
     obj->~T();
     a.deallocate(obj, typeid(T));
   }
-
-  Allocator* alloc_;
 };
 
 
@@ -177,7 +178,7 @@ struct Allocatable
 struct Term
 {
   Term()
-    : loc_()
+    : alloc_(nullptr), loc_()
   { }
 
   virtual ~Term() { }
@@ -191,6 +192,7 @@ struct Term
   // and ends at the term's location.
   virtual Region region() const { return {loc_, loc_}; }
 
+  Allocator* alloc_;
   Location loc_;
 };
 

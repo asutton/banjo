@@ -84,7 +84,6 @@ struct Printer
   void primary_type(Auto_type const&);
   void primary_type(Function_type const&);
   void primary_type(Tuple_type const&);
-  void primary_type(Type_type const&);
   void id_type(Class_type const&);
   void id_type(Typename_type const&);
   void grouped_type(Type const&);
@@ -107,7 +106,7 @@ struct Printer
   void postfix_expression(Expr const&);
   void postfix_expression(Call_expr const&);  
   void postfix_expression(Tuple_expr const&);
-  void postfix_expression(Mem_expr const&);
+  void postfix_expression(Access_expr const&);
   void postfix_expression(Value_conv const&);
   void postfix_expression(Qualification_conv const&);
   void postfix_expression(Boolean_conv const&);
@@ -180,7 +179,7 @@ struct Printer
   void function_definition(Defaulted_def const&);
   void function_definition(Intrinsic_def const&);
   void parameter(Decl const&);
-  void parameter(Object_parm const&);
+  void parameter(Variable_parm const&);
   void parameter_list(Decl_list const&);
 
   // Classes

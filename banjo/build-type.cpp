@@ -175,14 +175,6 @@ Builder::get_decltype_type(Type_category c, Expr& e, Qualifier_set q)
 }
 
 
-// TODO: I hate this type. It should go away...
-Type_type&
-Builder::get_type_type()
-{
-  return {Type_type::make(alloc_)};
-}
-
-
 // -------------------------------------------------------------------------- //
 // Reference types
 

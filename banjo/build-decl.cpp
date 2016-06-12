@@ -13,47 +13,35 @@ namespace banjo
 // Variables
 
 
-Object_decl&
-Builder::make_object_declaration(Name& n, Type& t, Def& d)
+Variable_decl&
+Builder::make_variable_declaration(Name& n, Type& t, Def& d)
 {
-  return Object_decl::make(alloc_, n, t, d);
+  lingo_assert(!is<Function_type>(t));
+  return Variable_decl::make(alloc_, n, t, d);
 }
 
 
-Object_decl&
-Builder::make_object_declaration(char const* s, Type& t, Def& d)
+Variable_decl&
+Builder::make_variable_declaration(char const* s, Type& t, Def& d)
 {
-  return make_object_declaration(get_id(s), t, d);
-}
-
-
-// Create an object declaration whose definition is empty.
-Object_decl&
-Builder::make_object_declaration(Name& n, Type& t)
-{
-  return make_object_declaration(n, t, make_empty_definition());
+  lingo_assert(!is<Function_type>(t));
+  return make_variable_declaration(get_id(s), t, d);
 }
 
 
 // Create an object declaration whose definition is empty.
-Object_decl&
-Builder::make_object_declaration(char const* s, Type& t)
+Variable_decl&
+Builder::make_variable_declaration(Name& n, Type& t)
 {
-  return make_object_declaration(s, t, make_empty_definition());
+  return make_variable_declaration(n, t, make_empty_definition());
 }
 
 
-Reference_decl&
-Builder::make_reference_declaration(Name& n, Type& t, Def& d)
+// Create an object declaration whose definition is empty.
+Variable_decl&
+Builder::make_variable_declaration(char const* s, Type& t)
 {
-  return Reference_decl::make(alloc_, n, t, d);
-}
-
-
-Reference_decl&
-Builder::make_reference_declaration(char const* s, Type& t, Def& d)
-{
-  return make_reference_declaration(get_id(s), t, d);
+  return make_variable_declaration(s, t, make_empty_definition());
 }
 
 
@@ -183,104 +171,76 @@ Builder::make_class_definition(Stmt_list&& s)
 }
 
 
-Mem_object_decl&
-Builder::make_object_member(Name&, Type&, Def&)
+Field_decl&
+Builder::make_field_declaration(Name& n, Type& t, Def& d)
 {
-  lingo_unreachable();
+  return Field_decl::make(alloc_, n, t, d);
 }
 
 
-Mem_object_decl&
-Builder::make_object_member(char const*, Type&, Def&)
+Field_decl&
+Builder::make_field_declaration(char const* s, Type& t, Def& d)
 {
-  lingo_unreachable();
+  return make_field_declaration(get_id(s), t, d);
 }
 
 
-Mem_object_decl&
-Builder::make_object_member(Name&, Type&)
+Field_decl&
+Builder::make_field_declaration(Name& n, Type& t)
 {
-  lingo_unreachable();
+  return make_field_declaration(n, t, make_empty_definition());
 }
 
 
-Mem_object_decl&
-Builder::make_object_member(char const*, Type&)
+Field_decl&
+Builder::make_field_declaration(char const* s, Type& t)
 {
-  lingo_unreachable();
+  return make_field_declaration(s, t, make_empty_definition());
 }
 
 
-Mem_reference_decl&
-Builder::make_reference_member(Name&, Type&, Def&)
+Method_decl&
+Builder::make_method_declaration(Name& n, Type& t, Decl_list const& ps, Def& d)
 {
-  lingo_unreachable();
+  return Method_decl::make(alloc_, n, t, ps, d);
 }
 
 
-Mem_reference_decl&
-Builder::make_reference_member(char const*, Type&, Def&)
+Method_decl&
+Builder::make_method_declaration(Name& n, Type& t, Decl_list&& ps, Def& d)
 {
-  lingo_unreachable();
+  return Method_decl::make(alloc_, n, t, std::move(ps), d);
 }
 
 
-Mem_function_decl&
-Builder::make_function_member(Name&, Type&, Decl_list const&, Def&)
+Method_decl&
+Builder::make_method_declaration(Name& n, Type& t, Decl_list const& ps)
 {
-  lingo_unreachable();
+  return make_method_declaration(n, t, ps, make_empty_definition());
 }
 
 
-Mem_function_decl&
-Builder::make_function_member(Name&, Type&, Decl_list&&, Def&)
+Method_decl&
+Builder::make_method_declaration(Name& n, Type& t, Decl_list&& ps)
 {
-  lingo_unreachable();
-}
-
-
-Mem_function_decl&
-Builder::make_function_member(Name& n, Type& t, Decl_list const& ps)
-{
-  return make_function_member(n, t, ps, make_empty_definition());
-}
-
-
-Mem_function_decl&
-Builder::make_function_member(Name& n, Type& t, Decl_list&& ps)
-{
-  return make_function_member(n, t, std::move(ps), make_empty_definition());
+  return make_method_declaration(n, t, std::move(ps), make_empty_definition());
 }
 
 
 // -------------------------------------------------------------------------- //
 // Parameters
 
-Object_parm&
-Builder::make_object_parameter(Name& n, Type& t)
+Variable_parm&
+Builder::make_variable_parameter(Name& n, Type& t)
 {
-  return Object_parm::make(alloc_, n, t, make_empty_definition());
+  return Variable_parm::make(alloc_, n, t, make_empty_definition());
 }
 
 
-Object_parm&
-Builder::make_object_parameter(char const* s, Type& t)
+Variable_parm&
+Builder::make_variable_parameter(char const* s, Type& t)
 {
-  return make_object_parameter(get_id(s), t);
-}
-
-
-Reference_parm&
-Builder::make_reference_parameter(Name& n, Type& t)
-{
-  return Reference_parm::make(alloc_, n, t, make_empty_definition());
-}
-
-
-Reference_parm&
-Builder::make_reference_parameter(char const* s, Type& t)
-{
-  return make_reference_parameter(get_id(s), t);
+  return make_variable_parameter(get_id(s), t);
 }
 
 

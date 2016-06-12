@@ -224,7 +224,6 @@ struct Parser
   Decl& on_concept_name(Token);
 
   // Types
-  Type& on_class_type(Token);
   Type& on_void_type(Token);
   Type& on_bool_type(Token);
   Type& on_int_type(Token);
@@ -297,6 +296,7 @@ struct Parser
   // Variables
   Decl& on_variable_declaration(Name&, Type&);
   Decl& on_variable_declaration(Name&, Type&, Expr&);
+  Decl& on_variable_declaration(Name&, Type&, Def&);
   Decl& on_constant_declaration(Name&, Type&, Expr&);
   Decl& on_super_declaration(Name&, Type&);
 
@@ -306,7 +306,7 @@ struct Parser
   Decl& finish_function_declaration(Decl&, Stmt&);
 
   // Classes
-  Decl& start_class_declaration(Name&, Type&);
+  Decl& start_class_declaration(Name&);
   Decl& finish_class_definition(Decl&, Def&);
   Def& on_class_body(Stmt_list&&);
 

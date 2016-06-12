@@ -51,21 +51,7 @@ make_variable_ref(Context& cxt, Variable_decl& d)
 
 
 // Returns a reference to a declared function. A name denoting a function
-// declaration is a reference value whose type is the type of the function.
-//
-// TODO: Can I declare a consumed function? 
-//
-//    def f(n : int) -> int;
-//    consume f := fn; ???
-//
-// No... that wouldn't work. But this would:
-//
-//    consume f := consume fn;
-//
-// And it would have approximately the same meaning as this:
-//
-//    var x : int;
-//    consume x := consume x;
+// declaration is a reference to that function.
 static Expr&
 make_function_ref(Context& cxt, Function_decl& d)
 {
@@ -102,24 +88,23 @@ make_overload_ref(Context& cxt, Name& n, Decl_list&& ds)
 // is a reference value expression whose type is that of the declared 
 // field. If the field is declared with the consume specifier, then the 
 // expression computes a consumable value.
+//
+// TODO: Handle meta variables.
 static Expr&
-make_mem_variable_ref(Context& cxt, Expr& e, Mem_variable_decl& d)
+make_field_ref(Context& cxt, Expr& e, Field_decl& d)
 {
-  lingo_unreachable();
-
-  // Type& t = cxt.get_reference_type(d.type());
-  // return cxt.make_reference(t, d);
+  Type& t = cxt.get_reference_type(d.type());
+  return cxt.make_reference(t, e, d);
 }
 
 
 // Returns an expression referring to a class method. A method expression
 // is a reference value expression whose type is that of the function.
 static Expr&
-make_mem_function_ref(Context& cxt, Expr& e, Mem_function_decl& d)
+make_method_ref(Context& cxt, Expr& e, Method_decl& d)
 {
-  lingo_unreachable();
-
-  // return cxt.make_reference(nref_expr, d.type(), e, d);
+  Type& t = cxt.get_reference_type(d.type());
+  return cxt.make_reference(t, e, d);
 }
 
 
@@ -141,8 +126,8 @@ make_resolved_mem_ref(Context& cxt, Expr& obj, Decl& decl)
     Expr& operator()(Function_decl& d) { return make_function_ref(cxt, d); }
     
     // Members.
-    Expr& operator()(Mem_variable_decl& d) { return make_mem_variable_ref(cxt, obj, d); }
-    Expr& operator()(Mem_function_decl& d) { return make_mem_function_ref(cxt, obj, d); }
+    Expr& operator()(Field_decl& d)  { return make_field_ref(cxt, obj, d); }
+    Expr& operator()(Method_decl& d) { return make_method_ref(cxt, obj, d); }
   };
   return apply(decl, fn{cxt, obj});
 }

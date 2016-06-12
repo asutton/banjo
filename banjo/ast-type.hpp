@@ -54,12 +54,6 @@ enum Type_category : int
 //      values can be modified by processes outside of the current thread
 //      of execution.
 //
-//    - meta:
-//      A meta object is a compile-time entity and requires constant
-//      initialization. Meta objects are implicitly non-modifiable and
-//      cannot be volatile. A meta function is one that is always evaluated
-//      at its point of use.
-//
 //    - consume:
 //      A consume reference refers to an object whose value may be consumed 
 //      by a subsequent operation (the object's original value is reset).
@@ -67,16 +61,18 @@ enum Type_category : int
 //    - noexcept:
 //      A noexcept function does not propagate exceptions.
 //
+//    - meta:
+//      The meta qualifier applies to expressions that refer to variable
+//      and function declarations. A meta variable is a compile-time entity 
+//      and requires constant initialization. A meta function is one that 
+//      is compile-time evaluated at its point of use.
+//
 // Note objects references can be both const and volatile. Functions shall
 // be neither object-qualified nor reference-qualified. Likewise, objects
 // and references shall not be function-qualified.
 //
 // NOTE: Sets of qualifiers corresponding to different categories are
 // aligned within the bytes of the underlying type. 
-//
-// TODO: I'm not sure that meta works as an object qualifier because it
-// doesn't compound like cv-qualifiers For example, `int meta* meta` should 
-// not be valid -- or should it?
 //
 // TODO: Extend the partial ordering on object qualifiers to include
 // the meta qualifier. Also, is a meta object implicitly const?
@@ -89,13 +85,16 @@ enum Qualifier_set : int
   // Object qualifiers
   const_qual    = 1 << 0,
   volatile_qual = 1 << 1,
-  meta_qual     = 1 << 2, // Meta also qualifies functions
 
   // Reference qualifiers
   consume_qual  = 1 << 8,
 
   // Function qualifiers
   noexcept_qual = 1 << 12,
+
+  // Declaration qualifiers
+  meta_qual     = 1 << 16,
+
 
   // Combinations
   cv_qual        = const_qual | volatile_qual,
@@ -567,21 +566,6 @@ struct Decltype_type : Type, Allocatable<Decltype_type>
 {
   using Type::Type;
 
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-};
-
-
-// The type of a user-defined type.
-//
-// NOTE: This is currently used to model the "absence" of a meta-type 
-// for a class declaration. There's probably something better that
-// we could call this, or eliminate it completely in favor of a better
-// design?
-//
-// TODO: Rename to Type_kind? Something else?
-struct Type_type : Type, Allocatable<Type_type>
-{
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 };

@@ -638,7 +638,7 @@ contextual_conversion_to_bool(Context& cxt, Expr& e)
   // really want this declaration and its associated nodes to evaporate
   // when the function returns. Note that the initialization and
   // conversion are allocated in the main arena.
-  Object_decl& var = cxt.make_object_declaration("b", cxt.get_bool_type());
+  Variable_decl& var = cxt.make_variable_declaration("b", cxt.get_bool_type());
 
   // Actually perform the copy initialization.
   Expr& init = copy_initialize(cxt, var, e);

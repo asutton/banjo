@@ -89,7 +89,7 @@ check_declarations(Context& cxt, Decl const& d1, Decl const& d2)
     Context& cxt;
     Decl const& d2;
     void operator()(Decl const& d)           { lingo_unhandled(d); }
-    void operator()(Object_decl const& d1)   { return check_declarations(cxt, d1, cast_as(d1, d2)); }
+    void operator()(Variable_decl const& d1) { return check_declarations(cxt, d1, cast_as(d1, d2)); }
     void operator()(Function_decl const& d1) { return check_declarations(cxt, d1, cast_as(d1, d2)); }
     void operator()(Type_decl const& d1)     { return check_declarations(cxt, d1, cast_as(d1, d2)); }
   };
@@ -110,14 +110,14 @@ check_declarations(Context& cxt, Decl const& d1, Decl const& d2)
 
 
 void
-check_declarations(Context& cxt, Object_decl const& d1, Object_decl const& d2)
+check_declarations(Context& cxt, Variable_decl const& d1, Variable_decl const& d2)
 {
   struct fn
   {
-    char const* operator()(Decl const& d)              { lingo_unhandled(d); }
-    char const* operator()(Variable_decl const& d)     { return "variable"; }
-    char const* operator()(Mem_variable_decl const& d) { return "member variable"; }
-    char const* operator()(Object_parm const& d)       { return "parameter"; }
+    char const* operator()(Decl const& d)          { lingo_unhandled(d); }
+    char const* operator()(Variable_decl const& d) { return "variable"; }
+    char const* operator()(Field_decl const& d)    { return "member variable"; }
+    char const* operator()(Variable_parm const& d) { return "parameter"; }
   };
   error(cxt, "redeclaration of {} with the same name", apply(d1, fn{}));
   throw Declaration_error();

@@ -30,19 +30,8 @@ Parser::class_declaration()
   require(tk::class_tok);
   Name& name = identifier();
 
-  // Match the metatype.
-  Type* kind;
-  if (match_if(tk::colon_tok)) {
-    if (next_token_is(tk::lbrace_tok))
-      kind = &cxt.get_type_type();
-    else
-      kind = &unparsed_type(end_kind);
-  } else {
-    kind = &cxt.get_type_type();
-  }
-
   // Point of declaration.
-  Decl& decl = start_class_declaration(name, *kind);
+  Decl& decl = start_class_declaration(name);
   Enter_scope scope(cxt, cxt.saved_scope(decl));
 
   // Match the class body.

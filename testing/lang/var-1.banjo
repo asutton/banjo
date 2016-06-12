@@ -1,6 +1,7 @@
 var v0 : int;
 var v1 : int = 0;
-var v1 : int = 0;
+
+def f() -> int { return; }
 
 // var v2 := v3;
 // var v3 := 5;

@@ -17,13 +17,6 @@ namespace fe
 
 
 Type&
-Parser::on_class_type(Token)
-{
-  return cxt.get_type_type();
-}
-
-
-Type&
 Parser::on_void_type(Token)
 {
   return cxt.get_void_type();

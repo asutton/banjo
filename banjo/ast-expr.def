@@ -9,14 +9,12 @@ define_node(Real_expr)
 define_node(Tuple_expr)
 
 // References to declared entities
-define_node(Object_expr)
-define_node(Reference_expr)
-define_node(Function_expr)
-define_node(Overload_expr)
-define_node(Mem_object_expr)
-define_node(Mem_reference_expr)
-define_node(Mem_function_expr)
-define_node(Mem_overload_expr)
+define_node(Variable_ref)
+define_node(Function_ref)
+define_node(Overload_ref)
+define_node(Field_ref)
+define_node(Method_ref)
+define_node(Member_ref)
 
 // Arithmetic expressions
 define_node(Add_expr)

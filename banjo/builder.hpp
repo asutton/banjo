@@ -79,9 +79,6 @@ struct Builder
   Auto_type&     get_auto_type(Type_category, Type_decl&, Qualifier_set = {});
   Decltype_type& get_decltype_type(Type_category, Expr&, Qualifier_set = {});
 
-  // Meta-types
-  Type_type& get_type_type();
-
   // Reference and object types
   Type& get_reference_type(Type& t);
   Type& get_non_reference_type(Type& t);
@@ -113,17 +110,14 @@ struct Builder
   Tuple_expr&    make_tuple(Type&, Expr_list&&);
 
   // Declaration references
-  Resolved_id_expr&   make_reference(Type&, Variable_decl&);
-  Object_expr&        make_reference(Type&, Object_decl&);
-  Reference_expr&     make_reference(Type&, Reference_decl&);
-  Function_expr&      make_reference(Type&, Function_decl&);
-  Overload_expr&      make_reference(Name&, Decl_list const&);
-  Overload_expr&      make_reference(Name&, Decl_list&&);
-  Mem_object_expr&    make_reference(Type&, Expr&, Mem_object_decl&);
-  Mem_reference_expr& make_reference(Type&, Expr&, Mem_reference_decl&);
-  Mem_function_expr&  make_reference(Type&, Expr&, Mem_function_decl&);
-  Mem_overload_expr&  make_reference(Expr&, Name&, Decl_list const&);
-  Mem_overload_expr&  make_reference(Expr&, Name&, Decl_list&&);
+  Variable_ref& make_reference(Type&, Variable_decl&);
+  Function_ref& make_reference(Type&, Function_decl&);
+  Overload_ref& make_reference(Name&, Decl_list const&);
+  Overload_ref& make_reference(Name&, Decl_list&&);
+  Field_ref&    make_reference(Type&, Expr&, Field_decl&);
+  Method_ref&   make_reference(Type&, Expr&, Method_decl&);
+  Member_ref&   make_reference(Expr&, Name&, Decl_list const&);
+  Member_ref&   make_reference(Expr&, Name&, Decl_list&&);
 
   // Logical expressions
   And_expr& make_and(Type&, Expr&, Expr&);
@@ -187,12 +181,10 @@ struct Builder
   // Declarations
 
   // Variables
-  Object_decl&    make_object_declaration(Name&, Type&, Def&);
-  Object_decl&    make_object_declaration(char const*, Type&, Def&);
-  Object_decl&    make_object_declaration(Name&, Type&);
-  Object_decl&    make_object_declaration(char const*, Type&);
-  Reference_decl& make_reference_declaration(Name&, Type&, Def&);
-  Reference_decl& make_reference_declaration(char const*, Type&, Def&);
+  Variable_decl&  make_variable_declaration(Name&, Type&, Def&);
+  Variable_decl&  make_variable_declaration(char const*, Type&, Def&);
+  Variable_decl&  make_variable_declaration(Name&, Type&);
+  Variable_decl&  make_variable_declaration(char const*, Type&);
   Empty_def&      make_variable_initializer();
   Expression_def& make_variable_initializer(Expr& e);
 
@@ -212,22 +204,18 @@ struct Builder
   Class_decl&  make_class_declaration(Name&, Def&);
   Class_decl&  make_class_declaration(Name&);
   Class_def&   make_class_definition(Stmt_list&&);
-  Mem_object_decl&    make_object_member(Name&, Type&, Def&);
-  Mem_object_decl&    make_object_member(char const*, Type&, Def&);
-  Mem_object_decl&    make_object_member(Name&, Type&);
-  Mem_object_decl&    make_object_member(char const*, Type&);
-  Mem_reference_decl& make_reference_member(Name&, Type&, Def&);
-  Mem_reference_decl& make_reference_member(char const*, Type&, Def&);
-  Mem_function_decl&  make_function_member(Name&, Type&, Decl_list const&, Def&);
-  Mem_function_decl&  make_function_member(Name&, Type&, Decl_list&&, Def&);
-  Mem_function_decl&  make_function_member(Name&, Type&, Decl_list const&);
-  Mem_function_decl&  make_function_member(Name&, Type&, Decl_list&&);
+  Field_decl&  make_field_declaration(Name&, Type&, Def&);
+  Field_decl&  make_field_declaration(char const*, Type&, Def&);
+  Field_decl&  make_field_declaration(Name&, Type&);
+  Field_decl&  make_field_declaration(char const*, Type&);
+  Method_decl& make_method_declaration(Name&, Type&, Decl_list const&, Def&);
+  Method_decl& make_method_declaration(Name&, Type&, Decl_list&&, Def&);
+  Method_decl& make_method_declaration(Name&, Type&, Decl_list const&);
+  Method_decl& make_method_declaration(Name&, Type&, Decl_list&&);
 
   // Parameters
-  Object_parm&    make_object_parameter(Name&, Type&);
-  Object_parm&    make_object_parameter(char const*, Type&);
-  Reference_parm& make_reference_parameter(Name&, Type&);
-  Reference_parm& make_reference_parameter(char const*, Type&);
+  Variable_parm&  make_variable_parameter(Name&, Type&);
+  Variable_parm&  make_variable_parameter(char const*, Type&);
   Type_parm&      make_type_parameter(Name&);
   Type_parm&      make_type_parameter(char const*);
   

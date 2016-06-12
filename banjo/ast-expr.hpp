@@ -188,9 +188,9 @@ struct Id_expr : Expr
 
 
 // A resolved id expression refers to a single declaration.
-struct Resolved_id_expr : Id_expr
+struct Decl_ref : Id_expr
 {
-  Resolved_id_expr(Type& t, Name& n, Decl& d)
+  Decl_ref(Type& t, Name& n, Decl& d)
     : Id_expr(t, n), decl_(&d)
   { }
 
@@ -202,38 +202,24 @@ struct Resolved_id_expr : Id_expr
 };
 
 
-// A resolved reference to an object.
-struct Object_expr : Resolved_id_expr, Allocatable<Object_expr>
-{
-  using Resolved_id_expr::Resolved_id_expr;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the referenced object.
-  Object_decl const& declaration() const;
-  Object_decl&       declaration();
-};
-
-
 // A resolved reference to a reference.
-struct Reference_expr : Resolved_id_expr, Allocatable<Reference_expr>
+struct Variable_ref : Decl_ref, Allocatable<Variable_ref>
 {
-  using Resolved_id_expr::Resolved_id_expr;
+  using Decl_ref::Decl_ref;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the referenced object.
-  Reference_decl const& declaration() const;
-  Reference_decl&       declaration();
+  Variable_decl const& declaration() const;
+  Variable_decl&       declaration();
 };
 
 
 // A resolved reference to a function.
-struct Function_expr : Resolved_id_expr, Allocatable<Function_expr>
+struct Function_ref : Decl_ref, Allocatable<Function_ref>
 {
-  using Resolved_id_expr::Resolved_id_expr;
+  using Decl_ref::Decl_ref;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
@@ -246,13 +232,13 @@ struct Function_expr : Resolved_id_expr, Allocatable<Function_expr>
 
 // A name that refers to a set of declarations. Overload expressions
 // are inherently untyped.
-struct Overload_expr : Id_expr, Allocatable<Overload_expr>
+struct Overload_ref : Id_expr, Allocatable<Overload_ref>
 {
-  Overload_expr(Name& n, Decl_list const& ds)
+  Overload_ref(Name& n, Decl_list const& ds)
     : Id_expr(n), decls_(ds)
   { }
 
-  Overload_expr(Name& n, Decl_list&& ds)
+  Overload_ref(Name& n, Decl_list&& ds)
     : Id_expr(n), decls_(std::move(ds))
   { }
   
@@ -268,13 +254,13 @@ struct Overload_expr : Id_expr, Allocatable<Overload_expr>
 
 
 // The base class of all member access expressions.
-struct Mem_expr : Expr
+struct Access_expr : Expr
 {
-  Mem_expr(Expr& e, Name& n)
+  Access_expr(Expr& e, Name& n)
     : Expr(untyped_expr), obj_(&e), mem_(&n)
   { }
 
-  Mem_expr(Type& t, Expr& e, Name& n)
+  Access_expr(Type& t, Expr& e, Name& n)
     : Expr(t), obj_(&e), mem_(&n)
   { }
 
@@ -293,10 +279,10 @@ struct Mem_expr : Expr
 
 // The base class of resolved dot-expressions. This stores the resolved
 // declaration of the member name.
-struct Resolved_mem_expr : Mem_expr
+struct Scoped_ref : Access_expr
 {
-  Resolved_mem_expr(Type& t, Expr& e, Name& n, Decl& d)
-    : Mem_expr(t, e, n), decl_(&d)
+  Scoped_ref(Type& t, Expr& e, Name& n, Decl& d)
+    : Access_expr(t, e, n), decl_(&d)
   { }
 
   Typed_decl const& declaration() const;
@@ -307,56 +293,42 @@ struct Resolved_mem_expr : Mem_expr
 
 
 // A resolved reference to an object.
-struct Mem_object_expr : Resolved_mem_expr, Allocatable<Mem_object_expr>
+struct Field_ref : Scoped_ref, Allocatable<Field_ref>
 {
-  using Resolved_mem_expr::Resolved_mem_expr;
+  using Scoped_ref::Scoped_ref;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the referenced object.
-  Mem_object_decl const& declaration() const;
-  Mem_object_decl&       declaration();
-};
-
-
-// A resolved reference to a reference.
-struct Mem_reference_expr : Resolved_mem_expr, Allocatable<Mem_reference_expr>
-{
-  using Resolved_mem_expr::Resolved_mem_expr;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the referenced object.
-  Mem_reference_decl const& declaration() const;
-  Mem_reference_decl&       declaration();
+  Field_decl const& declaration() const;
+  Field_decl&       declaration();
 };
 
 
 // A resolved reference to a function.
-struct Mem_function_expr : Resolved_mem_expr, Allocatable<Mem_function_expr>
+struct Method_ref : Scoped_ref, Allocatable<Method_ref>
 {
-  using Resolved_mem_expr::Resolved_mem_expr;
+  using Scoped_ref::Scoped_ref;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the referenced object.
-  Mem_function_decl const& declaration() const;
-  Mem_function_decl&       declaration();
+  Method_decl const& declaration() const;
+  Method_decl&       declaration();
 };
 
 
 // An unresolved access expression, referring to a set of declarations.
-struct Mem_overload_expr : Mem_expr, Allocatable<Mem_overload_expr>
+struct Member_ref : Access_expr, Allocatable<Member_ref>
 {
-  Mem_overload_expr(Expr& e, Name& n, Decl_list const& ds)
-    : Mem_expr(e, n), decls_(ds)
+  Member_ref(Expr& e, Name& n, Decl_list const& ds)
+    : Access_expr(e, n), decls_(ds)
   { }
 
-  Mem_overload_expr(Expr& e, Name& n, Decl_list&& ds)
-    : Mem_expr(e, n), decls_(std::move(ds))
+  Member_ref(Expr& e, Name& n, Decl_list&& ds)
+    : Access_expr(e, n), decls_(std::move(ds))
   { }
 
   void accept(Visitor& v) const { v.visit(*this); }

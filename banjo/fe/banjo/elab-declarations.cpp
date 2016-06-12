@@ -18,16 +18,7 @@ namespace fe
 
 // Adjust the type of the variable by (possibly) parsing its type.
 void
-Elaborate_declarations::on_variable_declaration(Object_decl& d)
-{
-  d.type_ = &get_type(d.type());
-  check(d);
-}
-
-
-// TODO: Make sure that the adjusted type is actually a reference.
-void
-Elaborate_declarations::on_variable_declaration(Reference_decl& d)
+Elaborate_declarations::on_variable_declaration(Variable_decl& d)
 {
   d.type_ = &get_type(d.type());
   check(d);
@@ -50,7 +41,7 @@ Elaborate_declarations::enter_function_declaration(Function_decl& d)
 
 // Adjust the type of the parameter.
 void
-Elaborate_declarations::on_parameter(Object_parm& d)
+Elaborate_declarations::on_parameter(Variable_parm& d)
 {
   d.type_ = &get_type(d.type());
   check(d);

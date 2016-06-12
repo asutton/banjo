@@ -169,7 +169,7 @@ make_dependent_call(Context& cxt, Expr& e, Expr_list& args)
 
 
 Expr&
-make_regular_call(Context& cxt, Function_expr& e, Expr_list& args)
+make_regular_call(Context& cxt, Function_ref& e, Expr_list& args)
 {
   Function_decl& fn = e.declaration();
   Function_candidate cand = make_function_candidate(cxt, fn, args);
@@ -202,8 +202,8 @@ make_regular_call(Context& cxt, Expr& e, Expr_list& args)
   {
     Context&    cxt;
     Expr_list& args;
-    Expr& operator()(Expr& e)          { lingo_unhandled(e); }
-    Expr& operator()(Function_expr& e) { return make_regular_call(cxt, e, args); }
+    Expr& operator()(Expr& e)         { lingo_unhandled(e); }
+    Expr& operator()(Function_ref& e) { return make_regular_call(cxt, e, args); }
   };
   return apply(e, fn{cxt, args});
 }

@@ -48,9 +48,9 @@ struct Basic_elaborator
   // Declarations
   void on_declaration(Decl&) { }
 
-  void on_variable_declaration(Object_decl&) { }
-  void on_variable_declaration(Reference_decl&) { }
-
+  // Variables
+  void on_variable_declaration(Variable_decl&) { }
+ 
   // Functions
   void start_function_declaration(Function_decl&) { }
   void enter_function_declaration(Function_decl&) { }
@@ -59,7 +59,7 @@ struct Basic_elaborator
   void on_function_body(Expression_def&) { }
 
   // Parameters
-  void on_parameter(Object_parm&) { }
+  void on_parameter(Variable_parm&) { }
   
   // Classes
   void start_class_declaration(Class_decl&) { }
@@ -112,15 +112,14 @@ struct Elaborator
 
   void declaration(Decl&);
 
-  // variables
-  void variable_declaration(Object_decl&);
-  void variable_declaration(Reference_decl&);
+  // Variables
+  void variable_declaration(Variable_decl&);
 
   // Functions
   void function_declaration(Function_decl&);
   void parameter_list(Decl_list&);
   void parameter(Decl&);
-  void parameter(Object_parm&);
+  void parameter(Variable_parm&);
   void function_body(Def&);
   void function_body(Function_def&);
   void function_body(Expression_def&);
@@ -281,8 +280,7 @@ Elaborator<F>::declaration(Decl& d)
   {
     Self& elab;
     void operator()(Decl& d)           { lingo_unhandled(d); }
-    void operator()(Object_decl& d)    { elab.variable_declaration(d); }
-    void operator()(Reference_decl& d) { elab.variable_declaration(d); }
+    void operator()(Variable_decl& d)  { elab.variable_declaration(d); }
     void operator()(Function_decl& d)  { elab.function_declaration(d); }
     void operator()(Class_decl& d)     { elab.class_declaration(d); }
   };
@@ -293,15 +291,7 @@ Elaborator<F>::declaration(Decl& d)
 
 template<typename F>
 inline void
-Elaborator<F>::variable_declaration(Object_decl& d)
-{
-  vis.on_variable_declaration(d);
-}
-
-
-template<typename F>
-inline void
-Elaborator<F>::variable_declaration(Reference_decl& d)
+Elaborator<F>::variable_declaration(Variable_decl& d)
 {
   vis.on_variable_declaration(d);
 }
@@ -343,8 +333,8 @@ Elaborator<F>::parameter(Decl& p)
   struct fn
   {
     Self& elab;
-    void operator()(Decl& p)        { lingo_unhandled(p); }
-    void operator()(Object_parm& p) { elab.parameter(p); }
+    void operator()(Decl& p)          { lingo_unhandled(p); }
+    void operator()(Variable_parm& p) { elab.parameter(p); }
   };
   apply(p, fn{*this});
 }
@@ -352,7 +342,7 @@ Elaborator<F>::parameter(Decl& p)
 
 template<typename F>
 inline void
-Elaborator<F>::parameter(Object_parm& d)
+Elaborator<F>::parameter(Variable_parm& d)
 {
   vis.on_parameter(d);
 }

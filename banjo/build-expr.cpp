@@ -80,89 +80,63 @@ Builder::make_tuple(Type& t, Expr_list&& es)
 }
 
 
-Resolved_id_expr&
+// Returns an id-expression that refers to a declared object.
+Variable_ref&
 Builder::make_reference(Type& t, Variable_decl& d)
 {
-  if (Object_decl* obj = as<Object_decl>(&d))
-    return make_reference(t, *obj);
-  if (Reference_decl* ref = as<Reference_decl>(&d))
-    return make_reference(t, *ref);
-  lingo_unreachable();
-}
-
-
-// Returns an id-expression that refers to a declared object.
-Object_expr&
-Builder::make_reference(Type& t, Object_decl& d)
-{
-  return Object_expr::make(alloc_, t, d.name(), d);
-}
-
-
-// Returns an id-expression that refers to a declared reference.
-Reference_expr&
-Builder::make_reference(Type& t, Reference_decl& d)
-{
-  return Reference_expr::make(alloc_, t, d.name(), d);
+  return Variable_ref::make(alloc_, t, d.name(), d);
 }
 
 
 // Returns an id-expression that refers to a declared function.
-Function_expr&
+Function_ref&
 Builder::make_reference(Type& t, Function_decl& d)
 {
-  return Function_expr::make(alloc_, t, d.name(), d);
+  return Function_ref::make(alloc_, t, d.name(), d);
 }
 
 
 // Returns an id-expression that refers to a set of declared names.
-Overload_expr&
+Overload_ref&
 Builder::make_reference(Name& n, Decl_list const& ds)
 {
-  return Overload_expr::make(alloc_, n, ds);
+  return Overload_ref::make(alloc_, n, ds);
 }
 
 
 // Returns an id-expression that refers to a set of declared names.
-Overload_expr&
+Overload_ref&
 Builder::make_reference(Name& n, Decl_list&& ds)
 {
-  return Overload_expr::make(alloc_, n, std::move(ds));
+  return Overload_ref::make(alloc_, n, std::move(ds));
 }
 
 
-Mem_object_expr&
-Builder::make_reference(Type& t, Expr& e, Mem_object_decl& d)
+Field_ref&
+Builder::make_reference(Type& t, Expr& e, Field_decl& d)
 {
-  return Mem_object_expr::make(alloc_, t, e, d.name(), d);
+  return Field_ref::make(alloc_, t, e, d.name(), d);
 }
 
 
-Mem_reference_expr&
-Builder::make_reference(Type& t, Expr& e, Mem_reference_decl& d)
+Method_ref&
+Builder::make_reference(Type& t, Expr& e, Method_decl& d)
 {
-  return Mem_reference_expr::make(alloc_, t, e, d.name(), d);
+  return Method_ref::make(alloc_, t, e, d.name(), d);
 }
 
 
-Mem_function_expr&
-Builder::make_reference(Type& t, Expr& e, Mem_function_decl& d)
-{
-  return Mem_function_expr::make(alloc_, t, e, d.name(), d);
-}
-
-
-Mem_overload_expr&
+Member_ref&
 Builder::make_reference(Expr& e, Name& n, Decl_list const& ds)
 {
-  return Mem_overload_expr::make(alloc_, e, n, ds);
+  return Member_ref::make(alloc_, e, n, ds);
 }
 
 
-Mem_overload_expr&
+Member_ref&
 Builder::make_reference(Expr& e, Name& n, Decl_list&& ds)
 {
-  return Mem_overload_expr::make(alloc_, e, n, std::move(ds));
+  return Member_ref::make(alloc_, e, n, std::move(ds));
 }
 
 

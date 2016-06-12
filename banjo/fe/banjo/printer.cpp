@@ -417,7 +417,6 @@ Printer::primary_type(Type const& t)
     void operator()(Auto_type const& t)      { p.primary_type(t); }
     void operator()(Function_type const& t)  { p.primary_type(t); }
     void operator()(Tuple_type const& t)     { p.primary_type(t); }
-    void operator()(Type_type const& t)      { p.primary_type(t); }
     void operator()(Class_type const& t)     { p.id_type(t); }
     void operator()(Typename_type const& t)  { p.id_type(t); }
   };
@@ -509,14 +508,6 @@ Printer::type_list(Type_list const& ts)
     if (std::next(iter) != ts.end())
       token(',');
   }
-}
-
-
-// FIXME: We can't really spell this type, so I'm leaving it empty
-// for now.
-void
-Printer::primary_type(Type_type const& t)
-{
 }
 
 
@@ -786,7 +777,7 @@ Printer::postfix_expression(Expr const& e)
   {
     Printer& p;
     void operator()(Expr const& e)               { p.primary_expression(e); }
-    void operator()(Mem_expr const& e)           { p.postfix_expression(e); }
+    void operator()(Access_expr const& e)        { p.postfix_expression(e); }
     void operator()(Call_expr const& e)          { p.postfix_expression(e); }
     void operator()(Tuple_expr const& e)         { p.postfix_expression(e); }
     void operator()(Value_conv const& e)         { p.postfix_expression(e); }
@@ -808,7 +799,7 @@ Printer::postfix_expression(Expr const& e)
 // TODO: We may need to specialize the printing for resolved declarations
 // in case of ambiguous names from different base classes.
 void
-Printer::postfix_expression(Mem_expr const& e)
+Printer::postfix_expression(Access_expr const& e)
 {
   postfix_expression(e.object());
   token('.');
@@ -1249,7 +1240,7 @@ Printer::declaration(Decl const& d)
 
     // Support emitting these here so we can print parameters without
     // an appropriate context.
-    void operator()(Object_parm const& d)    { p.parameter(d); }
+    void operator()(Variable_parm const& d)  { p.parameter(d); }
     void operator()(Type_parm const& d)      { p.type_template_parameter(d); }
     void operator()(Template_parm const& d)  { p.template_template_parameter(d); }
   };
@@ -1692,8 +1683,8 @@ Printer::parameter(Decl const& d)
   struct parameter_fn
   {
     Printer& p;
-    void operator()(Decl const& d) { lingo_unhandled(d); }
-    void operator()(Object_parm const& d)   { p.parameter(d); }
+    void operator()(Decl const& d)          { lingo_unhandled(d); }
+    void operator()(Variable_parm const& d) { p.parameter(d); }
     void operator()(Type_parm const& d)     { p.type_template_parameter(d); }
     void operator()(Template_parm const& d) { p.template_template_parameter(d); }
   };
@@ -1705,7 +1696,7 @@ Printer::parameter(Decl const& d)
 
 // TODO: Print the default argument.
 void
-Printer::parameter(Object_parm const& p)
+Printer::parameter(Variable_parm const& p)
 {
   identifier(p);
   spaced_token(':');

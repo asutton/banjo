@@ -9,131 +9,99 @@
 namespace banjo
 {
 
-// Resolved_id_expr
+// Decl_ref
 
 Typed_decl const& 
-Resolved_id_expr::declaration() const
+Decl_ref::declaration() const
 {
   return cast<Typed_decl>(*decl_);
 }
 
 
 Typed_decl&
-Resolved_id_expr::declaration()
+Decl_ref::declaration()
 {
   return cast<Typed_decl>(*decl_);
 }
 
 
-// Object_expr
+// Variable_ref
 
-Object_decl const&
-Object_expr::declaration() const
+Variable_decl const&
+Variable_ref::declaration() const
 {
-  return cast<Object_decl>(*decl_);
+  return cast<Variable_decl>(*decl_);
 }
 
 
-Object_decl&      
-Object_expr::declaration()
+Variable_decl&      
+Variable_ref::declaration()
 {
-  return cast<Object_decl>(*decl_);
+  return cast<Variable_decl>(*decl_);
 }
 
 
-// Reference_expr
-
-Reference_decl const&
-Reference_expr::declaration() const
-{
-  return cast<Reference_decl>(*decl_);
-}
-
-
-Reference_decl&      
-Reference_expr::declaration()
-{
-  return cast<Reference_decl>(*decl_);
-}
-
-
-// Function_expr
+// Function_ref
 
 Function_decl const&
-Function_expr::declaration() const
+Function_ref::declaration() const
 {
   return cast<Function_decl>(*decl_);
 }
 
 
 Function_decl&      
-Function_expr::declaration()
+Function_ref::declaration()
 {
   return cast<Function_decl>(*decl_);
 }
 
 
-// Resolved_mem_expr
+// Scoped_ref
 
 Typed_decl const& 
-Resolved_mem_expr::declaration() const
+Scoped_ref::declaration() const
 {
   return cast<Typed_decl>(*decl_);
 }
 
 
 Typed_decl&
-Resolved_mem_expr::declaration()
+Scoped_ref::declaration()
 {
   return cast<Typed_decl>(*decl_);
 }
 
 
-// Mem_object_expr
+// Field_ref
 
-Mem_object_decl const&
-Mem_object_expr::declaration() const
+Field_decl const&
+Field_ref::declaration() const
 {
-  return cast<Mem_object_decl>(*decl_);
+  return cast<Field_decl>(*decl_);
 }
 
 
-Mem_object_decl&      
-Mem_object_expr::declaration()
+Field_decl&      
+Field_ref::declaration()
 {
-  return cast<Mem_object_decl>(*decl_);
+  return cast<Field_decl>(*decl_);
 }
 
 
-// Mem_reference_expr
+// Method_ref
 
-Mem_reference_decl const&
-Mem_reference_expr::declaration() const
+Method_decl const&
+Method_ref::declaration() const
 {
-  return cast<Mem_reference_decl>(*decl_);
+  return cast<Method_decl>(*decl_);
 }
 
 
-Mem_reference_decl&      
-Mem_reference_expr::declaration()
+Method_decl&      
+Method_ref::declaration()
 {
-  return cast<Mem_reference_decl>(*decl_);
-}
-
-
-// Mem_function_expr
-
-Mem_function_decl const&
-Mem_function_expr::declaration() const
-{
-  return cast<Mem_function_decl>(*decl_);
-}
-
-
-Mem_function_decl&      
-Mem_function_expr::declaration()
-{
-  return cast<Mem_function_decl>(*decl_);
+  return cast<Method_decl>(*decl_);
 }
 
 
@@ -221,9 +189,9 @@ declared_type(Expr const& e)
 Type&
 declared_type(Expr& e)
 {
-  if (Resolved_id_expr* d = as<Resolved_id_expr>(&e))
+  if (Decl_ref* d = as<Decl_ref>(&e))
     return d->declaration().type();
-  if (Resolved_mem_expr* d = as<Resolved_mem_expr>(&e))
+  if (Scoped_ref* d = as<Scoped_ref>(&e))
     return d->declaration().type();
 
     return e.type();

@@ -212,7 +212,6 @@ is_equivalent(Type const& t1, Type const& t2)
     bool operator()(Tuple_type const& t1)    { return eq_tuple_type(t1, cast_as(t1, t2)); }
     bool operator()(Pointer_type const& t1)  { return eq_pointer_type(t1, cast_as(t1, t2)); }
     bool operator()(Declared_type const& t1) { return eq_declared_type(t1, cast_as(t1, t2)); }
-    bool operator()(Type_type const& t1)     { return true; }
   };
 
   // Identical types are equivalent.  
@@ -251,7 +250,7 @@ eq_literal_expr(Literal_expr<T> const& e1, Literal_expr<T> const& e2)
 // Two (resolved) id-expressions are equivalent when they refer to the
 // same declaration.
 bool
-eq_id_expr(Resolved_id_expr const& e1, Resolved_id_expr const& e2)
+eq_id_expr(Decl_ref const& e1, Decl_ref const& e2)
 {
   return is_equivalent(e1.declaration(), e2.declaration());
 }
@@ -260,7 +259,7 @@ eq_id_expr(Resolved_id_expr const& e1, Resolved_id_expr const& e2)
 // Two (resolved) member-expressions are equivalent when they refer to the
 // same declaration.
 bool
-eq_mem_expr(Resolved_mem_expr const& e1, Resolved_mem_expr const& e2)
+eq_mem_expr(Scoped_ref const& e1, Scoped_ref const& e2)
 {
   return is_equivalent(e1.declaration(), e2.declaration());
 }
@@ -303,15 +302,15 @@ is_equivalent(Expr const& e1, Expr const& e2)
   struct fn
   {
     Expr const& e2;
-    bool operator()(Expr const& e) const               { lingo_unhandled(e); }
-    bool operator()(Boolean_expr const& e1) const      { return eq_literal_expr(e1, cast_as(e1, e2)); }
-    bool operator()(Integer_expr const& e1) const      { return eq_literal_expr(e1, cast_as(e1, e2)); }
-    bool operator()(Resolved_id_expr const& e1) const  { return eq_id_expr(e1, cast_as(e1, e2)); }
-    bool operator()(Resolved_mem_expr const& e1) const { return eq_mem_expr(e1, cast_as(e1, e2)); }
-    bool operator()(Unary_expr const& e1) const        { return eq_unary_expr(e1, cast_as(e1, e2)); }
-    bool operator()(Binary_expr const& e1) const       { return eq_binary_expr(e1, cast_as(e1, e2)); }
-    bool operator()(Call_expr const& e1) const         { return eq_call_expr(e1, cast_as(e1, e2)); }
-    bool operator()(Conv const& e1) const              { return eq_conv(e1, cast_as(e1, e2)); }
+    bool operator()(Expr const& e) const          { lingo_unhandled(e); }
+    bool operator()(Boolean_expr const& e1) const { return eq_literal_expr(e1, cast_as(e1, e2)); }
+    bool operator()(Integer_expr const& e1) const { return eq_literal_expr(e1, cast_as(e1, e2)); }
+    bool operator()(Decl_ref const& e1) const     { return eq_id_expr(e1, cast_as(e1, e2)); }
+    bool operator()(Scoped_ref const& e1) const   { return eq_mem_expr(e1, cast_as(e1, e2)); }
+    bool operator()(Unary_expr const& e1) const   { return eq_unary_expr(e1, cast_as(e1, e2)); }
+    bool operator()(Binary_expr const& e1) const  { return eq_binary_expr(e1, cast_as(e1, e2)); }
+    bool operator()(Call_expr const& e1) const    { return eq_call_expr(e1, cast_as(e1, e2)); }
+    bool operator()(Conv const& e1) const         { return eq_conv(e1, cast_as(e1, e2)); }
   };
 
   // The same objects represent the same types.

@@ -25,14 +25,13 @@ struct Elaborate_declarations : Basic_elaborator
 {
   using Basic_elaborator::Basic_elaborator;
 
-  void on_variable_declaration(Object_decl&);
-  void on_variable_declaration(Reference_decl&);
+  void on_variable_declaration(Variable_decl&);  
   
   void enter_function_declaration(Function_decl&);
   
   void start_class_declaration(Class_decl&);
 
-  void on_parameter(Object_parm&);
+  void on_parameter(Variable_parm&);
 
   Type& get_type(Type&);
 

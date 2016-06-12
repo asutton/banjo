@@ -197,11 +197,14 @@ struct Translation_unit : Decl, Allocatable<Translation_unit>
 // either an object (with storage) or a reference.
 //
 // TODO: Add constructors accepting a context?
-struct Variable_decl : Typed_decl
+struct Variable_decl : Typed_decl, Allocatable<Variable_decl>
 {
   Variable_decl(Name& n, Type& t, Def& d, Specifier_set s = {})
     : Typed_decl(n, t, s), def_(&d)
   { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the initializer for the variable.
   Def const& initializer() const { return *def_; }
@@ -252,34 +255,6 @@ struct Mapping_decl : Typed_decl
 };
 
 
-// Represents the declaration of a user-defined type. This is the base
-// class of class declarations and type parameters.
-struct Type_decl : Decl
-{
-  using Decl::Decl;
-};
-
-
-// A variable declaration (declares an object, not a reference).
-struct Object_decl : Variable_decl, Allocatable<Object_decl>
-{
-  using Variable_decl::Variable_decl;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-};
-
-
-// A reference declaration.
-struct Reference_decl : Variable_decl, Allocatable<Reference_decl>
-{
-  using Variable_decl::Variable_decl;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-};
-
-
 // Declares a function. A function maps input arguments to output values.
 // Functions can be evaluated at compile time, if used within a constant
 // expression context.
@@ -289,6 +264,14 @@ struct Function_decl : Mapping_decl, Allocatable<Function_decl>
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
+// Represents the declaration of a user-defined type. This is the base
+// class of class declarations and type parameters.
+struct Type_decl : Decl
+{
+  using Decl::Decl;
 };
 
 
@@ -322,9 +305,12 @@ struct Class_decl : Type_decl, Allocatable<Class_decl>
 
 // The base class of member objects and references stores the index
 // of the member within its class. 
-struct Mem_variable_decl : Variable_decl
+struct Field_decl : Variable_decl, Allocatable<Field_decl>
 {
   using Variable_decl::Variable_decl;
+
+  using Allocatable<Field_decl>::make;
+  using Allocatable<Field_decl>::unmake;
 
   // Returns the index of the field within the class.
   int index() const { return index_; }
@@ -333,34 +319,17 @@ struct Mem_variable_decl : Variable_decl
 };
 
 
-// Declares a member object with a class.
-struct Mem_object_decl : Mem_variable_decl, Allocatable<Mem_object_decl>
-{
-  using Mem_variable_decl::Mem_variable_decl;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-};
-
-
-// Declares a member reference with a class.
-struct Mem_reference_decl : Mem_variable_decl, Allocatable<Mem_reference_decl>
-{
-  using Mem_variable_decl::Mem_variable_decl;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-};
-
-
 // Declares a base class subobject. Note that super declarations always
 // have an empty definition.
 //
 // TODO: We could actually provide a default member initializer for
 // base classes.
-struct Mem_base_decl : Mem_variable_decl, Allocatable<Mem_base_decl>
+struct Super_decl : Field_decl, Allocatable<Super_decl>
 {
-  using Mem_variable_decl::Mem_variable_decl;
+  using Field_decl::Field_decl;
+
+  using Allocatable<Super_decl>::make;
+  using Allocatable<Super_decl>::unmake;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
@@ -374,9 +343,12 @@ struct Mem_base_decl : Mem_variable_decl, Allocatable<Mem_base_decl>
 // reference to this. That could be enforced in the constructor, I suppose.
 //
 // TODO: Add derived classes for constructors and destructors.
-struct Mem_function_decl : Function_decl, Allocatable<Mem_function_decl>
+struct Method_decl : Function_decl, Allocatable<Method_decl>
 {
   using Function_decl::Function_decl;
+
+  using Allocatable<Method_decl>::make;
+  using Allocatable<Method_decl>::unmake;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
@@ -494,29 +466,10 @@ struct Index : std::pair<int, int>
 //
 // TODO: For all derived classes, add accessors and checks to determine
 // if the default argument is present.
-template<typename T, typename B>
-struct Parameter : B
+template<typename T>
+struct Parameter : T
 {
-  using B::B;
-
-  // Bring new versions of make and unmake into scope so that we
-  // actually create objects of the right type. 
-  template<typename... Args>
-  static T& make(Allocator& a, Args&&... args)
-  {
-    void* p = a.allocate(sizeof(T), typeid(T));
-    T* obj = new (p) T(std::forward<Args>(args)...);
-    obj->alloc_ = &a;
-    return *obj;
-  }
-
-  void unmake(Allocator& a)
-  {
-    lingo_assert(this->alloc_ == & a);
-    T* obj = static_cast<T*>(this);
-    obj->~T();
-    a.deallocate(obj, typeid(T));
-  }
+  using T::T;
 
   // Returns the index of the template parameter.
   Index  index() const { return ix_; }
@@ -526,20 +479,13 @@ struct Parameter : B
 };
 
 
-// An object parameter of a function.
-struct Object_parm : Parameter<Object_parm, Object_decl>
+// A parameter containing or referring to an object.
+struct Variable_parm : Parameter<Variable_decl>, Allocatable<Variable_parm>
 {
-  using Parameter<Object_parm, Object_decl>::Parameter;
+  using Parameter<Variable_decl>::Parameter;
 
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-};
-
-
-// A reference parameter of a function.
-struct Reference_parm : Parameter<Reference_parm, Reference_decl>
-{
-  using Parameter<Reference_parm, Reference_decl>::Parameter;
+  using Allocatable<Variable_parm>::make;
+  using Allocatable<Variable_parm>::unmake;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
@@ -547,9 +493,15 @@ struct Reference_parm : Parameter<Reference_parm, Reference_decl>
 
 
 // A type parameter of a template.
-struct Type_parm : Parameter<Type_parm, Class_decl>
+//
+// TODO: Base this on Type_decl instead of Class_decl? Classes are heavy;
+// this may not be.
+struct Type_parm : Parameter<Class_decl>, Allocatable<Type_parm>
 {
-  using Parameter<Type_parm, Class_decl>::Parameter;
+  using Parameter<Class_decl>::Parameter;
+
+  using Allocatable<Type_parm>::make;
+  using Allocatable<Type_parm>::unmake;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
@@ -557,9 +509,12 @@ struct Type_parm : Parameter<Type_parm, Class_decl>
 
 
 // A template parameter of a template.
-struct Template_parm : Parameter<Template_parm, Template_decl>
+struct Template_parm : Parameter<Template_decl>, Allocatable<Template_parm>
 {
-  using Parameter<Template_parm, Template_decl>::Parameter;
+  using Parameter<Template_decl>::Parameter;
+
+  using Allocatable<Template_parm>::make;
+  using Allocatable<Template_parm>::unmake;
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
@@ -630,7 +585,7 @@ struct Generic_decl_mutator : Decl::Mutator, Generic_mutator<F, T>
 
 
 // Apply a function to the given declaration.
-template<typename F, typename T = typename std::result_of<F(Object_decl const&)>::type>
+template<typename F, typename T = typename std::result_of<F(Variable_decl const&)>::type>
 inline decltype(auto)
 apply(Decl const& d, F fn)
 {
@@ -640,7 +595,7 @@ apply(Decl const& d, F fn)
 
 
 // Apply a function to the given declaration.
-template<typename F, typename T = typename std::result_of<F(Object_decl&)>::type>
+template<typename F, typename T = typename std::result_of<F(Variable_decl&)>::type>
 inline decltype(auto)
 apply(Decl& d, F fn)
 {

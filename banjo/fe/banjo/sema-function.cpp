@@ -29,14 +29,23 @@ declare_parms(Context& cxt, Term& t, Decl_list& parms)
 // Build and declare the function or method. A method is a non-static
 // function declared in class scope.
 Decl&
-Parser::start_function_declaration(Name& n, Decl_list& p, Type& t)
+Parser::start_function_declaration(Name& n, Decl_list& ps, Type& t)
 {
-  Decl& decl = parsing_nonstatic_member()
-    ? cxt.make_function_member(n, t, p)
-    : cxt.make_function_declaration(n, t, p);
-  decl.spec_ = take_decl_specs();
-  declare(cxt, decl);
-  return decl;
+  // Form the (initial) function type.
+  Type_list ts;
+  for (Decl& p : ps)
+    ts.push_back(cast<Typed_decl>(p).type());
+  Type& ft = cxt.get_function_type(std::move(ts), t);
+
+  // Generate the declaration.
+  Decl* d;
+  if (parsing_nonstatic_member())
+    d = &cxt.make_method_declaration(n, ft, ps);
+  else
+    d = &cxt.make_function_declaration(n, ft, ps);
+  d->spec_ = take_decl_specs();
+  declare(cxt, *d);
+  return *d;
 }
 
 
@@ -67,7 +76,7 @@ Parser::finish_function_declaration(Decl& decl, Stmt& stmt)
 Decl&
 Parser::on_function_parameter(Name& n, Type& t)
 {
-  Decl& d = build.make_object_parameter(n, t);
+  Decl& d = build.make_variable_parameter(n, t);
   d.spec_ = take_decl_specs();
   return d;
 }

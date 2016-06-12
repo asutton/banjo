@@ -14,10 +14,8 @@ namespace fe
 {
 
 // Build and declare the class.
-//
-// FIXME: This should not be taking a type.
 Decl&
-Parser::start_class_declaration(Name& n, Type& t)
+Parser::start_class_declaration(Name& n)
 {
   Decl& d = cxt.make_class_declaration(n);
   declare(cxt, current_scope(), d);

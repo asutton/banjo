@@ -15,8 +15,4 @@ define_node(Auto_type)
 define_node(Decltype_type)
 define_node(Typename_type)
 define_node(Synthetic_type)
-
-// The type of types.
-define_node(Type_type)
-
 define_node(Unparsed_type)
