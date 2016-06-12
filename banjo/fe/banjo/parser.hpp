@@ -97,7 +97,6 @@ struct Parser
   Type& grouped_type();
   Type& function_type();
   Type& decltype_type();
-  Type& coroutine_type();
   Type_list type_list();
 
   // Expressions
@@ -160,7 +159,6 @@ struct Parser
   
   // Functions
   Decl& function_declaration();
-  Decl& coroutine_declaration();
   Decl_list parameter_clause();
   Decl_list parameter_list();
   Decl& parameter_declaration();
@@ -244,7 +242,6 @@ struct Parser
   Type& on_array_type(Type&, Expr&);
   Type& on_tuple_type(Type_list&);
   Type& on_dynarray_type(Type&, Expr&);
-  Type& on_coroutine_type(Token);
 
   // Expressions
   Expr& on_logical_and_expression(Token, Expr&, Expr&);
@@ -312,9 +309,6 @@ struct Parser
   Decl& start_class_declaration(Name&, Type&);
   Decl& finish_class_definition(Decl&, Def&);
   Def& on_class_body(Stmt_list&&);
-
-  // Coroutine declarations
-  Decl& on_coroutine_declaration(Name&, Decl_list&, Type&, Stmt&);
 
   // Concept declarations
   Decl& on_concept_declaration(Token, Name&, Decl_list&);

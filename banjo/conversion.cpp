@@ -485,7 +485,7 @@ convert_to_common_int(Context& cxt, Expr& e1, Expr& e2)
 // conditional expression? Note that the arithmetic version converts
 // to values, and the conditional expression can retain references.
 Expr_pair
-arithmetic_conversion(Context& cxt, Expr& e1, Expr& e2)
+arithmetic_conversions(Context& cxt, Expr& e1, Expr& e2)
 {
   // If the types are the same, no conversions are applied.
   if (is_equivalent(e1.type(), e2.type()))

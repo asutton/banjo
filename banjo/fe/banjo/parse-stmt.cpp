@@ -42,7 +42,6 @@ Parser::statement()
     case tk::super_tok:
     case tk::var_tok:
     case tk::def_tok:
-    case tk::coroutine_tok:
     case tk::class_tok:
     case tk::concept_tok:
       return declaration_statement();

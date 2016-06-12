@@ -32,8 +32,8 @@ Decl&
 Parser::start_function_declaration(Name& n, Decl_list& p, Type& t)
 {
   Decl& decl = parsing_nonstatic_member()
-    ? cxt.make_method_declaration(n, p, t)
-    : cxt.make_function_declaration(n, p, t);
+    ? cxt.make_function_member(n, t, p)
+    : cxt.make_function_declaration(n, t, p);
   decl.spec_ = take_decl_specs();
   declare(cxt, decl);
   return decl;
@@ -62,22 +62,12 @@ Parser::finish_function_declaration(Decl& decl, Stmt& stmt)
 }
 
 
-// TODO: Declare parameters as we do above.
-Decl&
-Parser::on_coroutine_declaration(Name& n, Decl_list& p, Type& t, Stmt& s)
-{
-  Decl& d = build.make_coroutine_declaration(n, p, t, s);
-  declare(cxt, current_scope(), d);
-  return d;
-}
-
-
 // In the first pass, just create the parameter. It is declared into the
 // function body.
 Decl&
 Parser::on_function_parameter(Name& n, Type& t)
 {
-  Decl& d = build.make_object_parm(n, t);
+  Decl& d = build.make_object_parameter(n, t);
   d.spec_ = take_decl_specs();
   return d;
 }

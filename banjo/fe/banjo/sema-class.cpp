@@ -14,10 +14,12 @@ namespace fe
 {
 
 // Build and declare the class.
+//
+// FIXME: This should not be taking a type.
 Decl&
 Parser::start_class_declaration(Name& n, Type& t)
 {
-  Decl& d = cxt.make_class_declaration(n, t);
+  Decl& d = cxt.make_class_declaration(n);
   declare(cxt, current_scope(), d);
   return d;
 }
@@ -44,9 +46,10 @@ Parser::on_class_body(Stmt_list&& ss)
 Decl&
 Parser::on_super_declaration(Name& n, Type& t)
 {
-  Decl& d = cxt.make_super_declaration(t);
-  declare(cxt, d);
-  return d;
+  lingo_unreachable();
+  // Decl& d = cxt.make_super_declaration(t);
+  // declare(cxt, d);
+  // return d;
 }
 
 

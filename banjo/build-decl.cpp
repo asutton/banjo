@@ -77,17 +77,35 @@ Builder::make_variable_initializer(Expr& e)
 
 // Create a new function. 
 Function_decl&
-Builder::make_function_declaration(Name& n, Type& t, Decl_list const& p, Def& d)
+Builder::make_function_declaration(Name& n, Type& t, Decl_list const& ps, Def& d)
 {
-  return Function_decl::make(alloc_, n, t, p, d);
+  lingo_assert(is<Function_type>(t));
+  return Function_decl::make(alloc_, n, t, ps, d);
 }
 
 
 // Create a new function. 
 Function_decl&
-Builder::make_function_declaration(Name& n, Type& t, Decl_list&& p, Def& d)
+Builder::make_function_declaration(Name& n, Type& t, Decl_list&& ps, Def& d)
 {
-  return Function_decl::make(alloc_, n, t, std::move(p), d);
+  lingo_assert(is<Function_type>(t));
+  return Function_decl::make(alloc_, n, t, std::move(ps), d);
+}
+
+
+// Create a new function with an empty definition.
+Function_decl&
+Builder::make_function_declaration(Name& n, Type& t, Decl_list const& ps)
+{
+  return make_function_declaration(n, t, ps, make_empty_definition());
+}
+
+
+// Create a new function with an empty definition.
+Function_decl&
+Builder::make_function_declaration(Name& n, Type& t, Decl_list&& ps)
+{
+  return make_function_declaration(n, t, std::move(ps), make_empty_definition());
 }
 
 
@@ -150,10 +168,88 @@ Builder::make_class_declaration(Name& n, Def& d)
 }
 
 
+// Create a class with an empty definition.
+Class_decl&
+Builder::make_class_declaration(Name& n)
+{
+  return make_class_declaration(n, make_empty_definition());
+}
+
+
 Class_def&
 Builder::make_class_definition(Stmt_list&& s)
 {
   return Class_def::make(alloc_, std::move(s));
+}
+
+
+Mem_object_decl&
+Builder::make_object_member(Name&, Type&, Def&)
+{
+  lingo_unreachable();
+}
+
+
+Mem_object_decl&
+Builder::make_object_member(char const*, Type&, Def&)
+{
+  lingo_unreachable();
+}
+
+
+Mem_object_decl&
+Builder::make_object_member(Name&, Type&)
+{
+  lingo_unreachable();
+}
+
+
+Mem_object_decl&
+Builder::make_object_member(char const*, Type&)
+{
+  lingo_unreachable();
+}
+
+
+Mem_reference_decl&
+Builder::make_reference_member(Name&, Type&, Def&)
+{
+  lingo_unreachable();
+}
+
+
+Mem_reference_decl&
+Builder::make_reference_member(char const*, Type&, Def&)
+{
+  lingo_unreachable();
+}
+
+
+Mem_function_decl&
+Builder::make_function_member(Name&, Type&, Decl_list const&, Def&)
+{
+  lingo_unreachable();
+}
+
+
+Mem_function_decl&
+Builder::make_function_member(Name&, Type&, Decl_list&&, Def&)
+{
+  lingo_unreachable();
+}
+
+
+Mem_function_decl&
+Builder::make_function_member(Name& n, Type& t, Decl_list const& ps)
+{
+  return make_function_member(n, t, ps, make_empty_definition());
+}
+
+
+Mem_function_decl&
+Builder::make_function_member(Name& n, Type& t, Decl_list&& ps)
+{
+  return make_function_member(n, t, std::move(ps), make_empty_definition());
 }
 
 

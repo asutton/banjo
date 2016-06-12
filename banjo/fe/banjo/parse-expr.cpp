@@ -457,31 +457,32 @@ Parser::id_expression()
 Expr&
 Parser::requires_expression()
 {
-  Token tok = require(tk::requires_tok);
+  lingo_unreachable();
 
-  // Match template parameter.
-  //
-  // TODO: Introduce a new scope.
-  Decl_list tparms;
-  if (match_if(tk::lt_tok)) {
-    tparms = template_parameter_list();
-    match(tk::gt_tok);
-  }
+  // Token tok = require(tk::requires_tok);
 
-  // Parse parameters in a new block scope.
-  // Enter_scope scope(cxt, cxt.make_requires_scope());
-  Decl_list parms;
-  if (match_if(tk::lparen_tok)) {
-    parms = parameter_list();
-    match(tk::rparen_tok);
-  }
+  // // Match template parameter.
+  // //
+  // // TODO: Introduce a new scope.
+  // Decl_list tparms;
+  // if (match_if(tk::lt_tok)) {
+  //   tparms = template_parameter_list();
+  //   match(tk::gt_tok);
+  // }
 
-  match(tk::lbrace_tok);
-  Req_list reqs = usage_seq();
-  match(tk::rbrace_tok);
+  // // Parse parameters in a new block scope.
+  // // Enter_scope scope(cxt, cxt.make_requires_scope());
+  // Decl_list parms;
+  // if (match_if(tk::lparen_tok)) {
+  //   parms = parameter_list();
+  //   match(tk::rparen_tok);
+  // }
 
-  return on_requires_expression(tok, tparms, parms, reqs);
+  // match(tk::lbrace_tok);
+  // Req_list reqs = usage_seq();
+  // match(tk::rbrace_tok);
 
+  // return on_requires_expression(tok, tparms, parms, reqs);
 }
 
 

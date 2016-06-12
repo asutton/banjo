@@ -12,7 +12,6 @@ namespace banjo
 namespace fe
 {
 
-
 // Parse a function definition.
 //
 //    function-definition:
@@ -184,40 +183,6 @@ Parser::parameter_declaration()
   //   lingo_unimplemented("default arguments");
 
   // return on_function_parameter(*name, type);
-}
-
-
-// -------------------------------------------------------------------------- //
-// Coroutines.
-
-// Parse a coroutine.
-//
-//    coroutine-definition:
-//      'codef' identifier ':' parameter-clause '->' type compound-statement
-//
-// TODO: Allow deduction from yield statements?
-Decl&
-Parser::coroutine_declaration()
-{
-  Match_token_pred end_type(*this, tk::lbrace_tok);
-  
-  require(tk::coroutine_tok);
-
-  // Name
-  Name& n = identifier(); // Name of coroutine
-  match_if(tk::colon_tok);
-  
-  // Parameters.
-  Decl_list params = parameter_clause(); // (...)
-
-  // Return type.
-  match(tk::arrow_tok);
-  Type& yield = unparsed_type(end_type);
-
-  // Body.
-  Stmt& body = compound_statement();
-  
-  return on_coroutine_declaration(n, params, yield, body);
 }
 
 

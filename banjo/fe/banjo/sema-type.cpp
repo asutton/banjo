@@ -22,12 +22,6 @@ Parser::on_class_type(Token)
   return cxt.get_type_type();
 }
 
-Type&
-Parser::on_coroutine_type(Token)
-{
-  return cxt.get_type_type();
-}
-
 
 Type&
 Parser::on_void_type(Token)

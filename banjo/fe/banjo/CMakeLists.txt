@@ -20,11 +20,11 @@ add_library(banjo-fe
   sema-id.cpp
   sema-type.cpp
   sema-expr.cpp
-  # sema-init.cpp
+  sema-init.cpp
   sema-stmt.cpp
-  # sema-decl.cpp
-  # sema-function.cpp
-  # sema-class.cpp
+  sema-decl.cpp
+  sema-function.cpp
+  sema-class.cpp
   # sema-req.cpp
   # elaboration.cpp
   # elab-declarations.cpp

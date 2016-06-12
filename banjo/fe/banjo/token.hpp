@@ -81,7 +81,6 @@ struct Token_kind : banjo::Token_kind
     class_tok,
     concept_tok,
     const_tok,
-    coroutine_tok,
     consume_tok,
     continue_tok,
     decltype_tok,

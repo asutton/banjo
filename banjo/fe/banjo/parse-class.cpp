@@ -101,7 +101,6 @@ Parser::member_statement_seq()
 //
 //    member-declaration:
 //      variable-declaration
-//      constant-declaration
 //      super-declaration
 //      function-declaration
 //      class-declaration
@@ -124,7 +123,6 @@ Parser::member_statement()
     case tk::protected_tok:
     // Declaration introducers.
     case tk::var_tok:
-    case tk::const_tok:
     case tk::super_tok:
     case tk::def_tok:
     case tk::class_tok:

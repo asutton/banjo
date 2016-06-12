@@ -199,6 +199,8 @@ struct Builder
   // Functions
   Function_decl&  make_function_declaration(Name&, Type&, Decl_list const&, Def&);
   Function_decl&  make_function_declaration(Name&, Type&, Decl_list&&, Def&);
+  Function_decl&  make_function_declaration(Name&, Type&, Decl_list const&);
+  Function_decl&  make_function_declaration(Name&, Type&, Decl_list&&);
   Function_def&   make_function_definition(Stmt&);
   Expression_def& make_function_definition(Expr&);
   Intrinsic_def&  make_function_definition(Nullary_fn);
@@ -208,7 +210,18 @@ struct Builder
 
   // Classes and their members
   Class_decl&  make_class_declaration(Name&, Def&);
+  Class_decl&  make_class_declaration(Name&);
   Class_def&   make_class_definition(Stmt_list&&);
+  Mem_object_decl&    make_object_member(Name&, Type&, Def&);
+  Mem_object_decl&    make_object_member(char const*, Type&, Def&);
+  Mem_object_decl&    make_object_member(Name&, Type&);
+  Mem_object_decl&    make_object_member(char const*, Type&);
+  Mem_reference_decl& make_reference_member(Name&, Type&, Def&);
+  Mem_reference_decl& make_reference_member(char const*, Type&, Def&);
+  Mem_function_decl&  make_function_member(Name&, Type&, Decl_list const&, Def&);
+  Mem_function_decl&  make_function_member(Name&, Type&, Decl_list&&, Def&);
+  Mem_function_decl&  make_function_member(Name&, Type&, Decl_list const&);
+  Mem_function_decl&  make_function_member(Name&, Type&, Decl_list&&);
 
   // Parameters
   Object_parm&    make_object_parameter(Name&, Type&);

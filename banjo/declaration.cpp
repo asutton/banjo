@@ -7,9 +7,6 @@
 #include "scope.hpp"
 #include "lookup.hpp"
 #include "overload.hpp"
-#include "printer.hpp"
-
-#include <iostream>
 
 
 namespace banjo
@@ -100,12 +97,12 @@ check_declarations(Context& cxt, Decl const& d1, Decl const& d2)
   if (typeid(d1) != typeid(d2)) {
     // TODO: Get the source location right.
     error(cxt, "declaration changes the meaning of '{}'", d1.name());
-    note("'{}' previously declared as:", d1.name());
+    // note("'{}' previously declared as:", d1.name());
     
     // TODO: Don't print the definition. It's not germaine to
     // the error. If we have source locations, I wonder if we
     // can just point at the line.
-    note("{}", d1);
+    // note("{}", d1);
     throw Declaration_error();
   }
   apply(d1, fn{cxt, d2});
@@ -117,10 +114,10 @@ check_declarations(Context& cxt, Object_decl const& d1, Object_decl const& d2)
 {
   struct fn
   {
-    char const* operator()(Decl const& d)          { lingo_unhandled(d); }
-    char const* operator()(Variable_decl const& d) { return "variable"; }
-    char const* operator()(Field_decl const& d)    { return "member variable"; }
-    char const* operator()(Object_parm const& d)   { return "parameter"; }
+    char const* operator()(Decl const& d)              { lingo_unhandled(d); }
+    char const* operator()(Variable_decl const& d)     { return "variable"; }
+    char const* operator()(Mem_variable_decl const& d) { return "member variable"; }
+    char const* operator()(Object_parm const& d)       { return "parameter"; }
   };
   error(cxt, "redeclaration of {} with the same name", apply(d1, fn{}));
   throw Declaration_error();
@@ -134,22 +131,12 @@ check_declarations(Context& cxt, Function_decl const& d1, Function_decl const& d
 }
 
 
+// FIXME: Verify this diagnostics.
 void
 check_declarations(Context& cxt, Type_decl const& d1, Type_decl const& d2)
 {
-  Type const& t1 = d1.type();
-  Type const& t2 = d2.type();
-  if (is_different(t1, t2)) {
-    // TODO: Get the source location right.
-    error(cxt, "declaration of '{}' as a different kind of type", d1.name());
-    note("'{}' previously declared as:", d1.name());
-    
-    // TODO: Don't print the definition. It's not germaine to
-    // the error. If we have source locations, I wonder if we
-    // can just point at the line.
-    note("{}", d1);
-    throw Declaration_error();
-  }
+  error(cxt, "declaration of '{}' as a different kind of type", d1.name());
+  throw Declaration_error();
 }
 
 

@@ -22,7 +22,7 @@ Expr& contextual_conversion_to_bool(Context&, Expr&);
 Expr& dependent_conversion(Context&, Expr&, Type&);
 
 // Arithmetic conversion
-Expr_pair arithmetic_conversions(Context&, Expr const&, Expr const&);
+Expr_pair arithmetic_conversions(Context&, Expr&, Expr&);
 
 
 // -------------------------------------------------------------------------- //

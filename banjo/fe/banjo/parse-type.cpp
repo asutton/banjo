@@ -188,9 +188,6 @@ Parser::primary_type()
     case tk::class_tok:
       return on_class_type(accept());
 
-    case tk::coroutine_tok:
-      return on_coroutine_type(accept());
-
     case tk::lparen_tok: {
       // FIXME: We shouldn't need a tentative parse for this.
       if (Type* t = match_if(&Parser::function_type))

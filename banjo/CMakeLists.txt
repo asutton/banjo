@@ -40,7 +40,7 @@ add_library(banjo
 
   # # # Tree construction
   type.cpp
-  # declaration.cpp
+  declaration.cpp
   # overload.cpp
   expression.cpp
   expr-id.cpp
@@ -57,12 +57,12 @@ add_library(banjo
   # inheritance.cpp
   # substitution.cpp
   # deduction.cpp
-  # # template.cpp
-  # # requirement.cpp
-  # # constraint.cpp
-  # # normalization.cpp
-  # # satisfaction.cpp
-  # # subsumption.cpp
+  # template.cpp
+  # requirement.cpp
+  # constraint.cpp
+  # normalization.cpp
+  # satisfaction.cpp
+  # subsumption.cpp
   # inspection.cpp
 
   # Compile-time evaluation

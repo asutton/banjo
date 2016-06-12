@@ -160,7 +160,6 @@ Parser::parameter_specifier_seq()
 //
 //    basic-declaration:
 //      variable-declaration
-//      constant-declaration
 //      function-declaration
 //      type-declaration
 //      concept-declaration
@@ -174,9 +173,6 @@ Parser::declaration()
     case tk::var_tok:
       return variable_declaration();
 
-    case tk::const_tok:
-      return constant_declaration();
-    
     case tk::def_tok:
       return function_declaration();
 
@@ -237,44 +233,6 @@ Parser::variable_declaration()
   // Otherwise, match the "name : type ;" form.
   match(tk::semicolon_tok);
   return on_variable_declaration(name, type);
-}
-
-
-// -------------------------------------------------------------------------- //
-// Variable declarations
-
-// Parse a constant declaration.
-//
-//    variable-declaration:
-//      'const' identifier ':' [template-header] type '=' initializer ';'
-//      'const' identifier ':' '=' initializer ';'
-Decl&
-Parser::constant_declaration()
-{
-  // Helper functions.
-  Match_any_token_pred end_type(*this, tk::eq_tok, tk::semicolon_tok);
-  Match_token_pred     end_init(*this, tk::semicolon_tok);
-
-  require(tk::const_tok);
-  Name& name = identifier();
-  match(tk::colon_tok);
-
-  // // Match the ":=" form.
-  // if (match_if(tk::eq_tok)) {
-  //   Type& type = cxt.make_auto_type();
-  //   Expr& init = unparsed_expression(end_init);
-  //   match(tk::semicolon_tok);
-  //   return on_constant_declaration(name, type, init);
-  // }
-
-  // Match the type.
-  Type& type = unparsed_type(end_type);
-
-  // Match the "name : type =" form.
-  match_if(tk::eq_tok);
-  Expr& init = unparsed_expression(end_init);
-  match(tk::semicolon_tok);
-  return on_constant_declaration(name, type, init);
 }
 
 
@@ -515,18 +473,19 @@ Parser::concept_declaration()
 Def&
 Parser::concept_definition(Decl& d)
 {
-  if (match_if(tk::eq_tok)) {
-    Expr& e = expression();
-    Def& def = on_concept_definition(d, e);
-    match(tk::semicolon_tok);
-    return def;
-  } else {
-    match(tk::lbrace_tok);
-    Req_list rs = concept_member_seq();
-    Def& def = on_concept_definition(d, rs);
-    match(tk::rbrace_tok);
-    return def;
-  }
+  lingo_unreachable();
+  // if (match_if(tk::eq_tok)) {
+  //   Expr& e = expression();
+  //   Def& def = on_concept_definition(d, e);
+  //   match(tk::semicolon_tok);
+  //   return def;
+  // } else {
+  //   match(tk::lbrace_tok);
+  //   Req_list rs = concept_member_seq();
+  //   Def& def = on_concept_definition(d, rs);
+  //   match(tk::rbrace_tok);
+  //   return def;
+  // }
 }
 
 
@@ -568,14 +527,15 @@ Parser::concept_member_seq()
 Req&
 Parser::concept_member()
 {
-  switch (lookahead()) {
-    case tk::typename_tok:
-      return type_requirement();
-    case tk::requires_tok:
-      return syntactic_requirement();
-    default:
-      return expression_requirement();
-  }
+  lingo_unreachable();
+  // switch (lookahead()) {
+  //   case tk::typename_tok:
+  //     return type_requirement();
+  //   case tk::requires_tok:
+  //     return syntactic_requirement();
+  //   default:
+  //     return expression_requirement();
+  // }
 }
 
 

@@ -4,7 +4,6 @@
 #ifndef BANJO_DECLARATION_HPP
 #define BANJO_DECLARATION_HPP
 
-#include "prelude.hpp"
 #include "language.hpp"
 
 

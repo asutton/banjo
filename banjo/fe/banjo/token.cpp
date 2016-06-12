@@ -110,7 +110,6 @@ init_tokens(Symbol_table& syms)
   init_token(syms, tk::class_tok, "class");
   init_token(syms, tk::concept_tok, "concept");
   init_token(syms, tk::const_tok, "const");
-  init_token(syms, tk::coroutine_tok, "codef");
   init_token(syms, tk::consume_tok, "consume");
   init_token(syms, tk::continue_tok, "continue");
   init_token(syms, tk::decltype_tok, "decltype");
