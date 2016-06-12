@@ -1,8 +1,8 @@
 // Copyright (c) 2015-2016 Andrew Sutton
 // All rights reserved
 
-#ifndef BANJO_PRINTER_HPP
-#define BANJO_PRINTER_HPP
+#ifndef BANJO_FE_PRINTER_HPP
+#define BANJO_FE_PRINTER_HPP
 
 // The core printer provides the ability to pretty print banjo core
 // language constructs. Note that this class is always defined by the

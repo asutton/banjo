@@ -32,6 +32,20 @@ Context::Context(Symbol_table& s)
 }
 
 
+Translation_unit const&
+Context::translation_unit() const
+{
+  return builtins_.translation_unit();
+}
+
+
+Translation_unit&      
+Context::translation_unit()
+{
+  return builtins_.translation_unit();
+}
+
+
 Scope const& 
 Context::global_scope() const 
 { 

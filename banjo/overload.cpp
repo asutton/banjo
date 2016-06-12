@@ -25,6 +25,7 @@ Overload_set::name()
 }
 
 
+// FIXME: Replace this with a debug() overload.
 #if 0
 std::ostream&
 operator<<(std::ostream& os, Overload_set const& ovl)

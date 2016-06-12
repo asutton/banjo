@@ -69,10 +69,6 @@ struct Function_candidate
 };
 
 
-// Streaming
-std::ostream& operator<<(std::ostream&, Overload_set const&);
-
-
 bool can_overload(Decl&, Decl&);
 
 

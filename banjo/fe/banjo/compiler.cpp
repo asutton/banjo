@@ -4,9 +4,9 @@
 #include "context.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
+#include "printer.hpp"
 
-// #include <banjo/printer.hpp>
-// #include <banjo/gen/llvm/generator.hpp>
+#include <banjo/ast.hpp>
 
 #include <lingo/file.hpp>
 #include <lingo/io.hpp>
@@ -26,7 +26,7 @@ struct Options
 {
   ~Options();
 
-  String   emit    = "tokens";
+  String   emit    = "banjo";
   File_seq inputs  = {};
 };
 
@@ -119,17 +119,16 @@ main(int argc, char* argv[])
   // Perform syntactic analysis.
   Token_stream ts(toks);
   fe::Parser parse(cxt, ts);
-  Decl& tu = parse();
+  parse();
 
   if (opts.emit == "tokens") {
     for (Token k : toks)
       std::cout << k << ' ';
     std::cout << '\n';
   }
-
-  // else if (opts.emit == "banjo") {
-  //   std::cout << tu << '\n';
-  // }
+  else if (opts.emit == "banjo") {
+    std::cout << cxt.translation_unit() << '\n';
+  }
 
   // FIXME: Code generation not re-linked yet.
   // else if (opts.emit == "llvm") {

@@ -41,7 +41,7 @@ add_library(banjo
   # # # Tree construction
   type.cpp
   declaration.cpp
-  # overload.cpp
+  overload.cpp
   expression.cpp
   expr-id.cpp
   expr-logical.cpp

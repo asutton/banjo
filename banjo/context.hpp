@@ -46,6 +46,10 @@ struct Context : List_allocator, Builder
   Context(Context const&) = delete;
   Context& operator=(Context const&) = delete;
 
+  // Returns the translation unit.
+  Translation_unit const& translation_unit() const;
+  Translation_unit&       translation_unit();
+
   // Unique ids
   int get_unique_id();
 
