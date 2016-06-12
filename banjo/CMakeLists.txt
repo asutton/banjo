@@ -67,7 +67,7 @@ add_library(banjo
 
   # Compile-time evaluation
   value.cpp
-  # evaluation.cpp
+  evaluation.cpp
 )
 
 target_compile_definitions(banjo PUBLIC ${LLVM_DEFINITIONS})

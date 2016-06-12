@@ -4,8 +4,8 @@
 #include "context.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
+#include "printer.hpp"
 
-#include <banjo/printer.hpp>
 #include <banjo/evaluation.hpp>
 
 #include <lingo/file.hpp>
@@ -22,7 +22,8 @@ using namespace banjo;
 int
 main(int argc, char* argv[])
 {
-  fe::Context cxt;
+  Symbol_table syms;
+  fe::Context cxt(syms);
 
   while (true) {
     String str;

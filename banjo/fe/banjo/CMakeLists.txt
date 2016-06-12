@@ -6,6 +6,7 @@ add_library(banjo-fe
   context.cpp
   token.cpp
   lexer.cpp
+  printer.cpp
   parser.cpp
   parse-tu.cpp
   parse-id.cpp
@@ -56,5 +57,5 @@ add_executable(banjo-compile compiler.cpp)
 target_link_libraries(banjo-compile banjo banjo-fe)
 
 # A simple expression calculator.
-# add_executable(banjo-calc calc.cpp)
-# target_link_libraries(banjo-calc banjo banjo-fe)
+add_executable(banjo-calc calc.cpp)
+target_link_libraries(banjo-calc banjo banjo-fe)

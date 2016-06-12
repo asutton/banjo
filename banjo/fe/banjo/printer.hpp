@@ -12,10 +12,8 @@
 // NOTE: When forking the banjo grammar, be sure to update this printer
 // to the most recent version.
 
-#include "token.hpp"
-#include "language.hpp"
-#include "ast-stmt.hpp"
-#include "ast-decl.hpp"
+#include <banjo/token.hpp>
+#include <banjo/language.hpp>
 
 #include <iosfwd>
 
@@ -109,7 +107,7 @@ struct Printer
   void postfix_expression(Expr const&);
   void postfix_expression(Call_expr const&);  
   void postfix_expression(Tuple_expr const&);
-  void postfix_expression(Dot_expr const&);
+  void postfix_expression(Mem_expr const&);
   void postfix_expression(Value_conv const&);
   void postfix_expression(Qualification_conv const&);
   void postfix_expression(Boolean_conv const&);
@@ -128,7 +126,6 @@ struct Printer
   void literal(Integer_expr const&);
   void literal(Real_expr const&);
   void id_expression(Id_expr const&);
-  void id_expression(Decl_expr const&);
   void id_expression(Synthetic_expr const&);
 
   void requires_expression(Requires_expr const&);
@@ -166,12 +163,8 @@ struct Printer
   void specifier(char const*);
   void specifier_seq(Specifier_set);
 
-  // Supers
-  void super_declaration(Super_decl const&);
-
   // Variables and constant
   void variable_declaration(Variable_decl const&);
-  void constant_declaration(Constant_decl const&);
   void initializer(Def const&);
   void initializer(Empty_def const&);
   void initializer(Expression_def const&);
@@ -179,7 +172,6 @@ struct Printer
   // Functions
   void mapping_declaration(Mapping_decl const&, char const*);
   void function_declaration(Function_decl const&);
-  void macro_declaration(Macro_decl const&);
   void function_definition(Def const&);
   void function_definition(Empty_def const&);
   void function_definition(Expression_def const&);
@@ -201,25 +193,21 @@ struct Printer
   void member_statement_seq(Stmt_list const&);
   void member_statement(Stmt const&);
 
-  // Coroutine
-  void coroutine_delcaration(Coroutine_decl const&);
-
   // Concepts
-  void concept_declaration(Concept_decl const&);
-  void concept_definition(Def const&);
-  void concept_definition(Expression_def const&);
-  void concept_definition(Concept_def const&);
-  void concept_member_seq(Req_list const&);
-  void concept_member(Req const&);
-  void concept_member(Syntactic_req const&);
-  void concept_member(Semantic_req const&);
-  void concept_member(Type_req const&);
-  void concept_member(Expression_req const&);
+  // void concept_declaration(Concept_decl const&);
+  // void concept_definition(Def const&);
+  // void concept_definition(Expression_def const&);
+  // void concept_definition(Concept_def const&);
+  // void concept_member_seq(Req_list const&);
+  // void concept_member(Req const&);
+  // void concept_member(Syntactic_req const&);
+  // void concept_member(Semantic_req const&);
+  // void concept_member(Type_req const&);
+  // void concept_member(Expression_req const&);
 
   // Templates
   void template_declaration(Template_decl const&);
   void type_template_parameter(Type_parm const&);
-  void value_template_parameter(Value_parm const&);
   void template_template_parameter(Template_parm const&);
   void template_parameter(Decl const&);
   void template_parameter_list(Decl_list const&);
@@ -253,9 +241,6 @@ struct Printer
   std::ostream& os;     // Output stream
   int           indent; // The current indentation
 };
-
-
-
 
 
 std::ostream& operator<<(std::ostream&, Term const&);

@@ -2,6 +2,7 @@
 // All rights reserved
 
 #include "parser.hpp"
+#include "printer.hpp"
 
 #include <banjo/ast.hpp>
 

@@ -9,6 +9,8 @@
 #include "context.hpp"
 #include "value.hpp"
 
+#include <lingo/environment.hpp>
+
 
 namespace banjo
 {
@@ -19,7 +21,7 @@ namespace banjo
 // (e.g., a block scope), a new frame is created to store bindings.
 //
 // This is also the call stack.
-using Call_stack = Stack<Store>;
+using Call_stack = lingo::Stack<Store>;
 
 
 // Represents the evaluation of a statement. This determines the
@@ -51,7 +53,6 @@ struct Evaluator
   Value integer(Integer_expr const&);
   Value tuple(Tuple_expr const&);
   Value object(Object_expr const&);
-  Value value(Value_expr const&);
   Value call(Call_expr const&);
   Value logical_and(And_expr const&);
   Value logical_or(Or_expr const&);
@@ -84,7 +85,6 @@ struct Evaluator
 
   void elaborate(Decl const&);
   void variable(Variable_decl const&);
-  void constant(Constant_decl const&);
 
   void initialize(Decl const&, Expr const&);
   void initialize(Value&, Expr const&);

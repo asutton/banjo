@@ -115,6 +115,10 @@ struct Value
   Value(Value&&);
   Value& operator=(Value&&);
 
+  Value(Void_value v)
+    : k(void_value), r(v)
+  { }
+
   // Need this constructor because the conversion from int to int64_t or 
   // double is ambiguous.
   Value(int n)

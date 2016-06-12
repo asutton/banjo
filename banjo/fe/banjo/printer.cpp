@@ -2,7 +2,8 @@
 // All rights reserved
 
 #include "printer.hpp"
-#include "ast.hpp"
+
+#include <banjo/ast.hpp>
 
 #include <iterator>
 #include <iostream>
@@ -785,7 +786,7 @@ Printer::postfix_expression(Expr const& e)
   {
     Printer& p;
     void operator()(Expr const& e)               { p.primary_expression(e); }
-    void operator()(Dot_expr const& e)           { p.postfix_expression(e); }
+    void operator()(Mem_expr const& e)           { p.postfix_expression(e); }
     void operator()(Call_expr const& e)          { p.postfix_expression(e); }
     void operator()(Tuple_expr const& e)         { p.postfix_expression(e); }
     void operator()(Value_conv const& e)         { p.postfix_expression(e); }
@@ -807,7 +808,7 @@ Printer::postfix_expression(Expr const& e)
 // TODO: We may need to specialize the printing for resolved declarations
 // in case of ambiguous names from different base classes.
 void
-Printer::postfix_expression(Dot_expr const& e)
+Printer::postfix_expression(Mem_expr const& e)
 {
   postfix_expression(e.object());
   token('.');
@@ -955,7 +956,6 @@ Printer::primary_expression(Expr const& e)
     void operator()(Integer_expr const& e)   { p.literal(e); }
     void operator()(Real_expr const& e)      { p.literal(e); }
     void operator()(Id_expr const& e)        { p.id_expression(e); }
-    void operator()(Decl_expr const& e)      { p.id_expression(e); }
     void operator()(Synthetic_expr const& e) { p.id_expression(e); }
     void operator()(Requires_expr const& e)  { p.requires_expression(e); }
   };
@@ -1010,14 +1010,6 @@ Printer::id_expression(Id_expr const& e)
 }
 
 
-// Write the qualified name of the referenced declaration.
-void
-Printer::id_expression(Decl_expr const& e)
-{
-  id(e.declaration().name());
-}
-
-
 void
 Printer::id_expression(Synthetic_expr const& e)
 {
@@ -1028,24 +1020,25 @@ Printer::id_expression(Synthetic_expr const& e)
 void
 Printer::requires_expression(Requires_expr const& e)
 {
-  token("requires");
-  space();
+  lingo_unreachable();
+  // token("requires");
+  // space();
 
-  // FIXME: Print template parameters.
+  // // FIXME: Print template parameters.
 
-  Decl_list const& nparms = e.normal_parameters();
-  if (!nparms.empty()) {
-    token('(');
-    parameter_list(nparms);
-    token(')');
-    space();
-  }
+  // Decl_list const& nparms = e.normal_parameters();
+  // if (!nparms.empty()) {
+  //   token('(');
+  //   parameter_list(nparms);
+  //   token(')');
+  //   space();
+  // }
 
-  token('{');
-  newline_and_indent();
-  usage_seq(e.requirements());
-  newline_and_undent();
-  token('}');
+  // token('{');
+  // newline_and_indent();
+  // usage_seq(e.requirements());
+  // newline_and_undent();
+  // token('}');
 }
 
 
@@ -1132,19 +1125,17 @@ void
 Printer::return_statement(Return_stmt const& s)
 {
   token("return");
-  space();
-  expression(s.expression());
   token(';');
 }
+
 
 void
 Printer::yield_statement(Yield_stmt const& s)
 {
   token("yield");
-  space();
-  expression(s.expression());
   token(';');
 }
+
 
 // TODO: If the branch is not compound statement, then drop to the next
 // line and indent, so it prints like this:
@@ -1253,17 +1244,12 @@ Printer::declaration(Decl const& d)
     void operator()(Decl const& d)             { lingo_unhandled(d); }
     void operator()(Translation_unit const& d) { p.translation_unit(d); }
     void operator()(Variable_decl const& d)    { p.variable_declaration(d); }
-    void operator()(Constant_decl const& d)    { p.constant_declaration(d); }
-    void operator()(Super_decl const& d)       { p.super_declaration(d); }
     void operator()(Function_decl const& d)    { p.function_declaration(d); }
-    void operator()(Macro_decl const& d)       { p.macro_declaration(d); }
     void operator()(Class_decl const& d)       { p.class_declaration(d); }
-    void operator()(Coroutine_decl const& d)   { p.coroutine_delcaration(d); }
 
     // Support emitting these here so we can print parameters without
     // an appropriate context.
     void operator()(Object_parm const& d)    { p.parameter(d); }
-    void operator()(Value_parm const& d)     { p.value_template_parameter(d); }
     void operator()(Type_parm const& d)      { p.type_template_parameter(d); }
     void operator()(Template_parm const& d)  { p.template_template_parameter(d); }
   };
@@ -1323,8 +1309,6 @@ Printer::specifier_seq(Specifier_set s)
     specifier("mutable");
   if (s & consume_spec)
     specifier("consume");
-  if (s & const_spec)
-    specifier("const");
   
   // Fake specifiers
   if (s & internal_spec) {
@@ -1346,34 +1330,6 @@ Printer::variable_declaration(Variable_decl const& d)
   spaced_token(':');
   type(d.type());
   initializer(d.initializer());
-  token(';');
-}
-
-
-void
-Printer::constant_declaration(Constant_decl const& d)
-{
-  token("const");
-  space();
-
-  // FIXME: We probably want to print the qualified name of 
-  // the constant... depends on the current context.
-  identifier(d);
-
-  spaced_token(':');
-  type(d.type());
-  initializer(d.initializer());
-  token(';');
-}
-
-
-void
-Printer::super_declaration(Super_decl const& d)
-{
-  token("super");
-  // identifier(d);
-  spaced_token(':');
-  type(d.type());
   token(';');
 }
 
@@ -1429,30 +1385,6 @@ void
 Printer::function_declaration(Function_decl const& d)
 {
   mapping_declaration(d, "def");
-}
-
-
-void
-Printer::macro_declaration(Macro_decl const& d)
-{
-  mapping_declaration(d, "macro");
-}
-
-
-// TODO: For some reason a coroutine is not a mapping declaration.
-void
-Printer::coroutine_delcaration(Coroutine_decl const& d)
-{
-  token("codef");
-  space();
-  identifier(d);
-  spaced_token(':');
-  token('(');
-  parameter_list(d.parameters());
-  token(')');
-  spaced_token("->");
-  type(d.return_type());
-  function_definition(d.definition());
 }
 
 
@@ -1531,8 +1463,7 @@ Printer::class_declaration(Class_decl const& d)
   token("class");
   space();
   identifier(d);
-  spaced_token(':');
-  type(d.type());
+  space();
   class_definition(d.definition());
 }
 
@@ -1652,18 +1583,6 @@ Printer::type_template_parameter(Type_parm const& d)
 }
 
 
-// FIXME: Default arguments.
-void
-Printer::value_template_parameter(Value_parm const& p)
-{
-  token("const");
-  space();
-  identifier(p);
-  spaced_token(':');
-  type(p.type());
-}
-
-
 // FIXME: Actually implement me.
 void
 Printer::template_template_parameter(Template_parm const& d)
@@ -1673,7 +1592,7 @@ Printer::template_template_parameter(Template_parm const& d)
 }
 
 
-
+#if 0
 // -------------------------------------------------------------------------- //
 // Concept declarations
 
@@ -1764,6 +1683,7 @@ Printer::requires_clause(Expr const& e)
   space();
   expression(e);
 }
+#endif
 
 
 void
@@ -1774,7 +1694,6 @@ Printer::parameter(Decl const& d)
     Printer& p;
     void operator()(Decl const& d) { lingo_unhandled(d); }
     void operator()(Object_parm const& d)   { p.parameter(d); }
-    void operator()(Value_parm const& d)    { p.value_template_parameter(d); }
     void operator()(Type_parm const& d)     { p.type_template_parameter(d); }
     void operator()(Template_parm const& d) { p.template_template_parameter(d); }
   };
@@ -1832,6 +1751,8 @@ Printer::template_argument_list(Term_list const& ts)
   }
 }
 
+
+#if 0
 // -------------------------------------------------------------------------- //
 // Requirements
 
@@ -1893,6 +1814,7 @@ Printer::requirement(Deduction_req const& r)
   type(r.type());
   token(';');
 }
+#endif
 
 
 // -------------------------------------------------------------------------- //
@@ -1915,7 +1837,7 @@ Printer::constraint(Cons const& c)
   struct fn
   {
     Printer& p;
-    void operator()(Cons const& c)               { banjo_unhandled_case(c); }
+    void operator()(Cons const& c)               { lingo_unhandled(c); }
     void operator()(Concept_cons const& c)       { p.constraint(c); }
     void operator()(Predicate_cons const& c)     { p.constraint(c); }
     void operator()(Expression_cons const& c)    { p.constraint(c); }

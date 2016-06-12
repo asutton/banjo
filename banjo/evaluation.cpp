@@ -4,7 +4,6 @@
 #include "evaluation.hpp"
 #include "ast.hpp"
 #include "builder.hpp"
-#include "printer.hpp"
 
 #include <iostream>
 
@@ -67,12 +66,16 @@ Evaluator::evaluate(Expr const& e)
   struct fn
   {
     Evaluator& self;
-    Value operator()(Expr const& e) { banjo_unhandled_case(e); }
+    
+    // FIXME: This should probably throw an evaluation error and not
+    // result in an ICE. The idea is that only the expressions in this
+    // switch can be CT-evaluated.
+    Value operator()(Expr const& e) { lingo_unhandled(e); }
+    
     Value operator()(Boolean_expr const& e) { return self.boolean(e); }
     Value operator()(Integer_expr const& e) { return self.integer(e); }
     Value operator()(Tuple_expr const& e)   { return self.tuple(e); }
     Value operator()(Object_expr const& e)  { return self.object(e); }
-    Value operator()(Value_expr const& e)   { return self.value(e); }
     Value operator()(Call_expr const& e)    { return self.call(e); }
     Value operator()(And_expr const& e)     { return self.logical_and(e); }
     Value operator()(Or_expr const& e)      { return self.logical_or(e); }
@@ -118,7 +121,7 @@ Value
 Evaluator::tuple(Tuple_expr const& e)
 {
   Expr_list const& elems = e.elements();
-  Tuple_value ret(elems.size());
+  Aggregate_value ret(elems.size());
   for (std::size_t i = 0; i < elems.size(); ++i)
     ret[i] = evaluate(*elems[i]);
   return ret;
@@ -133,17 +136,11 @@ Evaluator::object(Object_expr const& e)
 }
 
 
-// Returns the value of the referred-to object.
-Value
-Evaluator::value(Value_expr const& e)
-{
-  return load(e.declaration());
-}
-
-
 Value
 Evaluator::call(Call_expr const& e)
 {
+  lingo_unreachable();
+#if 0
   // FIXME: I believe that the function operand must be a reference to
   // a function.
   Value v = evaluate(e.function());
@@ -187,6 +184,7 @@ Evaluator::call(Call_expr const& e)
   if (ctl != return_ctl)
     throw Evaluation_error("function evaluation failed");
   return result;
+#endif
 }
 
 
@@ -365,13 +363,15 @@ Evaluator::cmp(Cmp_expr const& e)
 // -------------------------------------------------------------------------- //
 // Evaluation of conversions
 
+
 // Given an object, convert it to a value. This loads the value stored
 // previously by the object.
 Value
 Evaluator::to_value(Value_conv const& e)
 {
-  Value v = evaluate(e.source());
-  return load(*v.get_reference());
+  lingo_unreachable();
+  // Value v = evaluate(e.source());
+  // return load(*v.get_reference());
 }
 
 
@@ -438,7 +438,7 @@ Evaluator::evaluate_expression(Expression_stmt const& s, Value& r)
 Control
 Evaluator::evaluate_return(Return_stmt const& s, Value& r)
 {
-  r = evaluate(s.expression());
+  r = Value(Void_value{});
   return return_ctl;
 }
 
@@ -454,7 +454,6 @@ Evaluator::elaborate(Decl const& d)
     Evaluator& self;
     void operator()(Decl const& d)          { lingo_unhandled(d); }
     void operator()(Variable_decl const& d) { self.variable(d); }
-    void operator()(Constant_decl const& d) { self.constant(d); }
   };
   return apply(d, fn{*this});
 }
@@ -462,20 +461,6 @@ Evaluator::elaborate(Decl const& d)
 
 void
 Evaluator::variable(Variable_decl const& decl)
-{
-  struct fn
-  {
-    Evaluator&  self;
-    Decl const& decl;
-    void operator()(Def const& d)            { lingo_unhandled(d); }
-    void operator()(Expression_def const& d) { self.initialize(decl, d.expression()); }
-  };
-  apply(decl.initializer(), fn{*this, decl});
-}
-
-
-void
-Evaluator::constant(Constant_decl const& decl)
 {
   struct fn
   {
@@ -532,7 +517,7 @@ void
 Evaluator::initialize(Value& obj, Aggregate_init const& init)
 {
   Expr_list const& inits = init.initializers();
-  Tuple_value agg(inits.size());
+  Aggregate_value agg(inits.size());
   for (std::size_t i = 0; i < inits.size(); ++i) {
     agg[i] = Value{};
     initialize(agg[i], *inits[i]);
@@ -562,7 +547,7 @@ lift_integer(Context& cxt, Type& t, Integer_value const& v)
   if (is_integer_type(t))
     return cxt.get_integer(t, v); 
   if (is_boolean_type(t))
-    return cxt.get_bool(v);
+    return cxt.get_boolean(t, v);
 
   // TODO: What other kinds of integer representation do we have?
   lingo_unreachable();
@@ -570,8 +555,11 @@ lift_integer(Context& cxt, Type& t, Integer_value const& v)
 
 
 // Construct a tuple expression from the values. 
+//
+// TODO: Note that T could be a tuple or class type. Not just a tuple
+// type.
 static Expr&
-lift_tuple(Context& cxt, Type& t, Tuple_value const& v)
+lift_aggregate(Context& cxt, Type& t, Aggregate_value const& v)
 {
   // Only tuple types evaluate to tuples. We need the element
   // types to reconstruct the elements.
@@ -601,11 +589,11 @@ lift_value(Context& cxt, Type& t, Value const& v)
     Type&    type;
 
     Expr& operator()(Error_value const& v)     { return lift_error(cxt, type, v); }
+    Expr& operator()(Void_value const& v)      { lingo_unreachable(); }
     Expr& operator()(Integer_value const& v)   { return lift_integer(cxt, type, v); }
     Expr& operator()(Float_value const& v)     { lingo_unreachable(); }
     Expr& operator()(Reference_value const& v) { lingo_unreachable(); }
-    Expr& operator()(Array_value const& v)     { lingo_unreachable(); }
-    Expr& operator()(Tuple_value const& v)     { return lift_tuple(cxt, type, v); }
+    Expr& operator()(Aggregate_value const& v) { return lift_aggregate(cxt, type, v); }
   };
   return apply(v, fn{cxt, t});
 }
