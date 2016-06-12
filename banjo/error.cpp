@@ -86,9 +86,12 @@ dump_arg(std::ostream& os, Message::Arg const& a)
 }
 
 
+// FIXME: This is *CLEARLY* incorrect. Render the result into JSON by default.
+// This will allow other clients to consume and manipulate the diagnostics.
 void
 dump(std::ostream& os, Message const& m)
 {
+  os << m.fmt_ << " << ";
   m.render(os, dump_arg);
 }
 

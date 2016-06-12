@@ -5,6 +5,7 @@
 #include "parser.hpp"
 
 #include <banjo/ast.hpp>
+#include <banjo/declaration.hpp>
 #include <banjo/debugging.hpp>
 
 
@@ -19,8 +20,8 @@ namespace fe
 void
 Elaborate_declarations::on_variable_declaration(Object_decl& d)
 {
-  d.type_ = &parse_type(d.type());
-  debug(d);
+  d.type_ = &get_type(d.type());
+  check(d);
 }
 
 
@@ -28,35 +29,39 @@ Elaborate_declarations::on_variable_declaration(Object_decl& d)
 void
 Elaborate_declarations::on_variable_declaration(Reference_decl& d)
 {
-  d.type_ = &parse_type(d.type());
+  d.type_ = &get_type(d.type());
+  check(d);
 }
 
 
 // Before entering the function, adjust its type based on the adjusted
 // types of the parameters.
 void
-Elaborate_declarations::enter_function_declaration(Function_decl& decl)
+Elaborate_declarations::enter_function_declaration(Function_decl& d)
 {
   Type_list ts;
-  for (Decl& d : decl.parameters())
+  for (Decl& d : d.parameters())
     ts.push_back(cast<Typed_decl>(d).type());
-  Type& ret = parse_type(decl.return_type());
-  decl.type_ = &cxt.get_function_type(std::move(ts), ret);
+  Type& ret = get_type(d.return_type());
+  d.type_ = &cxt.get_function_type(std::move(ts), ret);
+  check(d);
 }
 
 
 // Adjust the type of the parameter.
 void
-Elaborate_declarations::on_parameter(Object_parm& p)
+Elaborate_declarations::on_parameter(Object_parm& d)
 {
-  p.type_ = &parse_type(p.type());
+  d.type_ = &get_type(d.type());
+  check(d);
 }
 
 
 // Make sure that we don't have any conflicting declarations.
 void
-Elaborate_declarations::start_class_declaration(Class_decl& p)
+Elaborate_declarations::start_class_declaration(Class_decl& d)
 {
+  check(d);
 }
 
 
@@ -70,7 +75,7 @@ Elaborate_declarations::start_class_declaration(Class_decl& p)
 // elaborate that definition as needed. For overloaded functions, any 
 // not-yet-typed declarations are considered non-viable.
 Type&
-Elaborate_declarations::parse_type(Type& t)
+Elaborate_declarations::get_type(Type& t)
 {
   if (Unparsed_type* u = as<Unparsed_type>(&t)) {
     Save_input_location loc(cxt);
@@ -82,7 +87,39 @@ Elaborate_declarations::parse_type(Type& t)
 }
 
 
+// -------------------------------------------------------------------------- //
+// Declaration checking
+
+// Lookup the declaration and compare it against all previously elaborated
+// declarations in the overload set.
+//
+// TODO: For declarations allowing "partiality", also link those together
+// so that we can unify them later on.
+void
+Elaborate_declarations::check(Decl& d)
+{
+  Name& name = d.name();
+  Overload_set& ovl = *cxt.current_scope().lookup(name);
+
+  bool ok = true;
+  auto iter = ovl.begin();
+  while (&*iter != &d) {
+    // Trap errors, so we can diagnose as many declaration errors as possible.
+    try {
+      check_declarations(cxt, d, *iter);
+    } 
+    catch (...) {
+      ok = false;
+    }
+    ++iter;
+  }
+  if (!ok)
+    throw Declaration_error();
+}
+
+
 } // namespace fe
 
 } // namespace banjo
+
 

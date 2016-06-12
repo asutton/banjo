@@ -92,6 +92,18 @@ struct Context : List_allocator, Builder
   Value const& load(Decl&);
 
   // Diagnostics
+  //
+  // TODO: Parameterize the context with a diagnostics manager that will 
+  // provide behaviors for these functions. Good options for managing 
+  // diagnostics are:
+  //
+  //    - render as colored text
+  //    - render as an intermediate format
+  //    - cache objects for later
+  //    - fail outright
+  //
+  // Making these virtual doesn't provide the level of generality that
+  // we really want.
   bool diagnose_errors() const { return diags; }
   virtual void emit_error(Message const& m);
   virtual void emit_warning(Message const& m);

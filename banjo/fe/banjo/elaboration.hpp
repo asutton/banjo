@@ -312,6 +312,10 @@ inline void
 Elaborator<F>::function_declaration(Function_decl& d)
 {
   vis.start_function_declaration(d);
+  
+  // TODO: I wonder if we should have different kinds of scopes for
+  // different contexts. For example, block scope doesn't allow for
+  // overloaded declarations.
   Enter_scope scope(cxt, d);
   parameter_list(d.parameters());
 

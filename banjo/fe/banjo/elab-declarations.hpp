@@ -34,7 +34,9 @@ struct Elaborate_declarations : Basic_elaborator
 
   void on_parameter(Object_parm&);
 
-  Type& parse_type(Type&);
+  Type& get_type(Type&);
+
+  void check(Decl&);
 };
 
 
