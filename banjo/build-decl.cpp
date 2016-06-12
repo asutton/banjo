@@ -27,6 +27,22 @@ Builder::make_object_declaration(char const* s, Type& t, Def& d)
 }
 
 
+// Create an object declaration whose definition is empty.
+Object_decl&
+Builder::make_object_declaration(Name& n, Type& t)
+{
+  return make_object_declaration(n, t, make_empty_definition());
+}
+
+
+// Create an object declaration whose definition is empty.
+Object_decl&
+Builder::make_object_declaration(char const* s, Type& t)
+{
+  return make_object_declaration(s, t, make_empty_definition());
+}
+
+
 Reference_decl&
 Builder::make_reference_declaration(Name& n, Type& t, Def& d)
 {

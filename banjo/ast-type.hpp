@@ -74,6 +74,10 @@ enum Type_category : int
 // NOTE: Sets of qualifiers corresponding to different categories are
 // aligned within the bytes of the underlying type. 
 //
+// TODO: I'm not sure that meta works as an object qualifier because it
+// doesn't compound like cv-qualifiers For example, `int meta* meta` should 
+// not be valid -- or should it?
+//
 // TODO: Extend the partial ordering on object qualifiers to include
 // the meta qualifier. Also, is a meta object implicitly const?
 //

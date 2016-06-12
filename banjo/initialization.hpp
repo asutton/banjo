@@ -15,19 +15,31 @@ namespace banjo
 {
 
 Expr& zero_initialize(Context&, Decl&);
-Expr& default_initialize(Context&, Decl&);
-Expr& value_initialize(Context&, Decl&);
-Expr& copy_initialize(Context&, Decl&, Expr&);
-Expr& direct_initialize(Context&, Decl&, Expr&);
-Expr& direct_initialize(Context&, Decl&, Expr_list&);
-Expr& list_initialize(Context&, Decl&, Expr_list&);
-Expr& reference_initialize(Context&, Decl&, Expr&);
-Expr& aggregate_initialize(Context&, Decl&, Expr_list&);
-Expr& array_initialize(Decl&, Expr&);
-Expr& tuple_initialize(Context&, Decl&, Tuple_expr&);
+Expr& zero_initialize(Context&, Typed_decl&);
 
-Expr& tuple_array_init(Type&, Expr&);
-Expr& array_tuple_init(Type&, Expr&);
+Expr& default_initialize(Context&, Decl&);
+Expr& default_initialize(Context&, Typed_decl&);
+
+Expr& value_initialize(Context&, Decl&);
+Expr& value_initialize(Context&, Typed_decl&);
+
+Expr& copy_initialize(Context&, Decl&, Expr&);
+Expr& copy_initialize(Context&, Typed_decl&, Expr&);
+
+Expr& direct_initialize(Context&, Decl&, Expr&);
+Expr& direct_initialize(Context&, Typed_decl&, Expr&);
+
+Expr& direct_initialize(Context&, Decl&, Expr_list&);
+Expr& direct_initialize(Context&, Typed_decl&, Expr_list&);
+
+Expr& reference_initialize(Context&, Decl&, Expr&);
+Expr& reference_initialize(Context&, Typed_decl&, Expr&);
+
+Expr& aggregate_initialize(Context&, Decl&, Expr_list&);
+Expr& aggregate_initialize(Context&, Typed_decl&, Expr_list&);
+
+Expr& tuple_initialize(Context&, Decl&, Tuple_expr&);
+Expr& tuple_initialize(Context&, Typed_decl&, Tuple_expr&);
 
 
 } // namespace banjo

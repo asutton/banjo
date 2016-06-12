@@ -54,4 +54,17 @@ Class_decl::objects()
 }
 
 
+// -------------------------------------------------------------------------- //
+// Declared type
+
+Type&
+declared_type(Decl& d)
+{
+  if (Typed_decl* td = as<Typed_decl>(&d))
+    return td->type();
+  lingo_unreachable();
+}
+
+
+
 } // namespace banjo

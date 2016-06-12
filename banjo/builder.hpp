@@ -52,15 +52,14 @@ struct Builder
 
   // Fundamental types
   Void_type&     get_void_type(Qualifier_set = {});
-  Boolean_type&  get_bool_type(Type_category, Qualifier_set = {});
-  Byte_type&     get_byte_type(Type_category, Qualifier_set = {});
+  Boolean_type&  get_bool_type(Type_category = object_type, Qualifier_set = {});
+  Byte_type&     get_byte_type(Type_category = object_type, Qualifier_set = {});
   Integer_type&  get_integer_type(Type_category, bool, int, Qualifier_set = {});
   Integer_type&  get_integer_type(bool, int, Qualifier_set = {});
-  Integer_type&  get_int_type(Type_category, Qualifier_set = {});
-  Integer_type&  get_int_type(Qualifier_set = {});
-  Integer_type&  get_uint_type(Type_category, Qualifier_set = {});
-  Integer_type&  get_uint_type(Qualifier_set = {});
+  Integer_type&  get_int_type(Type_category = object_type, Qualifier_set = {});
+  Integer_type&  get_uint_type(Type_category = object_type, Qualifier_set = {});
   Float_type&    get_float_type(Type_category, int, Qualifier_set = {});
+  Float_type&    get_float_type(int, Qualifier_set = {});
 
   // Composite types
   Function_type& get_function_type(Type_category, Type_list const&, Type&, Qualifier_set = {});
@@ -87,6 +86,7 @@ struct Builder
   Type& get_reference_type(Type& t);
   Type& get_non_reference_type(Type& t);
   
+  // Qualified types
   Type& get_qualified_type(Type&, Qualifier_set);
   Integer_type& get_qualified_integer_type(Integer_type&, Qualifier_set);
   Float_type&   get_qualified_float_type(Float_type&, Qualifier_set);
@@ -189,6 +189,8 @@ struct Builder
   // Variables
   Object_decl&    make_object_declaration(Name&, Type&, Def&);
   Object_decl&    make_object_declaration(char const*, Type&, Def&);
+  Object_decl&    make_object_declaration(Name&, Type&);
+  Object_decl&    make_object_declaration(char const*, Type&);
   Reference_decl& make_reference_declaration(Name&, Type&, Def&);
   Reference_decl& make_reference_declaration(char const*, Type&, Def&);
   Empty_def&      make_variable_initializer();

@@ -569,6 +569,17 @@ struct Template_parm : Parameter<Template_parm, Template_decl>
 // -------------------------------------------------------------------------- //
 // Operations
 
+// Returns the declared type of the declaration. The declaration shall be
+// a typed declaration.
+Type& declared_type(Decl&);
+
+inline Type& 
+declared_type(Typed_decl& d)
+{
+  return d.type();
+}
+
+
 // Returns true if `d` is a (normal) function.
 inline bool
 is_function(Decl const& d)

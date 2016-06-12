@@ -18,6 +18,7 @@ Builder::get_void_type(Qualifier_set q)
 Boolean_type&
 Builder::get_bool_type(Type_category c, Qualifier_set q)
 {
+  lingo_assert(c != function_type);
   return Boolean_type::make(alloc_, c, q);
 }
 
@@ -25,6 +26,7 @@ Builder::get_bool_type(Type_category c, Qualifier_set q)
 Byte_type&
 Builder::get_byte_type(Type_category c, Qualifier_set q)
 {
+  lingo_assert(c != function_type);
   return Byte_type::make(alloc_, c, q);
 }
 
@@ -32,6 +34,7 @@ Builder::get_byte_type(Type_category c, Qualifier_set q)
 Integer_type&
 Builder::get_integer_type(Type_category c, bool s, int p, Qualifier_set q)
 {
+  lingo_assert(c != function_type);
   return Integer_type::make(alloc_, c, s, p, q);
 }
 
@@ -53,13 +56,6 @@ Builder::get_int_type(Type_category c, Qualifier_set q)
 }
 
 
-Integer_type&
-Builder::get_int_type(Qualifier_set q)
-{
-  return get_integer_type(object_type, true, 32, q);
-}
-
-
 // TODO: See comments above.
 Integer_type&
 Builder::get_uint_type(Type_category c, Qualifier_set q)
@@ -68,17 +64,17 @@ Builder::get_uint_type(Type_category c, Qualifier_set q)
 }
 
 
-Integer_type&
-Builder::get_uint_type(Qualifier_set q)
-{
-  return get_integer_type(object_type, false, 32, q);
-}
-
-
 Float_type&
 Builder::get_float_type(Type_category c, int p, Qualifier_set q)
 {
   return Float_type::make(alloc_, c, p, q);
+}
+
+
+Float_type&
+Builder::get_float_type(int p, Qualifier_set q)
+{
+  return get_float_type(object_type, p, q);
 }
 
 

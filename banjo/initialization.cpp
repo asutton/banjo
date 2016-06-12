@@ -7,18 +7,26 @@
 #include "conversion.hpp"
 #include "inheritance.hpp"
 #include "builder.hpp"
-#include "printer.hpp"
 
-#include <iostream>
 
 
 namespace banjo
 {
 
+// -------------------------------------------------------------------------- //
+// Zero initialization
+
+Expr&
+zero_initialize(Context& cxt, Decl& d)
+{
+  return zero_initialize(cxt, cast<Typed_decl>(d));
+}
+
+
 // Select a zero-initialization procedure for variable or constant of 
 // fundamental or composite type `t`.
 Expr&
-zero_initialize(Context& cxt, Decl& d)
+zero_initialize(Context& cxt, Typed_decl& d)
 {
   lingo_assert(!is<Function_decl>(d));
 
@@ -39,12 +47,15 @@ zero_initialize(Context& cxt, Decl& d)
 }
 
 
+// -------------------------------------------------------------------------- //
+// Default initialization
+
 // Select a default initialization procedure for an variable or constant
 // of type `t`.
 //
 // A reference declaration shall not be default initialized.
 Expr&
-default_initialize(Context& cxt, Decl& d)
+default_initialize(Context& cxt, Typed_decl& d)
 {
   lingo_assert(!is<Function_decl>(d));
 
@@ -61,10 +72,20 @@ default_initialize(Context& cxt, Decl& d)
   return cxt.make_trivial_init();
 }
 
+Expr&
+default_initialize(Context& cxt, Decl& d)
+{
+  return default_initialize(cxt, cast<Typed_decl>(d));
+}
+
+
+// -------------------------------------------------------------------------- //
+// Value initialization
+
 
 // Select a procedure to value-initialize an object.
 Expr&
-value_initialize(Context& cxt, Decl& d)
+value_initialize(Context& cxt, Typed_decl& d)
 {
   lingo_assert(!is<Function_decl>(d));
 
@@ -81,6 +102,15 @@ value_initialize(Context& cxt, Decl& d)
 }
 
 
+Expr&
+value_initialize(Context& cxt, Decl& d)
+{
+  return value_initialize(cxt, cast<Typed_decl>(d));
+}
+
+// -------------------------------------------------------------------------- //
+// Copy initialization
+
 // Select a procedure to copy initialize a variable or constant of type
 // `t` by an expression `e`. This corresponds to the initialization of
 // a variable by the syntax:
@@ -93,7 +123,7 @@ value_initialize(Context& cxt, Decl& d)
 // TODO: If either t or e is dependent, then we should perform dependent
 // initialization -- that needs to be the first.
 Expr&
-copy_initialize(Context& cxt, Decl& d, Expr& e)
+copy_initialize(Context& cxt, Typed_decl& d, Expr& e)
 {
   // TODO: If either d or e is dependent, d is dependent-initialized.
 
@@ -121,6 +151,165 @@ copy_initialize(Context& cxt, Decl& d, Expr& e)
   return cxt.make_copy_init(c);
 }
 
+
+Expr&
+copy_initialize(Context& cxt, Decl& d, Expr& e)
+{
+  return copy_initialize(cxt, cast<Typed_decl>(d), e);
+}
+
+// -------------------------------------------------------------------------- //
+// Direct initialization
+
+// Select a procedure to direct-initialize an object or reference of
+// type `t` by a paren-enclosed list of expressions `es`. This corresponds
+// to the initialization of a variable by the syntax:
+//
+//    T x(e1, e2, ..., en);
+//
+// When the list of expressions is empty, this selects value
+// initialization.
+//
+// This also applies in new expressions, etc.
+Expr&
+direct_initialize(Context& cxt, Typed_decl& d, Expr_list& es)
+{
+  Type& t = d.type();
+
+  // Arrays must be copy or list-initialized.
+  //
+  // FIXME: Provide a better diagnostic.
+  if (is_array_type(t))
+    throw Translation_error("invalid array initialization");
+
+  // If no initializers are given, corresponding to () or {}, the object 
+  // is value initialized.
+  if (es.empty())
+    return value_initialize(cxt, d);
+
+  Expr& e = es.front();
+
+  // If the destination type is a T&, then perform reference
+  // initialization on the only element in the list of expressions.
+  //
+  // FIXME: Shouldn't I have an error if I try to do this;
+  //
+  //    ref x : T = { a, b, c };
+  //
+  // Unless there's some kind of magical binding that can happen.
+  if (d.is_reference())
+    return reference_initialize(cxt, d, e);
+
+  // Otherwise, If the target type is dependent, perform dependent
+  // conversions.
+  //
+  // FIXME: Why does this result in copy initialization? Also, shouldn't
+  // this be first in order?
+  if (is_dependent_type(t)) {
+    Expr& c = dependent_conversion(cxt, e, t);
+    return cxt.make_copy_init(c);
+  }
+
+  // If the initializer has a source type, then try to find a
+  // user-defined conversion from s to the destination type, which
+  // should be a (possibly qualified) fundamental type.
+  Type& s = e.type();
+
+  // Otherwise, If the target type is dependent, perform dependent
+  // conversions.
+  //
+  // FIXME: Should be covered by the dependent check above?
+  if (is_dependent_type(s)) {
+    Expr& c = dependent_conversion(cxt, e, t);
+    return cxt.make_copy_init(c);
+  }
+
+  // If all else fails, try a a standard conversion. This should be
+  // the case that we have a non-class, fundamental type.
+  //
+  // TODO: Catch exceptions and restructure the error with
+  // the conversion error as an explanation.
+  Expr& c = standard_conversion_to_value(cxt, e, t);
+  return cxt.make_copy_init(c);
+}
+
+
+// -------------------------------------------------------------------------- //
+// Reference initialization
+
+// A type q-T1 is reference-related to a type q-T2 if T1 and T2 are
+// the same type or T1 is a base class of T2.
+//
+// TODO: Implement the base class test.
+bool
+is_reference_related(Type const& t1, Type const& t2)
+{
+  return is_equivalent(t1, t2);
+}
+
+
+// Two types q1-t1 and q2-t2 are reference compatible if t1 is
+// reference-related to t2, and q1 is a superset of q2 (i.e.,
+// t1 is as qualified as or more qualified than t2).
+//
+// TODO: Check for ambiguous base classes.
+bool
+is_reference_compatible(Type const& t1, Type const& t2)
+{
+  if (is_reference_related(t1, t2)) {
+    Qualifier_set q1 = t1.qualifiers();
+    Qualifier_set q2 = t2.qualifiers();
+    return is_superset(q1, q2);
+  }
+  return false;
+}
+
+
+// Select an initialization of the reference type `d` by an expression
+// `e`.
+//
+// FIXME: The current design effectively obviates the reference compatibility
+// rules in C++. We need to rethink how that works. The simplest rule is:
+// like references to objects of equivalent type bind. However, we probably
+// need to account for qualifiers. I wonder if that can reduce to a standard
+// conversion.
+Expr&
+reference_initialize(Context& cxt, Typed_decl& d, Expr& e)
+{
+  // TODO: If is a value expression, then we probably need to do some
+  // kin do lifetime extension.
+
+  // FIXME: The conversion is almost certainly incorrect.
+  if (d.is_normal_reference() && e.type().is_reference()) {
+      Expr& c = standard_conversion(cxt, e, d.type());
+      return cxt.make_bind_init(c);
+  }
+
+  // TODO: Handle bindings to temporaries.
+
+  throw Type_error("reference binding");
+}
+
+
+Expr&
+reference_initialize(Context& cxt, Decl& d, Expr& e)
+{
+  return reference_initialize(cxt, cast<Typed_decl>(d), e);
+}
+
+
+// -------------------------------------------------------------------------- //
+// Aggregate initialization
+
+Expr&
+aggregate_initialize(Context& cxt, Type& t, Expr_list& i)
+{
+  lingo_unreachable();
+}
+
+
+// -------------------------------------------------------------------------- //
+// Tuple initialization
 
 // Diagnose the initialization error.
 static Expr&
@@ -201,7 +390,7 @@ tuple_init(Context& cxt, Class_type& t, Tuple_expr& e)
 
 // Tuple compared with tuple or array
 Expr&
-tuple_initialize(Context& cxt, Type& t, Tuple_expr& e)
+tuple_initialize(Context& cxt, Typed_decl& d, Tuple_expr& e)
 {
   struct fn
   {
@@ -212,196 +401,16 @@ tuple_initialize(Context& cxt, Type& t, Tuple_expr& e)
     Expr& operator()(Array_type& t) { return tuple_init(cxt, t, e); }
     Expr& operator()(Class_type& t) { return tuple_init(cxt, t, e); }
   };
-  return apply(t, fn{cxt, e});
+  return apply(d.type(), fn{cxt, e});
 }
 
-
-// e has array type
-Expr&
-tuple_array_init(Type& t, Expr& e)
-{
-  lingo_unreachable();
-  // Tuple_type& tt = as<Tuple_type>(t);
-  // Array_type& at = as<Array_type>(e.type());
-  // if(is_tuple_equiv_to_array(tt,at))
-  //   return e;
-  // throw std::runtime_error("cannot initialize tuple with array type");
-}
-
-
-//e has tuple type
-Expr&
-array_tuple_init(Type& t, Expr& e)
-{
-  lingo_unreachable();
-  // Tuple_type& tt = as<Tuple_type>(e);
-  // Array_type& at = as<Array_type>(e.type());
-  // if(is_tuple_equiv_to_array(tt,at)) {
-  //   return e;
-  // }
-  // throw std::runtime_error("cannot initialize array with tuple type");
-}
-
-
-// Select a procedure to direct-initialize an object or reference of
-// type `t` by a paren-enclosed list of expressions `es`. This corresponds
-// to the initialization of a variable by the syntax:
-//
-//    T x(e1, e2, ..., en);
-//
-// When the list of expressions is empty, this selects value
-// initialization.
-//
-// This also applies in new expressions, etc.
-Expr&
-direct_initialize(Context& cxt, Decl& d, Expr_list& es)
-{
-  Type& t = d.type();
-
-  // Arrays must be copy or list-initialized.
-  //
-  // FIXME: Provide a better diagnostic.
-  if (is_array_type(t))
-    throw Translation_error("invalid array initialization");
-
-  // If no initializers are given, corresponding to () or {}, the object 
-  // is value initialized.
-  if (es.empty())
-    return value_initialize(cxt, d);
-
-  Expr& e = es.front();
-
-  // If the destination type is a T&, then perform reference
-  // initialization on the only element in the list of expressions.
-  //
-  // FIXME: Shouldn't I have an error if I try to do this;
-  //
-  //    ref x : T = { a, b, c };
-  //
-  // Unless there's some kind of magical binding that can happen.
-  if (d.is_reference())
-    return reference_initialize(cxt, d, e);
-
-  // Otherwise, If the target type is dependent, perform dependent
-  // conversions.
-  //
-  // FIXME: Why does this result in copy initialization? Also, shouldn't
-  // this be first in order?
-  if (is_dependent_type(t)) {
-    Expr& c = dependent_conversion(cxt, e, t);
-    return cxt.make_copy_init(c);
-  }
-
-  // If the initializer has a source type, then try to find a
-  // user-defined conversion from s to the destination type, which
-  // should be a (possibly qualified) fundamental type.
-  Type& s = e.type();
-
-  // Otherwise, If the target type is dependent, perform dependent
-  // conversions.
-  //
-  // FIXME: Should be covered by the dependent check above?
-  if (is_dependent_type(s)) {
-    Expr& c = dependent_conversion(cxt, e, t);
-    return cxt.make_copy_init(c);
-  }
-
-  // If all else fails, try a a standard conversion. This should be
-  // the case that we have a non-class, fundamental type.
-  //
-  // TODO: Catch exceptions and restructure the error with
-  // the conversion error as an explanation.
-  Expr& c = standard_conversion_to_value(cxt, e, t);
-  return cxt.make_copy_init(c);
-}
-
-
-// -------------------------------------------------------------------------- //
-// List initialization
-
-// Select a procedure to direct-initialize an object or reference of
-// type `t` by a brace-enclosed list of expressions `es`. This corresponds
-// to the initialization of a variable by the syntax:
-//
-//    T x{e1, e2, ..., en};
-//
-// When the list of expressions is empty, this selects value
-// initialization.
-//
-// TODO: Implement me.
-Expr&
-list_initialize(Context& cxt, Type& t, Expr_list& es)
-{
-  lingo_unreachable();
-}
-
-
-// -------------------------------------------------------------------------- //
-// Reference initialization
-
-
-// A type q-T1 is reference-related to a type q-T2 if T1 and T2 are
-// the same type or T1 is a base class of T2.
-//
-// TODO: Implement the base class test.
-bool
-is_reference_related(Type const& t1, Type const& t2)
-{
-  return is_equivalent(t1, t2);
-}
-
-
-// Two types q1-t1 and q2-t2 are reference compatible if t1 is
-// reference-related to t2, and q1 is a superset of q2 (i.e.,
-// t1 is as qualified as or more qualified than t2).
-//
-// TODO: Check for ambiguous base classes.
-bool
-is_reference_compatible(Type const& t1, Type const& t2)
-{
-  if (is_reference_related(t1, t2)) {
-    Qualifier_set q1 = t1.qualifiers();
-    Qualifier_set q2 = t2.qualifiers();
-    return is_superset(q1, q2);
-  }
-  return false;
-}
-
-
-// Select an initialization of the reference type `d` by an expression
-// `e`.
-//
-// FIXME: The current design effectively obviates the reference compatibility
-// rules in C++. We need to rethink how that works. The simplest rule is:
-// like references to objects of equivalent type bind. However, we probably
-// need to account for qualifiers. I wonder if that can reduce to a standard
-// conversion.
-Expr&
-reference_initialize(Context& cxt, Decl& d, Expr& e)
-{
-  // TODO: If is a value expression, then we probably need to do some
-  // kin do lifetime extension.
-
-  // FIXME: The conversion probably isn't right.
-  if (d.is_normal_reference() && e.is_normal()) {
-      Expr& c = standard_conversion(cxt, e, nref_expr, d.type());
-      return cxt.make_bind_init(c);
-  }
-
-  // TODO: Handle bindings to temporaries.
-
-  throw Type_error("reference binding");
-}
-
-
-// -------------------------------------------------------------------------- //
-// Aggregate initialization
 
 Expr&
-aggregate_initialize(Context& cxt, Type& t, Expr_list& i)
+tuple_initialize(Context& cxt, Decl& d, Tuple_expr& e)
 {
-  lingo_unreachable();
+  return tuple_initialize(cxt, cast<Typed_decl>(d), e);
 }
+
 
 
 } // namespace banjo

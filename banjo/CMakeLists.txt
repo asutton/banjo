@@ -52,8 +52,8 @@ add_library(banjo
 
 
   # # Semantic rules and algorithms
-  # conversion.cpp
-  # initialization.cpp
+  conversion.cpp
+  initialization.cpp
   # inheritance.cpp
   # substitution.cpp
   # deduction.cpp

@@ -6,10 +6,6 @@
 #include "context.hpp"
 #include "constraint.hpp"
 #include "initialization.hpp"
-#include "printer.hpp"
-
-#include <typeindex>
-#include <iostream>
 
 
 namespace banjo
@@ -18,31 +14,42 @@ namespace banjo
 // -------------------------------------------------------------------------- //
 // Categorical conversions
 
-// Returns a possibly converted expression. If no conversions are possible, 
-// this returns the original expression.
+// If needed, convert a reference to an object.
 //
 // In C++, this would be a glvalue to prvalue conversion.
 //
-// FIXME: Check that e's type is complete before invoking the conversion.
+// TODO: Check that e's type is complete before invoking the conversion.
 //
 // FIXME: Allocate using the context.
 Expr&
-convert_reference_to_value(Context& cxt, Expr& e)
+convert_reference_to_object(Context& cxt, Expr& e)
 {
-  if (e.is_reference())
-    return *new Value_conv(val_expr, e.type(), e);
+  if (e.type().is_reference()) {
+    Type& t = cxt.get_non_reference_type(e.type());
+    return *new Value_conv(t, e);
+  }
   return e;
+}
+
+
+// If needed, convert a function to an object.
+Expr&
+convert_reference_to_function(Context& cxt, Expr& e)
+{
+  lingo_unreachable();
 }
 
 
 // Perform at most one categorical conversion.
 Expr&
-convert_category(Context& cxt, Expr& e, Category c)
+convert_category(Context& cxt, Expr& e, Type& t)
 {
   // If the destination category is a value expression, then we
   // may need a reference to value conversion.
-  if (c == val_expr)
-    return convert_reference_to_value(cxt, e);
+  if (t.is_object())
+    return convert_reference_to_object(cxt, e);
+  if (t.is_function())
+    return convert_reference_to_function(cxt, e);
   return e;
 }
 
@@ -50,7 +57,7 @@ convert_category(Context& cxt, Expr& e, Category c)
 // -------------------------------------------------------------------------- //
 // Value conversions
 
-// The following value expressions can be implicitly converted to bool. 
+// The following object expressions can be implicitly converted to bool. 
 //
 //    - expressions of integer type
 //    - expressions of floating point type
@@ -67,11 +74,11 @@ convert_to_bool(Context& cxt, Expr& e)
     Type& t;
 
     Expr& operator()(Type&)           { return e; }
-    Expr& operator()(Integer_type& t) { return *new Boolean_conv(val_expr, t, e); }
-    Expr& operator()(Float_type& t)   { return *new Boolean_conv(val_expr, t, e); }
-    Expr& operator()(Pointer_type& t) { return *new Boolean_conv(val_expr, t, e); }
+    Expr& operator()(Integer_type& t) { return *new Boolean_conv(t, e); }
+    Expr& operator()(Float_type& t)   { return *new Boolean_conv(t, e); }
+    Expr& operator()(Pointer_type& t) { return *new Boolean_conv(t, e); }
   };
-  return apply(e.type(), fn{cxt, e, cxt.get_bool_type()});
+  return apply(e.type(), fn{cxt, e, cxt.get_bool_type(object_type)});
 }
 
 
@@ -143,7 +150,7 @@ Expr&
 convert_value(Context& cxt, Expr& e, Type& t)
 {
   // Reference expressions do not participate in value conversions.
-  if (e.is_reference())
+  if (e.type().is_reference())
     return e;
 
   // Determine which conversion to apply based on the destination
@@ -336,7 +343,7 @@ convert_qualifier(Context& cxt, Expr& e, Type& t)
     Qualifier_list sa = get_qualification_signature(e.type());
     Qualifier_list sb = get_qualification_signature(t);
     if (can_convert_signature(sa, sb))
-      return *new Qualification_conv(e.category(), t, e);
+      return *new Qualification_conv(t, e);
   }
   return e;
 }
@@ -348,14 +355,14 @@ convert_qualifier(Context& cxt, Expr& e, Type& t)
 // Search for a sequence of conversions from expression `e` to a destination
 // category c and type t.
 Expr&
-standard_conversion(Context& cxt, Expr& e, Category c, Type& t)
+standard_conversion(Context& cxt, Expr& e, Type& t)
 {
   // No conversions are required if the types are the same.
   if (is_equivalent(e.type(), t))
     return e;
 
   // Try a categorical conversion.
-  Expr& c1 = convert_category(cxt, e, c);
+  Expr& c1 = convert_category(cxt, e, t);
   if (is_equivalent(c1.type(), t))
     return c1;
 
@@ -369,7 +376,8 @@ standard_conversion(Context& cxt, Expr& e, Category c, Type& t)
   if (is_equivalent(c3.type(), t))
     return c3;
 
-  throw Type_error("cannot convert '{}' (type '{}') to '{}'", e, e.type(), t);
+  error(cxt, "cannot convert '{}' (type '{}') to '{}'", e, e.type(), t);
+  throw Type_error();
 }
 
 
@@ -378,7 +386,7 @@ standard_conversion(Context& cxt, Expr& e, Category c, Type& t)
 Expr&
 standard_conversion_to_value(Context& cxt, Expr& e, Type& t)
 {
-  return standard_conversion(cxt, e, val_expr, t);
+  return standard_conversion(cxt, e, t);
 }
 
 
@@ -412,7 +420,8 @@ convert_to_common_float(Context& cxt, Expr& e1, Expr& e2)
     return {c, e2};
   }
 
-  throw Type_error("no floating point conversions for '{}' and '{}'", e1, e2);
+  error(cxt, "no floating point conversions for '{}' and '{}'", e1, e2);
+  throw Type_error();
 }
 
 Expr_pair
@@ -497,7 +506,8 @@ arithmetic_conversion(Context& cxt, Expr& e1, Expr& e2)
     return convert_to_common_int(cxt, e1, e2);
 
   // TODO: No conversion from e1 to e2.
-  throw Type_error("no usual arithmetic conversion of '{}' and '{}'", e1, e2);
+  error(cxt, "no usual arithmetic conversion of '{}' and '{}'", e1, e2);
+  throw Type_error();
 }
 
 
@@ -622,9 +632,15 @@ compare(Conversion_seq const& a, Conversion_seq const& b)
 Expr&
 contextual_conversion_to_bool(Context& cxt, Expr& e)
 {
-  Variable_decl var(cxt.get_id("b"),
-                    cxt.get_bool_type(), 
-                    cxt.make_empty_definition());
+  // Synthesize a declaration.
+  //
+  // TODO: This epitomizes our need for smarter memory management. I
+  // really want this declaration and its associated nodes to evaporate
+  // when the function returns. Note that the initialization and
+  // conversion are allocated in the main arena.
+  Object_decl& var = cxt.make_object_declaration("b", cxt.get_bool_type());
+
+  // Actually perform the copy initialization.
   Expr& init = copy_initialize(cxt, var, e);
 
   // Based on the initializer selected, we can either:
@@ -633,7 +649,8 @@ contextual_conversion_to_bool(Context& cxt, Expr& e)
   //  3. invoke a user-defined conversion
   if (Copy_init* i = as<Copy_init>(&init))
     return i->expression();  
-  banjo_unhandled_case(init);
+  
+  lingo_unhandled(init);
 }
 
 
@@ -682,7 +699,8 @@ dependent_conversion(Context& cxt, Expr& e, Type& t)
   }
 #endif
 
-  throw Type_error(cxt, "no admissible conversion from '{}' to '{}'", e, t);
+  error(cxt, "no admissible conversion from '{}' to '{}'", e, t);
+  throw Type_error();
 }
 
 
