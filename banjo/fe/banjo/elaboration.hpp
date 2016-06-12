@@ -48,17 +48,22 @@ struct Basic_elaborator
   // Declarations
   void on_declaration(Decl&) { }
 
-  void on_variable_declaration(Variable_decl&) { }
+  void on_variable_declaration(Object_decl&) { }
+  void on_variable_declaration(Reference_decl&) { }
 
+  // Functions
   void start_function_declaration(Function_decl&) { }
+  void enter_function_declaration(Function_decl&) { }
   void finish_function_declaration(Function_decl&) { }
-  void on_parameter(Object_parm&) { }
   void on_function_body(Function_def&) { }
   void on_function_body(Expression_def&) { }
+
+  // Parameters
+  void on_parameter(Object_parm&) { }
   
+  // Classes
   void start_class_declaration(Class_decl&) { }
   void finish_class_declaration(Class_decl&) { }
-  void on_super_declaration(Super_decl&) { }
   
   // Types
   void on_type(Type&) { }
@@ -77,15 +82,15 @@ struct Basic_elaborator
 // easier to write simple elaboration/type checking passes over a
 // program.
 //
-// Again, note that this is a *grammer* directed visitor. It is not
-// based on the abstract syntax of the language.
+// Again, note that this is a *grammar* directed visitor. It is not
+// based on the concrete syntax of the language, not the abstract syntax.
 template<typename F>
 struct Elaborator
 {
   using Self = Elaborator;
 
-  Elaborator(Parser& p, F f)
-    : cxt(p.cxt), parser(p), vis(f)
+  Elaborator(Context& c, F f)
+    : cxt(c), vis(f)
   { }
 
   void operator()(Translation_unit& s) { translation_unit(s); }
@@ -107,28 +112,30 @@ struct Elaborator
 
   void declaration(Decl&);
 
-  void variable_declaration(Variable_decl&);
+  // variables
+  void variable_declaration(Object_decl&);
+  void variable_declaration(Reference_decl&);
 
+  // Functions
   void function_declaration(Function_decl&);
-  void parameter_list(Function_decl&);
+  void parameter_list(Decl_list&);
   void parameter(Decl&);
   void parameter(Object_parm&);
   void function_body(Def&);
   void function_body(Function_def&);
   void function_body(Expression_def&);
 
+  // Classes and their members
   void class_declaration(Class_decl&);
+  void class_body(Def&);
   void class_body(Class_def&);
-  void super_declaration(Super_decl&);
-
 
   // Types
-  Type& types(Type&);
+  void types(Type&);
 
   // Expressions
-  Expr& expression(Expr&);
+  void expression(Expr&);
 
-  Parser&  parser;
   Context& cxt;
   F        vis;
 };
@@ -144,7 +151,7 @@ Elaborator<F>::translation_unit(Translation_unit& tu)
   // FIXME: This should be toplevel-stmt-seq
   statement_seq(tu.statements());
   
-  vis.finish_translation_unut(tu);
+  vis.finish_translation_unit(tu);
 }
 
 
@@ -187,7 +194,7 @@ Elaborator<F>::compound_statement(Compound_stmt& s)
 {
   Enter_scope scoppe(cxt, s);
   vis.start_compound_statement(s);
-  statement_seq(s);
+  statement_seq(s.statements());
   vis.finish_compound_statement(s);
 }
 
@@ -234,9 +241,26 @@ Elaborator<F>::while_statement(While_stmt& s)
 
 template<typename F>
 inline void
+Elaborator<F>::break_statement(Break_stmt& s) 
+{
+  vis.on_break_statement(s);
+}
+
+
+template<typename F>
+inline void
+Elaborator<F>::continue_statement(Continue_stmt& s)
+{ 
+  vis.on_continue_statement(s);
+}
+
+
+template<typename F>
+inline void
 Elaborator<F>::declaration_statement(Declaration_stmt& s)
 {
-  vis.on_declaration_stmt(s);
+  vis.on_declaration_statement(s);
+  declaration(s.declaration());
 }
 
 
@@ -244,9 +268,9 @@ template<typename F>
 inline void
 Elaborator<F>::expression_statement(Expression_stmt& s)
 {
-  vis.on_expression_stmt(s);
+  vis.on_expression_statement(s);
+  expression(s.expression());
 }
-
 
 
 template<typename F>
@@ -256,13 +280,11 @@ Elaborator<F>::declaration(Decl& d)
   struct fn
   {
     Self& elab;
-    void operator()(Decl& d)          { lingo_unhandled(d); }
-    void operator()(Variable_decl& d) { elab.variable_declaration(d); }
-    void operator()(Function_decl& d) { elab.function_declaration(d); }
-    void operator()(Class_decl& d)    { elab.class_declaration(d); }
-    void operator()(Super_decl& d)    { elab.super_declaration(d); }
-    void operator()(Field_decl& d)    { elab.field_declaration(d); }
-    void operator()(Method_decl& d)   { elab.method_declaration(d); }
+    void operator()(Decl& d)           { lingo_unhandled(d); }
+    void operator()(Object_decl& d)    { elab.variable_declaration(d); }
+    void operator()(Reference_decl& d) { elab.variable_declaration(d); }
+    void operator()(Function_decl& d)  { elab.function_declaration(d); }
+    void operator()(Class_decl& d)     { elab.class_declaration(d); }
   };
   vis.on_declaration(d);
   apply(d, fn{(*this)});
@@ -271,7 +293,15 @@ Elaborator<F>::declaration(Decl& d)
 
 template<typename F>
 inline void
-Elaborator<F>::variable_declaration(Variable_decl& d)
+Elaborator<F>::variable_declaration(Object_decl& d)
+{
+  vis.on_variable_declaration(d);
+}
+
+
+template<typename F>
+inline void
+Elaborator<F>::variable_declaration(Reference_decl& d)
 {
   vis.on_variable_declaration(d);
 }
@@ -281,19 +311,23 @@ template<typename F>
 inline void
 Elaborator<F>::function_declaration(Function_decl& d)
 {
-  Enter_scope scope(cxt, d);
   vis.start_function_declaration(d);
-  parameter_list(d);
-  function_body(d);
+  Enter_scope scope(cxt, d);
+  parameter_list(d.parameters());
+
+  // TODO: Elaborate the function return declaration?
+
+  vis.enter_function_declaration(d);
+  function_body(d.definition());
   vis.finish_function_declaration(d);
 }
 
 
 template<typename F>
 inline void
-Elaborator<F>::parameter_list(Function_decl& d)
+Elaborator<F>::parameter_list(Decl_list& ds)
 {
-  for (Decl& d : d.parameters())
+  for (Decl& d : ds)
     parameter(d);
 }
 
@@ -338,7 +372,7 @@ template<typename F>
 inline void
 Elaborator<F>::function_body(Function_def& d)
 {
-  vis.on_on_function_body(d);
+  vis.on_function_body(d);
   statement(d.statement());
 }
 
@@ -356,17 +390,57 @@ template<typename F>
 inline void
 Elaborator<F>::class_declaration(Class_decl& d)
 {
-  Enter_scope scope(cxt, d);
   vis.start_class_declaration(d);
+  Enter_scope scope(cxt, d);
   class_body(d.definition());
   vis.finish_class_declaration(d);
 }
 
+
 template<typename F>
 inline void
-Elaborator<F>::super_declaration(Super_decl& d)
+Elaborator<F>::class_body(Def& d)
 {
-  vis.on_super_declaration(d);
+  struct fn
+  {
+    Self& elab;
+    void operator()(Def& d)       { lingo_unhandled(d); }
+    void operator()(Class_def& d) { elab.class_body(d); }
+  };
+  apply(d, fn{*this});
+}
+
+
+template<typename F>
+inline void
+Elaborator<F>::class_body(Class_def& d)
+{
+  // TODO: Implement me.
+  lingo_unreachable();
+}
+
+
+// -------------------------------------------------------------------------- //
+// Expressions
+
+template<typename F>
+inline void
+Elaborator<F>::expression(Expr& e)
+{
+  lingo_unreachable();
+}
+
+
+// -------------------------------------------------------------------------- //
+// Elaboration application
+
+template<typename Elab>
+inline void
+elaborate(Parser& p)
+{
+  Elab fn(p);
+  Elaborator<Elab> elab(p.cxt, fn);
+  elab(p.cxt.translation_unit());
 }
 
 

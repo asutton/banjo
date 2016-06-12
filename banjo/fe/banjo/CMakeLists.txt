@@ -26,9 +26,8 @@ add_library(banjo-fe
   sema-decl.cpp
   sema-function.cpp
   sema-class.cpp
-  # sema-req.cpp
-  # elaboration.cpp
-  # elab-declarations.cpp
+  elaboration.cpp
+  elab-declarations.cpp
   # elab-overloads.cpp
   # elab-classes.cpp
   # elab-expressions.cpp

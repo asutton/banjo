@@ -6,6 +6,11 @@
 #include "parser.hpp"
 #include "printer.hpp"
 
+#include "elab-declarations.hpp"
+// #include "elab-overloads.hpp"
+// #include "elab-classes.hpp"
+// #include "elab-expressions.hpp"
+
 #include <banjo/ast.hpp>
 
 #include <lingo/file.hpp>
@@ -120,6 +125,21 @@ main(int argc, char* argv[])
   Token_stream ts(toks);
   fe::Parser parse(cxt, ts);
   parse();
+
+  // Elaboration passes.
+  fe::elaborate<fe::Elaborate_declarations>(parse);
+
+  // Elaborate_overloads    overloads(*this);
+  // Elaborate_classes      classes(*this);
+  // Elaborate_expressions  expressions(*this);
+
+
+  // // TODO: Transform abbreviated templates into templates.
+
+  // overloads(tu);    // Analyze overloaded/reopened declarations
+  // classes(tu);      // Complete class definitions
+  // expressions(tu);  // Update expressions
+
 
   if (opts.emit == "tokens") {
     for (Token k : toks)

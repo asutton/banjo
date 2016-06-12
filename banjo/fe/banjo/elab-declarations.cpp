@@ -5,8 +5,6 @@
 #include "parser.hpp"
 
 #include <banjo/ast.hpp>
-#include <banjo/declaration.hpp>
-#include <banjo/printer.hpp>
 
 
 namespace banjo
@@ -15,187 +13,62 @@ namespace banjo
 namespace fe
 { 
 
-Elaborate_declarations::Elaborate_declarations(Parser& p)
-  : parser(p), cxt(p.cxt)
-{ }
 
-
-// -------------------------------------------------------------------------- //
-// Statements
-
+// Adjust the type of the variable by (possibly) parsing its type.
 void
-Elaborate_declarations::translation_unit(Translation_unit& tu)
+Elaborate_declarations::on_variable_declaration(Object_decl& d)
 {
-  Enter_scope scope(cxt, tu);
-  statement_seq(tu.statements());
+  d.type_ = &parse_type(d.type());
 }
 
 
+// TODO: Make sure that the adjusted type is actually a reference.
 void
-Elaborate_declarations::statement(Stmt& s)
+Elaborate_declarations::on_variable_declaration(Reference_decl& d)
 {
-  struct fn
-  {
-    Self& elab;
-    void operator()(Stmt& s)             { /* Do nothing. */ }
-    void operator()(Compound_stmt& s)    { elab.compound_statement(s); }
-    void operator()(Declaration_stmt& s) { elab.declaration_statement(s); }
-  };
-  apply(s, fn{*this});
+  d.type_ = &parse_type(d.type());
 }
 
 
+// Before entering the function, adjust its type based on the adjusted
+// types of the parameters.
 void
-Elaborate_declarations::statement_seq(Stmt_list& ss)
+Elaborate_declarations::enter_function_declaration(Function_decl& decl)
 {
-  for (Stmt& s : ss)
-    statement(s);
+  Type_list ts;
+  for (Decl& d : decl.parameters())
+    ts.push_back(cast<Typed_decl>(d).type());
+  Type& ret = parse_type(decl.return_type());
+  decl.type_ = &cxt.get_function_type(std::move(ts), ret);
 }
 
 
+// Adjust the type of the parameter.
 void
-Elaborate_declarations::compound_statement(Compound_stmt& s)
+Elaborate_declarations::on_parameter(Object_parm& p)
 {
-  Enter_scope scope(cxt, cxt.saved_scope(s));
-  statement_seq(s.statements());
+  p.type_ = &parse_type(p.type());
 }
 
 
+// Make sure that we don't have any conflicting declarations.
 void
-Elaborate_declarations::declaration_statement(Declaration_stmt& s)
+Elaborate_declarations::start_class_declaration(Class_decl& p)
 {
-  declaration(s.declaration());
-}
-
-
-// -------------------------------------------------------------------------- //
-// Declarations
-
-void
-Elaborate_declarations::declaration(Decl& d)
-{
-  struct fn
-  {
-    Self& elab;
-    void operator()(Decl& d)           { lingo_unhandled(d); }
-    void operator()(Variable_decl& d)  { elab.variable_declaration(d); }
-    void operator()(Constant_decl& d)  { elab.constant_declaration(d); }
-    void operator()(Super_decl& d)     { elab.super_declaration(d); }
-    void operator()(Function_decl& d)  { elab.function_declaration(d); }
-    void operator()(Coroutine_decl& d) { elab.coroutine_declaration(d); }
-    void operator()(Class_decl& d)     { elab.class_declaration(d); }
-  };
-  apply(d, fn{*this});
-}
-
-
-void
-Elaborate_declarations::variable_declaration(Variable_decl& d)
-{
-  d.type_ = &type(d.type());
-}
-
-
-void
-Elaborate_declarations::constant_declaration(Constant_decl& d)
-{
-  d.type_ = &type(d.type());
-}
-
-
-void
-Elaborate_declarations::super_declaration(Super_decl& d)
-{
-  d.type_ = &type(d.type());
-}
-
-
-void
-Elaborate_declarations::function_declaration(Function_decl& decl)
-{
-  // Create a new scope for the function and elaborate parameter
-  // declarations. Note that we're going 
-  Decl_list& parms = decl.parameters();
-  for (Decl& p : parms)
-    parameter(p);
-
-  // Elaborate the return type.
-  Type& ret = type(decl.return_type());
-
-  // Rebuild the function type and update the declaration.
-  decl.type_ = &cxt.get_function_type(parms, ret);
-
-  // FIXME: Rewrite expression definitions into function definitions
-  // to simplify later analysis and code gen.
-  
-  // Enter the function scope and recurse through the definition.
-  Enter_scope scope(cxt, decl);
-  if (Function_def* def = as<Function_def>(&decl.definition()))
-    statement(def->statement());
-}
-
-
-// TODO: We should probably be doing more checking here.
-//
-// TODO: Is this the appropriate place to transform a couroutine
-// into a class. Perhaps...
-void
-Elaborate_declarations::coroutine_declaration(Coroutine_decl &decl)
-{
-  // Elaborate the parameters.
-  Decl_list& parms = decl.parameters();
-  for (Decl& p : parms)
-    parameter(p);
-  
-  // Elaborate the return type of the coroutine
-  decl.ret_ = &type(decl.type());
-
-  // FIXME: Don't we have to set the coroutine type here?
-
-  Enter_scope scope(cxt, decl);
-  if (Function_def* def = as<Function_def>(&decl.definition()))
-    statement(def->statement());
-}
-
-
-void
-Elaborate_declarations::class_declaration(Class_decl& d)
-{
-  struct fn
-  {
-    Self& elab;
-    void operator()(Def& d)       { lingo_unhandled(d); }
-    void operator()(Class_def& d) { elab.statement_seq(d.statements()); }
-  };
-
-  // Update the class kind/metatype
-  d.kind_ = &type(d.kind());
-
-  Enter_scope scope(cxt, d);
-  apply(d.definition(), fn{*this});
-}
-
-
-void
-Elaborate_declarations::parameter(Decl& p)
-{
-  parameter(cast<Object_parm>(p));
-}
-
-
-void
-Elaborate_declarations::parameter(Object_parm& p)
-{
-  p.type_ = &type(p.type());
 }
 
 
 // -------------------------------------------------------------------------- //
 // Types
 
-// Parse the type as needed, returning its fully elaborated form.
+// Parse the type as needed.
+//
+// TODO: Probably not specific to this function, but a general idea. If t
+// depends on an un-elaborated function or variable definition, then we
+// elaborate that definition as needed. For overloaded functions, any 
+// not-yet-typed declarations are considered non-viable.
 Type&
-Elaborate_declarations::type(Type& t)
+Elaborate_declarations::parse_type(Type& t)
 {
   if (Unparsed_type* u = as<Unparsed_type>(&t)) {
     Save_input_location loc(cxt);

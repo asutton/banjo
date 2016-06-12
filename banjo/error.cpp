@@ -43,6 +43,7 @@ Message::render(std::ostream& os, Render_fn fn) const
       f += 2; // TODO: If we have formatting flags, this will be greater
       ++iter;
     }
+    ++f;
   }
   if (iter != args_.end())
     throw Formatting_error("message formatting: too many arguments");
