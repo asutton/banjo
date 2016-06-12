@@ -18,14 +18,14 @@ namespace
 // Returns a spelling for the current token. If the token
 // stream is at the end of input, then the spelling will
 // reflect that state.
-String const&
+char const*
 token_spelling(Token_stream& ts)
 {
-  static String end = "end-of-input";
+  static char end[] = "end-of-input";
   if (ts.eof())
     return end;
   else
-    return ts.peek().spelling();
+    return ts.peek().spelling().c_str();
 }
 
 } // namespace

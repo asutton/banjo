@@ -40,10 +40,12 @@ Message::render(std::ostream& os, Render_fn fn) const
       if (iter == args_.end())
         throw Formatting_error("too few arguments");
       fn(os, *iter);
-      f += 2; // TODO: If we have formatting flags, this will be greater
+      f += 2;
       ++iter;
+    } else {
+      os << *f;
+      ++f;
     }
-    ++f;
   }
   if (iter != args_.end())
     throw Formatting_error("message formatting: too many arguments");
@@ -91,7 +93,6 @@ dump_arg(std::ostream& os, Message::Arg const& a)
 void
 dump(std::ostream& os, Message const& m)
 {
-  os << m.fmt_ << " << ";
   m.render(os, dump_arg);
 }
 

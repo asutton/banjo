@@ -160,8 +160,8 @@ init_tokens(Symbol_table& syms)
   init_token(syms, tk::yield_tok, "yield");
   init_token(syms, tk::while_tok, "while");
 
-  init_token_class(syms, tk::identifier_tok, "<identifier>");
-  init_token_class(syms, tk::integer_tok, "<integer>");
+  init_token_class(syms, tk::identifier_tok, "identifier");
+  init_token_class(syms, tk::integer_tok, "integer");
 }
 
 
