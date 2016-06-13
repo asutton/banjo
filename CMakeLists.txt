@@ -61,5 +61,6 @@ endif()
 
 add_subdirectory(lingo)
 add_subdirectory(banjo)
+# add_subdirectory(generator)
 add_subdirectory(compiler)
 
