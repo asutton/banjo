@@ -88,5 +88,3 @@ PUBLIC
 add_executable(test-banjo test.cpp)
 target_link_libraries(test-banjo banjo)
 
-
-add_subdirectory(fe/banjo)
