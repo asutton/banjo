@@ -13,58 +13,6 @@ namespace banjo
 {
 
 // -------------------------------------------------------------------------- //
-// Declaration of names
-
-
-// Save d in the given overload set. If d conflicts with any errors,
-// this function diagnoses the error and throws an exception.
-//
-// Note that the overload set is only valid when all members have 
-// well-formed types.
-static inline void
-declare(Context& cxt, Overload_set& ovl, Decl& decl)
-{
-  ovl.push_back(decl);
-}
-
-
-// Add the declaration d to the given scope.
-void
-declare(Context& cxt, Scope& scope, Decl& decl)
-{
-  if (Overload_set* ovl = scope.lookup(decl.name()))
-    declare(cxt, *ovl, decl);
-  else
-    scope.bind(decl);
-}
-
-
-// Add the declaration d to the current scope.
-void
-declare(Context& cxt, Decl& d)
-{
-  declare(cxt, cxt.current_scope(), d);
-}
-
-
-// -------------------------------------------------------------------------- //
-// Declaration of required expressions
-
-// Save the declaration of a required expression.
-//
-// FIXME: This is a hack. This should be name-based. Otherwise, lookup
-// is going to be very, very slow.
-//
-// FIXME: Who is responsible for guaranteeing non-repetition?
-void
-declare_required_expression(Context& cxt, Expr& e)
-{
-  // Requires_scope& s = *cxt.current_requires_scope();
-  // s.exprs.push_back(e);
-}
-
-
-// -------------------------------------------------------------------------- //
 // Declaration checking
 
 // Given declarations d1 and d2, a declaration error occurs when:
@@ -138,6 +86,52 @@ check_declarations(Context& cxt, Type_decl const& d1, Type_decl const& d2)
   error(cxt, "declaration of '{}' as a different kind of type", d1.name());
   throw Declaration_error();
 }
+
+
+// -------------------------------------------------------------------------- //
+// Declaration of names
+
+
+// Add the declaration d to the given scope. 
+//
+// Note that this does not currently check to see if the declaration is 
+// valid i.e., that it does not conflict a previous declaration. This is
+// only checkable if all declarations are fully elaborated (i.e., typed).
+void
+declare(Context& cxt, Scope& scope, Decl& decl)
+{
+  if (Overload_set* ovl = scope.lookup(decl.name()))
+    ovl->push_back(decl);
+  else
+    scope.bind(decl);
+}
+
+
+// Add the declaration d to the current scope.
+void
+declare(Context& cxt, Decl& d)
+{
+  declare(cxt, cxt.current_scope(), d);
+}
+
+
+// -------------------------------------------------------------------------- //
+// Declaration of required expressions
+
+// Save the declaration of a required expression.
+//
+// FIXME: This is a hack. This should be name-based. Otherwise, lookup
+// is going to be very, very slow.
+//
+// FIXME: Who is responsible for guaranteeing non-repetition?
+void
+declare_required_expression(Context& cxt, Expr& e)
+{
+  // Requires_scope& s = *cxt.current_requires_scope();
+  // s.exprs.push_back(e);
+}
+
+
 
 
 } // namespace banjo

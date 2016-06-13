@@ -304,6 +304,7 @@ struct Parser
 
   // Functions
   Decl& start_function_declaration(Name&, Decl_list&, Type&);
+  Decl& enter_function_declaration(Decl&);
   Decl& finish_function_declaration(Decl&, Expr&);
   Decl& finish_function_declaration(Decl&, Stmt&);
 

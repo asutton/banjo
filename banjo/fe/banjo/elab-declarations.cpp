@@ -89,6 +89,14 @@ Elaborate_declarations::get_type(Type& t)
 //
 // TODO: For declarations allowing "partiality", also link those together
 // so that we can unify them later on.
+//
+// FIXME: This doesn't really work. We would need to ensure that all
+// declarations are in scope at the time we call the function. When the
+// declaration is in a saved scope, that's fine. When it's not... we have
+// some issues.
+//
+// Find the balance for saving declarations between the parser and the
+// elaboration framework.
 void
 Elaborate_declarations::check(Decl& d)
 {

@@ -51,6 +51,18 @@ Parser::start_function_declaration(Name& n, Decl_list& ps, Type& t)
 }
 
 
+// Called just prior to analyzing the definition, declare all of the
+// parameters into the saved function scope.
+Decl&
+Parser::enter_function_declaration(Decl& d)
+{
+  Function_decl& fn = cast<Function_decl>(d);
+  for (Decl& p : fn.parameters())
+    declare(cxt, p);
+  return d;
+}
+
+
 // Declare parameters and update the definition.
 Decl&
 Parser::finish_function_declaration(Decl& decl, Expr& expr)

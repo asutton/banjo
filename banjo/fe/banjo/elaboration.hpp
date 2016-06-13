@@ -7,6 +7,9 @@
 #include "parser.hpp"
 
 #include <banjo/ast.hpp>
+#include <banjo/declaration.hpp>
+#include <banjo/debugging.hpp>
+
 
 namespace banjo
 {
@@ -36,7 +39,9 @@ struct Basic_elaborator
   void finish_compound_statement(Compound_stmt&) { }
   void on_empty_statement(Empty_stmt&) { }
   void on_return_statement(Return_stmt&) { }
+  void on_return_statement(Return_value_stmt&) { }
   void on_yield_statement(Yield_stmt&) { }
+  void on_yield_statement(Yield_value_stmt&) { }
   void on_if_statement(If_then_stmt&) { }
   void on_if_statement(If_else_stmt&) { }
   void on_while_statement(While_stmt&) { }
@@ -101,7 +106,9 @@ struct Elaborator
   void statement_seq(Stmt_list&);
   void compound_statement(Compound_stmt&);
   void return_statement(Return_stmt&);
+  void return_statement(Return_value_stmt&);
   void yield_statement(Yield_stmt&);
+  void yield_statement(Yield_value_stmt&);
   void if_statement(If_then_stmt&);
   void if_statement(If_else_stmt&);
   void while_statement(While_stmt&);
@@ -161,17 +168,19 @@ Elaborator<F>::statement(Stmt& s)
   struct fn
   {
     Self& elab;
-    void operator()(Stmt& s)             { lingo_unhandled(s); }
-    void operator()(Compound_stmt& s)    { elab.compound_statement(s); }
-    void operator()(Return_stmt& s)      { elab.return_statement(s); }
-    void operator()(Yield_stmt& s)       { elab.yield_statement(s); }
-    void operator()(If_then_stmt& s)     { elab.if_statement(s); }
-    void operator()(If_else_stmt& s)     { elab.if_statement(s); }
-    void operator()(While_stmt& s)       { elab.while_statement(s); }
-    void operator()(Break_stmt& s)       { elab.break_statement(s); }
-    void operator()(Continue_stmt& s)    { elab.continue_statement(s); }
-    void operator()(Declaration_stmt& s) { elab.declaration_statement(s); }
-    void operator()(Expression_stmt& s)  { elab.expression_statement(s); }
+    void operator()(Stmt& s)              { lingo_unhandled(s); }
+    void operator()(Compound_stmt& s)     { elab.compound_statement(s); }
+    void operator()(Return_stmt& s)       { elab.return_statement(s); }
+    void operator()(Return_value_stmt& s) { elab.return_statement(s); }
+    void operator()(Yield_stmt& s)        { elab.yield_statement(s); }
+    void operator()(Yield_value_stmt& s)  { elab.yield_statement(s); }
+    void operator()(If_then_stmt& s)      { elab.if_statement(s); }
+    void operator()(If_else_stmt& s)      { elab.if_statement(s); }
+    void operator()(While_stmt& s)        { elab.while_statement(s); }
+    void operator()(Break_stmt& s)        { elab.break_statement(s); }
+    void operator()(Continue_stmt& s)     { elab.continue_statement(s); }
+    void operator()(Declaration_stmt& s)  { elab.declaration_statement(s); }
+    void operator()(Expression_stmt& s)   { elab.expression_statement(s); }
   };
   vis.on_statement(s);
   apply(s, fn{*this});
@@ -208,7 +217,23 @@ Elaborator<F>::return_statement(Return_stmt& s)
 
 template<typename F>
 inline void
+Elaborator<F>::return_statement(Return_value_stmt& s)
+{
+  vis.on_return_statement(s);
+}
+
+
+template<typename F>
+inline void
 Elaborator<F>::yield_statement(Yield_stmt& s)
+{
+  vis.on_yield_statement(s);
+}
+
+
+template<typename F>
+inline void
+Elaborator<F>::yield_statement(Yield_value_stmt& s)
 {
   vis.on_yield_statement(s);
 }
@@ -359,6 +384,7 @@ Elaborator<F>::function_body(Def& d)
     void operator()(Function_def& d)   { elab.function_body(d); }
     void operator()(Expression_def& d) { elab.function_body(d); }
   };
+  apply(d, fn{*this});
 }
 
 

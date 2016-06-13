@@ -78,9 +78,11 @@ Parser::function_declaration()
   // else
   //   ret = &cxt.make_auto_type(object_type);
 
-  // Declare the function and establish the function scope.
+  // Declare the function.
   Decl& fn = start_function_declaration(name, parms, *ret);
+  
   Enter_scope scope(cxt, cxt.saved_scope(fn));
+  enter_function_declaration(fn);
 
   // Match the function definition.
   //
@@ -89,10 +91,12 @@ Parser::function_declaration()
     Expr& expr = unparsed_expression(end_expr);
     match(tk::semicolon_tok);
     return finish_function_declaration(fn, expr);
-  } else if (next_token_is(tk::lbrace_tok)) { // '{' ... '}'
+  } 
+  else if (next_token_is(tk::lbrace_tok)) { // '{' ... '}'
     Stmt& stmt = compound_statement();
     return finish_function_declaration(fn, stmt);
-  } else {
+  } 
+  else {
     Expr& expr = unparsed_expression(end_expr);
     match(tk::semicolon_tok);
     return finish_function_declaration(fn, expr);
