@@ -4,6 +4,7 @@
 #include "parser.hpp"
 
 #include <banjo/ast.hpp>
+#include <banjo/debugging.hpp>
 
 
 namespace banjo
@@ -44,22 +45,10 @@ Parser::on_return_statement(Token)
 }
 
 
-// TODO: The typing should move toward the AST or into an elaborator.
 Stmt&
 Parser::on_return_statement(Token, Expr& e)
 {
-  // Don't perform analysis on unparsed expressions.
-  if (is<Unparsed_expr>(e))
-    return cxt.make_return_statement(e);
-
-  lingo_unreachable();
-
-  // // FIXME: This is very, very wrong. We need to convert e to the return 
-  // // type of the current function, not simply convert to its non-reference
-  // // type (that's stupid).
-  // Type& t = e.type().non_reference_type();
-  // Expr& c = standard_conversion(e, t);
-  // return cxt.make_return_statement(c);
+  return cxt.make_return_statement(e);
 }
 
 

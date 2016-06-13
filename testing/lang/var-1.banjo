@@ -1,7 +1,8 @@
 var v0 : int;
 var v1 : int = 0;
 
-def f() -> int { return; }
+
+// def f() -> int { return; }
 
 
 def fib(n : int) -> int {

@@ -28,9 +28,8 @@ add_library(banjo-fe
   sema-class.cpp
   elaboration.cpp
   elab-declarations.cpp
-  # elab-overloads.cpp
   # elab-classes.cpp
-  # elab-expressions.cpp
+  elab-expressions.cpp
 )
 target_compile_definitions(banjo-fe PUBLIC ${LLVM_DEFINITIONS})
 target_include_directories(banjo-fe

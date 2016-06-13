@@ -219,6 +219,7 @@ template<typename F>
 inline void
 Elaborator<F>::return_statement(Return_value_stmt& s)
 {
+  expression(s.expression());
   vis.on_return_statement(s);
 }
 
@@ -235,15 +236,20 @@ template<typename F>
 inline void
 Elaborator<F>::yield_statement(Yield_value_stmt& s)
 {
+  expression(s.expression());
   vis.on_yield_statement(s);
 }
 
 
+// TODO: Do we need finer-grain control over the entry and traversal
+// of these statements?
 template<typename F>
 inline void
 Elaborator<F>::if_statement(If_then_stmt& s)
 {
   vis.on_if_statement(s);
+  expression(s.condition());
+  statement(s.true_branch());
 }
 
 
@@ -252,6 +258,9 @@ inline void
 Elaborator<F>::if_statement(If_else_stmt& s)
 {
   vis.on_if_statement(s);
+  expression(s.condition());
+  statement(s.true_branch());
+  statement(s.false_branch());
 }
 
 
@@ -260,6 +269,8 @@ inline void
 Elaborator<F>::while_statement(While_stmt& s)
 {
   vis.on_while_statement(s);
+  expression(s.condition());
+  statement(s.body());
 }
 
 
@@ -443,11 +454,19 @@ Elaborator<F>::class_body(Class_def& d)
 // -------------------------------------------------------------------------- //
 // Expressions
 
+// TODO: We probably don't want all elaborators to perform full traversals
+// on the tree. We should probably provide some mechanism for opting out
+// of certain kinds of traversals.
 template<typename F>
 inline void
 Elaborator<F>::expression(Expr& e)
 {
-  lingo_unreachable();
+  // struct fn
+  // {
+  //   Self& elab;
+  //   void operator()(Expr& e) { }
+  // };
+  // apply(e, fn{*this});
 }
 
 

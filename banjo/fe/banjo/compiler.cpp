@@ -7,9 +7,8 @@
 #include "printer.hpp"
 
 #include "elab-declarations.hpp"
-// #include "elab-overloads.hpp"
+#include "elab-expressions.hpp"
 // #include "elab-classes.hpp"
-// #include "elab-expressions.hpp"
 
 #include <banjo/ast.hpp>
 
@@ -128,6 +127,7 @@ main(int argc, char* argv[])
 
   // Elaboration passes.
   fe::elaborate<fe::Elaborate_declarations>(parse);
+  fe::elaborate<fe::Elaborate_expressions>(parse);
 
   // Elaborate_overloads    overloads(*this);
   // Elaborate_classes      classes(*this);
@@ -155,5 +155,4 @@ main(int argc, char* argv[])
   //   ll::Generator gen(cxt);
   //   gen(tu);
   // }
-
 }

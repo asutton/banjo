@@ -60,15 +60,29 @@ struct Debug_printer
   void id_expression(Id_expr const&);
   void unary_expression(Unary_expr const&);
   void binary_expression(Binary_expr const&);
+  void unparsed_expression(Unparsed_expr const&);
 
   void initializer(Bind_init const&);
 
   // Statements
   void statement(Stmt const&);
+  void return_statement(Return_stmt const&);
+  void return_statement(Return_value_stmt const&);
 
   // Declarations
   void declaration(Decl const&);
-  void declaration(Typed_decl const&);
+  
+  // Modules
+  void translation_unit(Translation_unit const&);
+  
+  // Variables
+  void variable_declaration(Variable_decl const&);
+  void variable_initializer(Def const&);
+  void variable_initializer(Empty_def const&);
+  void variable_initializer(Expression_def const&);
+  
+  // Functions
+  void function_declaration(Function_decl const&);
 
   // Constraints
   void constraint(Cons const&);

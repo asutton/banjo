@@ -106,12 +106,22 @@ Debug_printer::prop(char const* s)
 void
 Debug_printer::rep(Term const& t)
 {
-  std::string s = type_str(t);
+  // Get a the shortest part of the name.
+  String s = type_str(t);
   auto n = s.find_last_of(':');
-  if (color)
-    os << lingo::bright_green(s.substr(n + 1));
-  else
-    os << s.substr(n + 1);
+  String name = s.substr(n + 1);
+
+  // Print the name in pretty colors.
+  if (color) {
+    if (is<Name>(t))      os << lingo::bright_cyan(name);
+    else if (is<Type>(t)) os << lingo::bright_blue(name);
+    else if (is<Expr>(t)) os << lingo::bright_magenta(name);
+    else if (is<Decl>(t)) os << lingo::bright_green(name);
+    else                  os << lingo::bright(name);
+  }
+  else {
+    os << name;
+  }
 }
 
 
@@ -137,14 +147,17 @@ Debug_printer::operator()(Term const& x)
 {
   if (Name const* n = as<Name>(&x))
     id(*n);
-  if (Type const* t = as<Type>(&x))
+  else if (Type const* t = as<Type>(&x))
     type(*t);
-  if (Expr const* e = as<Expr>(&x))
+  else if (Expr const* e = as<Expr>(&x))
     expression(*e);
-  if (Stmt const* s = as<Stmt>(&x))
+  else if (Stmt const* s = as<Stmt>(&x))
     statement(*s);
-  if (Decl const* d = as<Decl>(&x))
+  else if (Decl const* d = as<Decl>(&x))
     declaration(*d);
+  else {
+    Sexpr guard (*this, x);
+  }
 }
 
 
@@ -296,13 +309,14 @@ Debug_printer::expression(Expr const& e)
   struct fn
   {
     Debug_printer& self;
-    void operator()(Expr const& e)         { lingo_unhandled(e); }
-    void operator()(Boolean_expr const& e) { self.literal(e); }
-    void operator()(Integer_expr const& e) { self.literal(e); }
-    void operator()(Id_expr const& e)      { self.id_expression(e); }
-    void operator()(Binary_expr const& e)  { self.binary_expression(e); }
-    void operator()(Unary_expr const& e)   { self.unary_expression(e); }
-    void operator()(Bind_init const& e)    { self.initializer(e); }
+    void operator()(Expr const& e)          { lingo_unhandled(e); }
+    void operator()(Boolean_expr const& e)  { self.literal(e); }
+    void operator()(Integer_expr const& e)  { self.literal(e); }
+    void operator()(Id_expr const& e)       { self.id_expression(e); }
+    void operator()(Binary_expr const& e)   { self.binary_expression(e); }
+    void operator()(Unary_expr const& e)    { self.unary_expression(e); }
+    void operator()(Unparsed_expr const& e) { self.unparsed_expression(e); }
+    void operator()(Bind_init const& e)     { self.initializer(e); }
   };
   apply(e, fn{*this});
 }
@@ -362,6 +376,20 @@ Debug_printer::binary_expression(Binary_expr const& e)
 
 
 void
+Debug_printer::unparsed_expression(Unparsed_expr const& e)
+{
+  Sexpr sentinel(*this, e);
+  os << " <|";
+  for (auto iter = e.tokens().begin(); iter != e.tokens().end(); ++iter) {
+    os << *iter;
+    if (std::next(iter) != e.tokens().end())
+      os << ' ';
+  }
+  os << "|>";
+}
+
+
+void
 Debug_printer::initializer(Bind_init const& e)
 {
   Sexpr sentinel(*this, e);
@@ -376,7 +404,31 @@ Debug_printer::initializer(Bind_init const& e)
 void
 Debug_printer::statement(Stmt const& s)
 {
-  lingo_unreachable();
+  struct fn
+  {
+    Debug_printer& self;
+    void operator()(Stmt const& s)              { lingo_unhandled(s); }
+    void operator()(Return_stmt const& d)       { self.return_statement(d); }
+    void operator()(Return_value_stmt const& d) { self.return_statement(d); }
+  };
+  apply(s, fn{*this});
+}
+
+
+void
+Debug_printer::return_statement(Return_stmt const& s)
+{
+  Sexpr guard(*this, s);
+}
+
+
+void
+Debug_printer::return_statement(Return_value_stmt const& s)
+{
+  Sexpr guard(*this, s);
+  newline_and_indent();
+  expression(s.expression());
+  newline_and_undent();
 }
 
 
@@ -385,31 +437,91 @@ Debug_printer::statement(Stmt const& s)
 
 void
 Debug_printer::declaration(Decl const& d)
-{
-  Sexpr guard(*this, d);
-
-  newline_and_indent();
-  if (d.is_named())
-    id(d.name());
-  
+{  
   struct fn
   {
     Debug_printer& self;
     void operator()(Decl const& d)             { lingo_unhandled(d); }
-    void operator()(Translation_unit const& d) { }
-    void operator()(Typed_decl const& d)       { self.declaration(d); }
+    void operator()(Translation_unit const& d) { self.translation_unit(d); }
+    void operator()(Variable_decl const& d)    { self.variable_declaration(d); }
+    void operator()(Function_decl const& d)    { self.function_declaration(d); }
   };
   apply(d, fn{*this});
-  
+}
+
+
+void
+Debug_printer::translation_unit(Translation_unit const& d)
+{
+  Sexpr guard(*this, d); 
+  d.statements();
+}
+
+
+// -------------------------------------------------------------------------- //
+// Variables
+
+void
+Debug_printer::variable_declaration(Variable_decl const& d)
+{
+  Sexpr guard(*this, d); 
+  newline_and_indent();
+  id(d.name());
+  newline();
+  type(d.type());
+  newline();
+  variable_initializer(d.initializer());
   newline_and_undent();
 }
 
 
 void
-Debug_printer::declaration(Typed_decl const& d)
+Debug_printer::variable_initializer(Def const& d)
 {
+  struct fn
+  {
+    Debug_printer& self;
+    void operator()(Def const& d)            { lingo_unhandled(d); }
+    void operator()(Empty_def const& d)      { self.variable_initializer(d); }
+    void operator()(Expression_def const& d) { self.variable_initializer(d); }
+  };
+  apply(d, fn{*this});
+}
+
+void
+Debug_printer::variable_initializer(Empty_def const& d)
+{
+  Sexpr guard(*this, d);
+}
+
+
+void
+Debug_printer::variable_initializer(Expression_def const& d)
+{
+  Sexpr guard(*this, d);
+  newline_and_indent();
+  expression(d.expression());
+  newline_and_undent();
+}
+
+
+// -------------------------------------------------------------------------- //
+// Functions
+
+void
+Debug_printer::function_declaration(Function_decl const& d)
+{
+  Sexpr guard(*this, d); 
+  newline_and_indent();
+  id(d.name());
   newline();
   type(d.type());
+  
+  // FIXME: Implement this.
+  // newline();
+  // function_body(d.def());
+  
+  newline_and_undent();
 }
 
 
