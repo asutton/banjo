@@ -4,6 +4,7 @@
 #include "printer.hpp"
 
 #include <banjo/ast.hpp>
+#include <banjo/debugging.hpp>
 
 #include <iterator>
 #include <iostream>
@@ -1053,18 +1054,19 @@ Printer::statement(Stmt const& s)
   struct fn
   {
     Printer& p;
-    void operator()(Stmt const& s)             { lingo_unhandled(s); }
-    void operator()(Unparsed_stmt const& s)    { p.statement(s); }
-    void operator()(Compound_stmt const& s)    { p.compound_statement(s); }
-    void operator()(Return_stmt const& s)      { p.return_statement(s); }
-    void operator()(Yield_stmt const& s)       { p.yield_statement(s); }
-    void operator()(If_then_stmt const& s)     { p.if_statement(s); }
-    void operator()(If_else_stmt const& s)     { p.if_statement(s); }
-    void operator()(While_stmt const& s)       { p.while_statement(s); }
-    void operator()(Break_stmt const& s)       { p.break_statement(s); }
-    void operator()(Continue_stmt const& s)    { p.continue_statement(s); }
-    void operator()(Expression_stmt const& s)  { p.expression_statement(s); }
-    void operator()(Declaration_stmt const& s) { p.declaration_statement(s); }
+    void operator()(Stmt const& s)              { lingo_unhandled(s); }
+    void operator()(Unparsed_stmt const& s)     { p.statement(s); }
+    void operator()(Compound_stmt const& s)     { p.compound_statement(s); }
+    void operator()(Return_stmt const& s)       { p.return_statement(s); }
+    void operator()(Return_value_stmt const& s) { p.return_statement(s); }
+    void operator()(Yield_stmt const& s)        { p.yield_statement(s); }
+    void operator()(If_then_stmt const& s)      { p.if_statement(s); }
+    void operator()(If_else_stmt const& s)      { p.if_statement(s); }
+    void operator()(While_stmt const& s)        { p.while_statement(s); }
+    void operator()(Break_stmt const& s)        { p.break_statement(s); }
+    void operator()(Continue_stmt const& s)     { p.continue_statement(s); }
+    void operator()(Expression_stmt const& s)   { p.expression_statement(s); }
+    void operator()(Declaration_stmt const& s)  { p.declaration_statement(s); }
   };
   apply(s, fn{*this});
 }
@@ -1116,6 +1118,16 @@ void
 Printer::return_statement(Return_stmt const& s)
 {
   token("return");
+  token(';');
+}
+
+
+void
+Printer::return_statement(Return_value_stmt const& s)
+{
+  token("return");
+  space();
+  expression(s.expression());
   token(';');
 }
 

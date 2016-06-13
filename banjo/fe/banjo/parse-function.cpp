@@ -2,8 +2,11 @@
 // All rights reserved
 
 #include "parser.hpp"
+#include "printer.hpp"
 
 #include <banjo/ast.hpp>
+
+#include <iostream>
 
 
 namespace banjo
@@ -63,7 +66,7 @@ Parser::function_declaration()
   // Match the return type.
   //
   // FIXME: Allow the return type to be omitted.
-  expect(tk::arrow_tok);
+  match(tk::arrow_tok);
   Type* ret = &unparsed_type(end_type);
 
   // FIXME: Generate a fresh type in the case where the return type is

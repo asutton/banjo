@@ -144,8 +144,8 @@ template<typename F>
 inline void
 Elaborator<F>::translation_unit(Translation_unit& tu)
 {
-  Enter_scope scope(cxt, tu);
   vis.start_translation_unit(tu);
+  Enter_scope scope(cxt, tu);
 
   // FIXME: This should be toplevel-stmt-seq
   statement_seq(tu.statements());
@@ -191,8 +191,8 @@ template<typename F>
 inline void
 Elaborator<F>::compound_statement(Compound_stmt& s)
 {
-  Enter_scope scoppe(cxt, s);
   vis.start_compound_statement(s);
+  Enter_scope scoppe(cxt, s);
   statement_seq(s.statements());
   vis.finish_compound_statement(s);
 }

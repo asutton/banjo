@@ -122,9 +122,13 @@ Parser::compound_statement()
 Stmt&
 Parser::return_statement()
 {
-  Match_token_pred end_expr(*this, tk::semicolon_tok);
-
   Token tok = require(tk::return_tok);
+  
+  // Match the empty return case.
+  if (match_if(tk::semicolon_tok))
+    return on_return_statement(tok);
+
+  Match_token_pred end_expr(*this, tk::semicolon_tok);
   Expr& e = unparsed_expression(end_expr);
   match(tk::semicolon_tok);
   return on_return_statement(tok, e);
@@ -138,10 +142,14 @@ Parser::return_statement()
 //      'yield' expression ';'
 Stmt&
 Parser::yield_statement()
-{
-  Match_token_pred end_expr(*this, tk::semicolon_tok);
-  
+{  
   Token tok = require(tk::yield_tok);
+
+  // Match the empty case.
+  if (match_if(tk::semicolon_tok))
+    on_yield_statement(tok);
+
+  Match_token_pred end_expr(*this, tk::semicolon_tok);
   Expr&e = unparsed_expression(end_expr);
   match(tk::semicolon_tok);
   return on_yield_statement(tok, e);

@@ -37,6 +37,13 @@ Parser::on_empty_statement()
 }
 
 
+Stmt&
+Parser::on_return_statement(Token)
+{
+  return cxt.make_return_statement();
+}
+
+
 // TODO: The typing should move toward the AST or into an elaborator.
 Stmt&
 Parser::on_return_statement(Token, Expr& e)
@@ -57,9 +64,16 @@ Parser::on_return_statement(Token, Expr& e)
 
 
 Stmt&
+Parser::on_yield_statement(Token)
+{
+  return cxt.make_yield_statement();
+}
+
+
+Stmt&
 Parser::on_yield_statement(Token, Expr& e)
 {
- return build.make_yield_statement(e);
+ return cxt.make_yield_statement(e);
 }
 
 

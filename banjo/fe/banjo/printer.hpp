@@ -131,7 +131,6 @@ struct Printer
 
   void expression_list(Expr_list const&);
 
-
   // Statements
   void statement(Stmt const&);
   void statement(Unparsed_stmt const&);
@@ -139,6 +138,7 @@ struct Printer
   void empty_statement(Empty_stmt const&);
   void compound_statement(Compound_stmt const&);
   void return_statement(Return_stmt const&);
+  void return_statement(Return_value_stmt const&);
   void yield_statement(Yield_stmt const&);
   void if_statement(If_then_stmt const&);
   void if_statement(If_else_stmt const&);

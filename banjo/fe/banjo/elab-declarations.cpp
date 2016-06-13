@@ -3,10 +3,13 @@
 
 #include "elab-declarations.hpp"
 #include "parser.hpp"
+#include "printer.hpp"
 
 #include <banjo/ast.hpp>
 #include <banjo/declaration.hpp>
 #include <banjo/debugging.hpp>
+
+#include <iostream>
 
 
 namespace banjo
@@ -89,8 +92,14 @@ Elaborate_declarations::get_type(Type& t)
 void
 Elaborate_declarations::check(Decl& d)
 {
-  Name& name = d.name();
-  Overload_set& ovl = *cxt.current_scope().lookup(name);
+  // Functions elaborated after entering their scope, so we need to adjust
+  // the scope prior to checking.
+  Scope* scope = &cxt.current_scope();
+  if (is<Function_decl>(d))
+    scope = scope->enclosing_scope();
+
+  // Get the overload set for this declaration.
+  Overload_set& ovl = *scope->lookup(d.name());
 
   bool ok = true;
   auto iter = ovl.begin();

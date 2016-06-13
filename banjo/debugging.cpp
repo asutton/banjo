@@ -387,14 +387,17 @@ void
 Debug_printer::declaration(Decl const& d)
 {
   Sexpr guard(*this, d);
+
   newline_and_indent();
-  id(d.name());
+  if (d.is_named())
+    id(d.name());
   
   struct fn
   {
     Debug_printer& self;
-    void operator()(Decl const& d)       { lingo_unhandled(d); }
-    void operator()(Typed_decl const& d) { self.declaration(d); }
+    void operator()(Decl const& d)             { lingo_unhandled(d); }
+    void operator()(Translation_unit const& d) { }
+    void operator()(Typed_decl const& d)       { self.declaration(d); }
   };
   apply(d, fn{*this});
   

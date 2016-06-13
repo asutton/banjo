@@ -280,7 +280,9 @@ struct Parser
   Stmt& start_compound_statement();
   Stmt& finish_compound_statement(Stmt&, Stmt_list&&);
   Stmt& on_empty_statement();
+  Stmt& on_return_statement(Token);
   Stmt& on_return_statement(Token, Expr&);
+  Stmt& on_yield_statement(Token);
   Stmt& on_yield_statement(Token, Expr&);
   Stmt& on_if_statement(Expr&, Stmt&);
   Stmt& on_if_statement(Expr&, Stmt&, Stmt&);

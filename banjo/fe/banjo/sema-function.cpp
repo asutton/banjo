@@ -44,7 +44,9 @@ Parser::start_function_declaration(Name& n, Decl_list& ps, Type& t)
   else
     d = &cxt.make_function_declaration(n, ft, ps);
   d->spec_ = take_decl_specs();
+  
   declare(cxt, *d);
+  
   return *d;
 }
 
