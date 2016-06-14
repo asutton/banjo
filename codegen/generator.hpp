@@ -70,8 +70,7 @@ struct Generator
   llvm::Value* gen(Boolean_expr const&);
   llvm::Value* gen(Integer_expr const&);
   llvm::Value* gen(Tuple_expr const&);
-  llvm::Value* gen(Variable_ref const&);
-  llvm::Value* gen(Function_ref const&);
+  llvm::Value* gen(Decl_ref const&);
 
   // Arithmetic expressions
   llvm::Value* gen(Real_expr const&);

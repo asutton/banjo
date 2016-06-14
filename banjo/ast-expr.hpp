@@ -188,45 +188,20 @@ struct Id_expr : Expr
 
 
 // A resolved id expression refers to a single declaration.
-struct Decl_ref : Id_expr
+struct Decl_ref : Id_expr, Allocatable<Decl_ref>
 {
   Decl_ref(Type& t, Name& n, Decl& d)
     : Id_expr(t, n), decl_(&d)
   { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
   // Returns the referenced declaration.
   Typed_decl const& declaration() const;
   Typed_decl&       declaration();
 
   Decl* decl_;
-};
-
-
-// A resolved reference to a reference.
-struct Variable_ref : Decl_ref, Allocatable<Variable_ref>
-{
-  using Decl_ref::Decl_ref;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the referenced object.
-  Variable_decl const& declaration() const;
-  Variable_decl&       declaration();
-};
-
-
-// A resolved reference to a function.
-struct Function_ref : Decl_ref, Allocatable<Function_ref>
-{
-  using Decl_ref::Decl_ref;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the referenced object.
-  Function_decl const& declaration() const;
-  Function_decl&       declaration();
 };
 
 
@@ -277,13 +252,15 @@ struct Access_expr : Expr
 };
 
 
-// The base class of resolved dot-expressions. This stores the resolved
-// declaration of the member name.
-struct Scoped_ref : Access_expr
+// A resolved reference to a member variable or function.
+struct Member_ref : Access_expr, Allocatable<Member_ref>
 {
-  Scoped_ref(Type& t, Expr& e, Name& n, Decl& d)
+  Member_ref(Type& t, Expr& e, Name& n, Decl& d)
     : Access_expr(t, e, n), decl_(&d)
   { }
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
 
   Typed_decl const& declaration() const;
   Typed_decl&       declaration();
@@ -292,42 +269,14 @@ struct Scoped_ref : Access_expr
 };
 
 
-// A resolved reference to an object.
-struct Field_ref : Scoped_ref, Allocatable<Field_ref>
-{
-  using Scoped_ref::Scoped_ref;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the referenced object.
-  Field_decl const& declaration() const;
-  Field_decl&       declaration();
-};
-
-
-// A resolved reference to a function.
-struct Method_ref : Scoped_ref, Allocatable<Method_ref>
-{
-  using Scoped_ref::Scoped_ref;
-
-  void accept(Visitor& v) const { v.visit(*this); }
-  void accept(Mutator& v)       { v.visit(*this); }
-
-  // Returns the referenced object.
-  Method_decl const& declaration() const;
-  Method_decl&       declaration();
-};
-
-
 // An unresolved access expression, referring to a set of declarations.
-struct Member_ref : Access_expr, Allocatable<Member_ref>
+struct Scoped_ref : Access_expr, Allocatable<Scoped_ref>
 {
-  Member_ref(Expr& e, Name& n, Decl_list const& ds)
+  Scoped_ref(Expr& e, Name& n, Decl_list const& ds)
     : Access_expr(e, n), decls_(ds)
   { }
 
-  Member_ref(Expr& e, Name& n, Decl_list&& ds)
+  Scoped_ref(Expr& e, Name& n, Decl_list&& ds)
     : Access_expr(e, n), decls_(std::move(ds))
   { }
 

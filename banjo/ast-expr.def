@@ -9,12 +9,10 @@ define_node(Real_expr)
 define_node(Tuple_expr)
 
 // References to declared entities
-define_node(Variable_ref)
-define_node(Function_ref)
+define_node(Decl_ref)
 define_node(Overload_ref)
-define_node(Field_ref)
-define_node(Method_ref)
 define_node(Member_ref)
+define_node(Scoped_ref)
 
 // Arithmetic expressions
 define_node(Add_expr)

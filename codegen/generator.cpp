@@ -72,7 +72,7 @@ Generator::gen(Expr const& e)
     llvm::Value* operator()(Or_expr const& e)      { return g.gen(e); }
     llvm::Value* operator()(Not_expr const& e)     { return g.gen(e); }
     llvm::Value* operator()(Tuple_expr const& e)   { return g.gen(e); }
-    llvm::Value* operator()(Variable_ref const& e) { return g.gen(e); }
+    llvm::Value* operator()(Decl_ref const& e)     { return g.gen(e); }
 
     llvm::Value* operator()(Value_conv const& e)   { return g.gen(e); }
     llvm::Value* operator()(Boolean_conv const& e) { return g.gen(e); }
@@ -168,7 +168,7 @@ Generator::gen(Tuple_expr const& e)
 
 // Return the address of the object referenced by the expression.
 llvm::Value*
-Generator::gen(Variable_ref const& e)
+Generator::gen(Decl_ref const& e)
 {
   llvm::Value* ret = lookup(e.declaration());
   return ret;

@@ -110,14 +110,14 @@ struct Builder
   Tuple_expr&    make_tuple(Type&, Expr_list&&);
 
   // Declaration references
-  Variable_ref& make_reference(Type&, Variable_decl&);
-  Function_ref& make_reference(Type&, Function_decl&);
+  Decl_ref&     make_reference(Type&, Variable_decl&);
+  Decl_ref&     make_reference(Type&, Function_decl&);
   Overload_ref& make_reference(Name&, Decl_list const&);
   Overload_ref& make_reference(Name&, Decl_list&&);
-  Field_ref&    make_reference(Type&, Expr&, Field_decl&);
-  Method_ref&   make_reference(Type&, Expr&, Method_decl&);
-  Member_ref&   make_reference(Expr&, Name&, Decl_list const&);
-  Member_ref&   make_reference(Expr&, Name&, Decl_list&&);
+  Member_ref&   make_reference(Type&, Expr&, Field_decl&);
+  Member_ref&   make_reference(Type&, Expr&, Method_decl&);
+  Scoped_ref&   make_reference(Expr&, Name&, Decl_list const&);
+  Scoped_ref&   make_reference(Expr&, Name&, Decl_list&&);
 
   // Logical expressions
   And_expr& make_and(Type&, Expr&, Expr&);

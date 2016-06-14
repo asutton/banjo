@@ -81,18 +81,18 @@ Builder::make_tuple(Type& t, Expr_list&& es)
 
 
 // Returns an id-expression that refers to a declared object.
-Variable_ref&
+Decl_ref&
 Builder::make_reference(Type& t, Variable_decl& d)
 {
-  return Variable_ref::make(alloc_, t, d.name(), d);
+  return Decl_ref::make(alloc_, t, d.name(), d);
 }
 
 
 // Returns an id-expression that refers to a declared function.
-Function_ref&
+Decl_ref&
 Builder::make_reference(Type& t, Function_decl& d)
 {
-  return Function_ref::make(alloc_, t, d.name(), d);
+  return Decl_ref::make(alloc_, t, d.name(), d);
 }
 
 
@@ -112,31 +112,31 @@ Builder::make_reference(Name& n, Decl_list&& ds)
 }
 
 
-Field_ref&
+Member_ref&
 Builder::make_reference(Type& t, Expr& e, Field_decl& d)
 {
-  return Field_ref::make(alloc_, t, e, d.name(), d);
+  return Member_ref::make(alloc_, t, e, d.name(), d);
 }
 
 
-Method_ref&
+Member_ref&
 Builder::make_reference(Type& t, Expr& e, Method_decl& d)
 {
-  return Method_ref::make(alloc_, t, e, d.name(), d);
+  return Member_ref::make(alloc_, t, e, d.name(), d);
 }
 
 
-Member_ref&
+Scoped_ref&
 Builder::make_reference(Expr& e, Name& n, Decl_list const& ds)
 {
-  return Member_ref::make(alloc_, e, n, ds);
+  return Scoped_ref::make(alloc_, e, n, ds);
 }
 
 
-Member_ref&
+Scoped_ref&
 Builder::make_reference(Expr& e, Name& n, Decl_list&& ds)
 {
-  return Member_ref::make(alloc_, e, n, std::move(ds));
+  return Scoped_ref::make(alloc_, e, n, std::move(ds));
 }
 
 

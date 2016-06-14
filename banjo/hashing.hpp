@@ -278,7 +278,7 @@ hash_binary_expr(A& h, Binary_expr const& e)
 
 template<typename A>
 void
-hash_id_expr(A& h, Decl_ref const& e)
+hash_del_ref(A& h, Decl_ref const& e)
 {
   hash_append(h, e.declaration());
 }
@@ -286,7 +286,7 @@ hash_id_expr(A& h, Decl_ref const& e)
 
 template<typename A>
 void
-hash_mem_expr(A& h, Scoped_ref const& e)
+hash_member_expr(A& h, Member_ref const& e)
 {
   hash_append(h, e.declaration());
 }
@@ -304,8 +304,8 @@ hash_append(A& h, Expr const& e)
     void operator()(Boolean_expr const& e) { hash_append(h, e.value()); }
     void operator()(Integer_expr const& e) { hash_append(h, e.value()); }
     void operator()(Tuple_expr const& e)   { hash_append(h, e.elements()); }
-    void operator()(Decl_ref const& e)     { hash_id_expr(h, e); }
-    void operator()(Scoped_ref const& e)   { hash_mem_expr(h, e); }
+    void operator()(Decl_ref const& e)     { hash_decl_ref(h, e); }
+    void operator()(Member_ref const& e)   { hash_member_ref(h, e); }
     void operator()(Unary_expr const& e)   { hash_append(h, e.operand()); }
     void operator()(Binary_expr const& e)  { hash_binary_expr(h, e); }
   };

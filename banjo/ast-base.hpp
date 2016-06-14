@@ -37,9 +37,7 @@ struct Declared_type;
 
 struct Expr;
 struct Id_expr;
-struct Decl_ref;
 struct Access_expr;
-struct Scoped_ref;
 struct Unary_expr;
 struct Binary_expr;
 struct Conv;

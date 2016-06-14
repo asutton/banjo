@@ -250,7 +250,7 @@ eq_literal_expr(Literal_expr<T> const& e1, Literal_expr<T> const& e2)
 // Two (resolved) id-expressions are equivalent when they refer to the
 // same declaration.
 bool
-eq_id_expr(Decl_ref const& e1, Decl_ref const& e2)
+eq_decl_ref(Decl_ref const& e1, Decl_ref const& e2)
 {
   return is_equivalent(e1.declaration(), e2.declaration());
 }
@@ -259,7 +259,7 @@ eq_id_expr(Decl_ref const& e1, Decl_ref const& e2)
 // Two (resolved) member-expressions are equivalent when they refer to the
 // same declaration.
 bool
-eq_mem_expr(Scoped_ref const& e1, Scoped_ref const& e2)
+eq_member_ref(Member_ref const& e1, Member_ref const& e2)
 {
   return is_equivalent(e1.declaration(), e2.declaration());
 }
@@ -305,8 +305,8 @@ is_equivalent(Expr const& e1, Expr const& e2)
     bool operator()(Expr const& e) const          { lingo_unhandled(e); }
     bool operator()(Boolean_expr const& e1) const { return eq_literal_expr(e1, cast_as(e1, e2)); }
     bool operator()(Integer_expr const& e1) const { return eq_literal_expr(e1, cast_as(e1, e2)); }
-    bool operator()(Decl_ref const& e1) const     { return eq_id_expr(e1, cast_as(e1, e2)); }
-    bool operator()(Scoped_ref const& e1) const   { return eq_mem_expr(e1, cast_as(e1, e2)); }
+    bool operator()(Decl_ref const& e1) const     { return eq_decl_ref(e1, cast_as(e1, e2)); }
+    bool operator()(Member_ref const& e1) const   { return eq_member_ref(e1, cast_as(e1, e2)); }
     bool operator()(Unary_expr const& e1) const   { return eq_unary_expr(e1, cast_as(e1, e2)); }
     bool operator()(Binary_expr const& e1) const  { return eq_binary_expr(e1, cast_as(e1, e2)); }
     bool operator()(Call_expr const& e1) const    { return eq_call_expr(e1, cast_as(e1, e2)); }

@@ -25,85 +25,20 @@ Decl_ref::declaration()
 }
 
 
-// Variable_ref
-
-Variable_decl const&
-Variable_ref::declaration() const
-{
-  return cast<Variable_decl>(*decl_);
-}
-
-
-Variable_decl&      
-Variable_ref::declaration()
-{
-  return cast<Variable_decl>(*decl_);
-}
-
-
-// Function_ref
-
-Function_decl const&
-Function_ref::declaration() const
-{
-  return cast<Function_decl>(*decl_);
-}
-
-
-Function_decl&      
-Function_ref::declaration()
-{
-  return cast<Function_decl>(*decl_);
-}
-
-
-// Scoped_ref
+// Member_ref
 
 Typed_decl const& 
-Scoped_ref::declaration() const
+Member_ref::declaration() const
 {
   return cast<Typed_decl>(*decl_);
 }
 
 
 Typed_decl&
-Scoped_ref::declaration()
+Member_ref::declaration()
 {
   return cast<Typed_decl>(*decl_);
 }
-
-
-// Field_ref
-
-Field_decl const&
-Field_ref::declaration() const
-{
-  return cast<Field_decl>(*decl_);
-}
-
-
-Field_decl&      
-Field_ref::declaration()
-{
-  return cast<Field_decl>(*decl_);
-}
-
-
-// Method_ref
-
-Method_decl const&
-Method_ref::declaration() const
-{
-  return cast<Method_decl>(*decl_);
-}
-
-
-Method_decl&      
-Method_ref::declaration()
-{
-  return cast<Method_decl>(*decl_);
-}
-
 
 
 // -------------------------------------------------------------------------- //
@@ -191,7 +126,7 @@ declared_type(Expr& e)
 {
   if (Decl_ref* d = as<Decl_ref>(&e))
     return d->declaration().type();
-  if (Scoped_ref* d = as<Scoped_ref>(&e))
+  if (Member_ref* d = as<Member_ref>(&e))
     return d->declaration().type();
 
     return e.type();

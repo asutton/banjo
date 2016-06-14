@@ -169,9 +169,27 @@ make_dependent_call(Context& cxt, Expr& e, Expr_list& args)
 
 
 Expr&
-make_regular_call(Context& cxt, Function_ref& e, Expr_list& args)
+make_regular_call(Context& cxt, Decl_ref& e, Expr_list& args)
 {
-  Function_decl& fn = e.declaration();
+  // TODO: This could be a function object!.
+  Typed_decl& decl = e.declaration();
+  if (!is<Function_decl>(decl)) {
+    error(cxt, "call to non-function '{}'", decl);
+    throw Type_error();
+  }
+
+  // TODO: We should be searching for or synthesizing a call operator that 
+  // accepts functions of (specifically) this type -- as opposed to generating
+  // the call indirectly. Perhaps we should just attach a declaration to
+  // each overloadable operation that contains the resolved declaration to
+  // call. This would allow us to preserve the surface syntax while also
+  // supporting generalized lookup rules.
+
+  // TODO: The call operator takes an argument of function type (as in the
+  // category, not the value type). This means we are generally going to be
+  // performing a reference-to-function conversion.
+
+  Function_decl& fn = cast<Function_decl>(decl);
   Function_candidate cand = make_function_candidate(cxt, fn, args);
   if (!cand.viable) {
     // TODO: Diagnose the error at the call site. Also explain why.
@@ -202,8 +220,8 @@ make_regular_call(Context& cxt, Expr& e, Expr_list& args)
   {
     Context&    cxt;
     Expr_list& args;
-    Expr& operator()(Expr& e)         { lingo_unhandled(e); }
-    Expr& operator()(Function_ref& e) { return make_regular_call(cxt, e, args); }
+    Expr& operator()(Expr& e)     { lingo_unhandled(e); }
+    Expr& operator()(Decl_ref& e) { return make_regular_call(cxt, e, args); }
   };
   return apply(e, fn{cxt, args});
 }
