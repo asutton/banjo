@@ -6,6 +6,7 @@
 
 #include "prelude.hpp"
 #include "language.hpp"
+#include "overload.hpp"
 
 
 namespace banjo
@@ -41,14 +42,19 @@ Expr& make_bit_lsh(Context&, Expr&, Expr&);
 Expr& make_bit_rsh(Context&, Expr&, Expr&);
 Expr& make_bit_not(Context&, Expr&);
 
-Expr& make_call(Context& cxt, Expr& e, Expr_list&);
+// Function calls
+Expr& make_call(Context&, Expr& e, Expr_list&);
 
-Expr& make_tuple_expr(Context& cxt, Expr_list&);
+Resolution resolve_call(Context&, Decl_list&, Expr&);
+Resolution resolve_call(Context&, Decl_list&, Expr&, Expr&);
+Resolution resolve_call(Context&, Decl_list&, Expr_list&);
 
-Expr& make_reference(Context& cxt, Name&);
-Expr& make_member_reference(Context& cxt, Expr&, Name&);
+Expr& make_tuple_expr(Context&, Expr_list&);
 
-Expr& make_requirements(Context& cxt, Decl_list const&, Decl_list const&, Req_list const&);
+Expr& make_reference(Context&, Name&);
+Expr& make_member_reference(Context&, Expr&, Name&);
+
+Expr& make_requirements(Context&, Decl_list const&, Decl_list const&, Req_list const&);
 
 
 } // namespace banjo

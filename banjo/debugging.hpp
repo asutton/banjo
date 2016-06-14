@@ -63,7 +63,12 @@ struct Debug_printer
   void binary_expression(Binary_expr const&);
   void unparsed_expression(Unparsed_expr const&);
 
-  void initializer(Bind_init const&);
+  // Conversion
+  void conversion(Value_conv const&);
+
+  // Initialization
+  void initialization(Bind_init const&);
+  void initialization(Copy_init const&);
 
   // Statements
   void statement(Stmt const&);

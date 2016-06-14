@@ -120,21 +120,19 @@ create(Context& cxt, Binary_op const& op)
   
   Def& def = cxt.make_function_definition(op.def);
 
-  Decl& fn = cxt.make_function_declaration(name, type, std::move(parms), def);
-  debug(fn);
-  return fn;
+  return cxt.make_function_declaration(name, type, std::move(parms), def);
 }
 
 
 // Translate a sequence of binary op specifications into definitions.
 template<int N>
-Decl_list
+void
 create(Context& cxt, Binary_op const (&ops)[N])
 {
-  Decl_list ds;
-  for (Binary_op const& op : ops)
-    ds.push_back(create(cxt, op));
-  return ds;
+  for (Binary_op const& op : ops) {
+    Decl& decl = create(cxt, op);
+    declare(cxt, decl);
+  }
 }
 
 
@@ -277,11 +275,13 @@ init_builtins(Context& cxt)
   // Create the translation unit.
   bi.tu_ = &cxt.make_translation_unit();
 
-  // Initialize builtin operators
+  // Put the TU in scope.
+  Enter_scope scope(cxt, *bi.tu_);  
+
+  // Initialize all builtin operators
   make_builtin_ops(cxt, bi);
   
   // Create builtin declarations.
-  // Enter_scope scope(cxt, *tu_);  
   // make_compiler_class(cxt, bi);
   // make_compiler(cxt, bi);
 }

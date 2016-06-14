@@ -123,7 +123,7 @@ Evaluator::tuple(Tuple_expr const& e)
   Expr_list const& elems = e.elements();
   Aggregate_value ret(elems.size());
   for (std::size_t i = 0; i < elems.size(); ++i)
-    ret[i] = evaluate(*elems[i]);
+    ret[i] = evaluate(elems[i]);
   return ret;
 }
 
@@ -520,7 +520,7 @@ Evaluator::initialize(Value& obj, Aggregate_init const& init)
   Aggregate_value agg(inits.size());
   for (std::size_t i = 0; i < inits.size(); ++i) {
     agg[i] = Value{};
-    initialize(agg[i], *inits[i]);
+    initialize(agg[i], inits[i]);
   }
   obj = agg;
 }
@@ -567,10 +567,10 @@ lift_aggregate(Context& cxt, Type& t, Aggregate_value const& v)
   
   // Populate the element list for the tuple.
   Expr_list elems;
-  elems.resize(v.size());
+  elems.reserve(v.size());
   for (std::size_t i = 0; i < v.size(); ++i) {
-    Type& t = *types[i];
-    elems[i] = &lift_value(cxt, t, v[i]);
+    Type& t = types[i];
+    elems.push_back(lift_value(cxt, t, v[i]));
   }
   return cxt.make_tuple(t, std::move(elems));
 }

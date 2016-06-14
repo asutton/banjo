@@ -376,8 +376,8 @@ tuple_init(Context& cxt, Class_type& t, Tuple_expr& e)
 
   Expr_list inits;
   for (std::size_t i = 0; i < mem.size(); ++i) {
-    Decl& var = *mem[i];
-    Expr& elem = *els[i];
+    Decl& var = mem[i];
+    Expr& elem = els[i];
 
     // FIXME: This is probably just normal initialization.
     Expr& init = copy_initialize(cxt, var, elem);

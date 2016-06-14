@@ -310,7 +310,7 @@ struct Suppress_diagnostics : Change_diagnostics
 };
 
 
-// Indiate that diagnostics should be emitted
+// Indicate that diagnostics should be emitted
 struct Emit_diagnostics : Change_diagnostics
 {
   Emit_diagnostics(Context& cxt)

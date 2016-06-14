@@ -191,7 +191,7 @@ make_regular_call(Context& cxt, Decl_ref& e, Expr_list& args)
 
   Function_decl& fn = cast<Function_decl>(decl);
   Function_candidate cand = make_function_candidate(cxt, fn, args);
-  if (!cand.viable) {
+  if (!cand) {
     // TODO: Diagnose the error at the call site. Also explain why.
     error(cxt, "cannot call function '{}", fn.name());
     throw Lookup_error();
@@ -235,6 +235,102 @@ make_call(Context& cxt, Expr& e, Expr_list& args)
   // else
   //   return make_regular_call(cxt, e, args);
   return make_regular_call(cxt, e, args);
+}
+
+
+// -------------------------------------------------------------------------- //
+// Overload resolution
+
+using Candidate_list = std::vector<Function_candidate>;
+
+
+// Returns a list of all possible candidates, viable or not.
+//
+// TODO: It might be worthwhile making the distinction between gather
+// and filter a little more clear. In particular, this would simply collect
+// all of the needed declarations and filter would try to fit the
+// arguments to the parameters.
+static Candidate_list
+gather_candidates(Context& cxt, Decl_list& ds, Expr_list& args)
+{
+  // Build the initial candidate list.
+  Candidate_list cands;
+  cands.reserve(ds.size());
+  for (Decl& d : ds) {
+    // For now, we work only with functions. Note that the current declaration
+    // rules do not allow functions and classes to have the same names.
+    if (!is<Function_decl>(d)) {
+      error(cxt, "'{}' is not a function", d);
+      throw Type_error();
+    }
+
+    Function_decl& fn = cast<Function_decl&>(d);
+
+    // Suppress diagnostics when creating function candidates.
+    Suppress_diagnostics diags(cxt);
+    cands.emplace_back(make_function_candidate(cxt, fn, args));
+  }
+  return cands;
+}
+
+
+// Returns a list containing only the viable candidates.
+static Candidate_list
+filter_candidates(Candidate_list& cands)
+{
+  Candidate_list viable;
+  viable.reserve(cands.size());
+  for (Function_candidate& c : cands) {
+    if (c) 
+      viable.push_back(c);
+  }
+  return viable;
+}
+
+
+// Resolve a call to one of the functions or function templates in ds
+// given a sequence of arguments.
+//
+// The result of resolution is the function candidate containing the 
+// called function and its converted arguments.
+Resolution
+resolve_call(Context& cxt, Decl_list& ds, Expr_list& args)
+{
+  // Gather candidates
+  Candidate_list cands = gather_candidates(cxt, ds, args);
+
+  // Eliminate non-viable candidates.
+  Candidate_list viable = filter_candidates(cands);
+
+  // If there are no viable candidates, then resolution fails.
+  if (viable.empty()) {
+    error(cxt, "no viable candidates for '{}", ds.front().name());
+    throw Type_error();
+  }
+
+  // If there is only one, that is the function called.
+  if (viable.size() == 1)
+    return viable.front();
+
+  // TODO: Order candidates
+  error(cxt, "ambiguous lookup for '{}'", ds.front().name());
+  throw Type_error();
+}
+
+
+Resolution
+resolve_call(Context& cxt, Decl_list& ds, Expr& e)
+{
+  Expr_list args {&e};
+  return resolve_call(cxt, ds, args);
+}
+
+
+Resolution
+resolve_call(Context& cxt, Decl_list& ds, Expr& e1, Expr& e2)
+{
+  Expr_list args {&e1, &e2};
+  return resolve_call(cxt, ds, args);
 }
 
 

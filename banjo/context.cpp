@@ -91,6 +91,8 @@ Context::leave_context()
 void
 Context::emit_error(Message const& m)
 {
+  if (!diags) return;
+  
   std::cerr << "error: " << input << ": ";
   dump(std::cerr, m);
   std::cerr << '\n';
@@ -100,6 +102,8 @@ Context::emit_error(Message const& m)
 void
 Context::emit_warning(Message const& m)
 {
+  if (!diags) return;
+
   std::cerr << "warning: " << input << ": ";
   dump(std::cerr, m);
   std::cerr << '\n';

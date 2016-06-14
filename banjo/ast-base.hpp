@@ -300,6 +300,9 @@ struct List : std::vector<T*>
   
   std::size_t size() const { return base().size(); }
 
+  T const& operator[](std::size_t n) const { return *base()[n]; }
+  T&       operator[](std::size_t n)       { return *base()[n]; }
+
   T const& front() const { return *base().front(); }
   T&       front()       { return *base().front(); }
 

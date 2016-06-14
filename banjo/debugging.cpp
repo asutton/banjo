@@ -326,7 +326,9 @@ Debug_printer::expression(Expr const& e)
     void operator()(Binary_expr const& e)   { self.binary_expression(e); }
     void operator()(Unary_expr const& e)    { self.unary_expression(e); }
     void operator()(Unparsed_expr const& e) { self.unparsed_expression(e); }
-    void operator()(Bind_init const& e)     { self.initializer(e); }
+    void operator()(Value_conv const& e)    { self.conversion(e); }
+    void operator()(Copy_init const& e)     { self.initialization(e); }
+    void operator()(Bind_init const& e)     { self.initialization(e); }
   };
   apply(e, fn{*this});
 }
@@ -378,10 +380,11 @@ void
 Debug_printer::binary_expression(Binary_expr const& e)
 {
   Sexpr sentinel(*this, e);
-  space();
+  newline_and_indent();
   expression(e.left());
-  space();
+  newline();
   expression(e.right());
+  newline_and_undent();
 }
 
 
@@ -400,11 +403,34 @@ Debug_printer::unparsed_expression(Unparsed_expr const& e)
 
 
 void
-Debug_printer::initializer(Bind_init const& e)
+Debug_printer::conversion(Value_conv const& e)
+{
+  Sexpr guard(*this, e);
+  newline_and_indent();
+  type(e.type()); // TODO: Destination?
+  newline();
+  expression(e.source());
+  newline_and_undent();
+}
+
+
+void
+Debug_printer::initialization(Copy_init const& e)
 {
   Sexpr sentinel(*this, e);
-  space();
+  newline_and_indent();
   expression(e.expression());
+  newline_and_undent();
+}
+
+
+void
+Debug_printer::initialization(Bind_init const& e)
+{
+  Sexpr sentinel(*this, e);
+  newline_and_indent();
+  expression(e.expression());
+  newline_and_undent();
 }
 
 

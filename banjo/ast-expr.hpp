@@ -63,6 +63,25 @@ struct Expr::Mutator
 };
 
 
+// An overloadable expression retains a reference to the function defining
+// it's behavior.
+struct Overloadable
+{
+  Overloadable()
+    : res_(nullptr)
+  { }
+
+  Overloadable(Decl& d)
+    : res_(&d)
+  { }
+
+  Decl const& resolution() const { return *res_; }
+  Decl&       resolution()       { return *res_; }
+
+  Decl* res_;
+};
+
+
 // The family of base classes for literal. This holds a value of the 
 // parameterized type. All literal expressions are inherently value 
 // expressions.
@@ -253,6 +272,18 @@ struct Access_expr : Expr
 
 
 // A resolved reference to a member variable or function.
+//
+// FIXME: This and Scoped_ref can probably go away. We should be
+// able to use an Access_expr (Member_expr?) that contains a Decl_ref
+// as its right-most operand. That is:
+//
+//    (x.y).z
+//
+// would be:
+//
+//    (Member_expr 
+//      (Member_expr (Decl_ref "x") (Decl_ref "y")) 
+//      (Decl_ref "z"))
 struct Member_ref : Access_expr, Allocatable<Member_ref>
 {
   Member_ref(Type& t, Expr& e, Name& n, Decl& d)
@@ -291,9 +322,8 @@ struct Scoped_ref : Access_expr, Allocatable<Scoped_ref>
 };
 
 
-// The base class of all unary expressions. This is parameterized
-// by the derived class, providing default some default operations.
-struct Unary_expr : Expr
+// The base class of all overloadable unary expressions.
+struct Unary_expr : Expr, Overloadable
 {
   Unary_expr(Type& t, Expr& e)
     : Expr(t), op_(&e)
@@ -307,8 +337,8 @@ struct Unary_expr : Expr
 };
 
 
-// The base class of all binary expressions.
-struct Binary_expr : Expr
+// The base class of all overloadable binary expressions.
+struct Binary_expr : Expr, Overloadable
 {
   Binary_expr(Type& t, Expr& e1, Expr& e2)
     : Expr(t), left_(&e1), right_(&e2)
@@ -563,12 +593,12 @@ struct Not_expr : Unary_expr, Allocatable<Not_expr>
 // and instantiated default arguments, and the type is the return
 // type of the function.
 //
-// If the operands are dependent, then the retun type is a fresh
+// If the operands are dependent, then the return type is a fresh
 // placeholder type.
 //
 // TODO: Consider subtyping for [virtual|open| method calls and
 // unresolved calls. It would simplify code generation.
-struct Call_expr : Expr, Allocatable<Call_expr>
+struct Call_expr : Expr, Overloadable, Allocatable<Call_expr>
 {
   Call_expr(Type& t, Expr& e, Expr_list const& a)
     : Expr(t), fn(&e), args(a)
