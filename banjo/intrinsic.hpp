@@ -16,7 +16,13 @@ namespace banjo
 namespace intrinsic
 {
 
-Expr& show_value(Context&, Expr&);
+Value eq_bool(Context&, Value const&, Value const&);
+Value ne_bool(Context&, Value const&, Value const&);
+
+Value eq_int(Context&, Value const&, Value const&);
+Value ne_int(Context&, Value const&, Value const&);
+
+Value show_value(Context&, Value const&);
  
 
 } // namespace intrinsic

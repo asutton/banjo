@@ -7,7 +7,7 @@
 // This module defines the compile-time representation of values within 
 // the abstract machine.
 
-#include "language.hpp"
+#include "prelude.hpp"
 
 #include <cstring>
 

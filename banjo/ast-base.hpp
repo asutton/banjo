@@ -8,6 +8,7 @@
 // supporting structures.
 
 #include "prelude.hpp"
+#include "value.hpp"
 
 #include <lingo/integer.hpp>
 #include <lingo/real.hpp>
@@ -422,9 +423,9 @@ using Expr_pair = std::pair<Expr&, Expr&>;
 
 // Intrinsic function types.
 using Nullary_fn = Expr& (*)(Context&);
-using Unary_fn   = Expr& (*)(Context&, Expr&);
-using Binary_fn  = Expr& (*)(Context&, Expr&, Expr&);
-using Ternary_fn = Expr& (*)(Context&, Expr&, Expr&, Expr&);
+using Unary_fn   = Value (*)(Context&, Value const&);
+using Binary_fn  = Value (*)(Context&, Value const&, Value const&);
+using Ternary_fn = Value (*)(Context&, Value const&, Value const&, Value const&);
 
 
 // Forward declarations of enumerations.

@@ -6,10 +6,153 @@
 #include "context.hpp"
 #include "intrinsic.hpp"
 #include "declaration.hpp"
+#include "debugging.hpp"
 
 
 namespace banjo
 {
+
+namespace
+{
+
+// Indicates a requested type.
+enum Typename {
+  void_obj,
+  bool_obj,
+  byte_obj,
+  int_obj,
+  float_obj,
+};
+
+
+// TODO: Return tr if t is a reference type specifier.
+inline bool
+is_reference(Typename t)
+{
+  return false;
+}
+
+
+// TODO: Return the non-reference typename for t.
+inline Typename
+get_value_type(Typename t)
+{
+  return t;
+}
+
+
+struct Binary_op
+{
+  Operator_kind name;
+  Typename      parms[2];
+  Typename      ret;
+  Binary_fn     def;
+};
+
+
+Type&
+make_value_type(Context& cxt, Typename t)
+{
+  Typename v = get_value_type(t);
+  switch (v) {
+    case bool_obj:
+      return cxt.get_bool_type();
+    case byte_obj:
+      return cxt.get_byte_type();
+    case int_obj:
+      return cxt.get_int_type();
+    default:
+      lingo_unreachable();
+  }
+}
+
+Type&
+make_type(Context& cxt, Typename t)
+{
+  Type& type = make_value_type(cxt, t);
+  if (is_reference(t))
+    return cxt.get_reference_type(type);
+  else
+    return type;
+}
+
+
+Decl&
+make_parm(Context& cxt, Typename t)
+{
+  Name& name = cxt.get_id();
+  Type& type = make_type(cxt, t);
+  return cxt.make_variable_parameter(name, type);
+}
+
+
+template<int N>
+Decl_list
+make_parms(Context& cxt, Typename const (&ts)[N])
+{
+  Decl_list parms;
+  for (Typename t : ts)
+    parms.push_back(make_parm(cxt, t));
+  return parms;
+}
+
+
+// TODO: The return value should be an object.
+Type& 
+make_ret(Context& cxt, Typename t)
+{
+  return make_type(cxt, t);
+}
+
+
+Decl&
+create(Context& cxt, Binary_op const& op)
+{
+  Name& name = cxt.get_id(op.name);
+  Decl_list parms = make_parms(cxt, op.parms);
+  Type& ret = make_ret(cxt, op.ret);
+
+  // Build the function type.
+  Type_list ts;
+  for (Decl& p : parms)
+    ts.push_back(cast<Typed_decl>(p).type());
+  Type& type = cxt.get_function_type(std::move(ts), ret);
+
+  debug(type);
+
+  lingo_unreachable();
+}
+
+
+// Translate a sequence of binary op specifications into definitions.
+template<int N>
+Decl_list
+create(Context& cxt, Binary_op const (&ops)[N])
+{
+  Decl_list ds;
+  for (Binary_op const& op : ops)
+    ds.push_back(create(cxt, op));
+  return ds;
+}
+
+
+} // namespace
+
+
+// Predefine all builtin operators.
+static void
+make_builtin_ops(Context& cxt, Builtins& bi)
+{
+  Binary_op binops[] = {
+    {eq_op, {bool_obj, bool_obj}, bool_obj, intrinsic::eq_int },
+    {ne_op, {bool_obj, bool_obj}, bool_obj, intrinsic::ne_int },
+    
+    {eq_op, {int_obj, int_obj}, int_obj, intrinsic::eq_int },
+    {ne_op, {int_obj, int_obj}, int_obj, intrinsic::ne_int },
+  };
+  create(cxt, binops);
+}
+
 
 #if 0
 
@@ -131,6 +274,9 @@ init_builtins(Context& cxt)
   
   // Create the translation unit.
   bi.tu_ = &cxt.make_translation_unit();
+
+  // Initialize builtin operators
+  make_builtin_ops(cxt, bi);
   
   // Create builtin declarations.
   // Enter_scope scope(cxt, *tu_);  
