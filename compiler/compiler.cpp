@@ -12,6 +12,8 @@
 
 #include <banjo/ast.hpp>
 
+#include <codegen/generator.hpp>
+
 #include <lingo/file.hpp>
 #include <lingo/io.hpp>
 #include <lingo/error.hpp>
@@ -30,7 +32,7 @@ struct Options
 {
   ~Options();
 
-  String   emit    = "banjo";
+  String   emit    = "llvm";
   File_seq inputs  = {};
 };
 
@@ -149,10 +151,11 @@ main(int argc, char* argv[])
   else if (opts.emit == "banjo") {
     std::cout << cxt.translation_unit() << '\n';
   }
-
-  // FIXME: Code generation not re-linked yet.
-  // else if (opts.emit == "llvm") {
-  //   ll::Generator gen(cxt);
-  //   gen(tu);
-  // }
+  else if (opts.emit == "llvm") {
+    std::cout << "-- parsed --\n";
+    std::cout << cxt.translation_unit() << '\n';
+    std::cout << "-- generating --\n";
+    ll::Generator gen(cxt);
+    gen(cxt.translation_unit());
+  }
 }

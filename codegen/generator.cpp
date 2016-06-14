@@ -4,8 +4,8 @@
 #include "generator.hpp"
 
 #include <banjo/ast.hpp>
-#include <banjo/printer.hpp>
 #include <banjo/evaluation.hpp>
+#include <banjo/debugging.hpp>
 
 #include <llvm/IR/Type.h>
 #include <llvm/IR/GlobalVariable.h>
@@ -16,6 +16,8 @@
 #include <llvm/Support/raw_ostream.h>
 
 #include <iostream>
+
+#include <unistd.h>
 
 
 namespace banjo
@@ -35,161 +37,6 @@ Generator::get_name(Decl const& d)
   if (Simple_id const* id = as<Simple_id>(&n))
     return id->symbol().spelling();
   lingo_unhandled(n);
-}
-
-
-// -------------------------------------------------------------------------- //
-// Mapping of types
-//
-// The type generator transforms a beaker type into its correspondiong
-// LLVM type.
-
-
-llvm::Type*
-Generator::get_type(Type const& t)
-{
-  struct fn
-  {
-    Generator& g;
-
-    llvm::Type* operator()(Type const& t)           { lingo_unhandled(t); }
-    llvm::Type* operator()(Void_type const& t)      { return g.get_type(t); }
-    llvm::Type* operator()(Boolean_type const& t)   { return g.get_type(t); }
-    llvm::Type* operator()(Integer_type const& t)   { return g.get_type(t); }
-    llvm::Type* operator()(Byte_type const& t)      { return g.get_type(t); }
-    llvm::Type* operator()(Float_type const& t)     { return g.get_type(t); }
-    llvm::Type* operator()(Function_type const& t)  { return g.get_type(t); }
-    llvm::Type* operator()(Coroutine_type const& t) { return g.get_type(t); }
-    llvm::Type* operator()(Class_type const& t)     { return g.get_type(t); }
-    llvm::Type* operator()(Auto_type const& t)      { return g.get_type(t); }
-    llvm::Type* operator()(Array_type const& t)     { return g.get_type(t); }
-    llvm::Type* operator()(Dynarray_type const& t)  { return g.get_type(t); }
-    llvm::Type* operator()(Tuple_type const& t)    { return g.get_type(t); }
-   };
-  return apply(t, fn{*this});
-}
-
-
-llvm::Type*
-Generator::get_type(Void_type const&)
-{
-  return build.getVoidTy();
-}
-
-
-// Return the 1 bit integer type.
-llvm::Type*
-Generator::get_type(Boolean_type const&)
-{
-  return build.getInt1Ty();
-}
-
-
-// FIXME: This isn't realistic.
-llvm::Type*
-Generator::get_type(Integer_type const& t)
-{
-  return build.getInt32Ty();
-}
-
-llvm::Type*
-Generator::get_type(Byte_type const& t)
-{
-  return build.getInt8Ty();
-}
-
-
-// FIXME: This isn't realistic.
-llvm::Type*
-Generator::get_type(Float_type const&)
-{
-  return build.getDoubleTy();
-}
-
-
-// Return a tuple type.
-llvm::Type*
-Generator::get_type(Tuple_type const& t)
-{
-  Type_list const& ts = t.element_types();
-
-  // Handle the empty case specially.
-  if (ts.empty())
-    return llvm::StructType::get(cxt);
-
-  // Generate a literal struct type.
-  std::vector<llvm::Type*> types;
-  types.reserve(t.element_types().size());
-  for (Type const& t1 : t.element_types())
-    types.push_back(get_type(t1));
-  return llvm::StructType::get(cxt, types);
-}
-
-
-// Return a function type.
-llvm::Type*
-Generator::get_type(Function_type const& t)
-{
-  std::vector<llvm::Type*> parms;
-  parms.reserve(t.parameter_types().size());
-  for (Type const& pt : t.parameter_types())
-    parms.push_back(get_type(pt));
-  llvm::Type* ret = get_type(t.return_type());
-  return llvm::FunctionType::get(ret, parms, false);
-}
-
-llvm::Type*
-Generator::get_type(Coroutine_type const& t)
-{
-  auto const* bind = types.lookup(&t.declaration());
-  if(!bind)
-  {
-    gen(as<Coroutine_decl>(t.declaration()));
-    bind = types.lookup(&t.declaration());
-  }
-  return bind->second;
-}
-
-llvm::Type*
-Generator::get_type(Class_type const& t)
-{
-  auto const* bind = types.lookup(&t.declaration());
-  if (!bind)
-  {
-    gen(as<Class_decl>(t.declaration()));
-    bind = types.lookup(&t.declaration());
-  }
-  return bind->second;
-}
-
-// Return an array type
-llvm::Type*
-Generator::get_type(Array_type const& t) 
-{
-  llvm::Type* t1 = get_type(t.type());
-  Value v = evaluate(banjo, t.extent());
-  return llvm::ArrayType::get(t1, v.get_integer());
-}
-
-
-// Return an array type.
-//
-// FIXME: This is wrong. This should just return a pointer.
-llvm::Type*
-Generator::get_type(Dynarray_type const& t) 
-{
-  llvm::Type* t1 = get_type(t.type());
-  Value v = evaluate(banjo, t.extent());
-  return llvm::ArrayType::get(t1, v.get_integer());
-}
-
-
-// FIXME: This shouldn't exist. We cannot generate code from a
-// non-deduced type.
-llvm::Type*
-Generator::get_type(Auto_type const& t)
-{
-  return build.getInt32Ty();
 }
 
 
@@ -225,10 +72,15 @@ Generator::gen(Expr const& e)
     llvm::Value* operator()(Or_expr const& e)      { return g.gen(e); }
     llvm::Value* operator()(Not_expr const& e)     { return g.gen(e); }
     llvm::Value* operator()(Tuple_expr const& e)   { return g.gen(e); }
-    llvm::Value* operator()(Object_expr const& e)  { return g.gen(e); }
+    llvm::Value* operator()(Variable_ref const& e) { return g.gen(e); }
 
     llvm::Value* operator()(Value_conv const& e)   { return g.gen(e); }
     llvm::Value* operator()(Boolean_conv const& e) { return g.gen(e); }
+
+    llvm::Value* operator()(Unparsed_expr const& e) {
+      debug(e);
+      lingo_unreachable();
+    }
 
     // llvm::Value* operator()(Call_expr const* e) const { return g.gen(e); }
     // llvm::Value* operator()(Dot_expr const* e) const { return g.gen(e); }
@@ -261,10 +113,10 @@ Generator::gen(Integer_expr const& e)
 llvm::Value*
 Generator::gen(Tuple_expr const& e)
 {
-  llvm::Type* type = get_type(e.type());
+  llvm::Type* type = gen_type(e.type());
   llvm::Value* agg = llvm::UndefValue::get(type);
 
-  // Build the tuple through a sequence of insertvalues, putting a
+  // Build the tuple through a sequence of insert values, putting a
   // new value into each index.
   int n = 0;
   for (Expr const& elem : e.elements())
@@ -316,7 +168,7 @@ Generator::gen(Tuple_expr const& e)
 
 // Return the address of the object referenced by the expression.
 llvm::Value*
-Generator::gen(Object_expr const& e)
+Generator::gen(Variable_ref const& e)
 {
   llvm::Value* ret = lookup(e.declaration());
   return ret;
@@ -708,10 +560,10 @@ Generator::gen(Promote_conv const* e)
 
   if(is<Integer_type>(t)) {
     const Integer_type * t2 = dynamic_cast<const Integer_type*>(t);
-    return build.CreateIntCast(v, get_type(t2), t2->is_signed());
+    return build.CreateIntCast(v, gen_type(t2), t2->is_signed());
   }
   else if (is<Float_type>(t) || is<Double_type>(t)) {
-    return build.CreateFPCast(v, get_type(t));
+    return build.CreateFPCast(v, gen_type(t));
   }
 
   else
@@ -752,7 +604,7 @@ void
 Generator::gen_init(llvm::Value* ptr, Default_init const* e)
 {
   Type const* t = e->type();
-  llvm::Type* type = get_type(t);
+  llvm::Type* type = gen_type(t);
   llvm::Value* init = nullptr;
 
   // Scalar types should get a 0 value in the
@@ -827,19 +679,35 @@ Generator::gen(Compound_stmt const& s)
 }
 
 
+void
+Generator::gen(Return_stmt const& s)
+{
+  build.CreateBr(exit);
+}
+
 // Generate a return statement. Note that this does not return directly.
 // We store the return value and then branch to the exit block. This strategy 
 // allows us to execute destructors in the exit block.
 void
-Generator::gen(Return_stmt const& s)
+Generator::gen(Return_value_stmt const& s)
 {
-  llvm::Value* v = gen(s.expression());
-  build.CreateStore(v, ret);
-  build.CreateBr(exit);
+  lingo_unreachable();
+  // llvm::Value* v = gen(s.expression());
+  // build.CreateStore(v, ret);
+  // build.CreateBr(exit);
 }
+
 
 void
 Generator::gen(Yield_stmt const& s)
+{
+  lingo_unreachable();
+  // build.CreateBr(exit);
+}
+
+
+void
+Generator::gen(Yield_value_stmt const& s)
 {
   llvm::Value* v = gen(s.expression());
   build.CreateStore(v, ret);
@@ -958,26 +826,6 @@ Generator::gen(Stmt_list const& s)
     gen(stmt);
 }
 
-#if 0
-// Note that the result of the expression is discarded.
-void
-Generator::gen(Assign_stmt const* s)
-{
-  llvm::Value* lhs = gen(s->object());
-  llvm::Value* rhs = gen(s->value());
-  build.CreateStore(rhs, lhs);
-}
-
-
-
-void
-Generator::gen(Expression_stmt const* s)
-{
-  gen(s->expression());
-}
-
-
-#endif
 
 void
 Generator::gen(Expression_stmt const& s)
@@ -998,7 +846,6 @@ Generator::gen(Decl const& d)
     void operator()(Translation_unit const& d) { return g.gen(d); }
     void operator()(Variable_decl const& d)    { return g.gen(d); }
     void operator()(Function_decl const& d)    { return g.gen(d); }
-    void operator()(Coroutine_decl const& d)   { return g.gen(d); }
 
     // void operator()(Record_decl const& d)    { return g.gen(d); }
     // void operator()(Field_decl const& d)     { return g.gen(d); }
@@ -1046,7 +893,7 @@ Generator::gen_local_variable(Variable_decl const& d)
   // at the beginning of the function. Initialization happens here.
   llvm::BasicBlock& b = fn->getEntryBlock();
   llvm::IRBuilder<> tmp(&b, b.begin());
-  llvm::Type* type = get_type(d.type());
+  llvm::Type* type = gen_type(d.type());
 
   // TODO: Between this and parameter names, I'm convinced I need
   // an easier way to get non-mangled ids.
@@ -1066,7 +913,7 @@ void
 Generator::gen_global_variable(Variable_decl const& d)
 {
   String      name = get_name(d);
-  llvm::Type* type = get_type(d.type());
+  llvm::Type* type = gen_type(d.type());
 
   // Generate a null constant initializer for the global. Note that this 
   // might be overritten by a static initializer later.
@@ -1156,7 +1003,7 @@ void
 Generator::gen(Function_decl const& d)
 {
   String name = get_name(d);
-  llvm::Type* type = get_type(d.type());
+  llvm::Type* type = gen_type(d.type());
 
   // Build the function.
   llvm::FunctionType* ftype = llvm::cast<llvm::FunctionType>(type);
@@ -1249,68 +1096,6 @@ Generator::gen(Function_decl const& d)
   fn = nullptr;
 }
 
-void
-Generator::gen(Coroutine_decl const& d)
-{
-  String name = get_name(d);
-  // llvm::Type* type = get_type(d.type());
-  
-  // This will hold the labels and use an indirect branch inst;
-  std::vector<llvm::BlockAddress*> labels; 
-
-  // The parameters of the coroutine become members of the class, should 
-  // also probably grab them from the definition.
-  std::vector<llvm::Type*> ts;
-  for(auto &mem : d.parameters())
-    ts.push_back(get_type(mem.type()));
-
-  // Create a member variable that stores the execution state of
-  // the coroutne.
-  first = llvm::Type::getInt1Ty(cxt);
-  ts.push_back(first); // This will need to be set in the constructor.
-  llvm::Type* t = llvm::StructType::create(cxt, ts, get_name(d));
-  types.bind(&d, t);
-
-  // Generate the call function
-  Function_def def = as<Function_def>(d.definition());
-
-  gen_coroutine_definition(def, d.type());
-
-  ret = nullptr;
-  fn = nullptr;
-}
-
-// Probably need all of the variables in the def to add them as members 
-// of the struct.
-void
-Generator::gen_coroutine_definition(Function_def const& d, Type const& t)
-{
-  // Probably need to do something else here since yield should set 
-  // a label pointer
-  String name = "call";
-  llvm::Type* type = get_type(t);
-  type->dump();
-  llvm::FunctionType* ftype = llvm::FunctionType::get(get_type(t),false);
-  fn = llvm::Function::Create(
-    ftype,                           // function type
-    llvm::Function::ExternalLinkage, // linkage
-    name,                            // name
-    mod);                            // owning module
-
-  // Build the entry and exit blocks for the function.
-  entry = llvm::BasicBlock::Create(cxt, "entry", fn);
-  exit  = llvm::BasicBlock::Create(cxt, "exit");
-  leave = llvm::BasicBlock::Create(cxt, "leave");
-  reenter = llvm::BasicBlock::Create(cxt, "reenter");
-  build.SetInsertPoint(entry);
-  if (!is<Void_type>(t))
-    ret = build.CreateAlloca(fn->getReturnType());
-  else
-    ret = nullptr;
-
-  // Create a new binding for the variable.
-  gen_function_definition(d);
-}
 
 
 void
@@ -1332,9 +1117,10 @@ Generator::gen(Class_decl const& d)
   // we never have a type with 0 size.
   if (def.objects().empty()) {
     ts.push_back(build.getInt8Ty());
-  } else {
+  } 
+  else {
     for (Decl const& mem : def.objects())
-      ts.push_back(get_type(mem.type()));
+      ts.push_back(gen_type(cast<Typed_decl>(mem).type()));
   }
 
   // Create the llvm type
@@ -1392,13 +1178,13 @@ Generator::gen(Record_decl const* d)
   // represented as an i8* since we haven't generated the
   // the table yet.
   if (Decl const* vr = d->vref())
-    ts.push_back(get_type(vr->type()));
+    ts.push_back(gen_type(vr->type()));
 
   // Add the base class sub-object before fields.
   //
   // TODO: Implement the empty base optimization.
   if (Type const* b = d->base())
-    ts.push_back(get_type(b));
+    ts.push_back(gen_type(b));
 
   // Construct the type over only the fields. If the record
   // is empty, generate a struct with exactly one  byte so that
@@ -1407,7 +1193,7 @@ Generator::gen(Record_decl const* d)
     ts.push_back(build.getInt8Ty());
   } else {
     for (Decl const* f : d->fields())
-      ts.push_back(get_type(f->type()));
+      ts.push_back(gen_type(f->type()));
   }
 
   // This will automatically be added to the module,
@@ -1479,7 +1265,7 @@ Generator::gen_vtable(Record_decl const* d)
   std::vector<llvm::Type*> types;
   std::vector<llvm::Constant*> values;
   for (Decl const* d : vtbl) {
-    llvm::Type* t = llvm::PointerType::getUnqual(get_type(d->type()));
+    llvm::Type* t = llvm::PointerType::getUnqual(gen_type(d->type()));
     types.push_back(t);
 
     llvm::Value* v = stack.lookup(d)->second;
@@ -1573,3 +1359,6 @@ Generator::operator()(Decl const& d)
 } // namespace ll
 
 } // namespace banjo
+
+
+#include "gen-type.cpp"

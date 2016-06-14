@@ -55,6 +55,8 @@ struct Basic_elaborator
 
   // Variables
   void on_variable_declaration(Variable_decl&) { }
+  void on_variable_initializer(Empty_def&) { }
+  void on_variable_initializer(Expression_def&) { }
  
   // Functions
   void start_function_declaration(Function_decl&) { }
@@ -121,6 +123,9 @@ struct Elaborator
 
   // Variables
   void variable_declaration(Variable_decl&);
+  void variable_initializer(Def&);
+  void variable_initializer(Empty_def&);
+  void variable_initializer(Expression_def&);
 
   // Functions
   void function_declaration(Function_decl&);
@@ -294,8 +299,8 @@ template<typename F>
 inline void
 Elaborator<F>::declaration_statement(Declaration_stmt& s)
 {
-  vis.on_declaration_statement(s);
   declaration(s.declaration());
+  vis.on_declaration_statement(s);
 }
 
 
@@ -303,8 +308,8 @@ template<typename F>
 inline void
 Elaborator<F>::expression_statement(Expression_stmt& s)
 {
-  vis.on_expression_statement(s);
   expression(s.expression());
+  vis.on_expression_statement(s);
 }
 
 
@@ -325,12 +330,52 @@ Elaborator<F>::declaration(Decl& d)
 }
 
 
+// -------------------------------------------------------------------------- //
+// Variable declarations
+
 template<typename F>
 inline void
 Elaborator<F>::variable_declaration(Variable_decl& d)
 {
+  variable_initializer(d.initializer());
   vis.on_variable_declaration(d);
 }
+
+
+template<typename F>
+inline void
+Elaborator<F>::variable_initializer(Def& d)
+{
+  struct fn
+  {
+    Self& elab;
+    void operator()(Def& d)            { lingo_unhandled(d); }
+    void operator()(Empty_def& d)      { elab.variable_initializer(d); }
+    void operator()(Expression_def& d) { elab.variable_initializer(d); }
+  };
+  apply(d, fn{*this});
+}
+
+
+template<typename F>
+inline void
+Elaborator<F>::variable_initializer(Empty_def& d)
+{
+  vis.on_variable_initializer(d);
+}
+
+
+template<typename F>
+inline void
+Elaborator<F>::variable_initializer(Expression_def& d)
+{
+  expression(d.expression());
+  vis.on_variable_initializer(d);
+}
+
+
+// -------------------------------------------------------------------------- //
+// Function declarations
 
 
 template<typename F>

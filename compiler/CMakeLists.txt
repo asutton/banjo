@@ -32,15 +32,13 @@ add_library(banjo-fe
   elab-expressions.cpp
 )
 target_compile_definitions(banjo-fe PUBLIC ${LLVM_DEFINITIONS})
-target_include_directories(banjo-fe
-  PUBLIC
+target_include_directories(banjo-fe PUBLIC
     "$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR};${PROJECT_BINARY_DIR}>"
     ${lingo_SOURCE_DIR}
     ${Boost_INCLUDE_DIRS}
     ${LLVM_INCLUDE_DIRS}
 )
-target_link_libraries(banjo-fe
-PUBLIC
+target_link_libraries(banjo-fe PUBLIC
   banjo
   lingo
   ${Boost_LIBRARIES}
@@ -52,7 +50,7 @@ PUBLIC
 
 # The compiler is the main driver for compilation.
 add_executable(banjo-compile compiler.cpp)
-target_link_libraries(banjo-compile banjo banjo-fe)
+target_link_libraries(banjo-compile banjo banjo-llvm banjo-fe)
 
 # A simple expression calculator.
 add_executable(banjo-calc calc.cpp)

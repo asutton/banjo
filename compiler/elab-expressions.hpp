@@ -23,10 +23,8 @@ struct Elaborate_expressions : Basic_elaborator
 {
   using Basic_elaborator::Basic_elaborator;
 
-  // Bring hidden names into scope.
   using Basic_elaborator::on_return_statement;
   using Basic_elaborator::on_yield_statement;
-
   void on_return_statement(Return_value_stmt&);
   void on_yield_statement(Yield_value_stmt&);
   void on_if_statement(If_then_stmt&);
@@ -34,7 +32,9 @@ struct Elaborate_expressions : Basic_elaborator
   void on_while_statement(While_stmt&);
   void on_expression_statement(Expression_stmt&);
 
-  void on_variable_declaration(Variable_decl&);
+  using Basic_elaborator::on_variable_initializer;
+  void on_variable_initializer(Expression_def&);
+  
   void on_function_definition(Expression_def&);
 
   Expr& get_expr(Expr&);

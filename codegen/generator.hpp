@@ -37,13 +37,13 @@ enum {
 // Used to maintain a mapping of Beaker declarations to their corresponding
 // LLVM declarations. This is used to track the names of globals and
 // parameters.
-using Symbol_env = Environment<Decl const*, llvm::Value*>;
-using Symbol_stack = Stack<Symbol_env>;
+using Symbol_env = lingo::Environment<Decl const*, llvm::Value*>;
+using Symbol_stack = lingo::Stack<Symbol_env>;
 
 
 // Like the symbol environment, except that all
 // type annotations are global.
-using Type_env = Environment<Decl const*, llvm::Type*>;
+using Type_env = lingo::Environment<Decl const*, llvm::Type*>;
 
 
 struct Generator
@@ -54,25 +54,24 @@ struct Generator
 
   String get_name(Decl const&);
 
-  llvm::Type* get_type(Type const&);
-  llvm::Type* get_type(Void_type const&);
-  llvm::Type* get_type(Boolean_type const&);
-  llvm::Type* get_type(Integer_type const&);
-  llvm::Type* get_type(Byte_type const&);
-  llvm::Type* get_type(Float_type const&);
-  llvm::Type* get_type(Tuple_type const&);
-  llvm::Type* get_type(Function_type const&);
-  llvm::Type* get_type(Array_type const&);
-  llvm::Type* get_type(Dynarray_type const&);
-  llvm::Type* get_type(Auto_type const&);
-  llvm::Type* get_type(Coroutine_type const&);
-  llvm::Type* get_type(Class_type const&);
+  llvm::Type* gen_type(Type const&);
+  llvm::Type* gen_type(Void_type const&);
+  llvm::Type* gen_type(Boolean_type const&);
+  llvm::Type* gen_type(Integer_type const&);
+  llvm::Type* gen_type(Byte_type const&);
+  llvm::Type* gen_type(Float_type const&);
+  llvm::Type* gen_type(Function_type const&);
+  llvm::Type* gen_type(Array_type const&);
+  llvm::Type* gen_type(Tuple_type const&);
+  llvm::Type* gen_type(Pointer_type const&);
+  llvm::Type* gen_type(Class_type const&);
 
   llvm::Value* gen(Expr const&);
   llvm::Value* gen(Boolean_expr const&);
   llvm::Value* gen(Integer_expr const&);
   llvm::Value* gen(Tuple_expr const&);
-  llvm::Value* gen(Object_expr const&);
+  llvm::Value* gen(Variable_ref const&);
+  llvm::Value* gen(Function_ref const&);
 
   // Arithmetic expressions
   llvm::Value* gen(Real_expr const&);
@@ -107,7 +106,9 @@ struct Generator
   void gen(Empty_stmt const&);
   void gen(Compound_stmt const&);
   void gen(Return_stmt const&);
+  void gen(Return_value_stmt const&);
   void gen(Yield_stmt const&);
+  void gen(Yield_value_stmt const&);
   void gen(If_then_stmt const&);
   void gen(If_else_stmt const&);
   void gen(While_stmt const&);
@@ -117,9 +118,13 @@ struct Generator
   void gen(Declaration_stmt const&);
   void gen(Stmt_list const&);
 
-
+  // Declarations
   void gen(Decl const&);
+
+  // Modules
   void gen(Translation_unit const&);
+
+  // Variable declarations
   void gen(Variable_decl const&);
   void gen_local_variable(Variable_decl const&);
   void gen_global_variable(Variable_decl const&);
@@ -127,14 +132,17 @@ struct Generator
   void gen_global_init(llvm::Value*, Def const&);
   void gen_init(llvm::Value*, Empty_def const&);
   void gen_init(llvm::Value*, Expression_def const&);
+
+  // Function declarations
   void gen(Function_decl const&);
   void gen_function_definition(Def const&);
   void gen_function_definition(Function_def const&);
+
+  // Class declarations
   void gen(Type_decl const&);
-  void gen(Object_parm const&);
-  void gen(Coroutine_decl const&);
   void gen(Class_decl const&);
-  void gen_coroutine_definition(Function_def const&, Type const&);
+
+  void gen(Variable_parm const&);
 
   // Name  bindings
   void declare(Decl const&, llvm::Value*);

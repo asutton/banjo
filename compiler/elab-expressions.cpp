@@ -67,30 +67,12 @@ Elaborate_expressions::on_expression_statement(Expression_stmt& s)
 // -------------------------------------------------------------------------- //
 // Declarations
 
-// Perform a series of checks and transformations on the declared
-// type of d to yield a complete, deduced type.
-template<typename Init>
-static Type&
-get_complete_type(Context& cxt, Init& decl)
-{
-  deduce_declared_type(cxt, decl, decl.initializer());
-  
-  // Ensure the completeness of the type's definition. Most types are
-  // always complete. Class types are complete only when they have been
-  // fully elaborated. The completeness of array and tuple types depend
-  // on the completeness of their members, etc.
-  //
-  // FIXME: Implement this.
-
-  return decl.type();
-}
-
-
 
 void
-Elaborate_expressions::on_variable_declaration(Variable_decl& d)
+Elaborate_expressions::on_variable_initializer(Expression_def& d)
 {
-  // debug(d.initializer());
+  d.expr_ = &get_expr(d.expression());
+  debug(d.expression());
 }
 
 
