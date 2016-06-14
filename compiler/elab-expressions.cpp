@@ -72,7 +72,6 @@ void
 Elaborate_expressions::on_variable_initializer(Expression_def& d)
 {
   d.expr_ = &get_expr(d.expression());
-  debug(d.expression());
 }
 
 
