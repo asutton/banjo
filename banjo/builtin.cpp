@@ -117,10 +117,12 @@ create(Context& cxt, Binary_op const& op)
   for (Decl& p : parms)
     ts.push_back(cast<Typed_decl>(p).type());
   Type& type = cxt.get_function_type(std::move(ts), ret);
+  
+  Def& def = cxt.make_function_definition(op.def);
 
-  debug(type);
-
-  lingo_unreachable();
+  Decl& fn = cxt.make_function_declaration(name, type, std::move(parms), def);
+  debug(fn);
+  return fn;
 }
 
 

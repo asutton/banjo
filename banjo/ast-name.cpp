@@ -7,6 +7,40 @@
 namespace banjo
 {
 
+
+char const*
+Operator_id::spelling() const
+{
+  switch (op_) {
+    case add_op: return "+";
+    case sub_op: return "-";
+    case mul_op: return "*";
+    case div_op: return "/";
+    case rem_op: return "%";
+    case bit_and_op: return "&";
+    case bit_or_op: return "|";
+    case bit_xor_op: return "^";
+    case bit_not_op: return "~";
+    case bit_lsh_op: return "<<";
+    case bit_rsh_op: return ">>";
+    case eq_op: return "==";
+    case ne_op: return "!=";
+    case lt_op: return "<";
+    case gt_op: return ">";
+    case le_op: return "<=";
+    case ge_op: return ">=";
+    case cmp_op: return "<=>";
+    case and_op: return "&&";
+    case or_op: return "||";
+    case not_op: return "!";
+    case call_op: return "()";
+    case index_op: return "[]";
+    case assign_op: return "=";
+    default: lingo_unreachable();
+  }
+}
+
+
 Concept_decl const&
 Concept_id::declaration() const
 {

@@ -94,28 +94,32 @@ struct Placeholder_id : Name, Allocatable<Placeholder_id>
 
 
 // Kinds of operator names.
-//
-// TODO: I'm missing bitwise and logical operators.
 enum Operator_kind : int
 {
-  add_op,    // +
-  sub_op,    // -
-  mul_op,    // *
-  div_op,    // /
-  rem_op,    // %
-  eq_op,     // ==
-  ne_op,     // !=
-  lt_op,     // <
-  gt_op,     // >
-  le_op,     // <=
-  ge_op,     // >=
-  cmp_op,    // <=>
-  and_op,    // &&
-  or_op,     // ||
-  not_op,    // !
-  call_op,   // ()
-  index_op,  // []
-  assign_op, // =
+  add_op,     // +
+  sub_op,     // -
+  mul_op,     // *
+  div_op,     // /
+  rem_op,     // %
+  bit_and_op, // &
+  bit_or_op,  // |
+  bit_xor_op, // ^
+  bit_not_op, // ~
+  bit_lsh_op, // <<
+  bit_rsh_op, // >>
+  eq_op,      // ==
+  ne_op,      // !=
+  lt_op,      // <
+  gt_op,      // >
+  le_op,      // <=
+  ge_op,      // >=
+  cmp_op,     // <=>
+  and_op,     // &&
+  or_op,      // ||
+  not_op,     // !
+  call_op,    // ()
+  index_op,   // []
+  assign_op,  // =
 };
 
 
@@ -125,16 +129,19 @@ enum Operator_kind : int
 struct Operator_id : Name, Allocatable<Operator_id>
 {
   Operator_id(Operator_kind k)
-    : op(k)
+    : op_(k)
   { }
 
   void accept(Visitor& v) const { v.visit(*this); };
   void accept(Mutator& v)       { v.visit(*this); };
 
   // Returns the operator kind.
-  Operator_kind kind() const { return op; }
+  Operator_kind kind() const { return op_; }
 
-  Operator_kind op;
+  // Returns the spelling of the operator kind.
+  char const* spelling() const;
+
+  Operator_kind op_;
 };
 
 

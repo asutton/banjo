@@ -42,6 +42,7 @@ struct Debug_printer
   // Unresolved names
   void id(Name const&);
   void simple_id(Simple_id const&);
+  void operator_id(Operator_id const&);
 
   // Types
   void type(Type const&);
@@ -83,6 +84,10 @@ struct Debug_printer
   
   // Functions
   void function_declaration(Function_decl const&);
+  void function_definition(Def const&);
+  void function_definition(Expression_def const&);
+  void function_definition(Function_def const&);
+  void function_definition(Intrinsic_def const&);
 
   // Constraints
   void constraint(Cons const&);

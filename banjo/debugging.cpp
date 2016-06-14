@@ -170,8 +170,9 @@ Debug_printer::id(Name const& n)
   struct fn
   {
     Debug_printer& self;
-    void operator()(Name const& n)      { lingo_unhandled(n); }
-    void operator()(Simple_id const& n) { self.simple_id(n); }
+    void operator()(Name const& n)        { lingo_unhandled(n); }
+    void operator()(Simple_id const& n)   { self.simple_id(n); }
+    void operator()(Operator_id const& n) { self.operator_id(n); }
   };
   apply(n, fn{*this});
 }
@@ -183,6 +184,15 @@ Debug_printer::simple_id(Simple_id const& n)
   Sexpr guard(*this, n);
   space();
   os << '"' << n.symbol().spelling() << '"';
+}
+
+
+void
+Debug_printer::operator_id(Operator_id const& n)
+{
+  Sexpr guard(*this, n);
+  space();
+  os << n.spelling();
 }
 
 
@@ -515,13 +525,54 @@ Debug_printer::function_declaration(Function_decl const& d)
   newline_and_indent();
   id(d.name());
   newline();
-  type(d.type());
-  
-  // FIXME: Implement this.
-  // newline();
-  // function_body(d.def());
-  
+  type(d.type());  
+  newline();
+  function_definition(d.definition());
   newline_and_undent();
+}
+
+
+void
+Debug_printer::function_definition(Def const& d)
+{
+  struct fn
+  {
+    Debug_printer& self;
+    void operator()(Def const& d)            { lingo_unhandled(d); }
+    void operator()(Expression_def const& d) { self.function_definition(d); }
+    void operator()(Function_def const& d)   { self.function_definition(d); }
+    void operator()(Intrinsic_def const& d)  { self.function_definition(d); }
+  };
+  apply(d, fn{*this});
+}
+
+
+void
+Debug_printer::function_definition(Expression_def const& d)
+{
+  Sexpr guard(*this, d);
+  newline_and_indent();
+  expression(d.expression());
+  newline_and_undent();
+}
+
+
+void
+Debug_printer::function_definition(Function_def const& d)
+{
+  Sexpr guard(*this, d);
+  newline_and_indent();
+  statement(d.statement());
+  newline_and_undent();
+}
+
+
+// TODO: Print any other useful information about intrinsics? The
+// function object/name?
+void
+Debug_printer::function_definition(Intrinsic_def const& d)
+{
+  Sexpr guard(*this, d);
 }
 
 
