@@ -43,6 +43,7 @@ struct Debug_printer
   void id(Name const&);
   void simple_id(Simple_id const&);
   void operator_id(Operator_id const&);
+  void conversion_id(Conversion_id const&);
 
   // Types
   void type(Type const&);

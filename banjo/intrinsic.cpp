@@ -19,7 +19,7 @@ namespace intrinsic
 // Boolean intrinsics
 
 Value
-eq_bool(Context& cxt, Value const& a, Value const& b)
+bool_eq(Context& cxt, Value const& a, Value const& b)
 {
   lingo_unreachable();
 }
@@ -27,7 +27,35 @@ eq_bool(Context& cxt, Value const& a, Value const& b)
 
 // Compare two integer expressions for inequality.
 Value
-ne_bool(Context& cxt, Value const& a, Value const& b)
+bool_ne(Context& cxt, Value const& a, Value const& b)
+{
+  lingo_unreachable();
+}
+
+
+Value
+bool_and(Context&, Value const&, Value const&)
+{
+  lingo_unreachable();
+}
+
+
+Value
+bool_or(Context&, Value const&, Value const&)
+{
+  lingo_unreachable();
+}
+
+
+Value
+bool_not(Context&, Value const&)
+{
+  lingo_unreachable();
+}
+
+
+Value
+bool_to_int(Context& cxt, Value const&)
 {
   lingo_unreachable();
 }
@@ -38,7 +66,7 @@ ne_bool(Context& cxt, Value const& a, Value const& b)
 
 // Compare two integer expressions for equality.
 Value
-eq_int(Context& cxt, Value const& a, Value const& b)
+int_eq(Context& cxt, Value const& a, Value const& b)
 {
   lingo_unreachable();
 }
@@ -46,7 +74,84 @@ eq_int(Context& cxt, Value const& a, Value const& b)
 
 // Compare two integer expressions for inequality.
 Value
-ne_int(Context& cxt, Value const& a, Value const& b)
+int_ne(Context& cxt, Value const& a, Value const& b)
+{
+  lingo_unreachable();
+}
+
+
+Value
+int_lt(Context&, Value const&, Value const&)
+{
+  lingo_unreachable();
+}
+
+
+Value
+int_gt(Context&, Value const&, Value const&)
+{
+  lingo_unreachable();
+}
+
+
+Value
+int_le(Context&, Value const&, Value const&)
+{
+  lingo_unreachable();
+}
+
+
+Value
+int_ge(Context&, Value const&, Value const&)
+{
+  lingo_unreachable();
+}
+
+
+Value
+int_cmp(Context&, Value const&, Value const&)
+{
+  lingo_unreachable();
+}
+
+
+Value
+int_add(Context&, Value const&, Value const&)
+{
+  lingo_unreachable();
+}
+
+
+Value
+int_sub(Context&, Value const&, Value const&)
+{
+  lingo_unreachable();
+}
+
+
+Value
+int_mul(Context&, Value const&, Value const&)
+{
+  lingo_unreachable();
+}
+
+
+Value
+int_div(Context&, Value const&, Value const&)
+{
+  lingo_unreachable();
+}
+
+
+Value
+int_rem(Context&, Value const&, Value const&)
+{
+  lingo_unreachable();
+}
+
+
+Value
+int_to_bool(Context& cxt, Value const&)
 {
   lingo_unreachable();
 }

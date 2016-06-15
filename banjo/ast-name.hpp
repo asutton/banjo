@@ -124,8 +124,6 @@ enum Operator_kind : int
 
 
 // An identifier of an overloaded operator.
-//
-// TODO: Implement me.
 struct Operator_id : Name, Allocatable<Operator_id>
 {
   Operator_id(Operator_kind k)
@@ -146,12 +144,20 @@ struct Operator_id : Name, Allocatable<Operator_id>
 
 
 // An identifier of a conversion function.
-//
-// TODO: Implement me.
-struct Conversion_id : Name
+struct Conversion_id : Name, Allocatable<Conversion_id>
 {
+  Conversion_id(Type& t)
+    : type_(&t)
+  { }
+
   void accept(Visitor& v) const { v.visit(*this); };
   void accept(Mutator& v)       { v.visit(*this); };
+
+  // Returns the destination type of the conversions.
+  Type const& type() const { return *type_; }
+  Type&       type()       { return *type_; }
+
+  Type* type_;
 };
 
 

@@ -66,6 +66,13 @@ Builder::get_id(Operator_kind k)
 }
 
 
+Conversion_id&
+Builder::get_conversion_id(Type& t)
+{
+  return Conversion_id::make(alloc_, t);
+}
+
+
 // // Returns a destructor-id for the given type.
 // Destructor_id&
 // Builder::get_destructor_id(Type const& t)

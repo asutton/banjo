@@ -170,9 +170,10 @@ Debug_printer::id(Name const& n)
   struct fn
   {
     Debug_printer& self;
-    void operator()(Name const& n)        { lingo_unhandled(n); }
-    void operator()(Simple_id const& n)   { self.simple_id(n); }
-    void operator()(Operator_id const& n) { self.operator_id(n); }
+    void operator()(Name const& n)          { lingo_unhandled(n); }
+    void operator()(Simple_id const& n)     { self.simple_id(n); }
+    void operator()(Operator_id const& n)   { self.operator_id(n); }
+    void operator()(Conversion_id const& n) { self.conversion_id(n); }
   };
   apply(n, fn{*this});
 }
@@ -193,6 +194,16 @@ Debug_printer::operator_id(Operator_id const& n)
   Sexpr guard(*this, n);
   space();
   os << n.spelling();
+}
+
+
+void
+Debug_printer::conversion_id(Conversion_id const& n)
+{
+  Sexpr guard(*this, n);
+  newline_and_indent();
+  type(n.type());
+  newline_and_undent();
 }
 
 

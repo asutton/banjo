@@ -157,6 +157,14 @@ hash_operator_id(A& h, Operator_id const& n)
 
 
 template<typename A>
+inline void
+hash_conversion_id(A& h, Conversion_id const& n)
+{
+  hash_append(h, n.type());
+}
+
+
+template<typename A>
 void
 hash_append(A& h, Name const& n)
 {
@@ -168,6 +176,7 @@ hash_append(A& h, Name const& n)
     void operator()(Global_id const& n)      { }
     void operator()(Placeholder_id const& n) { return hash_placeholder_id(h, n); }
     void operator()(Operator_id const& n)    { return hash_operator_id(h, n); }
+    void operator()(Conversion_id const& n)  { return hash_conversion_id(h, n); }
   };
   hash_append(h, typeid(n));
   apply(n, fn{h});
@@ -278,7 +287,7 @@ hash_binary_expr(A& h, Binary_expr const& e)
 
 template<typename A>
 void
-hash_del_ref(A& h, Decl_ref const& e)
+hash_decl_ref(A& h, Decl_ref const& e)
 {
   hash_append(h, e.declaration());
 }
@@ -286,7 +295,7 @@ hash_del_ref(A& h, Decl_ref const& e)
 
 template<typename A>
 void
-hash_member_expr(A& h, Member_ref const& e)
+hash_member_ref(A& h, Member_ref const& e)
 {
   hash_append(h, e.declaration());
 }

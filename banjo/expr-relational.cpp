@@ -36,7 +36,6 @@ make_eq(Context& cxt, Expr& e1, Expr& e2)
   Expr_list& args = res.arguments();
   Eq_expr& e = cxt.make_eq(fn.return_type(), args[0], args[1]);
   e.res_ = &fn;
-  debug(e);
   return e;
 }
 

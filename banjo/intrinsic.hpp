@@ -16,12 +16,39 @@ namespace banjo
 namespace intrinsic
 {
 
-Value eq_bool(Context&, Value const&, Value const&);
-Value ne_bool(Context&, Value const&, Value const&);
+// Boolean relations
+Value bool_eq(Context&, Value const&, Value const&);
+Value bool_ne(Context&, Value const&, Value const&);
 
-Value eq_int(Context&, Value const&, Value const&);
-Value ne_int(Context&, Value const&, Value const&);
+// Boolean logic
+Value bool_and(Context&, Value const&, Value const&);
+Value bool_or(Context&, Value const&, Value const&);
+Value bool_not(Context&, Value const&);
 
+// Boolean conversions
+Value bool_to_int(Context&, Value const&);
+
+// Integer relations
+Value int_eq(Context&, Value const&, Value const&);
+Value int_ne(Context&, Value const&, Value const&);
+Value int_lt(Context&, Value const&, Value const&);
+Value int_gt(Context&, Value const&, Value const&);
+Value int_le(Context&, Value const&, Value const&);
+Value int_ge(Context&, Value const&, Value const&);
+Value int_cmp(Context&, Value const&, Value const&);
+
+// Integer arithmetic
+Value int_add(Context&, Value const&, Value const&);
+Value int_sub(Context&, Value const&, Value const&);
+Value int_mul(Context&, Value const&, Value const&);
+Value int_div(Context&, Value const&, Value const&);
+Value int_rem(Context&, Value const&, Value const&);
+
+// Integer conversions
+Value int_to_bool(Context&, Value const&);
+
+
+// Miscellaneous function
 Value show_value(Context&, Value const&);
  
 

@@ -40,7 +40,9 @@ struct Builder
   Simple_id&      get_id(Token const&);
   Placeholder_id& get_id();
   Operator_id&    get_id(Operator_kind);
-  // Conversion_id&  get_id();
+  
+  Conversion_id&  get_conversion_id(Type&);
+  
   // Literal_id&     get_id();
   // Destructor_id&  get_destructor_id(Type const&);
   // Template_id&    get_template_id(Template_decl&, Term_list const&);
