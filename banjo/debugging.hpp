@@ -44,6 +44,7 @@ struct Debug_printer
   void simple_id(Simple_id const&);
   void operator_id(Operator_id const&);
   void conversion_id(Conversion_id const&);
+  void placeholder_id(Placeholder_id const&);
 
   // Types
   void type(Type const&);
@@ -62,6 +63,7 @@ struct Debug_printer
   void id_expression(Id_expr const&);
   void unary_expression(Unary_expr const&);
   void binary_expression(Binary_expr const&);
+  void call_expression(Call_expr const&);
   void unparsed_expression(Unparsed_expr const&);
 
   // Conversion
@@ -73,8 +75,13 @@ struct Debug_printer
 
   // Statements
   void statement(Stmt const&);
+  void compound_statement(Compound_stmt const&);
+  void if_statement(If_then_stmt const&);
+  void if_statement(If_else_stmt const&);
   void return_statement(Return_stmt const&);
   void return_statement(Return_value_stmt const&);
+  void expression_statement(Expression_stmt const&);
+  void declaration_statement(Declaration_stmt const&);
 
   // Declarations
   void declaration(Decl const&);
@@ -91,6 +98,7 @@ struct Debug_printer
   // Functions
   void function_declaration(Function_decl const&);
   void function_definition(Def const&);
+  void function_definition(Empty_def const&);
   void function_definition(Expression_def const&);
   void function_definition(Function_def const&);
   void function_definition(Intrinsic_def const&);

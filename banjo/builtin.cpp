@@ -229,8 +229,8 @@ make_builtin_ops(Context& cxt, Builtins& bi)
     {or_op,  {bool_obj, bool_obj}, bool_obj, intrinsic::bool_or },
     
     // int relations
-    {eq_op, {int_obj, int_obj}, int_obj, intrinsic::int_eq },
-    {ne_op, {int_obj, int_obj}, int_obj, intrinsic::int_ne },
+    {eq_op, {int_obj, int_obj}, bool_obj, intrinsic::int_eq },
+    {ne_op, {int_obj, int_obj}, bool_obj, intrinsic::int_ne },
     {lt_op, {int_obj, int_obj}, bool_obj, intrinsic::int_lt },
     {gt_op, {int_obj, int_obj}, bool_obj, intrinsic::int_gt },
     {le_op, {int_obj, int_obj}, bool_obj, intrinsic::int_le },
@@ -238,11 +238,11 @@ make_builtin_ops(Context& cxt, Builtins& bi)
     {cmp_op, {int_obj, int_obj}, bool_obj, intrinsic::int_cmp },
 
     // int arithmetic
-    {add_op, {int_obj, int_obj}, bool_obj, intrinsic::int_add },
-    {sub_op, {int_obj, int_obj}, bool_obj, intrinsic::int_sub },
-    {mul_op, {int_obj, int_obj}, bool_obj, intrinsic::int_mul },
-    {div_op, {int_obj, int_obj}, bool_obj, intrinsic::int_div },
-    {rem_op, {int_obj, int_obj}, bool_obj, intrinsic::int_rem },
+    {add_op, {int_obj, int_obj}, int_obj, intrinsic::int_add },
+    {sub_op, {int_obj, int_obj}, int_obj, intrinsic::int_sub },
+    {mul_op, {int_obj, int_obj}, int_obj, intrinsic::int_mul },
+    {div_op, {int_obj, int_obj}, int_obj, intrinsic::int_div },
+    {rem_op, {int_obj, int_obj}, int_obj, intrinsic::int_rem },
   };
 
   Unary_op unops[] = {

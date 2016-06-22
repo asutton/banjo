@@ -14,26 +14,6 @@ namespace banjo
 // -------------------------------------------------------------------------- //
 // Scope definitions
 
-// Hash pointers to names.
-struct Name_hash
-{
-  std::size_t operator()(Name const* n) const
-  {
-    hash<fnv1a_hash> h;
-    return h(*n);
-  }
-};
-
-
-// Compare pointers to names.
-struct Name_eq
-{
-  bool operator()(Name const* a, Name const* b) const
-  {
-    return is_equivalent(*a, *b);
-  }
-};
-
 
 // Maps names to overload sets.
 using Name_map = std::unordered_map<Name const*, Overload_set, Name_hash, Name_eq>;

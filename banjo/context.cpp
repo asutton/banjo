@@ -3,8 +3,9 @@
 
 #include "context.hpp"
 #include "ast.hpp"
-#include "builder.hpp"
 #include "scope.hpp"
+#include "declaration.hpp"
+#include "debugging.hpp"
 
 #include <lingo/io.hpp>
 
@@ -116,6 +117,49 @@ Context::emit_info(Message const& m)
 {
   dump(std::cerr, m);
 }
+
+
+// Create a function call operator for the given declaration. We guarantee 
+// that the operator is unique for all functions of equivalent type.
+Decl&
+Context::synthesize_call_operator(Function_decl& d)
+{
+  // Don't synthesize the operator twice.
+  auto iter = op_calls_.find(&d.type());
+  if (iter != op_calls_.end())
+    return *iter->second;
+
+  // Build the parameters for the operator.
+  //
+  // TODO: Do I need to clone the parameters?
+  Decl_list& ps = d.parameters();
+  Decl& fp = make_variable_parameter(get_id(), d.type());
+  Decl_list ps2 = {&fp};
+  for (Decl&  p : ps) ps2.push_back(p);
+
+  // Build the function type.
+  //
+  // TODO: Do I need to clone the types?
+  Type_list& ts = d.type().parameter_types();
+  Type_list ts2 = {&d.type()};
+  for (Type& t : ts) ts2.push_back(t);
+  Type& type = get_function_type(std::move(ts2), d.return_type());
+
+  // Declare the function in the global scope.
+  //
+  // FIXME: Generate an intrinsic definition of the operator. The
+  // behavior should be to simply set up a call the named function.
+  Name& name = get_id(call_op);
+  Decl& op = make_function_declaration(name, type, std::move(ps2));
+  
+  declare(*this, global_scope(), op);
+
+  // Remember the operator.
+  op_calls_.insert({&d.type(), &op});
+
+  return op;
+}
+
 
 
 } // namespace banjo

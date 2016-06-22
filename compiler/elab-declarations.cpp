@@ -39,6 +39,11 @@ Elaborate_declarations::enter_function_declaration(Function_decl& d)
   Type& ret = get_type(d.return_type());
   d.type_ = &cxt.get_function_type(std::move(ts), ret);
   check(d);
+
+  // Build and declare the function's call operator.
+  //
+  // TODO: Synthesize equality operators also?
+  d.call_ = &cxt.synthesize_call_operator(d);
 }
 
 

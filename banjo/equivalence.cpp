@@ -59,16 +59,16 @@ is_equivalent(Placeholder_id const& n1, Placeholder_id const& n2)
 
 // they are operator-function-ids formed with the same operator
 inline bool
-is_equivalent(Operator_id const& n1, Operator_id const& n2)
+eq_operator_id(Operator_id const& n1, Operator_id const& n2)
 {
   return n1.kind() == n2.kind();
 }
 
 
 inline bool
-is_equivalent(Conversion_id const& n1, Conversion_id const& n2)
+eq_conversion_id(Conversion_id const& n1, Conversion_id const& n2)
 {
-  lingo_unreachable();
+  return is_equivalent(n1.type(), n2.type());
 }
 
 
@@ -116,8 +116,8 @@ is_equivalent(Name const& n1, Name const& n2)
     bool operator()(Simple_id const& n1)      { return is_equivalent(n1, cast<Simple_id>(n2)); }
     bool operator()(Global_id const& n1)      { lingo_unreachable(); }
     bool operator()(Placeholder_id const& n1) { return is_equivalent(n1, cast<Placeholder_id>(n2)); }
-    bool operator()(Operator_id const& n1)    { return is_equivalent(n1, cast<Operator_id>(n2)); }
-    bool operator()(Conversion_id const& n1)  { return is_equivalent(n1, cast<Conversion_id>(n2)); }
+    bool operator()(Operator_id const& n1)    { return eq_operator_id(n1, cast<Operator_id>(n2)); }
+    bool operator()(Conversion_id const& n1)  { return eq_conversion_id(n1, cast<Conversion_id>(n2)); }
     bool operator()(Literal_id const& n1)     { return is_equivalent(n1, cast<Literal_id>(n2)); }
     bool operator()(Destructor_id const& n1)  { return is_equivalent(n1, cast<Destructor_id>(n2)); }
     bool operator()(Template_id const& n1)    { return is_equivalent(n1, cast<Template_id>(n2)); }

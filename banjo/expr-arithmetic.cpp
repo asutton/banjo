@@ -2,13 +2,7 @@
 // All rights reserved
 
 #include "expression.hpp"
-#include "ast-type.hpp"
-#include "ast-expr.hpp"
-#include "context.hpp"
-#include "type.hpp"
-#include "constraint.hpp"
-#include "lookup.hpp"
-#include "conversion.hpp"
+#include "debugging.hpp"
 
 #include <iostream>
 
@@ -16,54 +10,49 @@
 namespace banjo
 {
 
-// FIXME: These are just stubbed out for now. Actually convert arguments
-// as needed.
 
 Expr&
 make_add(Context& cxt, Expr& e1, Expr& e2)
 {
-  Type& t = cxt.get_int_type();
-  return cxt.make_add(t, e1, e2);
+  // auto& ret = make_operator(cxt, add_op, e1, e2, &Context::make_add);
+  // debug(ret);
+  // return ret;
+  return make_operator(cxt, add_op, e1, e2, &Context::make_add);
 }
 
 
 Expr&
 make_sub(Context& cxt, Expr& e1, Expr& e2)
 {
-  Type& t = cxt.get_int_type();
-  return cxt.make_sub(t, e1, e2);
+  return make_operator(cxt, sub_op, e1, e2, &Context::make_sub);
 }
 
 
 Expr&
 make_mul(Context& cxt, Expr& e1, Expr& e2)
 {
-  Type& t = cxt.get_int_type();
-  return cxt.make_mul(t, e1, e2);
+  return make_operator(cxt, mul_op, e1, e2, &Context::make_mul);
 }
 
 
 Expr&
 make_div(Context& cxt, Expr& e1, Expr& e2)
 {
-  Type& t = cxt.get_int_type();
-  return cxt.make_div(t, e1, e2);
+  return make_operator(cxt, div_op, e1, e2, &Context::make_div);
 }
 
 
 Expr&
 make_rem(Context& cxt, Expr& e1, Expr& e2)
 {
-  Type& t = cxt.get_int_type();
-  return cxt.make_rem(t, e1, e2);
+  return make_operator(cxt, rem_op, e1, e2, &Context::make_rem);
 }
 
 
 Expr&
 make_neg(Context& cxt, Expr& e)
 {
-  Type& t = cxt.get_int_type();
-  return cxt.make_neg(t, e);
+  return make_operator(cxt, sub_op, e, &Context::make_neg);
 }
 
 
@@ -71,7 +60,7 @@ make_neg(Context& cxt, Expr& e)
 Expr&
 make_pos(Context& cxt, Expr& e)
 {
-  return cxt.make_pos(e.type(), e);
+  return make_operator(cxt, add_op, e, &Context::make_pos);
 }
 
 

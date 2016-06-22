@@ -170,10 +170,11 @@ Debug_printer::id(Name const& n)
   struct fn
   {
     Debug_printer& self;
-    void operator()(Name const& n)          { lingo_unhandled(n); }
-    void operator()(Simple_id const& n)     { self.simple_id(n); }
-    void operator()(Operator_id const& n)   { self.operator_id(n); }
-    void operator()(Conversion_id const& n) { self.conversion_id(n); }
+    void operator()(Name const& n)           { lingo_unhandled(n); }
+    void operator()(Simple_id const& n)      { self.simple_id(n); }
+    void operator()(Operator_id const& n)    { self.operator_id(n); }
+    void operator()(Conversion_id const& n)  { self.conversion_id(n); }
+    void operator()(Placeholder_id const& n) { self.placeholder_id(n); }
   };
   apply(n, fn{*this});
 }
@@ -204,6 +205,15 @@ Debug_printer::conversion_id(Conversion_id const& n)
   newline_and_indent();
   type(n.type());
   newline_and_undent();
+}
+
+
+void
+Debug_printer::placeholder_id(Placeholder_id const& n)
+{
+  Sexpr guard(*this, n);
+  space();
+  os << n.number();
 }
 
 
@@ -259,10 +269,19 @@ void
 Debug_printer::function_type(Function_type const& t)
 {
   newline_and_indent();
-  for (Type const& p : t.parameter_types()) {
-    type(p);
-    newline();
+  os << "parameter-types=";
+  open();
+  newline_and_indent();
+  Type_list const& parms = t.parameter_types();
+  for (auto iter = parms.begin(); iter != parms.end(); ++iter) {
+    type(*iter);
+    if (std::next(iter) != parms.end())
+      newline();
   }
+  newline_and_undent();
+  close();
+  newline();
+  os << "return-type=";
   type(t.return_type());
   newline_and_undent();
 }
@@ -324,6 +343,7 @@ Debug_printer::type_qualifier(char const* q)
 // Expressions
 
 
+// TODO: We should be printing type information for every expression.
 void
 Debug_printer::expression(Expr const& e)
 {
@@ -334,8 +354,9 @@ Debug_printer::expression(Expr const& e)
     void operator()(Boolean_expr const& e)  { self.literal(e); }
     void operator()(Integer_expr const& e)  { self.literal(e); }
     void operator()(Id_expr const& e)       { self.id_expression(e); }
-    void operator()(Binary_expr const& e)   { self.binary_expression(e); }
     void operator()(Unary_expr const& e)    { self.unary_expression(e); }
+    void operator()(Binary_expr const& e)   { self.binary_expression(e); }
+    void operator()(Call_expr const& e)     { self.call_expression(e); }
     void operator()(Unparsed_expr const& e) { self.unparsed_expression(e); }
     void operator()(Value_conv const& e)    { self.conversion(e); }
     void operator()(Copy_init const& e)     { self.initialization(e); }
@@ -392,9 +413,27 @@ Debug_printer::binary_expression(Binary_expr const& e)
 {
   Sexpr sentinel(*this, e);
   newline_and_indent();
+  newline();
   expression(e.left());
   newline();
   expression(e.right());
+  newline_and_undent();
+}
+
+
+void
+Debug_printer::call_expression(Call_expr const& e)
+{
+  Sexpr sentinel(*this, e);
+  newline_and_indent();
+  expression(e.function());
+  newline();
+  Expr_list const& args = e.arguments();
+  for (auto iter = args.begin(); iter != args.end(); ++iter) {
+    expression(*iter);
+    if (std::next(iter) != args.end())
+      newline();
+  }  
   newline_and_undent();
 }
 
@@ -455,10 +494,56 @@ Debug_printer::statement(Stmt const& s)
   {
     Debug_printer& self;
     void operator()(Stmt const& s)              { lingo_unhandled(s); }
+    void operator()(Compound_stmt const& d)     { self.compound_statement(d); }
+    void operator()(If_then_stmt const& d)      { self.if_statement(d); }
+    void operator()(If_else_stmt const& d)      { self.if_statement(d); }
     void operator()(Return_stmt const& d)       { self.return_statement(d); }
     void operator()(Return_value_stmt const& d) { self.return_statement(d); }
+    void operator()(Expression_stmt const& d)   { self.expression_statement(d); }
+    void operator()(Declaration_stmt const& d)  { self.declaration_statement(d); }
   };
   apply(s, fn{*this});
+}
+
+
+void
+Debug_printer::compound_statement(Compound_stmt const& s)
+{
+  Sexpr guard(*this, s);
+  newline_and_indent();
+  Stmt_list const& ss = s.statements();
+  for (auto iter = ss.begin(); iter != ss.end(); ++iter) {
+    statement(*iter);
+    if (std::next(iter) != ss.end())
+      newline();    
+  }
+  newline_and_undent();
+}
+
+
+void
+Debug_printer::if_statement(If_then_stmt const& s)
+{
+  Sexpr guard(*this, s);
+  newline_and_indent();
+  expression(s.condition());
+  newline();
+  statement(s.true_branch());
+  newline_and_undent();
+}
+
+
+void
+Debug_printer::if_statement(If_else_stmt const& s)
+{
+  Sexpr guard(*this, s);
+  newline_and_indent();
+  expression(s.condition());
+  newline();
+  statement(s.true_branch());
+  newline();
+  statement(s.false_branch());
+  newline_and_undent();
 }
 
 
@@ -475,6 +560,26 @@ Debug_printer::return_statement(Return_value_stmt const& s)
   Sexpr guard(*this, s);
   newline_and_indent();
   expression(s.expression());
+  newline_and_undent();
+}
+
+
+void
+Debug_printer::expression_statement(Expression_stmt const& s)
+{
+  Sexpr guard(*this, s);
+  newline_and_indent();
+  expression(s.expression());
+  newline_and_undent();
+}
+
+
+void
+Debug_printer::declaration_statement(Declaration_stmt const& s)
+{
+  Sexpr guard(*this, s);
+  newline_and_indent();
+  declaration(s.declaration());
   newline_and_undent();
 }
 
@@ -576,11 +681,19 @@ Debug_printer::function_definition(Def const& d)
   {
     Debug_printer& self;
     void operator()(Def const& d)            { lingo_unhandled(d); }
+    void operator()(Empty_def const& d)      { self.function_definition(d); }
     void operator()(Expression_def const& d) { self.function_definition(d); }
     void operator()(Function_def const& d)   { self.function_definition(d); }
     void operator()(Intrinsic_def const& d)  { self.function_definition(d); }
   };
   apply(d, fn{*this});
+}
+
+
+void
+Debug_printer::function_definition(Empty_def const& d)
+{
+  Sexpr guard(*this, d); 
 }
 
 

@@ -33,10 +33,18 @@ convert_reference_to_object(Context& cxt, Expr& e)
 
 
 // If needed, convert a function to an object.
+//
+// FIXME: What does a reference-to-function conversion actually do?
+// Probably nothing, since the under-the-hood representation of both
+// functions and references-to-functions are function pointer.
 Expr&
 convert_reference_to_function(Context& cxt, Expr& e)
 {
-  lingo_unreachable();
+  if (e.type().is_reference()) {
+    Type& t = cxt.get_non_reference_type(e.type());
+    return *new Value_conv(t, e);
+  }
+  return e;
 }
 
 

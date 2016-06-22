@@ -7,6 +7,7 @@
 #include "type.hpp"
 #include "lookup.hpp"
 #include "initialization.hpp"
+#include "debugging.hpp"
 
 #include <iostream>
 
@@ -61,6 +62,9 @@ initialize_parameters(Context& cxt, Decl_list& parms, Expr_list& args)
 }
 
 
+// -------------------------------------------------------------------------- //
+// Overload resolution
+
 // Build a candidate for the given function. The resulting candidate may
 // be non-viable.
 //
@@ -84,162 +88,6 @@ make_function_candidate(Context& cxt, Function_decl& f, Expr_list& args)
   }
 }
 
-
-#if 0
-// Attempt to resolve a dependent call to a (single) function template.
-Expr&
-make_dependent_template_call(Context& cxt, Template_ref& e, Expr_list& args)
-{
-  Template_decl& temp = e.declaration();
-
-  Decl& pd = temp.parameterized_declaration();
-
-  // FIXME: Factor this into smaller bits. We'll need it when we try
-  // to handle overloads.
-  if (Function_decl* f = as<Function_decl>(&pd)) {
-    // Perform template argument deduction using the parameters of
-    // the function template and the given arguments.
-    Substitution sub(temp.parameters());
-    try {
-      deduce_from_call(cxt, f->parameters(), args, sub);
-      Decl& tspec = specialize_template(cxt, temp, sub);
-      Function_decl& spec = cast<Function_decl>(tspec);
-      Type& t = spec.return_type();
-
-      // If the template is constrained, then ensure that the current
-      // constraints subsume those of the declaration.
-      //
-      // Note that an unconstrained template is awlays admissible.
-      //
-      // TODO: Do this here, or in specialize_template?
-      if (temp.is_constrained()) {
-        Expr& fcons = temp.constraint();
-        Expr& ccons = *cxt.current_template_constraints();
-
-        // The call is admissible iff the current constraints subsume
-        // those of the the candidate function.
-        if (!subsumes(cxt, ccons, fcons))
-          warning(cxt, "call to function template '{}' not covered by constraints", e);
-      }
-      return cxt.make_call(t, e, args);
-    } catch (Translation_error& err) {
-      // FIXME: Improve diagnostics.
-      throw Type_error("no matching call to 'e'");
-    }
-  }
-  lingo_unimplemented("dependent function call");
-}
-
-
-// Make a dependent function call expression.
-Expr&
-make_dependent_call(Context& cxt, Expr& e, Expr_list& args)
-{
-  Type& t = make_fresh_type(cxt);
-  Expr& init = cxt.make_call(t, e, args);
-
-  // Unify with previous requirements.
-  if (cxt.in_requirements())
-    return make_required_expression(cxt, init);
-
-  // Don't check in unconstrained templates.
-  if (cxt.in_unconstrained_template())
-    return init;
-
-  // Determine if the constraints explicitly admit this declaration.
-  Expr& cons = *cxt.current_template_constraints();
-  if (Expr* ret = admit_expression(cxt, cons, init))
-    return *ret;
-
-  // Otherwise, e refers to a previous declaration, possibly many.
-  //
-  // TODO: Use dispatch?
-  //
-  // TODO: Handle the overload case. For overloaded funtions, we
-  // need to find them most general.
-  if (Template_ref* r = as<Template_ref>(&e))
-    return make_dependent_template_call(cxt, *r, args);
-  if (Reference_expr* r = as<Reference_expr>(&e))
-    return make_dependent_function_call(cxt, *r, args);
-
-  lingo_unhandled(e);
-}
-#endif
-
-
-
-Expr&
-make_regular_call(Context& cxt, Decl_ref& e, Expr_list& args)
-{
-  // TODO: This could be a function object!.
-  Typed_decl& decl = e.declaration();
-  if (!is<Function_decl>(decl)) {
-    error(cxt, "call to non-function '{}'", decl);
-    throw Type_error();
-  }
-
-  // TODO: We should be searching for or synthesizing a call operator that 
-  // accepts functions of (specifically) this type -- as opposed to generating
-  // the call indirectly. Perhaps we should just attach a declaration to
-  // each overloadable operation that contains the resolved declaration to
-  // call. This would allow us to preserve the surface syntax while also
-  // supporting generalized lookup rules.
-
-  // TODO: The call operator takes an argument of function type (as in the
-  // category, not the value type). This means we are generally going to be
-  // performing a reference-to-function conversion.
-
-  Function_decl& fn = cast<Function_decl>(decl);
-  Function_candidate cand = make_function_candidate(cxt, fn, args);
-  if (!cand) {
-    // TODO: Diagnose the error at the call site. Also explain why.
-    error(cxt, "cannot call function '{}", fn.name());
-    throw Lookup_error();
-  }
-
-  // The type is the declared return type of the function.
-  Type& t = fn.return_type();
-
-  return cxt.make_call(t, e, args);
-}
-
-
-// Make a non-dependent call expression.
-//
-// FIXME: Allow calls to expressions of any function type.
-//
-// NOTE: The builtin function call operator requires an object-to-value
-// conversion on the target. Be sure to apply that.
-//
-// FIXME: If e has user-defined type then we need to look for an
-// overloaded operator.
-Expr&
-make_regular_call(Context& cxt, Expr& e, Expr_list& args)
-{
-  struct fn 
-  {
-    Context&    cxt;
-    Expr_list& args;
-    Expr& operator()(Expr& e)     { lingo_unhandled(e); }
-    Expr& operator()(Decl_ref& e) { return make_regular_call(cxt, e, args); }
-  };
-  return apply(e, fn{cxt, args});
-}
-
-
-Expr&
-make_call(Context& cxt, Expr& e, Expr_list& args)
-{
-  // if (is_type_dependent(e) || is_type_dependent(args))
-  //   return make_dependent_call(cxt, e, args);
-  // else
-  //   return make_regular_call(cxt, e, args);
-  return make_regular_call(cxt, e, args);
-}
-
-
-// -------------------------------------------------------------------------- //
-// Overload resolution
 
 using Candidate_list = std::vector<Function_candidate>;
 
@@ -332,6 +180,84 @@ resolve_call(Context& cxt, Decl_list& ds, Expr& e1, Expr& e2)
   Expr_list args {&e1, &e2};
   return resolve_call(cxt, ds, args);
 }
+
+
+// Perform overload resolution for the given operator and operands.
+//
+// TODO: All overloads of this function should be using a canonicalizing
+// builder to generate the name for lookup.
+Resolution 
+resolve_operator(Context& cxt, Operator_kind op, Expr& e)
+{
+  Name& name = cxt.get_id(op);
+  Decl_list decls = unqualified_lookup(cxt, name);
+  return resolve_call(cxt, decls, e);
+}
+
+
+// Perform overload resolution for the given operator and operands.
+Resolution 
+resolve_operator(Context& cxt, Operator_kind op, Expr& e1, Expr& e2)
+{
+  Name& name = cxt.get_id(op);
+  Decl_list decls = unqualified_lookup(cxt, name);
+  return resolve_call(cxt, decls, e1, e2);
+}
+
+
+// Perform overload resolution for the given operator and operands.
+Resolution 
+resolve_operator(Context& cxt, Operator_kind op, Expr_list& args)
+{
+  Name& name = cxt.get_id(op);
+  Decl_list decls = unqualified_lookup(cxt, name);
+  return resolve_call(cxt, decls, args);
+}
+
+
+// -------------------------------------------------------------------------- //
+// Function call
+
+
+// Build a call expression for the function denoted by f and the sequence
+// of arguments in as.
+//
+// NOTE: This currently performs normal resolution, which will attempt to
+// find the right call operator from *all* function call operators. This is
+// an unnaturally large candidate set. We can *dramatically* reduce the size
+// of this set by generating the candidate set by the set of declarations
+// denoted by f. For example, if f refers to a function, then we simply
+// pick it's associated call operator. If f is an overload set, then we
+// consider only those...
+//
+// Hmmm... I don't know if I like this.
+Expr&
+make_call(Context& cxt, Expr& f, Expr_list& as)
+{
+  // Build a new sequence of arguments that includes the call target.
+  Expr_list ops {&f};
+  for (Expr& a : as) ops.push_back(a);
+
+  Name& name = cxt.get_id(call_op);
+  Decl_list decls = unqualified_lookup(cxt, name);
+
+  // Resolve the function call.
+  Resolution res = resolve_operator(cxt, call_op, ops);
+  Function_decl& decl = res.function();
+  Expr_list& conv = res.arguments();
+
+  // Unpack the function target and arguments from the converted arguments.
+  Expr& fn = conv[0];
+  Expr_list args;
+  for (auto iter = ++conv.begin(); iter != conv.end(); ++iter)
+    args.push_back(*iter);
+
+  // Build the call and set its resolved definition.
+  Call_expr& expr = cxt.make_call(decl.return_type(), fn, std::move(args));
+  expr.res_ = &decl;
+  return expr;
+}
+
 
 
 } // namespace banjo

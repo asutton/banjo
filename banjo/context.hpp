@@ -33,6 +33,10 @@ using Context_stack = std::vector<Decl*>;
 using Store = lingo::Environment<Decl const*, Value>;
 
 
+// Maps function types 
+using Call_map = std::unordered_map<Type*, Decl*, Type_hash, Type_eq>;
+
+
 // A repository of information to support translation.
 //
 // TODO: Choose a better default allocator for the context.
@@ -45,6 +49,10 @@ struct Context : List_allocator, Builder
   // Non-copyable
   Context(Context const&) = delete;
   Context& operator=(Context const&) = delete;
+
+  // Built-in entity definitions
+  Builtins const& builtins() const { return builtins_; }
+  Builtins&       builtins()       { return builtins_; }
 
   // Returns the translation unit.
   Translation_unit const& translation_unit() const;
@@ -72,10 +80,6 @@ struct Context : List_allocator, Builder
   Scope const& global_scope() const;
   Scope&       global_scope();
 
-  // Built-in entity definitions
-  Builtins const& builtins() const { return builtins_; }
-  Builtins&       builtins()       { return builtins_; }
-
   // Declaration contexts.
   void enter_context();
   void leave_context();
@@ -83,6 +87,9 @@ struct Context : List_allocator, Builder
   // Returns the current declaration context.
   Decl const& current_context() const { return *cxt.back(); }
   Decl&       current_context()       { return *cxt.back(); }
+
+  // Synthesis
+  Decl& synthesize_call_operator(Function_decl&);
 
   // Constant value store
   Store const& constants() const { return values; }
@@ -129,6 +136,7 @@ struct Context : List_allocator, Builder
 
   // Built-in entity definitions.
   Builtins builtins_;
+  Call_map op_calls_;
 };
 
 

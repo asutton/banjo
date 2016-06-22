@@ -357,6 +357,23 @@ struct hash
 };
 
 
+
+// A hash function on term pointers.
+template<typename T>
+struct Basic_term_hash
+{
+  std::size_t operator()(T const* t) const
+  {
+    hash<fnv1a_hash> h;
+    return h(*t);
+  }
+};
+
+
+using Name_hash = Basic_term_hash<Name>;
+using Type_hash = Basic_term_hash<Type>;
+
+
 } // namespace banjo
 
 

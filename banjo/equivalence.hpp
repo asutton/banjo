@@ -45,6 +45,22 @@ is_different(Type const& t1, Type const& t2)
 }
 
 
+// A hash function on pointers term pointers.
+template<typename T>
+struct Basic_term_eq
+{
+  bool operator()(T const* a, T const* b) const
+  {
+    return is_equivalent(*a, *b);
+  }
+};
+
+
+using Name_eq = Basic_term_eq<Name>;
+using Type_eq = Basic_term_eq<Type>;
+
+
+
 } // namespace banjo
 
 #endif

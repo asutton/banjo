@@ -264,6 +264,12 @@ struct Function_decl : Mapping_decl, Allocatable<Function_decl>
 
   void accept(Visitor& v) const { v.visit(*this); }
   void accept(Mutator& v)       { v.visit(*this); }
+
+  // Returns the function call operator associated with the function.
+  Function_decl const& call() const { return cast<Function_decl>(*call_); }
+  Function_decl&       call()       { return cast<Function_decl>(*call_); }
+
+  Decl* call_;
 };
 
 

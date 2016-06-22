@@ -4,15 +4,12 @@
 #ifndef BANJO_EXPRESSION_HPP
 #define BANJO_EXPRESSION_HPP
 
-#include "prelude.hpp"
-#include "language.hpp"
-#include "overload.hpp"
+#include "ast.hpp"
+#include "context.hpp"
 
 
 namespace banjo
 {
-
-struct Context;
 
 Expr& make_required_expression(Context&, Expr&);
 
@@ -45,16 +42,52 @@ Expr& make_bit_not(Context&, Expr&);
 // Function calls
 Expr& make_call(Context&, Expr& e, Expr_list&);
 
-Resolution resolve_call(Context&, Decl_list&, Expr&);
-Resolution resolve_call(Context&, Decl_list&, Expr&, Expr&);
-Resolution resolve_call(Context&, Decl_list&, Expr_list&);
-
+// Tuples
 Expr& make_tuple_expr(Context&, Expr_list&);
 
 Expr& make_reference(Context&, Name&);
 Expr& make_member_reference(Context&, Expr&, Name&);
 
 Expr& make_requirements(Context&, Decl_list const&, Decl_list const&, Req_list const&);
+
+
+// Overload resolution
+Resolution resolve_call(Context&, Decl_list&, Expr&);
+Resolution resolve_call(Context&, Decl_list&, Expr&, Expr&);
+Resolution resolve_call(Context&, Decl_list&, Expr_list&);
+Resolution resolve_operator(Context&, Operator_kind, Expr&);
+Resolution resolve_operator(Context&, Operator_kind, Expr&, Expr&);
+Resolution resolve_operator(Context&, Operator_kind, Expr_list&);
+
+
+// Helper functions for making overloaded operator expressions. This performs
+// overload resolution and then constructs a resolved expression using the
+// member function pointer.
+
+template<typename T>
+T& 
+make_operator(Context& cxt, Operator_kind op, Expr& e, T& (Builder::* make)(Type&, Expr&))
+{
+  Resolution res = resolve_operator(cxt, op, e);
+  Function_decl& fn = res.function();
+  Expr_list& args = res.arguments();
+  T& expr = (cxt.*make)(fn.return_type(), args[0]);
+  expr.res_ = &fn;
+  return expr;
+}
+
+
+template<typename T>
+T& 
+make_operator(Context& cxt, Operator_kind op, Expr& e1, Expr& e2, T& (Builder::* make)(Type&, Expr&, Expr&))
+{
+  Resolution res = resolve_operator(cxt, op, e1, e2);
+  Function_decl& fn = res.function();
+  Expr_list& args = res.arguments();
+  T& expr = (cxt.*make)(fn.return_type(), args[0], args[1]);
+  expr.res_ = &fn;
+  return expr;
+}
 
 
 } // namespace banjo
