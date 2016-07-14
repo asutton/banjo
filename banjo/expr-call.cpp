@@ -77,13 +77,17 @@ Function_candidate
 make_function_candidate(Context& cxt, Function_decl& f, Expr_list& args)
 {
   try {
+    std::cout << "-------\n";
+    debug(f);
     Decl_list& parms = f.parameters();
     Expr_list conv = initialize_parameters(cxt, parms, args);
+    std::cout << "^^^^^^^\n";
     return {f, conv, true};
   } 
   catch (Compiler_error& err) {
     // TOOD: We might want to copy the error into the candidate
     // so we can re-throw it later. For now, just do this.
+    std::cout << "^^^^^^^\n";
     return {f, args, false};
   }
 }
@@ -162,6 +166,11 @@ resolve_call(Context& cxt, Decl_list& ds, Expr_list& args)
 
   // TODO: Order candidates
   error(cxt, "ambiguous lookup for '{}'", ds.front().name());
+  // for (Function_candidate& c : viable) {
+  //   debug(c.function());
+  //   for (Expr& e : c.arguments())
+  //     debug(e);
+  // }
   throw Type_error();
 }
 
@@ -217,27 +226,26 @@ resolve_operator(Context& cxt, Operator_kind op, Expr_list& args)
 
 // -------------------------------------------------------------------------- //
 // Function call
-
+//
+// This is a bit different than every other language (I think). Function
+// call is resolved by searching for function call operators, even in cases
+// where the called entity is actually a function.
 
 // Build a call expression for the function denoted by f and the sequence
 // of arguments in as.
-//
-// NOTE: This currently performs normal resolution, which will attempt to
-// find the right call operator from *all* function call operators. This is
-// an unnaturally large candidate set. We can *dramatically* reduce the size
-// of this set by generating the candidate set by the set of declarations
-// denoted by f. For example, if f refers to a function, then we simply
-// pick it's associated call operator. If f is an overload set, then we
-// consider only those...
-//
-// Hmmm... I don't know if I like this.
 Expr&
-make_call(Context& cxt, Expr& f, Expr_list& as)
+make_call(Context& cxt, Expr& f, Expr_list& args)
 {
   // Build a new sequence of arguments that includes the call target.
   Expr_list ops {&f};
-  for (Expr& a : as) ops.push_back(a);
+  for (Expr& a : args) 
+    ops.push_back(a);
 
+  // Search for function call operators.
+  //
+  // TODO: This is expensive, especially when we include argument dependent
+  // lookup. We can use an alternative form of lookup that gathers operator
+  // declarations directly from the entities or objects referred to by f.
   Name& name = cxt.get_id(call_op);
   Decl_list decls = unqualified_lookup(cxt, name);
 
@@ -247,17 +255,18 @@ make_call(Context& cxt, Expr& f, Expr_list& as)
   Expr_list& conv = res.arguments();
 
   // Unpack the function target and arguments from the converted arguments.
+  //
+  // TODO: Why am I bothering to unpack these?
   Expr& fn = conv[0];
-  Expr_list args;
+  Expr_list cargs;
   for (auto iter = ++conv.begin(); iter != conv.end(); ++iter)
-    args.push_back(*iter);
+    cargs.push_back(*iter);
 
   // Build the call and set its resolved definition.
-  Call_expr& expr = cxt.make_call(decl.return_type(), fn, std::move(args));
+  Call_expr& expr = cxt.make_call(decl.return_type(), fn, std::move(cargs));
   expr.res_ = &decl;
   return expr;
 }
-
 
 
 } // namespace banjo

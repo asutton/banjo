@@ -559,6 +559,23 @@ struct Synthetic_type : Declared_type, Allocatable<Synthetic_type>
 // -------------------------------------------------------------------------- //
 // Miscellaneous types
 
+// The type of an expression referring to a set of functions.
+//
+// TODO: Should we be giving this some kind of internal structure? 
+// Note that we can sometimes compute the type of an overload set; if all 
+// functions have the same arity, we can generate parameter and result types 
+// as union types. If there are multiple arities, we could make this a kind
+// of "multi-function" type. This is a future project; not sure if it's 
+// worthwhile.
+struct Overload_type : Type, Allocatable<Overload_type>
+{
+  using Type::Type;
+
+  void accept(Visitor& v) const { v.visit(*this); }
+  void accept(Mutator& v)       { v.visit(*this); }
+};
+
+
 // The type decltype(e). The actual type is deduced from the expression.
 //
 // FIXME: Put this into a category somewhere...

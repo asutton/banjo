@@ -42,7 +42,11 @@ Elaborate_declarations::enter_function_declaration(Function_decl& d)
 
   // Build and declare the function's call operator.
   //
-  // TODO: Synthesize equality operators also?
+  // TODO: Synthesize equality operators also? Note that we could modify
+  // lookup rules for functions so that any defined operators (==, !=, ())
+  // are found by association and not by general lookup. That would mean
+  // that creating a new function declaration would automatically associate
+  // these declarations, which means I wouldn't be doing this here.
   d.call_ = &cxt.synthesize_call_operator(d);
 }
 

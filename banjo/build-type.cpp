@@ -159,6 +159,13 @@ Builder::get_typename_type(Type_category c, Type_decl& d, Qualifier_set q)
 // -------------------------------------------------------------------------- //
 // Deduced types
 
+// Returns the type of an overloaded function.
+Overload_type&
+Builder::get_overload_type()
+{
+  return Overload_type::make(alloc_, function_type);
+}
+
 // Returns the auto type corresponding to the given declaration.
 Auto_type&
 Builder::get_auto_type(Type_category c, Type_decl& d, Qualifier_set q)

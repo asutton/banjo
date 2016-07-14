@@ -4,8 +4,12 @@
 #include "conversion.hpp"
 #include "ast.hpp"
 #include "context.hpp"
-#include "constraint.hpp"
+#include "lookup.hpp"
+#include "expression.hpp"
 #include "initialization.hpp"
+#include "debugging.hpp"
+
+#include <iostream>
 
 
 namespace banjo
@@ -157,24 +161,34 @@ convert_to_float(Context& cxt,Expr& e, Float_type& t)
 Expr&
 convert_value(Context& cxt, Expr& e, Type& t)
 {
-  // Reference expressions do not participate in value conversions.
-  if (e.type().is_reference())
+  try {
+    // Note that errors here are not fatal. If we can't find a conversion,
+    // that doesn't mean the program is ill-formed.
+    Suppress_diagnostics guard(cxt);
+
+    debug(e);
+    debug(t);
+  
+    // Search for a list of conversion operators for the given type.
+    Name& id = cxt.get_conversion_id(t);  
+    Decl_list decls = unqualified_lookup(cxt, id);
+
+    // FIXME: What do I do with ambiguous resolutions? Fail to convert?
+    Resolution res = resolve_call(cxt, decls, e);
+    Function_decl& decl = res.function();
+    Expr_list& args = res.arguments();
+
+    // Build a call to the selected conversion.
+    Expr& fn = cxt.make_reference(decl.type(), decl);
+    Call_expr& conv = cxt.make_call(decl.return_type(), fn, std::move(args));
+    conv.res_ = &decl;
+    return conv;
+  }
+  catch (...) {
     return e;
+  }
 
-  // Determine which conversion to apply based on the destination
-  // type of the conversion.
-  struct fn
-  {
-    Context& cxt;
-    Expr& e;
-    Type& t;
-
-    Expr& operator()(Type&)           { return e; }
-    Expr& operator()(Integer_type& t) { return convert_to_integer(cxt, e, t); }
-    Expr& operator()(Float_type& t)   { return convert_to_float(cxt, e, t); }
-    Expr& operator()(Boolean_type& t) { return convert_to_bool(cxt, e); }
-  };
-  return apply(t, fn{cxt, e, t});
+  return e;
 }
 
 

@@ -78,6 +78,7 @@ struct Builder
   Typename_type& get_typename_type(Type_category, Type_decl&, Qualifier_set = {});
   
   // Placeholder types
+  Overload_type& get_overload_type();
   Auto_type&     get_auto_type(Type_category, Type_decl&, Qualifier_set = {});
   Decltype_type& get_decltype_type(Type_category, Expr&, Qualifier_set = {});
 
